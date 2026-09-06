@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\MySmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -44,35 +45,19 @@ class SMSController extends Controller
 }
 
 
-public function sendSMS(Request $request)
+public function sendSMS(Request $request, MySmsService $smsService)
 {
     $request->validate([
-        'mobile' => 'required',
-        'message' => 'required'
+        'mobile' => 'required|string|max:30',
+        'message' => 'required|string|max:2000',
     ]);
 
-    $authToken = env('MY_SMS_AUTH_TOKEN');
-    
+    $result = $smsService->send(
+        (string) $request->string('mobile')->trim(),
+        (string) $request->string('message')
+    );
 
-    $response = Http::post('https://api.mysms.com/json/remote/sms/send', [
-        'apiKey'=> "fes0Jtm5dUww0YyvQHnDsg",
-        'authToken' => $authToken,
-        'recipients' => [$request->mobile],
-        'message' => $request->message,
-        'store' => true
-    ]);
-
-    $data = $response->json();
-
-    if (isset($data['success']) && $data['success']) {
-        return response()->json(['success' => true]);
-    }
-
-    return response()->json([
-        'success' => false,
-        'message' => $data['message'] ?? 'SMS sending failed',
-        'details' => $data
-    ]);
+    return response()->json($result, $result['success'] ? 200 : 502);
 }
 
 

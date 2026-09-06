@@ -102,7 +102,8 @@ Route::prefix('bookings')->group(function () {
 });
 
 
-Route::post('/bookings/send-sms', [BookingController::class, 'sendSms']);
+Route::post('/bookings/send-sms', [BookingController::class, 'sendSms'])
+    ->name('bookings.sendSmsDashboard');
 Route::post('/bookings/send-email', [BookingController::class, 'sendEmaildashboard']);
 
 // Route::prefix('admin/dashboard')->name('admin.dashboard.')->group(function () {

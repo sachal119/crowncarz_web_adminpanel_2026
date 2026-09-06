@@ -17,6 +17,13 @@ return [
     'webhook_token' => env('CALLSWITCH_WEBHOOK_TOKEN'),
 ],
 
+    'mysms' => [
+        // Keep the current key as a fallback so existing live deployments continue
+        // working; MY_SMS_API_KEY should be set in the environment going forward.
+        'api_key' => env('MY_SMS_API_KEY', 'fes0Jtm5dUww0YyvQHnDsg'),
+        'auth_token' => env('MY_SMS_AUTH_TOKEN'),
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],

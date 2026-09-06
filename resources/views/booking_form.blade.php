@@ -1459,7 +1459,7 @@ function showModal(message, phone_no) {
 
 async function sendSMS(mobile, message) {
     try {
-        const response = await fetch("https://crowncarz.com/admin/sms/send", {
+        const response = await fetch(@json(route('sms.send')), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -1476,8 +1476,7 @@ async function sendSMS(mobile, message) {
 
         console.log("Error Code:", errorCode);
 
-        // If errorCode === 0 → SUCCESS (Your requirement)
-        if (errorCode === 0) {
+        if (response.ok && (result?.success === true || errorCode === 0)) {
             alert("✅ SMS Sent Successfully!");
             return;
         }

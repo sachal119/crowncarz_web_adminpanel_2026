@@ -35,6 +35,7 @@ use Kreait\Firebase\Messaging;
 use Kreait\Firebase\Database;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use App\Services\MySmsService;
 
 class BookingController extends Controller
 {
@@ -7057,44 +7058,45 @@ public function searchBookings(Request $request)
     // }
 
     // Send Confirmation SMS
-    public function sendConfirmationSMS(Request $request, $bookingId) {
+    public function sendConfirmationSMS(Request $request, $bookingId, MySmsService $smsService) {
         $booking = $this->firebase->getData("bookings/{$bookingId}");
-        if (!empty($booking['phone_no'])) {
-            // Use your SMS API here
-            // Example: SmsService::send($booking['phone_no'], "Booking {$booking['ref_no']} confirmed!");
+
+        if (empty($booking) || empty($booking['phone_no'])) {
+            return response()->json([
+                'status' => 'error',
+                'success' => false,
+                'message' => 'Booking phone number was not found.',
+            ], 422);
         }
-        return response()->json(['status'=>'success', 'message'=>'SMS sent']);
+
+        $message = $request->input('message')
+            ?: "Your booking (Ref: ".($booking['ref_no'] ?? $bookingId).") has been confirmed.";
+        $result = $smsService->send((string) $booking['phone_no'], (string) $message);
+
+        return response()->json([
+            'status' => $result['success'] ? 'success' : 'error',
+            ...$result,
+        ], $result['success'] ? 200 : 502);
     }
     
     
-    public function sendSms(Request $request)
+    public function sendSms(Request $request, MySmsService $smsService)
 {
     $request->validate([
-        'booking_id' => 'required',
-        'phone' => 'required',
-        'message' => 'required',
+        'booking_id' => 'required|string',
+        'phone' => 'required|string|max:30',
+        'message' => 'required|string|max:2000',
     ]);
 
-    // send SMS using your service
-    // SmsService::send($request->phone, $request->message);
-    
-    $authToken = config('services.mysms.auth_token');
-    
+    $result = $smsService->send(
+        (string) $request->string('phone')->trim(),
+        (string) $request->string('message')
+    );
 
-    $response = Http::post('https://api.mysms.com/json/remote/sms/send', [
-        'apiKey'=> config('services.mysms.api_key'),
-        'authToken' => $authToken,
-        'recipients' => [$request->phone],
-        'message' => $request->message,
-        'store' => true
-    ]);
-
-    $data = $response->json();
-
-    
-// if (isset($data['success']) && $data['success']) {
-    return response()->json(['status'=>'success', 'message'=>'SMS sent successfully.']);
-// }
+    return response()->json([
+        'status' => $result['success'] ? 'success' : 'error',
+        ...$result,
+    ], $result['success'] ? 200 : 502);
 }
 
 public function sendEmaildashboard(Request $request)

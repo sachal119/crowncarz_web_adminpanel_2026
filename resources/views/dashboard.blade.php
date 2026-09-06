@@ -1535,34 +1535,41 @@ Website: www.crowncarz.com`;
     });
 });
 
-    document.getElementById("sendSmsNowBtn").addEventListener("click", function () {
+    document.getElementById("sendSmsNowBtn").addEventListener("click", async function () {
         let bookingId = document.getElementById("smsBookingId").value;
         let phone = document.getElementById("smsPhone").value;
         let message = document.getElementById("smsMessage").value;
 
         if (!phone.trim()) { alert("Please enter phone number"); return; }
+        if (!message.trim()) { alert("Please enter a message"); return; }
 
-        fetch("/admin/bookings/send-sms", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({ booking_id: bookingId, phone: phone, message: message })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
+        const button = this;
+        button.disabled = true;
+
+        try {
+            const response = await fetch(@json(route('bookings.sendSmsDashboard')), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ booking_id: bookingId, phone, message })
+            });
+            const data = await response.json();
+
+            if (response.ok && data.success === true) {
                 alert("SMS sent successfully!");
                 bootstrap.Modal.getInstance(document.getElementById("sendSmsModal")).hide();
             } else {
-                alert("SMS failed to send.");
+                alert(data.message || "SMS failed to send.");
             }
-        })
-        .catch(err => {
+        } catch (err) {
             console.error(err);
             alert("Error sending SMS.");
-        });
+        } finally {
+            button.disabled = false;
+        }
     });
 
 
