@@ -69,9 +69,13 @@
         font-weight: 600;
         font-size: 14px;
         transition: 0.2s ease-in-out;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
     }
 
-    .cc-pagination-btn:hover:not(.disabled) {
+    .cc-pagination-btn:hover:not(.disabled):not(:disabled) {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
@@ -82,17 +86,30 @@
         border: none;
     }
 
+    .cc-prev:hover:not(.disabled):not(:disabled) {
+        color: white;
+        background: #5a6268;
+    }
+
     .cc-next {
         background: #FAD788;
         color: #6B3E26;
         border: none;
     }
 
+    .cc-next:hover:not(.disabled):not(:disabled) {
+        color: #6B3E26;
+        background: #f7cb67;
+    }
+
     .cc-prev.disabled,
-    .cc-next.disabled {
+    .cc-prev:disabled,
+    .cc-next.disabled,
+    .cc-next:disabled {
         opacity: 0.5;
         cursor: not-allowed;
         box-shadow: none !important;
+        pointer-events: none;
     }
 </style>
 
@@ -242,31 +259,37 @@
             @endforelse
         </tbody>
     </table>
-    <div class="d-flex justify-content-center mt-4 gap-3">
+    <div class="d-flex flex-column align-items-center mt-4">
+      @if($totalCount > 0)
+        <div class="mb-3 text-muted" style="font-size: 14px;">
+          Showing <strong>{{ $from }}</strong> – <strong>{{ $to }}</strong> of <strong>{{ $totalCount }}</strong> records (Page {{ $page }} of {{ $mileagePaginator->lastPage() }})
+        </div>
+      @endif
 
-    {{-- Previous --}}
-    @if($startAfter)
-        <a href="{{ url()->current() }}" class="cc-pagination-btn cc-prev">
-            <i class="bi bi-arrow-left-circle me-1"></i> Previous
-        </a>
-    @else
-        <button class="cc-pagination-btn cc-prev disabled">
-            <i class="bi bi-arrow-left-circle me-1"></i> Previous
-        </button>
-    @endif
+      <div class="d-flex justify-content-center gap-3">
+        {{-- Previous --}}
+        @if($mileagePaginator->previousPageUrl())
+            <a href="{{ $mileagePaginator->previousPageUrl() }}" class="cc-pagination-btn cc-prev">
+                <i class="bi bi-arrow-left-circle me-1"></i> Previous
+            </a>
+        @else
+            <button class="cc-pagination-btn cc-prev disabled" disabled>
+                <i class="bi bi-arrow-left-circle me-1"></i> Previous
+            </button>
+        @endif
 
-    {{-- Next --}}
-    @if($hasMore)
-        <a href="{{ url()->current() . '?startAfter=' . $lastKey }}" class="cc-pagination-btn cc-next">
-            Next <i class="bi bi-arrow-right-circle ms-1"></i>
-        </a>
-    @else
-        <button class="cc-pagination-btn cc-next disabled">
-            Next <i class="bi bi-arrow-right-circle ms-1"></i>
-        </button>
-    @endif
-
-</div>
+        {{-- Next --}}
+        @if($mileagePaginator->nextPageUrl())
+            <a href="{{ $mileagePaginator->nextPageUrl() }}" class="cc-pagination-btn cc-next">
+                Next <i class="bi bi-arrow-right-circle ms-1"></i>
+            </a>
+        @else
+            <button class="cc-pagination-btn cc-next disabled" disabled>
+                Next <i class="bi bi-arrow-right-circle ms-1"></i>
+            </button>
+        @endif
+      </div>
+    </div>
 
 </div>
 
@@ -311,120 +334,6 @@
     </div>
   </div>
 </div>
-
-
-<!--{{-- Info + Pagination --}}-->
-<!--<div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3">-->
-<!--    <p class="mb-2 mb-md-0 text-muted">-->
-<!--        Showing records. Total count not available.-->
-<!--    </p>-->
-
-<!--    <nav>-->
-<!--        <ul class="pagination mb-0">-->
-<!--            {{-- Previous button --}}-->
-<!--            {{-- Next button --}}-->
-<!--            @if($hasMore)-->
-<!--                <li class="page-item">-->
-<!--                    <a href="{{ url()->current() }}?page={{ ($page ?? 1) + 1 }}&startAfter={{ $lastKey }}" class="page-link">Next ➡</a>-->
-<!--                </li>-->
-<!--            @endif-->
-<!--        </ul>-->
-<!--    </nav>-->
-<!--</div>-->
-
-          {{-- Table --}}
-          <!--<div class="table-responsive">-->
-          <!--  <table class="table table-bordered align-middle">-->
-          <!--    <thead style="background-color: #E6B04A; color: #fff;">-->
-          <!--      <tr>-->
-          <!--        <th>From</th>-->
-          <!--        <th>To</th>-->
-          <!--        <th>Company Price (£)</th>-->
-          <!--        <th>Driver Price (£)</th>-->
-          <!--        <th>Agent Commission (£)</th>-->
-          <!--        <th>Type</th>-->
-          <!--        <th>Vehicle</th>-->
-          <!--        <th>Created At</th>-->
-          <!--      </tr>-->
-          <!--    </thead>-->
-          <!--    <tbody>-->
-          <!--      @forelse($mileagePrices as $id => $m)-->
-          <!--        <tr style="background-color: #FFF9E5;">-->
-          <!--          <td>{{ $m['from_postcode'] ?? '-' }}</td>-->
-          <!--          <td>{{ $m['to_postcode'] ?? '-' }}</td>-->
-          <!--          <td>£{{ number_format($m['company_price'] ?? 0, 2) }}</td>-->
-          <!--          <td>£{{ number_format($m['driver_price'] ?? 0, 2) }}</td>-->
-          <!--          <td>£{{ number_format($m['agent_commission'] ?? 0, 2) }}</td>-->
-          <!--          <td>{{ $m['type'] ?? 'default' }}</td>-->
-          <!--          <td>{{ $m['vehicle_type'] ?? 'default' }}</td>-->
-          <!--          <td>{{ $m['created_at'] ?? '-' }}</td>-->
-          <!--        </tr>-->
-          <!--      @empty-->
-          <!--        <tr>-->
-          <!--          <td colspan="8" class="text-center text-muted">No pricing records available.</td>-->
-          <!--        </tr>-->
-          <!--      @endforelse-->
-          <!--    </tbody>-->
-          <!--  </table>-->
-          <!--</div>-->
-<!--          <div class="table-responsive">-->
-<!--    <table class="table table-bordered align-middle">-->
-<!--        <thead style="background-color: #FAD788; color: #6B3E26;">-->
-<!--            <tr>-->
-<!--              <th>From</th>-->
-<!--              <th>To</th>-->
-<!--              <th>Saloon Price (£)</th>-->
-<!--              <th>Estate Price (£)</th>-->
-<!--              <th>6 Seater Price (£)</th>-->
-<!--              <th>7 to 8 Seater Price (£)</th>-->
-<!--              <th>10 to 12 Seater Price (£)</th>-->
-<!--            </tr>-->
-<!--          </thead>-->
-<!--        <tbody>-->
-<!--            @forelse($mileagePrices as $id => $m)-->
-<!--                <tr style="background-color: #FFF9E5;">-->
-<!--                    <td>{{ $m['from_postcode'] ?? '-' }}</td>-->
-<!--                    <td>{{ $m['to_postcode'] ?? '-' }}</td>-->
-<!--                    <td>£{{ number_format($m['saloon_fare'] ?? 0, 2) }}</td>-->
-<!--                    <td>£{{ number_format($m['estate_fare'] ?? 0, 2) }}</td>-->
-<!--                    <td>£{{ number_format($m['seater6_fare'] ?? 0, 2) }}</td>-->
-<!--                    <td>£{{ number_format($m['seater7_8_fare'] ?? 0, 2) }}</td>-->
-<!--                    <td>£{{ number_format($m['seater12_16_fare'] ?? 0, 2) }}</td>-->
-<!--                </tr>-->
-<!--            @empty-->
-<!--                <tr>-->
-<!--                    <td colspan="8" class="text-center text-muted">No pricing records available.</td>-->
-<!--                </tr>-->
-<!--            @endforelse-->
-<!--        </tbody>-->
-<!--    </table>-->
-<!--</div>-->
-
-<!--{{-- Info + Pagination --}}-->
-<!--<div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3">-->
-<!--<p class="mb-2 mb-md-0 text-muted">-->
-<!--    Showing {{ $from }} – {{ $to }} of {{ $totalCount }} total records-->
-<!--</p>-->
-
-<!--<nav>-->
-<!--    <ul class="pagination mb-0">-->
-<!--        {{-- Previous button --}}-->
-<!--        @if($page > 1)-->
-<!--            <li class="page-item me-2">-->
-<!--                <a href="{{ url()->current() }}?page={{ $page - 1 }}" class="page-link">⬅ Previous</a>-->
-<!--            </li>-->
-<!--        @endif-->
-
-<!--        {{-- Next button --}}-->
-<!--        @if($hasMore)-->
-<!--            <li class="page-item">-->
-<!--                <a href="{{ url()->current() }}?page={{ $page + 1 }}&startAfter={{ $lastKey }}" class="page-link">Next ➡</a>-->
-<!--            </li>-->
-<!--        @endif-->
-<!--    </ul>-->
-<!--</nav>-->
-
-<!--</div>-->
 
         </div>
       </div>
