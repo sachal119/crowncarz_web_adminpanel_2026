@@ -351,7 +351,8 @@
     top: 72px;
     left: 14px;
     bottom: 20px;
-    width: 320px;
+    width: 360px;
+    max-width: calc(100vw - 28px);
     z-index: 1025;
     display: flex;
     flex-direction: column;
@@ -360,7 +361,7 @@
 }
 
 .driver-sidebar.collapsed {
-    transform: translateX(-340px);
+    transform: translateX(-380px);
     opacity: 0;
     pointer-events: none;
 }
@@ -406,8 +407,48 @@
     color: #f8f9fa;
     font-size: 11px;
     font-weight: 700;
-    padding: 3px 8px;
+    padding: 2px 7px;
     border-radius: 6px;
+    letter-spacing: 0.3px;
+}
+
+/* Status Dot Indicator */
+.status-indicator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+.status-indicator-dot.dot-available {
+    background-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+.status-indicator-dot.dot-engaged {
+    background-color: #f43f5e;
+    box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.25);
+}
+.status-indicator-dot.dot-waiting {
+    background-color: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+.status-indicator-dot.dot-on-break,
+.status-indicator-dot.dot-offline {
+    background-color: #94a3b8;
+    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
+}
+
+.uk-reg-badge {
+    background: #fef08a;
+    color: #1e293b;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #eab308;
+    letter-spacing: 0.4px;
+    font-family: monospace, -apple-system, sans-serif;
+    display: inline-block;
 }
 
 .status-badge {
@@ -1147,44 +1188,48 @@ function renderSidebarList() {
         const status = normalizeStatus(driver.status);
         const isSelected = selectedDriverId === driver.id;
         const hasGps = driver.latitude && driver.longitude && !isNaN(parseFloat(driver.latitude)) && parseFloat(driver.latitude) !== 0;
-        const letter = (driver.name || 'D').trim().charAt(0).toUpperCase();
 
-        let statusClass = 'status-offline';
+        let statusDotClass = 'dot-offline';
         let statusLabel = 'Offline';
-        if (status === 'available') { statusClass = 'status-available'; statusLabel = 'Available'; }
-        else if (status === 'engaged' || status === 'on_job') { statusClass = 'status-engaged'; statusLabel = 'Engaged'; }
-        else if (status === 'waiting') { statusClass = 'status-waiting'; statusLabel = 'Waiting'; }
-        else if (status === 'on_break') { statusClass = 'status-on-break'; statusLabel = 'On Break'; }
+        if (status === 'available') { statusDotClass = 'dot-available'; statusLabel = 'Available'; }
+        else if (status === 'engaged' || status === 'on_job') { statusDotClass = 'dot-engaged'; statusLabel = 'Engaged'; }
+        else if (status === 'waiting') { statusDotClass = 'dot-waiting'; statusLabel = 'Waiting'; }
+        else if (status === 'on_break') { statusDotClass = 'dot-on-break'; statusLabel = 'On Break'; }
 
-        // Build rich vehicle display (e.g., MERCEDES-BENZ E220 • YG64 XSF)
-        let vehicleDisplay = 'Standard Vehicle';
+        const callSign = driver.call_sign || 'D-00';
+        const driverName = driver.name || 'Unnamed Driver';
+        const regPlate = driver.vehicle_reg ? `<span class="uk-reg-badge">${driver.vehicle_reg}</span>` : '';
+        const vehicleColor = driver.vehicle_color ? `<span class="text-secondary small fw-normal">• ${driver.vehicle_color}</span>` : '';
+
+        // Vehicle Make & Model for second row
+        let vehicleMakeModel = 'Standard Vehicle';
         if (driver.vehicle_make || driver.vehicle_model) {
             const make = (driver.vehicle_make || '').trim();
             const model = (driver.vehicle_model || '').trim();
-            const fullModel = `${make} ${model}`.trim();
-            const reg = driver.vehicle_reg ? ` • ${driver.vehicle_reg}` : '';
-            vehicleDisplay = fullModel + reg;
-        } else if (driver.vehicle_reg) {
-            vehicleDisplay = `Reg: ${driver.vehicle_reg}`;
+            vehicleMakeModel = `${make} ${model}`.trim();
         }
 
         html += `
             <div class="driver-card-item ${isSelected ? 'selected' : ''}" onclick="selectDriver('${driver.id}', true)">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge rounded-circle bg-warning text-dark fw-bold px-2 py-1">${letter}</span>
-                        <span class="driver-badge-sign">${driver.call_sign || 'D-00'}</span>
-                        <strong class="text-dark fs-6">${driver.name || 'Unnamed Driver'}</strong>
+                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                        <span class="driver-badge-sign">${callSign}</span>
+                        <strong class="text-dark fs-6 ms-1">${driverName}</strong>
+                        ${regPlate ? `<span>•</span> ${regPlate}` : ''}
+                        ${vehicleColor}
                     </div>
-                    <span class="status-badge ${statusClass}">${statusLabel}</span>
+                    <div class="d-flex align-items-center gap-1 ms-2 flex-shrink-0" title="${statusLabel}">
+                        <span class="status-indicator-dot ${statusDotClass}"></span>
+                        <span class="text-muted" style="font-size: 11px; font-weight: 600;">${statusLabel}</span>
+                    </div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center text-muted small mt-2">
-                    <div class="text-truncate" style="max-width: 190px;" title="${vehicleDisplay}">
+                <div class="d-flex justify-content-between align-items-center text-muted small mt-2 pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="text-truncate me-2" title="${vehicleMakeModel}">
                         <i class="bi bi-car-front text-secondary me-1"></i>
-                        <span class="fw-medium">${vehicleDisplay}</span>
+                        <span class="text-dark fw-medium">${vehicleMakeModel}</span>
                     </div>
-                    <div>
-                        ${hasGps ? '<span class="text-success fw-bold"><i class="bi bi-geo-alt-fill"></i> Live GPS</span>' : '<span class="text-muted"><i class="bi bi-geo-alt"></i> No GPS</span>'}
+                    <div class="flex-shrink-0">
+                        ${hasGps ? '<span class="text-success fw-bold" style="font-size: 11.5px;"><i class="bi bi-geo-alt-fill"></i> Live GPS</span>' : '<span class="text-muted" style="font-size: 11.5px;"><i class="bi bi-geo-alt"></i> No GPS</span>'}
                     </div>
                 </div>
             </div>
