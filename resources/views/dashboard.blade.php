@@ -1562,6 +1562,20 @@ td{
   background: linear-gradient(135deg, #111827 0%, #1e293b 100%) !important;
   border-bottom: 2px solid #E6B04A !important;
 }
+
+/* 🌟 Layering for Stacked Secondary Modals (SMS, Email, Dispatch, Status Confirm) */
+#sendSmsModal,
+#sendEmailModal,
+#dispatchDriverModal,
+#statusConfirmModal {
+  z-index: 1120 !important;
+}
+#sendSmsModal .modal-dialog,
+#sendEmailModal .modal-dialog,
+#dispatchDriverModal .modal-dialog,
+#statusConfirmModal .modal-dialog {
+  z-index: 1121 !important;
+}
 .booking-route-timeline {
   border-left: 2px dashed #cbd5e1;
   margin-left: 14px;
@@ -2783,7 +2797,7 @@ Email: info@crowncarz.com
 Website: www.crowncarz.com`;
 
             document.getElementById('smsMessage').value = messageTemplate;
-            const smsModal = new bootstrap.Modal(smsModalEl);
+            const smsModal = bootstrap.Modal.getOrCreateInstance(smsModalEl);
             smsModal.show();
         });
     }
@@ -2803,7 +2817,7 @@ Website: www.crowncarz.com`;
             document.getElementById('emailAddress').value = b.email || '';
             document.getElementById('emailMessage').value = `Hello ${b.passenger_name || 'Customer'}, your booking (Ref# ${b.ref_no || b.id}) has been confirmed.`;
 
-            const emailModal = new bootstrap.Modal(emailModalEl);
+            const emailModal = bootstrap.Modal.getOrCreateInstance(emailModalEl);
             emailModal.show();
         });
     }
@@ -3083,6 +3097,23 @@ document.addEventListener('DOMContentLoaded', function () {
             chevron.classList.add('bi-chevron-down');
         });
     }
+
+    // 🌟 Automatic Modal Stacking & Z-Index Layering
+    document.addEventListener('show.bs.modal', function (event) {
+        const modal = event.target;
+        if (!modal || !modal.classList || !modal.classList.contains('modal')) return;
+        const openModals = Array.from(document.querySelectorAll('.modal.show')).filter(m => m !== modal);
+        if (openModals.length > 0) {
+            const topZ = 1120 + (openModals.length * 10);
+            modal.style.zIndex = topZ;
+            setTimeout(() => {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                if (backdrops.length > 0) {
+                    backdrops[backdrops.length - 1].style.zIndex = topZ - 5;
+                }
+            }, 10);
+        }
+    });
 
     // Initial binding of table row events
     bindRowEvents(document);
