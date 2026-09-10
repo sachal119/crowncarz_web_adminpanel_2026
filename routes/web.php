@@ -183,6 +183,7 @@ Route::post('/logout', function () {
 // Route::get('/', [OtpAuthController::class, 'showLogin'])->name('login');
 
 Route::get('/dashboard', [BookingController::class, 'index'])->name('dashboard');
+Route::get('/live-map', [BookingController::class, 'liveMap'])->name('live.map');
 
 
 //Route::get('/', [BookingController::class, 'index'])->name('dashboard');

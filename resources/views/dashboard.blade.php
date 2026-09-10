@@ -121,29 +121,9 @@ td{
   font-weight: 600;
 }
 
-/* === Map container === */
-#map {
-  border-radius: 0 0 16px 16px;
-}
-
 /* === Pie Chart === */
 #revenuePieChart {
   max-height: 240px;
-}
-
-
-.map-fullscreen-btn {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  z-index: 10;
-  border-radius: 10px;
-  padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.95);
-}
-
-.map-fullscreen-btn:hover {
-  background: #fff;
 }
 
 /* === Responsive tweaks === */
@@ -279,50 +259,51 @@ td{
     
   <div class="row g-4">
 
-   <div class="col-lg-8">
+   <div class="col-12">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-light border-0">
+            <div class="card-header bg-light border-0 py-3">
                 <h6 class="mb-0 text-dark">
                     <a class="text-decoration-none text-dark d-block"
-   data-bs-toggle="collapse"
-   href="#filtersCollapse"
-   role="button"
-   aria-expanded="true"
-   aria-controls="filtersCollapse">
-    <i class="bi bi-sliders me-2"></i> Search & Filters
-    <i class="bi bi-chevron-down float-end filter-chevron"></i>
-</a>
+                       data-bs-toggle="collapse"
+                       href="#filtersCollapse"
+                       role="button"
+                       aria-expanded="true"
+                       aria-controls="filtersCollapse">
+                        <i class="bi bi-sliders me-2"></i> Search & Filters
+                        <i class="bi bi-chevron-down float-end filter-chevron"></i>
+                    </a>
                 </h6>
             </div>
             <div class="collapse" id="filtersCollapse">
-                <div class="card-body bg-light rounded-bottom" style="
-    height: 264px;
-">
+                <div class="card-body bg-light rounded-bottom p-4">
                     <form action="{{ route('bookings.search.main') }}" method="GET">
                         <div class="row g-3">
                             <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted">Keyword</label>
                                 <input type="text" name="search" class="form-control" placeholder="Search by Name, Ref#, Mobile" value="{{ request('search') }}">
                             </div>
                             <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted">Pickup Location</label>
                                 <input type="text" name="pickup" class="form-control" placeholder="Pickup Address" value="{{ request('pickup') }}">
                             </div>
                             <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted">Dropoff Location</label>
                                 <input type="text" name="dropoff" class="form-control" placeholder="Dropoff Address" value="{{ request('dropoff') }}">
                             </div>
                         </div>
-                        <div class="row g-3 mt-2">
+                        <div class="row g-3 mt-1">
                             <div class="col-md-3">
-                                <label class="form-label">From</label>
+                                <label class="form-label small fw-semibold text-muted">From</label>
                                 <input type="date" name="from_date" class="form-control" value="{{ request('from_date') }}" min="{{ date('Y-m-d') }}">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">To</label>
+                                <label class="form-label small fw-semibold text-muted">To</label>
                                 <input type="date" name="to_date" class="form-control" value="{{ request('to_date') }}">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Driver</label>
+                                <label class="form-label small fw-semibold text-muted">Driver</label>
                                 <select name="driver_id" class="form-select">
-                                    <option value="">All</option>
+                                    <option value="">All Drivers</option>
                                     @foreach($drivers as $driver)
                                         <option value="{{ $driver['id'] }}" {{ request('driver_id') == $driver['id'] ? 'selected' : '' }}>
                                             {{ $driver['call_sign'] }} / {{ $driver['name'] ?? 'Unknown Driver' }}
@@ -330,21 +311,10 @@ td{
                                     @endforeach
                                 </select>
                             </div>
-                            <!--<div class="col-md-2">-->
-                            <!--    <label class="form-label">Account</label>-->
-                            <!--    <select name="account_id" class="form-select">-->
-                            <!--        <option value="">All</option>-->
-                            <!--        @foreach($accounts as $account)-->
-                            <!--            <option value="{{ $account['id'] }}" {{ request('account_id') == $account['id'] ? 'selected' : '' }}>-->
-                            <!--                {{ $account['business_name'] }}-->
-                            <!--            </option>-->
-                            <!--        @endforeach-->
-                            <!--    </select>-->
-                            <!--</div>-->
                             <div class="col-md-3">
-                                <label class="form-label">Payment</label>
+                                <label class="form-label small fw-semibold text-muted">Payment</label>
                                 <select name="payment_type" class="form-select">
-                                    <option value="">All</option>
+                                    <option value="">All Payments</option>
                                     <option value="Cash" {{ request('payment_type') == 'Cash' ? 'selected' : '' }}>Cash</option>
                                     <option value="Card" {{ request('payment_type') == 'Card' ? 'selected' : '' }}>Card</option>
                                     <option value="Account" {{ request('payment_type') == 'Account' ? 'selected' : '' }}>Account</option>
@@ -360,55 +330,11 @@ td{
                             </button>
                         </div>
                     </form>
-                    <p style="
-    margin-top: 18px;
-    margin-bottom: 0px;
-">Note: Tap on Top Right Icon to Collapse the search</p>
+                    <p class="text-muted small mt-2 mb-0">Note: Tap on Top Right Icon to Collapse the search</p>
                 </div>
             </div>
         </div>
    </div>
-    
-
-    <!-- 🔹 LIVE DRIVER MAP -->
-  <!--  <div class="col-lg-4 col-md-6">-->
-  <!--    <div class="card shadow-sm border-0 h-100" style="-->
-  <!--  border-radius: 16px;">-->
-  <!--      <div class="card-header bg-light d-flex justify-content-between align-items-center">-->
-  <!--        <h6 class="mb-0 text-dark">🗺️ Live Driver Map</h6>-->
-  <!--        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#mapModal" title="Expand Map">-->
-  <!--          <i class="bi bi-arrows-fullscreen"></i>-->
-  <!--        </button>-->
-  <!--      </div>-->
-  <!--      <div class="card-body p-0">-->
-  <!--        <div id="map" style="height: 300px;"></div>-->
-  <!--      </div>-->
-  <!--    </div>-->
-  <!--  </div>-->
-  <!--</div>-->
-  <div class="col-lg-4 col-md-6">
-  <div class="card shadow-sm border-0 h-100" style="border-radius: 8px;">
-    
-    <!-- ❌ Header removed -->
-
-    <div class="card-body p-0 position-relative">
-      
-      <!-- Map -->
-      <div id="map" style="height: 300px; border-radius: 8px;"></div>
-
-      <!-- 🔳 Fullscreen Button (Bottom Left, Overlay) -->
-      <button
-        class="btn btn-sm btn-light shadow map-fullscreen-btn"
-        data-bs-toggle="modal"
-        data-bs-target="#mapModal"
-        title="Expand Map"
-      >
-        <i class="bi bi-arrows-fullscreen"></i>
-      </button>
-
-    </div>
-  </div>
-</div>
 
   
   <div class="col-lg-12 mt-4">
@@ -906,19 +832,7 @@ td{
     
 
 
-<div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title" id="mapModalLabel">Expanded Live Map</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0">
-                <div id="mapExpanded" style="height: 75vh;"></div>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 
 <div
@@ -1841,7 +1755,7 @@ function initFirebase() {
 
     const db = firebase.database();
 
-    // 1️⃣ Live Drivers Listener (Maps & Live Dispatch cache)
+    // 1️⃣ Live Drivers Listener (Live Dispatch cache)
     const driverRef = db.ref("drivers");
     driverRef.on("value", (snapshot) => {
         const drivers = snapshot.val();
@@ -1849,10 +1763,6 @@ function initFirebase() {
             for (const [id, d] of Object.entries(drivers)) {
                 DRIVERS_MAP[id] = { id, ...d };
             }
-        }
-        showDriversOnMap(drivers, map, markers);
-        if (expandedMap) {
-            showDriversOnMap(drivers, expandedMap, expandedMarkers);
         }
     });
 
@@ -1982,134 +1892,10 @@ function initFirebase() {
     });
 }
 
-// 🗺️ Google Maps Initialization
-var map;
-var expandedMap;
-var markers = {};
-var expandedMarkers = {};
-
-const ukBounds = {
-    north: 55.9,
-    south: 50.5,
-    west: -3.4,
-    east: 2.1
-};
-
-function initMap() {
-    const ukCenter = { lat: 52.849586, lng: -1.221341 };
-
-    map = new google.maps.Map(document.getElementById("map"), {
-        center: ukCenter,
-        zoom: 11,
-        minZoom: 7,
-        zoomControl: true,
-        disableDefaultUI: true,
-        restriction: {
-            latLngBounds: ukBounds,
-            strictBounds: false
-        }
-    });
-
-    expandedMap = new google.maps.Map(document.getElementById("mapExpanded"), {
-        center: ukCenter,
-        zoom: 7,
-        minZoom: 5,
-    });
-
-    initFirebase();
-}
-
-function showDriversOnMap(drivers, targetMap, markerCache) {
-    if (!drivers || !targetMap) return;
-
-    let visibleMarkers = {};
-    const bounds = new google.maps.LatLngBounds();
-
-    for (const id in drivers) {
-        const driver = drivers[id];
-        if (!driver.latitude || !driver.longitude) continue;
-
-        const pos = {
-            lat: parseFloat(driver.latitude),
-            lng: parseFloat(driver.longitude)
-        };
-
-        visibleMarkers[id] = true;
-        bounds.extend(pos);
-
-        if (markerCache[id]) {
-            markerCache[id].setPosition(pos);
-            markerCache[id].setIcon(getMarkerIcon(driver.status));
-        } else {
-            const marker = new google.maps.Marker({
-                position: pos,
-                map: targetMap,
-                title: driver.name || "Unnamed Driver",
-                icon: {
-                    url: "https://crowncarz.com/admin/public/images/Car.png",
-                    scaledSize: new google.maps.Size(100, 100),
-                }
-            });
-
-            const info = new google.maps.InfoWindow({
-                content: `
-                <div class="driver-infowindow">
-                    <div class="driver-name">${driver.name || "Unnamed Driver"}</div>
-                    <div class="driver-status">Status: <strong>${driver.status || "N/A"}</strong></div>
-                    <div class="driver-phone">📞 ${driver.phone || "N/A"}</div>
-                </div>
-                `,
-                disableAutoPan: false
-            });
-
-            marker.addListener("click", () => {
-                targetMap.panTo(pos);
-                targetMap.setZoom(16);
-                info.open(targetMap, marker);
-            });
-
-            markerCache[id] = marker;
-        }
-    }
-
-    for (const id in markerCache) {
-        if (!visibleMarkers[id]) {
-            markerCache[id].setMap(null);
-            delete markerCache[id];
-        }
-    }
-
-    const markerCount = Object.keys(visibleMarkers).length;
-    if (markerCount > 1) {
-        targetMap.fitBounds(bounds);
-    } else if (markerCount === 1) {
-        targetMap.setCenter(bounds.getCenter());
-        targetMap.setZoom(14);
-    }
-}
-
-function getMarkerIcon(status = "") {
-    return {
-        url: "https://crowncarz.com/admin/public/images/Car.png",
-        scaledSize: new google.maps.Size(180, 200),
-    };
-}
-
-const mapModalEl = document.getElementById('mapModal');
-if (mapModalEl) {
-    mapModalEl.addEventListener('shown.bs.modal', function () {
-        if (map && expandedMap) {
-            const center = map.getCenter();
-            expandedMap.setCenter(center);
-            google.maps.event.trigger(expandedMap, "resize");
-        }
-    });
-}
-
-window.initMap = initMap;
-
 // ⚡ Main DOM Loaded initialization
 document.addEventListener('DOMContentLoaded', function () {
+    // 🚀 Initialize Realtime Firebase Sync for bookings & drivers
+    initFirebase();
     // Filter collapse toggle
     const collapseEl = document.getElementById('filtersCollapse');
     const chevron = document.querySelector('.filter-chevron');
@@ -2298,8 +2084,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }));
 });
 </script>
-
-<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&callback=initMap&loading=async"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

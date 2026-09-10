@@ -51,6 +51,50 @@ protected $firebase;
     $this->firebaseMessaging = $firebase->getMessaging();
 }
     
+    public function liveMap(Request $request)
+    {
+        if (!session('admin_logged_in')) {
+            return redirect()->route('login')->with('error', 'Please login first.');
+        }
+
+        try {
+            $driversData = $this->firebase->getData('drivers') ?? [];
+            $vehiclesData = $this->firebase->getData('vehicles') ?? [];
+
+            $drivers = collect();
+            if (is_array($driversData)) {
+                foreach ($driversData as $id => $driver) {
+                    if (!is_array($driver)) continue;
+                    $driver['id'] = (string) $id;
+
+                    // Match vehicle
+                    if (is_array($vehiclesData)) {
+                        foreach ($vehiclesData as $v) {
+                            if (is_array($v) && (($v['driver_id'] ?? null) == $id)) {
+                                $driver['vehicle_make'] = $v['make'] ?? ($driver['vehicle_make'] ?? '');
+                                $driver['vehicle_model'] = $v['model'] ?? ($driver['vehicle_model'] ?? '');
+                                $driver['vehicle_reg'] = $v['registration'] ?? ($driver['vehicle_reg'] ?? ($v['plate'] ?? ''));
+                                $driver['vehicle_color'] = $v['color'] ?? ($driver['vehicle_color'] ?? '');
+                                $driver['vehicle_type'] = $v['type'] ?? ($driver['vehicle_type'] ?? '');
+                                break;
+                            }
+                        }
+                    }
+                    $drivers->push($driver);
+                }
+            }
+
+            return view('maps.live_map', [
+                'drivers' => $drivers,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Live Map Error: ' . $e->getMessage());
+            return view('maps.live_map', [
+                'drivers' => collect(),
+            ]);
+        }
+    }
+
     public function previous(Request $request)
 {
     $phone = $request->phone;

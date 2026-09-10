@@ -140,7 +140,8 @@
 
       <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
         <ul class="navbar-nav">
-          <li class="nav-item me-3"><a class="nav-link" href="{{ route('dashboard') }}"><i class="bi bi-grid-fill me-1"></i>Dashboard</a></li>
+          <li class="nav-item me-3"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-grid-fill me-1"></i>Dashboard</a></li>
+          <li class="nav-item me-3"><a class="nav-link {{ request()->routeIs('live.map') ? 'active' : '' }}" href="{{ route('live.map') }}"><i class="bi bi-geo-alt-fill me-1 text-warning"></i>Live Map</a></li>
           <li class="nav-item me-3"><a class="nav-link" href="{{ route('booking.create') }}"  target="_blank"><i class="bi bi-calendar-plus me-1"></i>Make Booking</a></li>
           @if(session('staff_role', 'super_admin') !== 'collaborator')
           <li class="nav-item dropdown me-3">
