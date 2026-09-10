@@ -372,9 +372,9 @@ td{
       
 
 @if (session('admin_logged_in'))
-      <form class="d-flex ms-auto" method="POST" action="{{ route('logout') }}">
+      <form class="d-flex ms-auto" method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to log out of Crown Carz Admin Panel?');">
         @csrf
-        <button class="btn btn-danger"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
+        <button type="submit" class="btn btn-danger"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
       </form>
       @endif
     </div>
@@ -392,48 +392,57 @@ td{
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <script>
-    // Initialize map
-    var map = L.map('map').setView([31.5204, 74.3587], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    // Initialize map safely only if container exists
+    const mapContainer = document.getElementById('map');
+    if (mapContainer) {
+      var map = L.map('map').setView([31.5204, 74.3587], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
 
-    // Expand Map functionality
-    var expandedMap;
-    var mapModal = new bootstrap.Modal(document.getElementById('mapModal'));
+      // Expand Map functionality
+      var expandedMap;
+      const mapModalEl = document.getElementById('mapModal');
+      const expandBtn = document.getElementById('expandMapBtn');
 
-    document.getElementById('expandMapBtn').addEventListener('click', function() {
-      mapModal.show();
-    });
+      if (mapModalEl && expandBtn) {
+        var mapModal = new bootstrap.Modal(mapModalEl);
+        expandBtn.addEventListener('click', function() {
+          mapModal.show();
+        });
 
-    document.getElementById('mapModal').addEventListener('shown.bs.modal', function () {
-      if (!expandedMap) {
-        expandedMap = L.map('mapExpanded').setView([31.5204, 74.3587], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(expandedMap);
-      } else {
-        expandedMap.invalidateSize();
-        expandedMap.setView([31.5204, 74.3587], 12);
+        mapModalEl.addEventListener('shown.bs.modal', function () {
+          if (!expandedMap) {
+            expandedMap = L.map('mapExpanded').setView([31.5204, 74.3587], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors'
+            }).addTo(expandedMap);
+          } else {
+            expandedMap.invalidateSize();
+            expandedMap.setView([31.5204, 74.3587], 12);
+          }
+        });
       }
-    });
 
-    // Auto-refresh bookings and map every 30 seconds
-    setInterval(() => {
-      location.reload();
-    }, 30000);
+      // Auto-refresh ONLY on dashboard
+      setInterval(() => {
+        location.reload();
+      }, 30000);
+    }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // Load metrics from LocalStorage
+    // Load metrics from LocalStorage safely
     const totalUsers = parseInt(localStorage.getItem("totalUsers")) || 0;
     const todaysRevenue = parseFloat(localStorage.getItem("todaysRevenue")) || 0.00;
     const revenueBreakdown = JSON.parse(localStorage.getItem("revenueBreakdown")) || { Cash: 0, Card: 0, Account: 0 };
 
-    // Update display elements
-    document.getElementById("totalUsersDisplay").textContent = totalUsers;
-    document.getElementById("todaysRevenueDisplay").textContent = `£${todaysRevenue.toFixed(2)}`;
+    const totalUsersEl = document.getElementById("totalUsersDisplay");
+    if (totalUsersEl) totalUsersEl.textContent = totalUsers;
+
+    const todaysRevenueEl = document.getElementById("todaysRevenueDisplay");
+    if (todaysRevenueEl) todaysRevenueEl.textContent = `£${todaysRevenue.toFixed(2)}`;
 
     // Create pie chart using LocalStorage data
     const ctx = document.getElementById('revenuePieChart');
