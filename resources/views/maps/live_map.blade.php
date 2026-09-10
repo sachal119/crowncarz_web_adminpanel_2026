@@ -8,7 +8,7 @@
     width: 100%;
     height: calc(100vh - 62px);
     overflow: hidden;
-    margin: -1.5rem -1.5rem -2rem -1.5rem; /* Cancel main layout padding */
+    margin: -1.5rem -1.5rem -2rem -1.5rem;
 }
 
 #liveGoogleMap {
@@ -37,12 +37,12 @@
 }
 
 .glass-panel {
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+    border-radius: 14px;
 }
 
 /* Radar Badge */
@@ -59,24 +59,24 @@
 .radar-dot {
     width: 10px;
     height: 10px;
-    background-color: #198754;
+    background-color: #10b981;
     border-radius: 50%;
-    box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
     animation: radarPulse 1.8s infinite;
 }
 
 @keyframes radarPulse {
     0% {
         transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
     }
     70% {
         transform: scale(1.1);
-        box-shadow: 0 0 0 10px rgba(25, 135, 84, 0);
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
     }
     100% {
         transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(25, 135, 84, 0);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
     }
 }
 
@@ -107,7 +107,7 @@
 }
 
 .filter-pill.active {
-    background: #212529;
+    background: #1e293b;
     color: #ffffff;
 }
 
@@ -118,13 +118,13 @@
     display: inline-block;
 }
 
-.pill-dot.dot-all { background: #6c757d; }
-.pill-dot.dot-available { background: #198754; }
-.pill-dot.dot-engaged { background: #dc3545; }
-.pill-dot.dot-waiting { background: #ffc107; }
-.pill-dot.dot-break { background: #6c757d; }
+.pill-dot.dot-all { background: #64748b; }
+.pill-dot.dot-available { background: #10b981; }
+.pill-dot.dot-engaged { background: #f43f5e; }
+.pill-dot.dot-waiting { background: #f59e0b; }
+.pill-dot.dot-break { background: #64748b; }
 
-/* Search & Actions */
+/* Search Box */
 .map-search-box {
     position: relative;
     width: 220px;
@@ -145,6 +145,157 @@
     transform: translateY(-50%);
     color: #888;
     font-size: 13px;
+}
+
+/* ========================================================================= */
+/* 📍 SNAPCHAT / HEATMAP STYLE AVATAR PINS                                   */
+/* ========================================================================= */
+.snap-marker-container {
+    position: absolute;
+    cursor: pointer;
+    transform: translate(-50%, -100%);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), z-index 0.2s;
+    user-select: none;
+    z-index: 100;
+}
+
+.snap-marker-container:hover {
+    transform: translate(-50%, -108%) scale(1.15);
+    z-index: 9999 !important;
+}
+
+.snap-marker-container.selected {
+    transform: translate(-50%, -110%) scale(1.22);
+    z-index: 10000 !important;
+}
+
+.snap-pin-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Call Sign Floating Mini Badge */
+.snap-callsign-badge {
+    background: #1e293b;
+    color: #ffffff;
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 0.4px;
+    margin-bottom: 3px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    text-transform: uppercase;
+}
+
+/* Avatar Circular Bubble */
+.snap-avatar-bubble {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    font-weight: 900;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    position: relative;
+    border: 3px solid #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* Status Ring Themes & Gradients */
+/* Available (Green / Emerald) */
+.snap-status-available .snap-avatar-bubble {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #34d399;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35), 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+.snap-status-available .snap-callsign-badge {
+    background: #065f46;
+}
+
+/* Engaged / On Job (Red / Rose) */
+.snap-status-engaged .snap-avatar-bubble {
+    background: linear-gradient(135deg, #f43f5e, #e11d48);
+    border-color: #fb7185;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.35), 0 6px 16px rgba(244, 63, 94, 0.4);
+}
+.snap-status-engaged .snap-callsign-badge {
+    background: #881337;
+}
+
+/* Waiting (Amber / Gold) */
+.snap-status-waiting .snap-avatar-bubble {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-color: #fcd34d;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35), 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+.snap-status-waiting .snap-callsign-badge {
+    background: #78350f;
+}
+
+/* On Break (Slate / Grey) */
+.snap-status-on-break .snap-avatar-bubble,
+.snap-status-offline .snap-avatar-bubble {
+    background: linear-gradient(135deg, #64748b, #475569);
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Pin Pointer Tip underneath */
+.snap-pin-tip {
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 8px solid #ffffff;
+    margin-top: -2px;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+}
+
+.snap-status-available .snap-pin-tip { border-top-color: #34d399; }
+.snap-status-engaged .snap-pin-tip { border-top-color: #fb7185; }
+.snap-status-waiting .snap-pin-tip { border-top-color: #fcd34d; }
+.snap-status-on-break .snap-pin-tip,
+.snap-status-offline .snap-pin-tip { border-top-color: #94a3b8; }
+
+/* Radar ripple pulse */
+.snap-pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: snapPulse 2s infinite cubic-bezier(0.24, 0, 0.38, 1);
+}
+
+.snap-status-available .snap-pulse-ring {
+    border: 2.5px solid #10b981;
+}
+.snap-status-engaged .snap-pulse-ring {
+    border: 2.5px solid #f43f5e;
+}
+
+@keyframes snapPulse {
+    0% {
+        width: 44px;
+        height: 44px;
+        opacity: 0.9;
+    }
+    100% {
+        width: 78px;
+        height: 78px;
+        opacity: 0;
+    }
 }
 
 /* Floating Driver List Sidebar */
@@ -248,7 +399,7 @@
 
 .drawer-header {
     padding: 16px 20px;
-    background: linear-gradient(135deg, #212529, #343a40);
+    background: linear-gradient(135deg, #1e293b, #334155);
     color: #ffffff;
     display: flex;
     justify-content: space-between;
@@ -264,15 +415,16 @@
 .drawer-avatar {
     width: 54px;
     height: 54px;
-    background: #B87333;
+    background: linear-gradient(135deg, #B87333, #d48b48);
     color: #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 22px;
-    font-weight: bold;
-    border: 3px solid rgba(255, 255, 255, 0.2);
+    font-weight: 900;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
 /* UK Reg Plate UI */
@@ -294,7 +446,7 @@
 .detail-section-title {
     font-size: 11px;
     font-weight: 700;
-    color: #6c757d;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 8px;
@@ -321,12 +473,12 @@
 }
 
 .detail-row .label {
-    color: #6c757d;
+    color: #64748b;
 }
 
 .detail-row .value {
     font-weight: 600;
-    color: #212529;
+    color: #1e293b;
 }
 
 .action-btn-circle {
@@ -347,27 +499,6 @@
     color: #fff;
 }
 
-/* Custom Marker Overlay */
-.custom-driver-marker {
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.custom-driver-marker:hover {
-    transform: scale(1.15);
-}
-
-/* Bottom Map Controls */
-.bottom-map-controls {
-    position: absolute;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1040;
-    display: flex;
-    gap: 8px;
-}
-
 @media (max-width: 768px) {
     .driver-sidebar {
         width: 280px;
@@ -386,7 +517,7 @@
 </style>
 
 <div class="live-map-wrapper">
-    <!-- Map Container -->
+    <!-- Map Canvas -->
     <div id="liveGoogleMap"></div>
 
     <!-- Floating Top Bar -->
@@ -529,7 +660,7 @@
                 </div>
                 <div class="detail-row">
                     <span class="label">Last Location Ping</span>
-                    <span class="value text-success" id="drawerLastUpdate">Just now</span>
+                    <span class="value text-success" id="drawerLastUpdate">Live Connected</span>
                 </div>
                 <div class="detail-row">
                     <span class="label">Base Address</span>
@@ -582,7 +713,7 @@ let map;
 let trafficLayer = null;
 let isTrafficActive = false;
 let currentMapTypeId = 'roadmap';
-let markers = {}; // id -> google.maps.Marker
+let overlayMarkers = {}; // id -> CustomDriverOverlay
 let driversState = {}; // id -> driver object
 let vehiclesState = {}; // driver_id -> vehicle object
 let activeFilter = 'all';
@@ -598,6 +729,105 @@ if (Array.isArray(initialDrivers)) {
             driversState[d.id] = d;
         }
     });
+}
+
+// 📍 Snapchat / Heatmap Style Custom Overlay Marker Class
+class CustomDriverOverlay extends google.maps.OverlayView {
+    constructor(driver, mapInstance, clickCallback) {
+        super();
+        this.driver = driver;
+        this.lat = parseFloat(driver.latitude);
+        this.lng = parseFloat(driver.longitude);
+        this.clickCallback = clickCallback;
+        this.div = null;
+        this.setMap(mapInstance);
+    }
+
+    onAdd() {
+        this.div = document.createElement('div');
+        this.div.className = 'snap-marker-container';
+        this.updateContent();
+
+        // Marker Click Event
+        this.div.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.clickCallback) {
+                this.clickCallback(this.driver.id);
+            }
+        });
+
+        const panes = this.getPanes();
+        if (panes && panes.overlayMouseTarget) {
+            panes.overlayMouseTarget.appendChild(this.div);
+        }
+    }
+
+    draw() {
+        if (!this.div) return;
+        const projection = this.getProjection();
+        if (!projection) return;
+
+        const pos = new google.maps.LatLng(this.lat, this.lng);
+        const point = projection.fromLatLngToDivPixel(pos);
+
+        if (point) {
+            this.div.style.left = point.x + 'px';
+            this.div.style.top = point.y + 'px';
+        }
+    }
+
+    updateDriver(driver) {
+        this.driver = driver;
+        this.lat = parseFloat(driver.latitude);
+        this.lng = parseFloat(driver.longitude);
+        if (this.div) {
+            this.updateContent();
+        }
+        this.draw();
+    }
+
+    updateContent() {
+        const d = this.driver;
+        const status = normalizeStatus(d.status);
+        const letter = (d.name || 'D').trim().charAt(0).toUpperCase();
+        const callSign = d.call_sign || 'D-00';
+        const isSelected = selectedDriverId === d.id;
+
+        let statusClass = 'snap-status-offline';
+        if (status === 'available') statusClass = 'snap-status-available';
+        else if (status === 'engaged' || status === 'on_job') statusClass = 'snap-status-engaged';
+        else if (status === 'waiting') statusClass = 'snap-status-waiting';
+        else if (status === 'on_break') statusClass = 'snap-status-on-break';
+
+        this.div.className = `snap-marker-container ${statusClass} ${isSelected ? 'selected' : ''}`;
+        this.div.innerHTML = `
+            <div class="snap-pin-wrapper">
+                <div class="snap-callsign-badge">${callSign}</div>
+                <div class="snap-avatar-bubble">
+                    <div class="snap-pulse-ring"></div>
+                    <span>${letter}</span>
+                </div>
+                <div class="snap-pin-tip"></div>
+            </div>
+        `;
+    }
+
+    onRemove() {
+        if (this.div && this.div.parentNode) {
+            this.div.parentNode.removeChild(this.div);
+            this.div = null;
+        }
+    }
+
+    setVisible(visible) {
+        if (this.div) {
+            this.div.style.display = visible ? 'block' : 'none';
+        }
+    }
+
+    getPosition() {
+        return new google.maps.LatLng(this.lat, this.lng);
+    }
 }
 
 // 🗺️ Initialize Google Map
@@ -750,8 +980,8 @@ function renderAllDrivers() {
 
         // Filter condition
         if (!matchesFilter(driver, activeFilter, searchQuery)) {
-            if (markers[id]) {
-                markers[id].setMap(null);
+            if (overlayMarkers[id]) {
+                overlayMarkers[id].setVisible(false);
             }
             continue;
         }
@@ -760,8 +990,8 @@ function renderAllDrivers() {
         const lng = parseFloat(driver.longitude);
 
         if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) {
-            if (markers[id]) {
-                markers[id].setMap(null);
+            if (overlayMarkers[id]) {
+                overlayMarkers[id].setVisible(false);
             }
             continue;
         }
@@ -771,35 +1001,23 @@ function renderAllDrivers() {
         bounds.extend(pos);
         validGpsCount++;
 
-        const iconConfig = getVehicleIcon(driver);
-
-        if (markers[id]) {
-            // Smoothly move existing marker
-            markers[id].setPosition(pos);
-            markers[id].setIcon(iconConfig);
-            markers[id].setMap(map);
+        if (overlayMarkers[id]) {
+            // Update existing custom overlay marker
+            overlayMarkers[id].updateDriver(driver);
+            overlayMarkers[id].setVisible(true);
         } else {
-            // Create new marker
-            const marker = new google.maps.Marker({
-                position: pos,
-                map: map,
-                title: `${driver.call_sign || 'D'} - ${driver.name || 'Driver'}`,
-                icon: iconConfig,
-                optimized: true,
+            // Create new Snapchat-style custom overlay marker
+            const overlay = new CustomDriverOverlay(driver, map, (clickedId) => {
+                selectDriver(clickedId, true);
             });
-
-            marker.addListener("click", () => {
-                selectDriver(id, true);
-            });
-
-            markers[id] = marker;
+            overlayMarkers[id] = overlay;
         }
     }
 
-    // Clean up markers that are no longer present
-    for (const id in markers) {
+    // Hide overlay markers that shouldn't be visible
+    for (const id in overlayMarkers) {
         if (!visibleDriverIds.has(id)) {
-            markers[id].setMap(null);
+            overlayMarkers[id].setVisible(false);
         }
     }
 
@@ -813,18 +1031,6 @@ function renderAllDrivers() {
 
     // Render Sidebar List
     renderSidebarList();
-}
-
-// 🎨 Marker Icon with status color ring
-function getVehicleIcon(driver) {
-    const status = normalizeStatus(driver.status);
-    let carIconUrl = "https://crowncarz.com/admin/public/images/Car.png";
-
-    return {
-        url: carIconUrl,
-        scaledSize: new google.maps.Size(46, 46),
-        anchor: new google.maps.Point(23, 23)
-    };
 }
 
 // 🔍 Filter & Search Helpers
@@ -879,7 +1085,7 @@ function renderSidebarList() {
     if (driversArray.length === 0) {
         listContainer.innerHTML = `
             <div class="text-center py-4 text-muted small">
-                <i class="bi bi-car-front fs-2 d-block mb-1 opacity-50"></i>
+                <i class="bi bi-person-x fs-2 d-block mb-1 opacity-50"></i>
                 No matching drivers found
             </div>
         `;
@@ -891,6 +1097,7 @@ function renderSidebarList() {
         const status = normalizeStatus(driver.status);
         const isSelected = selectedDriverId === driver.id;
         const hasGps = driver.latitude && driver.longitude && !isNaN(parseFloat(driver.latitude));
+        const letter = (driver.name || 'D').trim().charAt(0).toUpperCase();
 
         let statusClass = 'status-offline';
         let statusLabel = 'Offline';
@@ -903,6 +1110,7 @@ function renderSidebarList() {
             <div class="driver-card-item ${isSelected ? 'selected' : ''}" onclick="selectDriver('${driver.id}', true)">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <div class="d-flex align-items-center gap-2">
+                        <span class="badge rounded-circle bg-warning text-dark fw-bold px-2 py-1">${letter}</span>
                         <span class="driver-badge-sign">${driver.call_sign || 'D-00'}</span>
                         <strong class="text-dark fs-6">${driver.name || 'Unnamed Driver'}</strong>
                     </div>
@@ -914,7 +1122,7 @@ function renderSidebarList() {
                         <span>${driver.vehicle_model || driver.vehicle_make || 'Standard Vehicle'}</span>
                     </div>
                     <div>
-                        ${hasGps ? '<span class="text-success"><i class="bi bi-geo-alt-fill"></i> Live GPS</span>' : '<span class="text-muted"><i class="bi bi-geo-alt"></i> No GPS</span>'}
+                        ${hasGps ? '<span class="text-success fw-bold"><i class="bi bi-geo-alt-fill"></i> Live GPS</span>' : '<span class="text-muted"><i class="bi bi-geo-alt"></i> No GPS</span>'}
                     </div>
                 </div>
             </div>
@@ -935,6 +1143,13 @@ function selectDriver(driverId, panCamera = true) {
         const pos = new google.maps.LatLng(parseFloat(driver.latitude), parseFloat(driver.longitude));
         map.panTo(pos);
         map.setZoom(16);
+    }
+
+    // Refresh overlay classes
+    for (const id in overlayMarkers) {
+        if (overlayMarkers[id]) {
+            overlayMarkers[id].updateContent();
+        }
     }
 
     // Update Drawer Contents
@@ -958,9 +1173,9 @@ function updateDrawerData(driver) {
     else if (status === 'waiting') { statusClass = 'status-waiting'; statusLabel = 'Waiting'; }
     else if (status === 'on_break') { statusClass = 'status-on-break'; statusLabel = 'On Break'; }
 
-    // Header
-    const initials = (driver.name || 'D').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    document.getElementById('drawerAvatarText').textContent = initials;
+    // Header Letter & Name
+    const letter = (driver.name || 'D').trim().charAt(0).toUpperCase();
+    document.getElementById('drawerAvatarText').textContent = letter;
     document.getElementById('drawerDriverName').textContent = driver.name || 'Unnamed Driver';
     document.getElementById('drawerCallSign').textContent = driver.call_sign || 'D-000';
     
@@ -1037,9 +1252,10 @@ function setupUIEventHandlers() {
         if (!map) return;
         const bounds = new google.maps.LatLngBounds();
         let count = 0;
-        for (const id in markers) {
-            if (markers[id].getMap()) {
-                bounds.extend(markers[id].getPosition());
+        for (const id in overlayMarkers) {
+            const overlay = overlayMarkers[id];
+            if (overlay && overlay.div && overlay.div.style.display !== 'none') {
+                bounds.extend(overlay.getPosition());
                 count++;
             }
         }
@@ -1086,6 +1302,11 @@ function setupUIEventHandlers() {
         drawerEl.classList.remove('open');
         selectedDriverId = null;
         isFollowingDriver = false;
+        for (const id in overlayMarkers) {
+            if (overlayMarkers[id]) {
+                overlayMarkers[id].updateContent();
+            }
+        }
         renderSidebarList();
     });
 
