@@ -360,40 +360,37 @@ td{
 <!--    </div>-->
 <!--</div>-->
 <div class="container-fluid dashboard-section">
-    
-    
-    
-  <div class="row g-4">
+   <div class="row g-3 mb-2">
 
-    <!-- 🔍 50% Left Card: Search & Filter Bookings -->
-    <div class="col-12 col-xl-6">
+    <!-- 🔍 1/3 Left Card: Search & Filter Bookings -->
+    <div class="col-12 col-xl-4 col-lg-4">
         <div class="card shadow-sm border-0 h-100" style="border-radius: 14px; background: #ffffff; border: 1px solid #eaedf1;">
             <div class="card-header bg-transparent border-0 pb-1 pt-3 px-3">
-                <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 14px;">
+                <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 13.5px;">
                     <i class="bi bi-search text-warning"></i> Search & Filter Bookings
                 </h6>
             </div>
-            <div class="card-body p-3 pt-2">
+            <div class="card-body p-3 pt-2 d-flex flex-column justify-content-between">
                 <form action="{{ route('bookings.search.main') }}" method="GET" id="dashboardSearchForm">
                     <div class="row g-2 mb-2">
                         <!-- Universal Keyword Search Input -->
-                        <div class="col-md-7 col-12">
+                        <div class="col-12">
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius: 10px 0 0 10px;">
                                     <i class="bi bi-search"></i>
                                 </span>
                                 <input type="text" 
                                        name="search" 
-                                       id="universalSearchInput"
+                                       id="universalSearchInput" 
                                        class="form-control border-start-0 ps-0" 
                                        placeholder="Search passenger, phone, pickup, driver..." 
-                                       value="{{ request('search') }}"
-                                       style="border-radius: 0 10px 10px 0; font-size: 12.5px;">
+                                       value="{{ request('search') }}" 
+                                       style="border-radius: 0 10px 10px 0; font-size: 12px;">
                             </div>
                         </div>
 
                         <!-- Date Range Picker with Calendar Trigger -->
-                        <div class="col-md-5 col-12">
+                        <div class="col-12">
                             <div class="input-group" id="calendarWrapper" title="Click to filter by Date Range" style="cursor: pointer;">
                                 <span class="input-group-text bg-white border-end-0 text-warning" id="calendarIconBtn" style="border-radius: 10px 0 0 10px; cursor: pointer;">
                                     <i class="bi bi-calendar-event fs-6 text-warning"></i>
@@ -403,19 +400,19 @@ td{
                                        id="dateRangePicker" 
                                        class="form-control border-start-0 ps-0 bg-white" 
                                        placeholder="Select Dates" 
-                                       value="{{ request('date_range') ?: (request('from_date') && request('to_date') ? request('from_date').' to '.request('to_date') : (request('from_date') ?: '')) }}"
-                                       style="border-radius: 0 10px 10px 0; font-size: 12.5px; cursor: pointer;">
+                                       value="{{ request('date_range') ?: (request('from_date') && request('to_date') ? request('from_date').' to '.request('to_date') : (request('from_date') ?: '')) }}" 
+                                       style="border-radius: 0 10px 10px 0; font-size: 12px; cursor: pointer;">
                                 <input type="hidden" name="from_date" id="fromDateInput" value="{{ request('from_date') }}">
                                 <input type="hidden" name="to_date" id="toDateInput" value="{{ request('to_date') }}">
                             </div>
                         </div>
                     </div>
 
-                    <div class="row g-2">
+                    <div class="row g-2 mb-2">
                         <!-- Driver Select -->
-                        <div class="col-md-5 col-12">
-                            <select name="driver_id" class="form-select text-dark" style="border-radius: 10px; font-size: 12.5px;">
-                                <option value="">All Drivers (Any Vehicle)</option>
+                        <div class="col-7">
+                            <select name="driver_id" class="form-select text-dark" style="border-radius: 10px; font-size: 12px;">
+                                <option value="">All Drivers</option>
                                 @foreach($drivers as $driver)
                                     @php
                                         $callSign = $driver['call_sign'] ?? 'D';
@@ -435,187 +432,182 @@ td{
                         </div>
 
                         <!-- Payment Select -->
-                        <div class="col-md-4 col-7">
-                            <select name="payment_type" class="form-select" style="border-radius: 10px; font-size: 12.5px;">
+                        <div class="col-5">
+                            <select name="payment_type" class="form-select" style="border-radius: 10px; font-size: 12px;">
                                 <option value="">All Payments</option>
                                 <option value="Cash" {{ request('payment_type') == 'Cash' ? 'selected' : '' }}>Cash</option>
                                 <option value="Card" {{ request('payment_type') == 'Card' ? 'selected' : '' }}>Card</option>
                                 <option value="Account" {{ request('payment_type') == 'Account' ? 'selected' : '' }}>Account</option>
                             </select>
                         </div>
+                    </div>
 
-                        <!-- Filter Button -->
-                        <div class="col-md-3 col-5">
-                            <div class="d-flex gap-1" id="filterButtonsGroup">
-                                <button type="submit" id="filterSubmitBtn" class="btn text-white fw-bold w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 10px; border: none; font-size: 12.5px; height: 36px;">
-                                    <i class="bi bi-search"></i>
-                                    <span>Filter</span>
-                                </button>
-                                <div id="filterResetWrapper" class="d-flex">
-                                    @if(request('search') || request('date_range') || request('from_date') || request('to_date') || request('driver_id') || request('payment_type'))
-                                    <button type="button" id="resetFiltersBtn" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Reset All Filters" style="border-radius: 10px; width: 36px; height: 36px; flex-shrink: 0;">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                    @endif
-                                </div>
-                            </div>
+                    <div class="d-flex gap-1 mb-2" id="filterButtonsGroup">
+                        <button type="submit" id="filterSubmitBtn" class="btn text-white fw-bold w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 10px; border: none; font-size: 12px; height: 34px;">
+                            <i class="bi bi-search"></i>
+                            <span>Filter</span>
+                        </button>
+                        <div id="filterResetWrapper" class="d-flex">
+                            @if(request('search') || request('date_range') || request('from_date') || request('to_date') || request('driver_id') || request('payment_type'))
+                            <button type="button" id="resetFiltersBtn" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Reset All Filters" style="border-radius: 10px; width: 34px; height: 34px; flex-shrink: 0;">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                            @endif
                         </div>
                     </div>
 
                     <!-- Quick Date Presets -->
-                    <div class="d-flex align-items-center gap-1 mt-2 pt-2 border-top flex-wrap" style="border-color: #f1f5f9 !important;">
-                        <span class="text-muted small me-1" style="font-size: 11px;"><i class="bi bi-lightning-charge-fill text-warning"></i> Quick:</span>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="today" style="border-radius: 12px; font-size: 11px; border: 1px solid #e2e8f0;">Today</button>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="tomorrow" style="border-radius: 12px; font-size: 11px; border: 1px solid #e2e8f0;">Tomorrow</button>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="week" style="border-radius: 12px; font-size: 11px; border: 1px solid #e2e8f0;">Next 7 Days</button>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="clear" style="border-radius: 12px; font-size: 11px; border: 1px solid #e2e8f0;">All Bookings</button>
+                    <div class="d-flex align-items-center gap-1 pt-1 border-top flex-wrap" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted small me-1" style="font-size: 10.5px;"><i class="bi bi-lightning-charge-fill text-warning"></i> Quick:</span>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="today" style="border-radius: 12px; font-size: 10.5px; border: 1px solid #e2e8f0;">Today</button>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="tomorrow" style="border-radius: 12px; font-size: 10.5px; border: 1px solid #e2e8f0;">Tomorrow</button>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="week" style="border-radius: 12px; font-size: 10.5px; border: 1px solid #e2e8f0;">7 Days</button>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="clear" style="border-radius: 12px; font-size: 10.5px; border: 1px solid #e2e8f0;">All</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- ⚡ 50% Right Card: Get Instant Price / Quick Quote -->
-    <div class="col-12 col-xl-6">
+    <!-- ⚡ 1/3 Middle Card: Get Instant Price -->
+    <div class="col-12 col-xl-4 col-lg-4">
         <div class="card shadow-sm border-0 h-100" style="border-radius: 14px; background: #ffffff; border: 1px solid #eaedf1;">
             <div class="card-header bg-transparent border-0 pb-1 pt-3 px-3 d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 14px;">
+                <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 13.5px;">
                     <i class="bi bi-calculator-fill text-warning"></i> Get Instant Price
                 </h6>
                 <div class="d-flex align-items-center gap-1">
-                    <button type="button" class="btn btn-sm btn-light py-0 px-2 text-dark" id="swapPickupDropoffBtn" title="Swap Pickup & Dropoff" style="border-radius: 8px; font-size: 11px; border: 1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-sm btn-light py-0 px-2 text-dark" id="swapPickupDropoffBtn" title="Swap Pickup & Dropoff" style="border-radius: 8px; font-size: 10.5px; border: 1px solid #e2e8f0;">
                         <i class="bi bi-arrow-left-right text-primary"></i> Swap
                     </button>
-                    <button type="button" class="btn btn-sm btn-light py-0 px-2 text-dark" id="addViaToggleBtn" style="border-radius: 8px; font-size: 11px; border: 1px solid #e2e8f0;">
-                        <i class="bi bi-plus-circle text-success"></i> Add Via
+                    <button type="button" class="btn btn-sm btn-light py-0 px-2 text-dark" id="addViaToggleBtn" style="border-radius: 8px; font-size: 10.5px; border: 1px solid #e2e8f0;">
+                        <i class="bi bi-plus-circle text-success"></i> +Via
                     </button>
                 </div>
             </div>
-            <div class="card-body p-3 pt-2">
-                <div class="row g-2 mb-2">
-                    <!-- Pickup Address -->
-                    <div class="col-md-6 col-12">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0 text-success py-1" style="border-radius: 10px 0 0 10px;">
-                                <i class="bi bi-geo-alt-fill"></i>
-                            </span>
-                            <input type="text" 
-                                   id="calcPickupInput" 
-                                   class="form-control border-start-0 ps-0" 
-                                   placeholder="Pickup address / postcode" 
-                                   style="border-radius: 0 10px 10px 0; font-size: 12.5px;">
+            <div class="card-body p-3 pt-2 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="row g-2 mb-2">
+                        <!-- Pickup Address -->
+                        <div class="col-12">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-success py-1" style="border-radius: 10px 0 0 10px;">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                </span>
+                                <input type="text" 
+                                       id="calcPickupInput" 
+                                       class="form-control border-start-0 ps-0" 
+                                       placeholder="Pickup address / postcode" 
+                                       style="border-radius: 0 10px 10px 0; font-size: 12px;">
+                            </div>
+                        </div>
+                        <!-- Dropoff Address -->
+                        <div class="col-12">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-danger py-1" style="border-radius: 10px 0 0 10px;">
+                                    <i class="bi bi-pin-map-fill"></i>
+                                </span>
+                                <input type="text" 
+                                       id="calcDropoffInput" 
+                                       class="form-control border-start-0 ps-0" 
+                                       placeholder="Dropoff address / postcode" 
+                                       style="border-radius: 0 10px 10px 0; font-size: 12px;">
+                            </div>
                         </div>
                     </div>
-                    <!-- Dropoff Address -->
-                    <div class="col-md-6 col-12">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0 text-danger py-1" style="border-radius: 10px 0 0 10px;">
-                                <i class="bi bi-pin-map-fill"></i>
-                            </span>
-                            <input type="text" 
-                                   id="calcDropoffInput" 
-                                   class="form-control border-start-0 ps-0" 
-                                   placeholder="Dropoff address / postcode" 
-                                   style="border-radius: 0 10px 10px 0; font-size: 12.5px;">
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Via Address Container (Toggled via button) -->
-                <div class="row g-2 mb-2" id="calcViaWrapper" style="display: none;">
-                    <div class="col-12">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0 text-warning py-1" style="border-radius: 10px 0 0 10px;">
-                                <i class="bi bi-signpost-split"></i>
-                            </span>
-                            <input type="text" 
-                                   id="calcViaInput" 
-                                   class="form-control border-start-0 ps-0" 
-                                   placeholder="Via stop address or postcode (Optional)" 
-                                   style="font-size: 12.5px;">
-                            <button class="btn btn-outline-secondary py-1 px-2 border-start-0" type="button" id="removeViaBtn" style="border-radius: 0 10px 10px 0;" title="Remove via">
-                                <i class="bi bi-x"></i>
-                            </button>
+                    <!-- Via Address Container (Toggled via button) -->
+                    <div class="row g-2 mb-2" id="calcViaWrapper" style="display: none;">
+                        <div class="col-12">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-warning py-1" style="border-radius: 10px 0 0 10px;">
+                                    <i class="bi bi-signpost-split"></i>
+                                </span>
+                                <input type="text" 
+                                       id="calcViaInput" 
+                                       class="form-control border-start-0 ps-0" 
+                                       placeholder="Via stop address or postcode" 
+                                       style="font-size: 12px;">
+                                <button class="btn btn-outline-secondary py-1 px-2 border-start-0" type="button" id="removeViaBtn" style="border-radius: 0 10px 10px 0;" title="Remove via">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Row: Vehicle, Date, Time -->
-                <div class="row g-2 mb-2">
-                    <div class="col-md-5 col-12">
-                        <select id="calcVehicleSelect" class="form-select" style="border-radius: 10px; font-size: 12.5px;">
-                            <option value="Saloon" selected>Saloon</option>
-                            <option value="Estate">Estate</option>
-                            <option value="Executive">Executive</option>
-                            <option value="MPV">MPV / 6 Seater</option>
-                            <option value="8 Seater">8 Seater</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 col-6">
-                        <input type="date" id="calcDateInput" class="form-control" value="{{ date('Y-m-d') }}" style="border-radius: 10px; font-size: 12.5px;">
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <input type="time" id="calcTimeInput" class="form-control" value="{{ date('H:i') }}" style="border-radius: 10px; font-size: 12.5px;">
+                    <!-- Row: Vehicle, Date, Time -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-5">
+                            <select id="calcVehicleSelect" class="form-select" style="border-radius: 10px; font-size: 12px;">
+                                <option value="Saloon" selected>Saloon</option>
+                                <option value="Estate">Estate</option>
+                                <option value="Executive">Executive</option>
+                                <option value="MPV">MPV</option>
+                                <option value="8 Seater">8 Seater</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <input type="date" id="calcDateInput" class="form-control" value="{{ date('Y-m-d') }}" style="border-radius: 10px; font-size: 12px;">
+                        </div>
+                        <div class="col-3">
+                            <input type="time" id="calcTimeInput" class="form-control" value="{{ date('H:i') }}" style="border-radius: 10px; font-size: 12px;">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Price Result Output Bar -->
-                <div class="p-2 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span id="calcDistanceBadge" class="badge px-2.5 py-1.5 fw-bold d-flex align-items-center gap-1 shadow-sm" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size: 12px; border-radius: 8px;">
-                            <i class="bi bi-speedometer2 text-primary"></i> <span id="calcDistText">0.00 Miles</span>
+                <div class="p-2 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-1 mt-1" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                        <span id="calcDistanceBadge" class="badge px-2 py-1 fw-bold d-flex align-items-center gap-1 shadow-sm" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size: 11px; border-radius: 7px;">
+                            <i class="bi bi-speedometer2 text-primary"></i> <span id="calcDistText">0.00 Mi</span>
                         </span>
-                        <span class="text-muted small fw-semibold" id="calcBreakdownText" style="font-size: 12px;">Fare: £0.00</span>
+                        <span class="text-muted small fw-semibold" id="calcBreakdownText" style="font-size: 11px;">Fare: £0.00</span>
                         <span id="calcLoader" class="spinner-border spinner-border-sm text-warning ms-1" style="display: none;" role="status"></span>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-sm text-white fw-bold px-3 py-1.5 d-flex align-items-center gap-1 shadow-sm" id="getInstantPriceBtn" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 8px; font-size: 12px; border: none;">
+                    <div class="d-flex align-items-center gap-1">
+                        <button type="button" class="btn btn-sm text-white fw-bold px-2 py-1 d-flex align-items-center gap-1 shadow-sm" id="getInstantPriceBtn" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 7px; font-size: 11px; border: none;">
                             <i class="bi bi-lightning-fill"></i> Get Price
                         </button>
-                        <div class="d-flex align-items-center gap-1">
-                            <span class="text-muted small fw-semibold" style="font-size: 11px;">Total:</span>
-                            <span class="badge fs-6 fw-bold px-2.5 py-1.5 shadow-sm" id="calcFinalPriceBadge" style="background: #111827; color: #E6B04A !important; border: 1px solid rgba(230, 176, 74, 0.4); border-radius: 8px; font-size: 14.5px;">
-                                £0.00
-                            </span>
-                        </div>
+                        <span class="badge fs-6 fw-bold px-2 py-1 shadow-sm" id="calcFinalPriceBadge" style="background: #111827; color: #E6B04A !important; border: 1px solid rgba(230, 176, 74, 0.4); border-radius: 7px; font-size: 13.5px;">
+                            £0.00
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 📊 Day-Wise Bookings Volume & Trend Graph -->
-    <div class="col-12">
-        <div class="card shadow-sm border-0" style="border-radius: 14px; background: #ffffff; border: 1px solid #eaedf1;">
-            <div class="card-header bg-transparent border-0 pt-3 pb-1 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 14px;">
-                        <i class="bi bi-graph-up-arrow text-warning"></i> Day-Wise Bookings Volume & Trend
-                    </h6>
-                    <span class="badge bg-light text-muted border fw-normal" style="font-size: 11px;">15-Day Timeline</span>
-                </div>
-                <div class="d-flex align-items-center gap-2 flex-wrap">
+    <!-- 📊 1/3 Right Card: Day-Wise Bookings Trend Graph -->
+    <div class="col-12 col-xl-4 col-lg-4">
+        <div class="card shadow-sm border-0 h-100" style="border-radius: 14px; background: #ffffff; border: 1px solid #eaedf1;">
+            <div class="card-header bg-transparent border-0 pt-3 pb-1 px-3 d-flex justify-content-between align-items-center flex-wrap gap-1">
+                <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-1.5" style="font-size: 13.5px;">
+                    <i class="bi bi-graph-up-arrow text-warning"></i> Bookings Trend
+                </h6>
+                <div class="d-flex align-items-center gap-1 flex-wrap">
                     @php
                         $chartList = $dayWiseChartData ?? [];
                         $totalWindowBookings = array_sum(array_column($chartList, 'count'));
                         $todayBookingItem = collect($chartList)->firstWhere('is_today', true);
                         $todayCount = $todayBookingItem['count'] ?? 0;
                     @endphp
-                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1" style="font-size: 11.5px;">
-                        <i class="bi bi-calendar-check"></i> Today: <strong>{{ $todayCount }}</strong> Bookings
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-1.5 py-0.5" style="font-size: 11px;" title="Today's Bookings">
+                        <i class="bi bi-calendar-check"></i> Today: <strong>{{ $todayCount }}</strong>
                     </span>
-                    <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-50 px-2 py-1" style="font-size: 11.5px;">
-                        <i class="bi bi-collection"></i> 15-Day Total: <strong>{{ $totalWindowBookings }}</strong> Bookings
+                    <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-50 px-1.5 py-0.5" style="font-size: 11px;" title="15-Day Timeline Total">
+                        <i class="bi bi-collection"></i> 15D: <strong>{{ $totalWindowBookings }}</strong>
                     </span>
                 </div>
             </div>
-            <div class="card-body p-3 pt-1">
-                <div style="position: relative; height: 175px; width: 100%;">
+            <div class="card-body p-3 pt-1 d-flex flex-column justify-content-center">
+                <div style="position: relative; height: 185px; width: 100%;">
                     <canvas id="dayWiseBookingsChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
+
+  </div>
 
   
   <div class="col-lg-12 mt-2">
@@ -2782,14 +2774,14 @@ document.addEventListener('DOMContentLoaded', function () {
         document.head.appendChild(placesScript);
     }
     // =========================================================================
-    // 📊 DAY-WISE BOOKINGS CHART.JS INITIALIZATION
+    // 📊 DAY-WISE BOOKINGS CHART.JS INITIALIZATION (1/3 TOP COLUMN)
     // =========================================================================
     const chartDataRaw = @json($dayWiseChartData ?? []);
     const chartCanvas = document.getElementById('dayWiseBookingsChart');
 
     if (chartCanvas && Array.isArray(chartDataRaw) && chartDataRaw.length > 0 && typeof Chart !== 'undefined') {
         const ctx = chartCanvas.getContext('2d');
-        const shortLabels = chartDataRaw.map(d => (d.is_today ? '⭐ Today ' : '') + (d.day_name + ' ' + d.short_label));
+        const shortLabels = chartDataRaw.map(d => (d.is_today ? '⭐ ' : '') + d.short_label);
         const counts = chartDataRaw.map(d => d.count || 0);
         const backgroundColors = chartDataRaw.map(d => d.is_today ? '#111827' : (d.is_future ? 'rgba(184, 115, 51, 0.75)' : 'rgba(100, 116, 139, 0.45)'));
         const borderColors = chartDataRaw.map(d => d.is_today ? '#E6B04A' : (d.is_future ? '#B87333' : '#64748b'));
@@ -2804,12 +2796,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         label: 'Trend',
                         data: counts,
                         borderColor: '#E6B04A',
-                        borderWidth: 2.5,
+                        borderWidth: 2,
                         pointBackgroundColor: chartDataRaw.map(d => d.is_today ? '#111827' : '#E6B04A'),
                         pointBorderColor: chartDataRaw.map(d => d.is_today ? '#E6B04A' : '#ffffff'),
-                        pointBorderWidth: 2,
-                        pointRadius: chartDataRaw.map(d => d.is_today ? 6 : 3.5),
-                        pointHoverRadius: 7,
+                        pointBorderWidth: 1.5,
+                        pointRadius: chartDataRaw.map(d => d.is_today ? 5 : 2.5),
+                        pointHoverRadius: 6,
                         tension: 0.35,
                         fill: false,
                         order: 1
@@ -2820,11 +2812,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         data: counts,
                         backgroundColor: backgroundColors,
                         borderColor: borderColors,
-                        borderWidth: 1.5,
-                        borderRadius: 6,
+                        borderWidth: 1.2,
+                        borderRadius: 4,
                         borderSkipped: false,
-                        barPercentage: 0.5,
-                        categoryPercentage: 0.8,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.85,
                         order: 2
                     }
                 ]
@@ -2844,7 +2836,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         backgroundColor: '#111827',
                         titleColor: '#E6B04A',
                         bodyColor: '#ffffff',
-                        padding: 10,
+                        padding: 8,
                         cornerRadius: 8,
                         borderColor: 'rgba(230, 176, 74, 0.4)',
                         borderWidth: 1,
@@ -2863,7 +2855,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 const rev = parseFloat(item.revenue || 0).toFixed(2);
                                 return [
                                     `📋 Bookings: ${count}`,
-                                    `💷 Total Est. Fare: £${rev}`
+                                    `💷 Est. Total: £${rev}`
                                 ];
                             }
                         }
@@ -2876,6 +2868,10 @@ document.addEventListener('DOMContentLoaded', function () {
                             drawBorder: false
                         },
                         ticks: {
+                            maxRotation: 45,
+                            minRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 9,
                             color: function(ctx) {
                                 const idx = ctx.index;
                                 return (chartDataRaw[idx] && chartDataRaw[idx].is_today) ? '#B87333' : '#64748b';
@@ -2883,7 +2879,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             font: function(ctx) {
                                 const idx = ctx.index;
                                 return {
-                                    size: 10.5,
+                                    size: 9.5,
                                     weight: (chartDataRaw[idx] && chartDataRaw[idx].is_today) ? 'bold' : 'normal'
                                 };
                             }
@@ -2896,7 +2892,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             precision: 0,
                             color: '#94a3b8',
                             font: {
-                                size: 10.5
+                                size: 9.5
                             }
                         },
                         grid: {
