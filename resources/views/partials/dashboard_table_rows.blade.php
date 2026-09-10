@@ -60,7 +60,29 @@
             'account' => '#6f42c1',
         ];
         $bgColor = $paymentColors[$paymentType] ?? '#6c757d';
-        $driver = collect($drivers)->firstWhere('id', $booking['driver_id'] ?? null);
+        $bDriverId = trim((string)($booking['driver_id'] ?? ($booking['driverId'] ?? ($booking['driver'] ?? ''))));
+        $bDriverName = trim((string)($booking['driver_name'] ?? ''));
+        $bDriverCallSign = trim((string)($booking['driver_call_sign'] ?? ($booking['call_sign'] ?? '')));
+
+        $driver = null;
+        if ($bDriverId !== '' && isset($drivers)) {
+            $driver = collect($drivers)->first(function($d) use ($bDriverId) {
+                $dId = (string)($d['id'] ?? '');
+                $dKey = (string)($d['key'] ?? '');
+                return ($dId !== '' && $dId === $bDriverId) || ($dKey !== '' && $dKey === $bDriverId);
+            });
+        }
+        if (!$driver && $bDriverName !== '' && isset($drivers)) {
+            $driver = collect($drivers)->first(function($d) use ($bDriverName) {
+                return strcasecmp(trim($d['name'] ?? ''), $bDriverName) === 0
+                    || strcasecmp(trim($d['call_sign'] ?? ''), $bDriverName) === 0;
+            });
+        }
+        if (!$driver && $bDriverCallSign !== '' && isset($drivers)) {
+            $driver = collect($drivers)->first(function($d) use ($bDriverCallSign) {
+                return strcasecmp(trim($d['call_sign'] ?? ''), $bDriverCallSign) === 0;
+            });
+        }
     @endphp
     <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row" style="{{ $rowStyle }}">
         <td class="col-ref" style="{{ $rowStyle }}">{{ $booking['ref_no'] ?? 'N/A' }}</td>
@@ -72,21 +94,46 @@
         <td class="col-passenger" style="{{ $rowStyle }}">{{ $booking['passenger_name'] ?? 'N/A' }}</td>
         <td class="col-driver driver-cell" style="{{ $rowStyle }}">
             @if($driver)
-                <span class="badge rounded-pill bg-danger bg-opacity-90 px-3 py-2 me-1 driver-badge">
-                    {{ $driver['call_sign'] ?? '' }}/{{ $driver['name'] ?? '' }}
+                @php
+                    $dCall = !empty($driver['call_sign']) ? $driver['call_sign'] . '/' : '';
+                    $dName = $driver['name'] ?? 'Driver';
+                @endphp
+                <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">
+                    {{ $dCall }}{{ $dName }}
+                </span>
+            @elseif(!empty($bDriverName) || !empty($bDriverCallSign) || !empty($booking['driver']))
+                @php
+                    $dCall = !empty($bDriverCallSign) ? $bDriverCallSign . '/' : '';
+                    $dName = $bDriverName ?: ($booking['driver'] ?? 'Driver');
+                @endphp
+                <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">
+                    {{ $dCall }}{{ $dName }}
                 </span>
             @else
-                <span class="text-muted unassigned-driver">-</span>
+                <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>
             @endif
         </td>
         <td class="col-phone" style="{{ $rowStyle }}">{{ $booking['phone_no'] ?? 'N/A' }}</td>
         <td class="col-pickup" style="{{ $rowStyle }}">{{ Str::limit($booking['pickup_address'] ?? '', 30) }}</td>
         <td class="col-dropoff" style="{{ $rowStyle }}">{{ Str::limit($booking['dropoff_address'] ?? '', 30) }}</td>
         <td class="col-vias" style="{{ $rowStyle }}">
-            @if(!empty($booking['vias']))
-                {{ implode(' → ', $booking['vias']) }}
+            @php
+                $viasList = [];
+                if (!empty($booking['vias'])) {
+                    $viasList = is_array($booking['vias']) ? $booking['vias'] : [$booking['vias']];
+                } elseif (!empty($booking['via_addresses'])) {
+                    $viasList = is_array($booking['via_addresses']) ? $booking['via_addresses'] : [$booking['via_addresses']];
+                }
+                $viasList = array_filter(array_map('trim', $viasList));
+                $viasCount = count($viasList);
+                $viasFull = implode(' → ', $viasList);
+            @endphp
+            @if($viasCount > 0)
+                <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px; font-weight: 500; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle;" title="{{ $viasFull }}">
+                    <i class="bi bi-signpost-split text-warning me-1"></i>{{ Str::limit($viasFull, 16) }}
+                </span>
             @else
-                -
+                <span class="text-muted">-</span>
             @endif
         </td>
         <td class="col-date" style="{{ $rowStyle }}">{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '-' }}</td>

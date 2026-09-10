@@ -1496,6 +1496,60 @@ function getStatusSelectStyle(status) {
     return `background-color: var(--bs-${badgeClass}); color: var(--bs-black); border-color: var(--bs-${badgeClass});`;
 }
 
+// 🎨 Helper to format driver badge
+function getDriverBadgeHtml(booking) {
+    if (!booking) return `<span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>`;
+
+    const dId = String(booking.driver_id || booking.driverId || booking.driver || '').trim();
+    const dName = String(booking.driver_name || '').trim();
+    const dCall = String(booking.driver_call_sign || booking.call_sign || '').trim();
+
+    let driver = null;
+    if (dId && DRIVERS_MAP[dId]) {
+        driver = DRIVERS_MAP[dId];
+    } else if (dId) {
+        driver = Object.values(DRIVERS_MAP).find(d => String(d.id) === dId || String(d.key || '') === dId);
+    }
+    if (!driver && dName) {
+        driver = Object.values(DRIVERS_MAP).find(d => String(d.name || '').toLowerCase() === dName.toLowerCase() || String(d.call_sign || '').toLowerCase() === dName.toLowerCase());
+    }
+    if (!driver && dCall) {
+        driver = Object.values(DRIVERS_MAP).find(d => String(d.call_sign || '').toLowerCase() === dCall.toLowerCase());
+    }
+
+    if (driver) {
+        const callSign = driver.call_sign ? `${driver.call_sign}/` : '';
+        return `<span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">${callSign}${driver.name || 'Driver'}</span>`;
+    } else if (dName || dCall || (booking.driver && typeof booking.driver === 'string')) {
+        const fallbackCall = dCall ? `${dCall}/` : '';
+        const fallbackName = dName || booking.driver;
+        return `<span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">${fallbackCall}${fallbackName}</span>`;
+    }
+
+    return `<span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>`;
+}
+
+// 🎨 Helper to format vias badge
+function getViasBadgeHtml(booking) {
+    let viasArr = [];
+    if (Array.isArray(booking.vias) && booking.vias.length > 0) {
+        viasArr = booking.vias;
+    } else if (Array.isArray(booking.via_addresses) && booking.via_addresses.length > 0) {
+        viasArr = booking.via_addresses;
+    } else if (typeof booking.vias === 'string' && booking.vias.trim()) {
+        viasArr = [booking.vias.trim()];
+    }
+
+    viasArr = viasArr.filter(v => v && String(v).trim() !== '');
+    if (viasArr.length === 0) {
+        return '<span class="text-muted">-</span>';
+    }
+
+    const viasFull = viasArr.join(' → ').replace(/"/g, '&quot;');
+    const truncated = viasFull.length > 16 ? viasFull.substring(0, 16) + '...' : viasFull;
+    return `<span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px; font-weight: 500; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle;" title="${viasFull}"><i class="bi bi-signpost-split text-warning me-1"></i>${truncated}</span>`;
+}
+
 // 🛠️ Render a complete table row for a booking
 function buildBookingRowHtml(booking, isNew = false) {
     const id = booking.id;
@@ -1525,21 +1579,8 @@ function buildBookingRowHtml(booking, isNew = false) {
         } catch (e) {}
     }
 
-    let driver = null;
-    if (booking.driver_id && DRIVERS_MAP[booking.driver_id]) {
-        driver = DRIVERS_MAP[booking.driver_id];
-    }
-
-    const driverHtml = driver
-        ? `<span class="badge rounded-pill bg-danger bg-opacity-90 px-3 py-2 me-1 driver-badge">${driver.call_sign || ''}/${driver.name || ''}</span>`
-        : `<span class="text-muted unassigned-driver">-</span>`;
-
-    let viasText = '-';
-    if (Array.isArray(booking.via_addresses) && booking.via_addresses.length > 0) {
-        viasText = booking.via_addresses.join(' → ');
-    } else if (Array.isArray(booking.vias) && booking.vias.length > 0) {
-        viasText = booking.vias.join(' → ');
-    }
+    const driverHtml = getDriverBadgeHtml(booking);
+    const viasText = getViasBadgeHtml(booking);
 
     const commentText = booking.job_comment
         ? (booking.job_comment.length > 20 ? booking.job_comment.substring(0, 20) + '...' : booking.job_comment)
@@ -1708,20 +1749,13 @@ function updateBookingRowData(booking) {
     const dispatchItem = row.querySelector('.action-dispatch-item');
     const trackItem = row.querySelector('.action-track-item');
 
-    if (booking.driver_id && DRIVERS_MAP[booking.driver_id]) {
-        const driver = DRIVERS_MAP[booking.driver_id];
-        if (driverCell) {
-            driverCell.innerHTML = `<span class="badge rounded-pill bg-danger bg-opacity-90 px-3 py-2 me-1 driver-badge">${driver.call_sign || ''}/${driver.name || ''}</span>`;
-        }
-        if (dispatchItem) dispatchItem.style.display = 'none';
-        if (trackItem) trackItem.style.display = '';
-    } else {
-        if (driverCell) {
-            driverCell.innerHTML = `<span class="text-muted unassigned-driver">-</span>`;
-        }
-        if (dispatchItem) dispatchItem.style.display = '';
-        if (trackItem) trackItem.style.display = 'none';
+    if (driverCell) {
+        driverCell.innerHTML = getDriverBadgeHtml(booking);
     }
+
+    const hasDriver = !!(booking.driver_id || booking.driverId || booking.driver_name || booking.driver);
+    if (dispatchItem) dispatchItem.style.display = hasDriver ? 'none' : '';
+    if (trackItem) trackItem.style.display = hasDriver ? '' : 'none';
 
     // Update view-booking-btn data-booking
     const viewBtn = row.querySelector('.view-booking-btn');
@@ -1880,7 +1914,7 @@ function bindRowEvents(context = document) {
                     showDashboardToast('Job Recalled', 'Driver unassigned from booking.', 'success');
                     if (row) {
                         const driverCell = row.querySelector('.driver-cell');
-                        if (driverCell) driverCell.innerHTML = `<span class="text-muted unassigned-driver">-</span>`;
+                        if (driverCell) driverCell.innerHTML = `<span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>`;
                         const dispatchItem = row.querySelector('.action-dispatch-item');
                         const trackItem = row.querySelector('.action-track-item');
                         if (dispatchItem) dispatchItem.style.display = '';
