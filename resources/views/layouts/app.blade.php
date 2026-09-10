@@ -6,7 +6,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}" />
 
   <title>Crown Carz Panel</title>
-  <link href="{{ asset('public/images/logo_black.png')}}"/ rel="icon" type="image/x-icon">
+  <link href="{{ asset('public/images/logo_black.png') }}" rel="icon" type="image/x-icon">
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -16,7 +16,11 @@
   <style>
     .navbar-custom {
       background-color: #000; /* Top navbar black */
-      height: 65px;
+      min-height: 65px;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      width: 100%;
     }
     .navbar-custom .navbar-brand,
     .navbar-custom .nav-link {
@@ -200,7 +204,7 @@ td{
 
 <body>
   <!-- Top Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-custom">
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
     <div class="container-fluid" style="
     margin-left: 16px;
     margin-right: 16px;

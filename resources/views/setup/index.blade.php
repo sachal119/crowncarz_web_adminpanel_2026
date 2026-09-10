@@ -526,8 +526,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <option value="admin">Admin — full access</option>
                                     </select>
                                 </div>
-                                <div class="alert alert-light border small">
-                                    Password fields blank chhor dein agar sirf role update karna hai.
+                                <div class="alert alert-light border small text-muted">
+                                    <i class="bi bi-info-circle me-1"></i> Leave password fields blank if you only want to update the role.
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-sm-6">
