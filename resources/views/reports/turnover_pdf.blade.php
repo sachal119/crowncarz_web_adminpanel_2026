@@ -2,36 +2,157 @@
 
 @section('content')
 <style>
-.print-receipt-header,
-.print-receipt-footer {
-    display: none;
+.report-container {
+    max-width: 900px;
+    margin: 0 auto;
 }
 
 .action-buttons {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+}
+
+.report-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #edf2f7;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    padding: 35px 40px;
+}
+
+.report-logo {
+    height: 65px;
+    max-width: 160px;
+    object-fit: contain;
+}
+
+.gold-divider {
+    height: 3px;
+    background: linear-gradient(90deg, #E6B04A, #f3d289, #E6B04A);
+    border-radius: 2px;
+    width: 100%;
+}
+
+.report-title-badge {
+    display: inline-block;
+    background: #212529;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+
+.meta-box {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+
+.meta-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.meta-value {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #212529;
+}
+
+.turnover-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.turnover-table th, 
+.turnover-table td {
+    padding: 11px 16px;
+    font-size: 13.5px;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.turnover-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.turnover-table th {
+    font-weight: 500;
+    color: #495057;
+    width: 70%;
+}
+
+.turnover-table td.text-end {
+    text-align: right;
+    font-weight: 600;
+    color: #212529;
+}
+
+.row-highlight-gold {
+    background-color: #fffdf5 !important;
+}
+
+.row-highlight-gold th {
+    color: #856404 !important;
+    font-weight: 700 !important;
+}
+
+.row-highlight-gold td {
+    color: #856404 !important;
+    font-weight: 700 !important;
+}
+
+.row-highlight-green th,
+.row-highlight-green td {
+    color: #198754 !important;
+    font-weight: 700 !important;
+}
+
+.row-highlight-blue {
+    background-color: #f0f7ff !important;
+}
+
+.row-highlight-blue th,
+.row-highlight-blue td {
+    color: #0d6efd !important;
+    font-weight: 700 !important;
+}
+
+.report-footer {
+    border-top: 1px solid #dee2e6;
+    margin-top: 25px;
+    padding-top: 15px;
+    font-size: 12px;
+    color: #6c757d;
+    text-align: center;
 }
 
 @media print {
     @page {
-        size: A4;
-        margin: 12mm;
+        size: A4 portrait;
+        margin: 10mm;
     }
 
     body * {
         visibility: hidden;
     }
 
-    .container,
-    .container * {
+    .report-container,
+    .report-container * {
         visibility: visible;
     }
 
     .action-buttons,
     .modal,
-    .btn,
     nav,
     header,
     .navbar,
@@ -39,202 +160,130 @@
         display: none !important;
     }
 
-    .container {
+    .report-container {
         position: absolute;
-        left: 50%;
+        left: 0;
         top: 0;
-        transform: translateX(-50%);
-        width: 100%;
-        max-width: 190mm;
-        margin: 0 auto;
-        padding: 0;
-        font-size: 10pt;
-        color: #222;
-    }
-
-    .print-receipt-header,
-    .print-receipt-footer {
-        display: block !important;
-    }
-
-    .print-receipt-header {
-        border-bottom: 3px solid #E6B04A;
-        margin-bottom: 18px;
-        padding-bottom: 14px;
-    }
-
-    .print-brand-row {
-        align-items: center;
-        display: flex;
-        justify-content: space-between;
-        gap: 20px;
-    }
-
-    .print-logo {
-        height: 72px;
-        max-width: 180px;
-        object-fit: contain;
-    }
-
-    .print-company-details {
-        text-align: right;
-        font-size: 9pt;
-        line-height: 1.5;
-    }
-
-    .print-company-details h1 {
-        color: #343a40;
-        font-size: 20pt;
-        font-weight: 700;
-        margin: 0 0 6px;
-    }
-
-    .print-receipt-meta {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin-top: 14px;
-    }
-
-    .print-meta-box {
-        border: 1px solid #dee2e6;
-        padding: 8px 10px;
-    }
-
-    .print-meta-label {
-        color: #6c757d;
-        display: block;
-        font-size: 8pt;
-        font-weight: 700;
-        letter-spacing: .04em;
-        text-transform: uppercase;
-    }
-
-    .print-meta-value {
-        color: #212529;
-        display: block;
-        font-size: 10pt;
-        font-weight: 700;
-        margin-top: 2px;
-    }
-
-    .web-header {
-        display: none !important;
-    }
-
-    .card {
-        border: 0 !important;
-        box-shadow: none !important;
-    }
-
-    .card-body {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
         padding: 0 !important;
     }
 
-    .table {
-        font-size: 8.5pt;
+    .report-card {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
     }
 
-    .print-receipt-footer {
-        border-top: 1px solid #dee2e6;
-        clear: both;
-        color: #6c757d;
-        font-size: 8pt;
-        margin-top: 24px;
-        padding-top: 10px;
-        text-align: center;
+    .turnover-table th, 
+    .turnover-table td {
+        padding: 6px 8px !important;
+        font-size: 9pt !important;
+    }
+
+    .report-logo {
+        height: 55px !important;
+    }
+
+    .gold-divider {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .row-highlight-gold,
+    .row-highlight-blue {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 }
 </style>
 
-<div class="container mt-4" style="max-width: 1000px;">
-    <!-- Print Specific Header -->
-    <div class="print-receipt-header">
-        <div class="print-brand-row">
-            <div>
-                <img src="https://crowncarz.com/admin/public/images/logo.png" alt="Crown Carz Logo" class="print-logo">
-            </div>
-            <div class="print-company-details">
-                <h1>Crown Carz</h1>
-                <div>52 Elvaston Way, Reading, RG30 4LU</div>
-                <div>www.crowncarz.com | info@crowncarz.com</div>
-            </div>
-        </div>
-        <div class="print-receipt-meta">
-            <div class="print-meta-box">
-                <span class="print-meta-label">INVOICE DATE</span>
-                <span class="print-meta-value">{{ $invoiceDate }}</span>
-            </div>
-            <div class="print-meta-box">
-                <span class="print-meta-label">TRAVEL PERIOD</span>
-                <span class="print-meta-value">{{ $from }} - {{ $to }}</span>
-            </div>
-        </div>
-    </div>
-
+<div class="container mt-4 report-container">
     <!-- Action Buttons -->
     <div class="action-buttons">
-        <button class="btn btn-dark" onclick="window.print()">
-            🖨️ Print
+        <button class="btn btn-dark shadow-sm px-3" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i> Print
         </button>
-        <a href="{{ route('reports.turnover.download', ['from' => $from, 'to' => $to]) }}" class="btn btn-danger text-white">
-            📥 Export PDF
+        <a href="{{ route('reports.turnover.download', ['from' => $from, 'to' => $to]) }}" class="btn btn-danger shadow-sm px-3 text-white">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
         </a>
-        <button class="btn btn-warning text-dark fw-semibold" id="emailTurnoverReport">
-            ✉️ Email Report
+        <button class="btn btn-warning shadow-sm px-3 text-dark fw-semibold" id="emailTurnoverReport">
+            <i class="bi bi-envelope me-1"></i> Email Report
         </button>
     </div>
 
-    <!-- Web Header -->
-    <div class="web-header text-center mb-4">
-        <h2 class="fw-semibold text-secondary">Turnover Report</h2>
-        <p class="mb-1"><strong>INVOICE DATE:</strong> {{ $invoiceDate }}</p>
-        <p class="mb-0"><strong>TRAVEL PERIOD:</strong> {{ $from }} - {{ $to }}</p>
-        <hr class="mt-3" style="border-color: #E6B04A; opacity: 1; width: 60%; margin: 0 auto;">
-    </div>
+    <!-- Official Report Card -->
+    <div class="report-card">
+        <!-- Header Row -->
+        <div class="row align-items-center mb-3">
+            <div class="col-sm-7 col-12 d-flex align-items-center gap-3">
+                <img src="https://crowncarz.com/admin/public/images/logo.png" alt="Crown Carz Logo" class="report-logo">
+                <div>
+                    <h3 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.5px;">Crown Carz</h3>
+                    <div class="text-muted small mt-1">52 Elvaston Way, Reading, RG30 4LU</div>
+                    <div class="small">
+                        <a href="https://www.crowncarz.com" target="_blank" class="text-decoration-none text-muted">www.crowncarz.com</a> 
+                        <span class="text-muted">|</span> 
+                        <a href="mailto:info@crowncarz.com" class="text-decoration-none text-muted">info@crowncarz.com</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-5 col-12 text-sm-end mt-3 mt-sm-0">
+                <div class="report-title-badge mb-2">Turnover Report</div>
+                <div class="text-muted small"><strong>INVOICE DATE:</strong> {{ $invoiceDate }}</div>
+                <div class="text-muted small"><strong>TRAVEL PERIOD:</strong> {{ $from }} - {{ $to }}</div>
+            </div>
+        </div>
 
-    <!-- Company Info -->
-    <div class="web-header text-center mb-4">
-        <p class="mb-0">
-            Office address: 52 Elvaston Way, Reading, RG30 4LU
-        </p>
-        <p class="mb-0">
-            <a href="https://www.crowncarz.com" class="text-primary text-decoration-none">www.crowncarz.com</a> |
-            <a href="mailto:info@crowncarz.com" class="text-primary text-decoration-none">info@crowncarz.com</a>
-        </p>
-    </div>
+        <div class="gold-divider mb-4"></div>
 
-    <!-- Totals Table -->
-    <div class="card shadow-sm border-0 rounded-4 mb-4">
-        <div class="card-body p-4">
-            <table class="table table-striped table-hover align-middle mb-0">
-                <tbody class="fs-6">
-                    <tr><th style="width: 70%;">Total Fare (Driver Fare)</th><td class="text-end fw-semibold">£{{ number_format($totals['fare_total'], 2) }}</td></tr>
-                    <tr><th>Total Fare (Driver Fare - 20%)</th><td class="text-end">£{{ number_format($totals['fare_after_commission'], 2) }}</td></tr>
-                    <tr><th>Total Markup Fare</th><td class="text-end">£{{ number_format($totals['markup_fare'], 2) }}</td></tr>
-                    <tr><th>Total Service Charge</th><td class="text-end">£{{ number_format($totals['service_charge'], 2) }}</td></tr>
-                    <tr><th>Total Extra</th><td class="text-end">£{{ number_format($totals['extras'], 2) }}</td></tr>
-                    <tr><th>Total Markup Extras</th><td class="text-end">£{{ number_format($totals['markup_extras'], 2) }}</td></tr>
-                    <tr><th>Total Waiting</th><td class="text-end">£{{ number_format($totals['waiting'], 2) }}</td></tr>
-                    <tr><th>Total Parking</th><td class="text-end">£{{ number_format($totals['parking'], 2) }}</td></tr>
-                    <tr><th>Total Markup Parking</th><td class="text-end">£{{ number_format($totals['markup_parking'], 2) }}</td></tr>
-                    <tr><th>Total Customer Toll</th><td class="text-end">£{{ number_format($totals['customer_toll'], 2) }}</td></tr>
-                    <tr><th>Total Driver Toll</th><td class="text-end">£{{ number_format($totals['driver_toll'], 2) }}</td></tr>
-                    <tr><th>Total Customer ULEZ</th><td class="text-end">£{{ number_format($totals['customer_ulez'], 2) }}</td></tr>
-                    <tr><th>Total Driver ULEZ</th><td class="text-end">£{{ number_format($totals['driver_ulez'], 2) }}</td></tr>
+        <!-- Meta summary cards -->
+        <div class="row g-2 mb-4">
+            <div class="col-md-6 col-12">
+                <div class="meta-box d-flex justify-content-between align-items-center">
+                    <span class="meta-label">Invoice Date</span>
+                    <span class="meta-value">{{ $invoiceDate }}</span>
+                </div>
+            </div>
+            <div class="col-md-6 col-12">
+                <div class="meta-box d-flex justify-content-between align-items-center">
+                    <span class="meta-label">Travel Period</span>
+                    <span class="meta-value">{{ $from }} &nbsp;to&nbsp; {{ $to }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Breakdown Table -->
+        <div class="table-responsive">
+            <table class="table turnover-table align-middle mb-0">
+                <tbody>
+                    <tr><th>Total Fare (Driver Fare)</th><td class="text-end">£{{ number_format($totals['fare_total'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Fare (Driver Fare - 20%)</th><td class="text-end">£{{ number_format($totals['fare_after_commission'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Markup Fare</th><td class="text-end">£{{ number_format($totals['markup_fare'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Service Charge</th><td class="text-end">£{{ number_format($totals['service_charge'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Extra</th><td class="text-end">£{{ number_format($totals['extras'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Markup Extras</th><td class="text-end">£{{ number_format($totals['markup_extras'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Waiting</th><td class="text-end">£{{ number_format($totals['waiting'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Parking</th><td class="text-end">£{{ number_format($totals['parking'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Markup Parking</th><td class="text-end">£{{ number_format($totals['markup_parking'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Customer Toll</th><td class="text-end">£{{ number_format($totals['customer_toll'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Driver Toll</th><td class="text-end">£{{ number_format($totals['driver_toll'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Customer ULEZ</th><td class="text-end">£{{ number_format($totals['customer_ulez'] ?? 0, 2) }}</td></tr>
+                    <tr><th>Total Driver ULEZ</th><td class="text-end">£{{ number_format($totals['driver_ulez'] ?? 0, 2) }}</td></tr>
                     <tr><th>Drivers Earnings % of Turnover</th><td class="text-end">£0.00</td></tr>
                     <tr><th>Drivers Earnings % of Turnover (Markup)</th><td class="text-end">£0.00</td></tr>
-                    <tr class="table-warning"><th><strong>Company Earning 100% of Turnover</strong></th><td class="text-end fw-bold">£{{ number_format($totals['company_earning'], 2) }}</td></tr>
-                    <tr class="table-warning"><th><strong>Company Earning 100% of Turnover (Markup)</strong></th><td class="text-end fw-bold">£{{ number_format($totals['company_earning_markup'], 2) }}</td></tr>
-                    <tr><th><strong>Total Paid to Drivers</strong></th><td class="text-end text-success fw-bold">£{{ number_format($totals['paid_to_drivers'], 2) }}</td></tr>
-                    <tr class="table-primary"><th><strong>Money in Account</strong></th><td class="text-end text-primary fw-bold">£{{ number_format($totals['money_in_account'], 2) }}</td></tr>
+                    <tr class="row-highlight-gold"><th>Company Earning 100% of Turnover</th><td class="text-end">£{{ number_format($totals['company_earning'] ?? 0, 2) }}</td></tr>
+                    <tr class="row-highlight-gold"><th>Company Earning 100% of Turnover (Markup)</th><td class="text-end">£{{ number_format($totals['company_earning_markup'] ?? 0, 2) }}</td></tr>
+                    <tr class="row-highlight-green"><th>Total Paid to Drivers</th><td class="text-end">£{{ number_format($totals['paid_to_drivers'] ?? 0, 2) }}</td></tr>
+                    <tr class="row-highlight-blue"><th>Money in Account</th><td class="text-end">£{{ number_format($totals['money_in_account'] ?? 0, 2) }}</td></tr>
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <div class="print-receipt-footer">
-        Thank you for choosing Crown Carz. This is a computer generated Turnover Report.
+        <div class="report-footer">
+            Thank you for choosing Crown Carz. This is a computer generated Turnover Report.
+        </div>
     </div>
 </div>
 
