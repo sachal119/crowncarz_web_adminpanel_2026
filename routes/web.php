@@ -253,6 +253,8 @@ Route::get('/get-driver-email/{id}', [ReportController::class, 'getDriverEmail']
 Route::get('/reports/turnover', [ReportController::class, 'turnover'])->name('reports.turnover');
 Route::get('/reports/turnover/download', [ReportController::class, 'downloadTurnover'])
     ->name('reports.turnover.download');
+Route::post('/reports/turnover/send-email', [ReportController::class, 'sendTurnoverEmail'])
+    ->name('reports.turnover.send-email');
 
 Route::get('/reports/customer', [ReportController::class, 'customer'])->name('reports.customer');
 Route::get('/reports/customer/download', [ReportController::class, 'downloadCustomerReport'])

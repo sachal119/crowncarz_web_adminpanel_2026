@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Mail;
 
 // use PDF;
 // use Mail;
-// use Illuminate\Support\Facades\Mail;
 use App\Mail\CustomerReportMail;
+use App\Mail\TurnoverReportMail;
 
 
 class ReportController extends Controller
@@ -615,12 +615,9 @@ $totalJobs = count($accountBookings) + count($cashBookings);
 //     ]);
 // }
 
-public function turnover(Request $request)
+public function getTurnoverData($from, $to)
 {
-    $from = $request->from_date;
-    $to   = $request->to_date;
-
-    $firebaseBookings = $this->firebase->getData('bookings');
+    $firebaseBookings = $this->firebase->getData('bookings') ?? [];
     $totals = [
         'fare_total' => 0,
         'fare_after_commission' => 0,
@@ -643,14 +640,14 @@ public function turnover(Request $request)
         foreach ($firebaseBookings as $booking) {
             if (!isset($booking['price'], $booking['pickup_time'])) continue;
             
-            // 🔹 EXCLUDE job_cancelled bookings
-            if (isset($booking['booking_status']) && 
-                strtolower($booking['booking_status']) === 'job_cancelled') {
+            // 🔹 EXCLUDE job_cancelled / cancelled bookings
+            $status = strtolower($booking['status'] ?? $booking['booking_status'] ?? '');
+            if ($status === 'job_cancelled' || $status === 'cancelled') {
                 continue;
             }
 
             $bookingDate = date('Y-m-d', strtotime($booking['pickup_time']));
-            if ($bookingDate < $from || $bookingDate > $to) continue;
+            if ($from && $to && ($bookingDate < $from || $bookingDate > $to)) continue;
 
             $price = (float) ($booking['price'] ?? 0);
             $parking = (float) ($booking['parking'] ?? 0);
@@ -675,14 +672,24 @@ public function turnover(Request $request)
     $totals['company_earning'] = $totals['fare_total'];
     $totals['company_earning_markup'] = $totals['markup_fare'];
     $totals['money_in_account'] = $totals['fare_total'] - $totals['paid_to_drivers'];
-    
-              $driversData = $this->firebase->getData('drivers') ?? [];
-$drivers = collect();
 
-foreach ($driversData as $id => $driver) {
-    $driver['id'] = $id;
-    $drivers->push($driver);
+    return $totals;
 }
+
+public function turnover(Request $request)
+{
+    $from = $request->from_date ?? $request->from;
+    $to   = $request->to_date ?? $request->to;
+
+    $totals = $this->getTurnoverData($from, $to);
+    
+    $driversData = $this->firebase->getData('drivers') ?? [];
+    $drivers = collect();
+
+    foreach ($driversData as $id => $driver) {
+        $driver['id'] = $id;
+        $drivers->push($driver);
+    }
 
     return view('reports.turnover_pdf', [
         'from' => $from,
@@ -693,38 +700,44 @@ foreach ($driversData as $id => $driver) {
     ]);
 }
 
-
-
 public function downloadTurnover(Request $request)
 {
-    $from = $request->from;
-    $to   = $request->to;
+    $from = $request->from ?? $request->from_date;
+    $to   = $request->to ?? $request->to_date;
 
-    // Reuse same Firebase logic
-    $firebaseBookings = $this->firebase->getData('bookings'); 
-    $turnover = 0;
+    $totals = $this->getTurnoverData($from, $to);
+    $invoiceDate = date('d M Y');
 
-    if ($firebaseBookings) {
-        foreach ($firebaseBookings as $booking) {
-            if (!isset($booking['created_at'], $booking['price'])) {
-                continue;
-            }
-
-            $bookingDate = date('Y-m-d', strtotime($booking['created_at']));
-
-            if ($bookingDate >= $from && $bookingDate <= $to) {
-                $turnover += (float) $booking['price'];
-            }
-        }
-    }
-
-    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.turnover_pdf', [
-        'turnover' => $turnover,
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.turnover_export_pdf', [
+        'totals' => $totals,
         'from' => $from,
         'to'   => $to,
+        'invoiceDate' => $invoiceDate,
     ]);
 
     return $pdf->download("turnover_{$from}_to_{$to}.pdf");
+}
+
+public function sendTurnoverEmail(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'from'  => 'required|date',
+        'to'    => 'required|date',
+    ]);
+
+    $from = $request->from;
+    $to   = $request->to;
+    $totals = $this->getTurnoverData($from, $to);
+    $invoiceDate = date('d M Y');
+
+    try {
+        \Mail::to($request->email)->send(new \App\Mail\TurnoverReportMail($totals, $from, $to, $invoiceDate));
+        return response()->json(['success' => true, 'message' => 'Turnover Report emailed successfully!']);
+    } catch (\Exception $e) {
+        \Log::error('Turnover email error: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => 'Failed to send email: ' . $e->getMessage()], 500);
+    }
 }
 
 
