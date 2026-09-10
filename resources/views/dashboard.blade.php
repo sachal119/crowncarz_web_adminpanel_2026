@@ -243,29 +243,50 @@ td{
 }
 
 /* ===== Custom Pagination Styling ===== */
+#bookingsPaginationContainer {
+    margin: 0 !important;
+}
+#bookingsPaginationContainer nav {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin: 0 !important;
+}
+#bookingsPaginationContainer p.text-muted,
+#bookingsPaginationContainer p.small {
+    margin-bottom: 0 !important;
+    font-size: 12px !important;
+    color: #64748b !important;
+    white-space: nowrap !important;
+}
 .pagination {
-    padding: 10px 16px;
-    border-radius: 6px;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
 }
 
 .pagination .page-item {
-    margin: 0 4px;
+    margin: 0 2px;
 }
 
 .pagination .page-link {
     border: 1px solid #d1b96d;
     color: #6b5e2e;
-    padding: 6px 14px;
-    border-radius: 4px;
-    background-color: transparent;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background-color: #fff;
     font-weight: 500;
+    font-size: 12px;
+    line-height: 1.4;
+    transition: all 0.15s ease;
 }
 
 .pagination .page-item.active .page-link {
     background-color: #ffe8a1;
     border-color: #bfa75a;
     color: #000;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .pagination .page-link:hover {
@@ -277,6 +298,7 @@ td{
     color: #9c8f5c;
     background-color: transparent;
     border-color: #e0d4a6;
+    opacity: 0.6;
 }
 
 
@@ -752,7 +774,7 @@ td{
 
   <div class="col-lg-12 mt-3">
         <div class="card shadow-sm border-0" style="border-radius: 14px; overflow: hidden; border: 1px solid #eaedf1 !important;">
-            <div class="card-header bg-white py-3 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom" style="border-color: #f1f5f9 !important;">
+            <div class="card-header bg-white py-2.5 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom" style="border-color: #f1f5f9 !important;">
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(184, 115, 51, 0.12); color: #B87333;">
                         <i class="bi bi-calendar2-range-fill fs-6"></i>
@@ -762,9 +784,14 @@ td{
                     </h6>
                     <span class="badge bg-dark text-white rounded-pill px-2.5 py-1" id="bookingsTotalCount" style="font-size: 11px;">{{ $bookings->total() }}</span>
                 </div>
-                <span class="badge bg-success bg-opacity-75 text-white d-flex align-items-center gap-1.5 px-2.5 py-1.5 shadow-xs" id="liveSyncStatus" style="border-radius: 8px; font-size: 11px;">
-                    <i class="bi bi-broadcast"></i> Live Sync Active
-                </span>
+                <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
+                    <div class="d-flex align-items-center" id="bookingsPaginationContainer">
+                        {{ $bookings->links('pagination::bootstrap-5') }}
+                    </div>
+                    <span class="badge bg-success bg-opacity-75 text-white d-flex align-items-center gap-1.5 px-2.5 py-1.5 shadow-xs" id="liveSyncStatus" style="border-radius: 8px; font-size: 11px;">
+                        <i class="bi bi-broadcast"></i> Live Sync Active
+                    </span>
+                </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0 custom-dashboard-table" id="futureBookingsTable">
@@ -793,10 +820,6 @@ td{
 @include('partials.dashboard_table_rows', ['bookings' => $bookings, 'drivers' => $drivers])
 </tbody>
                 </table>
-<div class="justify-content-center my-3 d-flex" id="bookingsPaginationContainer">
-    {{ $bookings->links('pagination::bootstrap-5') }}
-</div>
-
             </div>
         </div>
 <!-- Confirmation Modal -->
