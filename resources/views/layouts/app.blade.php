@@ -11,7 +11,6 @@
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
   <style>
     .navbar-custom {
@@ -37,9 +36,6 @@
     display: block;
     margin-top: 0; /* Fix slight offset */
     }
-    .leaflet-control-attribution {
-    display: none !important;
-  }
   </style>
   <style>
   /* Responsive font scaling */
@@ -389,47 +385,6 @@ td{
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-  <script>
-    // Initialize map safely only if container exists
-    const mapContainer = document.getElementById('map');
-    if (mapContainer) {
-      var map = L.map('map').setView([31.5204, 74.3587], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
-
-      // Expand Map functionality
-      var expandedMap;
-      const mapModalEl = document.getElementById('mapModal');
-      const expandBtn = document.getElementById('expandMapBtn');
-
-      if (mapModalEl && expandBtn) {
-        var mapModal = new bootstrap.Modal(mapModalEl);
-        expandBtn.addEventListener('click', function() {
-          mapModal.show();
-        });
-
-        mapModalEl.addEventListener('shown.bs.modal', function () {
-          if (!expandedMap) {
-            expandedMap = L.map('mapExpanded').setView([31.5204, 74.3587], 12);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '© OpenStreetMap contributors'
-            }).addTo(expandedMap);
-          } else {
-            expandedMap.invalidateSize();
-            expandedMap.setView([31.5204, 74.3587], 12);
-          }
-        });
-      }
-
-      // Auto-refresh ONLY on dashboard
-      setInterval(() => {
-        location.reload();
-      }, 30000);
-    }
-  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {

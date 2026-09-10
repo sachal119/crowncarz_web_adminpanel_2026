@@ -823,6 +823,9 @@ public function updateStatusManual(Request $request, $id)
         $bookingSnap = $bookingRef->getSnapshot();
 
         if (!$bookingSnap->exists()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
+            }
             return back()->with('error', 'Booking not found.');
         }
 
@@ -1321,6 +1324,15 @@ Thank you for completing the trip.",
             }
         }
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking status updated.',
+                'status' => $newStatus,
+                'booking_id' => $id
+            ]);
+        }
+
         return back()->with('success', 'Booking status updated.');
 
     } catch (\Exception $e) {
@@ -1329,6 +1341,13 @@ Thank you for completing the trip.",
             'booking_id' => $id,
             'error' => $e->getMessage()
         ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Status update failed: ' . $e->getMessage()
+            ], 500);
+        }
 
         return back()->with('error', 'Something went wrong.');
     }
@@ -2089,22 +2108,29 @@ $drivers = collect();
 public function recallJob($id)
 {
     if (!session('admin_logged_in')) {
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json(['success' => false, 'message' => 'Please login first.'], 401);
+        }
         return redirect()->route('login')->with('error', 'Please login first.');
     }
     try {
         $ref = $this->firebase->updateData("bookings/{$id}", ['driver_id' => '']);
-        // $drivers = collect();
-        // $booking = $ref->getValue();updateData("bookings/{$id}", ['status' => 'recalled']);
 
         if (!$ref) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
+            }
             return redirect()->back()->with('error', 'Booking not found.');
         }
 
-        // Update booking status
-        // $ref->update(['status' => 'recalled']);
-
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Job recalled successfully.', 'booking_id' => $id]);
+        }
         return redirect()->back()->with('success', 'Job recalled successfully.');
     } catch (\Exception $e) {
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
         return redirect()->back()->with('error', $e->getMessage());
     }
 }
