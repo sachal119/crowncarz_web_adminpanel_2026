@@ -307,6 +307,7 @@
                            href="#"
                            data-bs-toggle="modal"
                            data-bs-target="#viewBookingModal"
+                           data-booking-id="{{ $booking['id'] ?? '' }}"
                            data-booking='@json($booking)'>
                             <i class="bi bi-eye me-2"></i> View Booking
                         </a>

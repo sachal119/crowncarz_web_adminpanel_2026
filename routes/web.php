@@ -98,6 +98,7 @@ Route::prefix('bookings')->group(function () {
     Route::post('{booking}/hide', [BookingController::class, 'hideJob'])->name('bookings.hide');
     Route::get('{booking}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
     Route::get('{booking}/{id}/view', [BookingController::class, 'view'])->name('bookings.view');
+    Route::get('{booking}/details-json', [BookingController::class, 'getBookingDetailsJson'])->name('bookings.detailsJson');
     // Route::put('/bookings/{id}', [BookingController::class, 'update'])->name('booking.update');
 });
 

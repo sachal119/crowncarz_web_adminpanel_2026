@@ -939,6 +939,8 @@ public function updateStatusManual(Request $request, $id)
             'updated_at' => now()->toDateTimeString(),
         ]);
 
+        $this->recordBookingActivity($id, 'Status Changed', 'Booking status changed from ' . ucfirst($booking['status'] ?? 'pending') . ' to ' . ucfirst($newStatus) . '.');
+
         $bookingRefNo = $booking['ref_no'] ?? $id;
 
         
@@ -2343,6 +2345,8 @@ public function recallJob($id)
             return redirect()->back()->with('error', 'Booking not found.');
         }
 
+        $this->recordBookingActivity($id, 'Driver Recalled', 'Driver unassigned from booking, status reset to Pending.');
+
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'Job recalled successfully.', 'booking_id' => $id]);
         }
@@ -2352,6 +2356,122 @@ public function recallJob($id)
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
         return redirect()->back()->with('error', $e->getMessage());
+    }
+}
+
+/**
+ * 📝 Record staff activity log for a booking in Firebase
+ */
+public function recordBookingActivity($bookingId, $action, $description = '', $extra = [])
+{
+    try {
+        if (!$bookingId) return null;
+        $staffName = session('staff_name') ?? (session('staff_role') === 'super_admin' ? 'Super Admin' : (session('admin_logged_in') ? 'Admin Staff' : 'System'));
+        $staffRole = session('staff_role') ?? 'admin';
+        $staffId   = session('staff_id') ?? null;
+
+        $logEntry = array_merge([
+            'id'             => (string) \Str::uuid(),
+            'staff_id'       => $staffId,
+            'staff_name'     => $staffName,
+            'staff_role'     => $staffRole,
+            'action'         => $action,
+            'description'    => $description,
+            'timestamp'      => now()->toISOString(),
+            'formatted_time' => now()->format('d M Y, H:i'),
+            'created_at'     => time(),
+        ], $extra);
+
+        $this->database->getReference("bookings/{$bookingId}/activity_logs")->push($logEntry);
+
+        return $logEntry;
+    } catch (\Throwable $e) {
+        \Log::error("Failed to record booking activity for {$bookingId}: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * 🔍 Get booking details and full staff activity logs as JSON for View Modal
+ */
+public function getBookingDetailsJson($id)
+{
+    if (!session('admin_logged_in')) {
+        return response()->json(['success' => false, 'message' => 'Please login first.'], 401);
+    }
+
+    try {
+        $bookingRef = $this->database->getReference("bookings/{$id}");
+        $booking = $bookingRef->getValue();
+
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
+        }
+
+        $booking['id'] = $id;
+
+        // Extract activity logs
+        $rawLogs = $booking['activity_logs'] ?? [];
+        $activityLogs = [];
+
+        if (is_array($rawLogs)) {
+            foreach ($rawLogs as $logKey => $log) {
+                if (!is_array($log)) continue;
+                $log['log_key'] = $logKey;
+                $activityLogs[] = $log;
+            }
+        }
+
+        // Sort newest first
+        usort($activityLogs, function($a, $b) {
+            $tA = isset($a['timestamp']) ? strtotime($a['timestamp']) : ($a['created_at'] ?? 0);
+            $tB = isset($b['timestamp']) ? strtotime($b['timestamp']) : ($b['created_at'] ?? 0);
+            return $tB <=> $tA;
+        });
+
+        // If no logs recorded yet, synthesize initial creation log
+        if (empty($activityLogs)) {
+            $createdTime = isset($booking['created_at']) 
+                ? (is_numeric($booking['created_at']) ? date('d M Y, H:i', (int)$booking['created_at']) : \Carbon\Carbon::parse($booking['created_at'])->format('d M Y, H:i'))
+                : (isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->subDay()->format('d M Y, H:i') : now()->format('d M Y, H:i'));
+
+            $activityLogs[] = [
+                'id'             => 'initial-create',
+                'staff_name'     => $booking['staff_name'] ?? ($booking['partner'] ?? ($booking['platform'] ? ucfirst($booking['platform']) : 'System / User')),
+                'staff_role'     => 'admin',
+                'action'         => 'Booking Created',
+                'description'    => 'Booking created in system with Ref: ' . ($booking['ref_no'] ?? $id),
+                'formatted_time' => $createdTime,
+                'timestamp'      => now()->toISOString()
+            ];
+        }
+
+        // Driver details lookup
+        $driverInfo = null;
+        $driverId = $booking['driver_id'] ?? null;
+        if ($driverId) {
+            $dData = $this->database->getReference("drivers/{$driverId}")->getValue();
+            if ($dData && is_array($dData)) {
+                $driverInfo = [
+                    'name'      => $dData['name'] ?? 'Driver',
+                    'call_sign' => $dData['call_sign'] ?? '',
+                    'phone'     => $dData['phone'] ?? '',
+                    'email'     => $dData['email'] ?? '',
+                ];
+            }
+        }
+
+        return response()->json([
+            'success'       => true,
+            'booking'       => $booking,
+            'activity_logs' => $activityLogs,
+            'driver_info'   => $driverInfo,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
     }
 }
 
@@ -2528,6 +2648,9 @@ public function dispatchDriver(Request $request)
             'updated_at'       => now()->toISOString(),
         ];
         $bookingRef->update($bookingData);
+
+        $dCallSign = !empty($existingDriver['call_sign']) ? $existingDriver['call_sign'] . '/' : '';
+        $this->recordBookingActivity($bookingId, 'Driver Dispatched', "Driver {$dCallSign}{$existingDriver['name']} was assigned to this booking.");
         
         // Send SMS to Driver
         if (!empty($existingDriver['phone'])) {
@@ -7474,6 +7597,10 @@ public function searchBookings(Request $request)
             ?: "Your booking (Ref: ".($booking['ref_no'] ?? $bookingId).") has been confirmed.";
         $result = $smsService->send((string) $booking['phone_no'], (string) $message);
 
+        if ($result['success'] ?? false) {
+            $this->recordBookingActivity($bookingId, 'SMS Sent', 'Sent SMS notification to ' . $booking['phone_no'] . '.');
+        }
+
         return response()->json([
             'status' => $result['success'] ? 'success' : 'error',
             ...$result,
@@ -7493,6 +7620,10 @@ public function searchBookings(Request $request)
         (string) $request->string('phone')->trim(),
         (string) $request->string('message')
     );
+
+    if ($result['success'] ?? false) {
+        $this->recordBookingActivity($request->booking_id, 'SMS Sent', 'Sent SMS notification to ' . $request->phone . '.');
+    }
 
     return response()->json([
         'status' => $result['success'] ? 'success' : 'error',
@@ -7531,6 +7662,8 @@ public function sendEmaildashboard(Request $request)
             $formattedPickupDate
         ));
 
+    $this->recordBookingActivity($bookingId, 'Email Sent', 'Sent email confirmation to ' . $request->email . '.');
+
     return response()->json(['status'=>'success', 'message'=>'Email sent successfully.']);
 }
 
@@ -7545,6 +7678,7 @@ public function sendEmaildashboard(Request $request)
     // Hide Job
     public function hideJob(Request $request, $bookingId) {
         $this->firebase->updateData("bookings/{$bookingId}", ['hidden'=>true]);
+        $this->recordBookingActivity($bookingId, 'Job Hidden', 'Booking marked as hidden from active list.');
         return response()->json(['status'=>'success', 'message'=>'Booking hidden']);
     }
 
@@ -7655,6 +7789,7 @@ public function sendEmaildashboard(Request $request)
         ];
 
         $this->firebase->updateData("bookings/{$bookingId}", $updatedBooking);
+        $this->recordBookingActivity($bookingId, 'Booking Edited', 'Booking details updated by staff.');
 
        return redirect('/dashboard')->with('success', 'Booking updated successfully!');
     }
@@ -7663,7 +7798,55 @@ public function sendEmaildashboard(Request $request)
     // View Booking
     public function view($bookingId) {
         $booking = $this->firebase->getData("bookings/{$bookingId}");
-        return view('bookings.view', ['booking' => $booking]);
+        if (!$booking) {
+            return redirect()->route('dashboard')->with('error', 'Booking not found.');
+        }
+
+        $booking['id'] = $bookingId;
+
+        // Fetch driver details if assigned
+        $driver = null;
+        $driverId = $booking['driver_id'] ?? ($booking['driverId'] ?? null);
+        if ($driverId) {
+            $driver = $this->firebase->getData("drivers/{$driverId}");
+        }
+
+        // Activity logs
+        $rawLogs = $this->firebase->getData("bookings/{$bookingId}/activity_logs") ?? [];
+        $logs = [];
+        if (is_array($rawLogs)) {
+            foreach ($rawLogs as $k => $log) {
+                if (is_array($log)) {
+                    $log['id'] = $k;
+                    $logs[] = $log;
+                }
+            }
+        }
+
+        if (empty($logs)) {
+            $createdAt = $booking['created_at'] ?? ($booking['createdAt'] ?? ($booking['pickup_time'] ?? now()->toIso8601String()));
+            $logs[] = [
+                'id' => 'initial_creation',
+                'action' => 'Booking Created',
+                'description' => 'Booking created in system.',
+                'staff_name' => $booking['created_by'] ?? 'Staff Member',
+                'staff_role' => 'System / Staff',
+                'timestamp' => $createdAt,
+                'created_at' => $createdAt,
+            ];
+        }
+
+        usort($logs, function ($a, $b) {
+            $tA = strtotime($a['timestamp'] ?? ($a['created_at'] ?? 'now'));
+            $tB = strtotime($b['timestamp'] ?? ($b['created_at'] ?? 'now'));
+            return $tB <=> $tA;
+        });
+
+        return view('bookings.view', [
+            'booking' => $booking,
+            'driver' => $driver,
+            'activity_logs' => $logs
+        ]);
     }
 
 
