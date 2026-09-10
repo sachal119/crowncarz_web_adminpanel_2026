@@ -892,7 +892,7 @@ td{
 
 <!-- Booking Details & Staff Activity Modal -->
 <div class="modal fade" id="viewBookingModal" tabindex="-1" aria-labelledby="viewBookingModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable my-4">
     <div class="modal-content border-0 shadow-lg" style="background: #f8fafc;">
       
       <!-- Modal Header -->
@@ -1546,9 +1546,17 @@ td{
 }
 
 /* 🌟 View Booking & Staff Activity Timeline Modal Styling */
+#viewBookingModal {
+  z-index: 1095 !important;
+}
+#viewBookingModal .modal-dialog {
+  margin-top: 30px !important;
+  margin-bottom: 30px !important;
+}
 #viewBookingModal .modal-content {
   border-radius: 16px !important;
   overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45) !important;
 }
 #viewBookingModal .modal-header {
   background: linear-gradient(135deg, #111827 0%, #1e293b 100%) !important;

@@ -33,11 +33,17 @@
       min-height: 65px;
       position: sticky;
       top: 0;
-      z-index: 1060 !important;
+      z-index: 1020 !important;
       width: 100%;
       flex-shrink: 0;
       box-shadow: 0 4px 20px rgba(0,0,0,0.25);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .modal-backdrop {
+      z-index: 1080 !important;
+    }
+    .modal {
+      z-index: 1085 !important;
     }
     .navbar-custom .navbar-brand {
       color: #fff;
