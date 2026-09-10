@@ -643,5 +643,164 @@ public function deleteBalanceHistory($driverId, $transactionId)
 
     return back()->with('success', 'Transaction deleted & balance updated');
 }
+
+    public function findJobByRef(Request $request)
+    {
+        if (!session('admin_logged_in')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $ref = trim($request->input('ref_no', ''));
+        if ($ref === '') {
+            return response()->json(['success' => false, 'message' => 'Please provide a Reference #.']);
+        }
+
+        $cleanRef = strtoupper(ltrim($ref, '#'));
+        $rawRef = $ref;
+
+        $database = $this->firebase->getDatabase();
+        $bookings = $database->getReference('bookings')->getValue() ?? [];
+
+        $matched = [];
+        foreach ($bookings as $key => $b) {
+            $bookingRef = strtoupper(trim($b['ref_no'] ?? ''));
+            $bookingId = (string) ($b['id'] ?? '');
+
+            if (
+                $bookingRef === $cleanRef ||
+                $bookingRef === strtoupper($rawRef) ||
+                (string)$key === $rawRef ||
+                (string)$key === $cleanRef ||
+                $bookingId === $rawRef ||
+                $bookingId === $cleanRef
+            ) {
+                $matched[] = [
+                    'key' => $key,
+                    'ref_no' => $b['ref_no'] ?? $key,
+                    'passenger_name' => $b['passenger_name'] ?? 'N/A',
+                    'phone_no' => $b['phone_no'] ?? 'N/A',
+                    'pickup_date' => $b['pickup_date'] ?? '',
+                    'pickup_time' => $b['pickup_time'] ?? '',
+                    'pickup_address' => $b['pickup_address'] ?? 'N/A',
+                    'dropoff_address' => $b['dropoff_address'] ?? 'N/A',
+                    'price' => $b['price'] ?? 0,
+                    'status' => ucfirst($b['status'] ?? 'pending'),
+                ];
+            }
+        }
+
+        if (empty($matched)) {
+            try {
+                $sqlBooking = \App\Models\Booking::where('ref_no', $rawRef)
+                    ->orWhere('ref_no', $cleanRef)
+                    ->orWhere('id', $rawRef)
+                    ->first();
+
+                if ($sqlBooking) {
+                    $matched[] = [
+                        'key' => 'mysql_' . $sqlBooking->id,
+                        'ref_no' => $sqlBooking->ref_no ?? ('ID: ' . $sqlBooking->id),
+                        'passenger_name' => $sqlBooking->passenger->name ?? 'N/A',
+                        'phone_no' => $sqlBooking->passenger->phone ?? 'N/A',
+                        'pickup_date' => '',
+                        'pickup_time' => '',
+                        'pickup_address' => $sqlBooking->pickup_address ?? 'N/A',
+                        'dropoff_address' => $sqlBooking->dropoff_address ?? 'N/A',
+                        'price' => $sqlBooking->price ?? 0,
+                        'status' => ucfirst($sqlBooking->status ?? 'pending'),
+                    ];
+                }
+            } catch (\Throwable $e) {
+                // Ignore fallback error
+            }
+        }
+
+        if (empty($matched)) {
+            return response()->json([
+                'success' => false,
+                'message' => "No job found matching Reference # '{$ref}'."
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'count' => count($matched),
+            'jobs' => $matched,
+        ]);
+    }
+
+    public function deleteJobByRef(Request $request)
+    {
+        if (!session('admin_logged_in')) {
+            return redirect()->route('login')->with('error', 'Please login first.');
+        }
+
+        $request->validate([
+            'ref_no' => 'required|string|max:100',
+        ]);
+
+        $ref = trim($request->input('ref_no'));
+        $cleanRef = strtoupper(ltrim($ref, '#'));
+        $rawRef = $ref;
+
+        $database = $this->firebase->getDatabase();
+        $bookings = $database->getReference('bookings')->getValue() ?? [];
+
+        $deletedCount = 0;
+        $deletedDetails = [];
+
+        foreach ($bookings as $key => $b) {
+            $bookingRef = strtoupper(trim($b['ref_no'] ?? ''));
+            $bookingId = (string) ($b['id'] ?? '');
+
+            if (
+                $bookingRef === $cleanRef ||
+                $bookingRef === strtoupper($rawRef) ||
+                (string)$key === $rawRef ||
+                (string)$key === $cleanRef ||
+                $bookingId === $rawRef ||
+                $bookingId === $cleanRef
+            ) {
+                $pName = $b['passenger_name'] ?? 'N/A';
+                $rNo = $b['ref_no'] ?? $key;
+                $deletedDetails[] = "{$rNo} (Passenger: {$pName})";
+                $database->getReference('bookings/' . $key)->remove();
+                $deletedCount++;
+            }
+        }
+
+        try {
+            $sqlDeleted = \App\Models\Booking::where('ref_no', $rawRef)
+                ->orWhere('ref_no', $cleanRef)
+                ->orWhere('id', $rawRef)
+                ->delete();
+            $deletedCount += $sqlDeleted;
+        } catch (\Throwable $e) {
+            // Ignore fallback error
+        }
+
+        if ($deletedCount > 0) {
+            $detailsStr = !empty($deletedDetails) ? ' [' . implode(', ', $deletedDetails) . ']' : '';
+            $msg = "Job with Ref # '{$ref}'{$detailsStr} has been permanently deleted from the database.";
+            
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $msg,
+                    'deleted_count' => $deletedCount,
+                ]);
+            }
+            return redirect()->route('setup')->with('success', $msg);
+        }
+
+        $errorMsg = "No job found with Ref # '{$ref}'. Nothing was deleted.";
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => $errorMsg,
+            ], 404);
+        }
+        return redirect()->route('setup')->with('error', $errorMsg);
+    }
     
 }

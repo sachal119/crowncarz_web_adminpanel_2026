@@ -280,6 +280,10 @@ Route::prefix('setup')->group(function () {
     Route::put('/driver/{id}', [SetupController::class, 'update'])->name('setup.driver.update');
     Route::post('/super-admin/password', [SetupController::class, 'updateSuperAdminPassword'])
         ->name('setup.super-admin.password');
+    Route::post('/delete-job-by-ref', [SetupController::class, 'deleteJobByRef'])
+        ->name('setup.job.delete-by-ref');
+    Route::post('/find-job-by-ref', [SetupController::class, 'findJobByRef'])
+        ->name('setup.job.find-by-ref');
 });
 
 Route::prefix('messages')->group(function () {

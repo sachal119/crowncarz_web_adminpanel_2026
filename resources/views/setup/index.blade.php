@@ -185,6 +185,10 @@
                 <i class="bi bi-shield-lock me-1"></i> Change Password
             </button>
         @endif
+
+        <button type="button" class="btn btn-outline-danger fw-semibold shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#deleteJobByRefModal">
+            <i class="bi bi-trash3 me-1"></i> Delete Job by Ref#
+        </button>
         
         <a href="{{ route('notifications.history') }}" class="btn btn-gradient fw-semibold shadow-sm">
             <i class="bi bi-broadcast me-1"></i> Notification Broadcast
@@ -234,13 +238,113 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 @endif
 @endif
+
+<!-- Delete Job by Ref # Modal -->
+<div class="modal fade" id="deleteJobByRefModal" tabindex="-1" aria-labelledby="deleteJobByRefLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+            <div class="modal-header bg-danger text-white py-3">
+                <h5 class="modal-title fw-bold" id="deleteJobByRefLabel">
+                    <i class="bi bi-trash3 me-2"></i>Delete Job by Reference Number
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="deleteJobByRefForm" method="POST" action="{{ route('setup.job.delete-by-ref') }}">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="alert alert-warning d-flex align-items-center mb-3">
+                        <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+                        <div>
+                            <strong>Warning:</strong> Deleting a job will permanently remove it from the database.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="lookup_ref_no" class="form-label fw-bold">Enter Booking Reference #</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light fw-bold text-muted">#</span>
+                            <input type="text" 
+                                   id="lookup_ref_no" 
+                                   name="ref_no" 
+                                   class="form-control text-uppercase fw-semibold" 
+                                   placeholder="e.g. CCW1001 or REF12345" 
+                                   autocomplete="off"
+                                   required>
+                            <button type="button" class="btn btn-dark px-4" id="btnLookupJob">
+                                <i class="bi bi-search me-1"></i> Verify Job
+                            </button>
+                        </div>
+                        <div class="form-text">Type the Ref # and click 'Verify Job' to preview before deletion, or click 'Delete Job' below.</div>
+                    </div>
+
+                    <!-- Job Preview Card (Hidden by default) -->
+                    <div id="jobLookupPreview" class="d-none mt-3">
+                        <div class="card border border-danger shadow-sm rounded-3">
+                            <div class="card-header bg-danger bg-opacity-10 fw-bold text-danger d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-info-circle me-1"></i> Job Found</span>
+                                <span class="badge bg-danger" id="previewJobStatus">Status</span>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-sm-6">
+                                        <div class="text-muted small">Reference No:</div>
+                                        <div class="fw-bold fs-6 text-dark" id="previewJobRef"></div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="text-muted small">Passenger:</div>
+                                        <div class="fw-bold text-dark" id="previewJobPassenger"></div>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-sm-6">
+                                        <div class="text-muted small">Pickup Address:</div>
+                                        <div class="small fw-semibold text-dark text-break" id="previewJobPickup"></div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="text-muted small">Dropoff Address:</div>
+                                        <div class="small fw-semibold text-dark text-break" id="previewJobDropoff"></div>
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-sm-6">
+                                        <div class="text-muted small">Date / Time:</div>
+                                        <div class="small fw-semibold text-dark" id="previewJobDateTime"></div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="text-muted small">Total Fare:</div>
+                                        <div class="fw-bold text-success" id="previewJobPrice"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="jobLookupAlert" class="alert alert-danger d-none mt-3 py-2 small" role="alert"></div>
+                </div>
+
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold" id="btnSubmitDeleteJob">
+                        <i class="bi bi-trash3-fill me-1"></i> Permanently Delete Job
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
     
     <br>
     
     {{-- Display Success/Error Messages --}}
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
+            <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>{{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
@@ -981,6 +1085,101 @@ document.addEventListener("DOMContentLoaded", function() {
             } catch (e) {
                 console.error(e);
                 statusDiv.textContent = "❌ Error fetching coordinates.";
+            }
+        });
+    }
+});
+</script>
+@push('scripts')
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const lookupInput = document.getElementById('lookup_ref_no');
+    const btnLookup = document.getElementById('btnLookupJob');
+    const previewCard = document.getElementById('jobLookupPreview');
+    const alertBox = document.getElementById('jobLookupAlert');
+    const deleteForm = document.getElementById('deleteJobByRefForm');
+
+    async function lookupJob() {
+        const ref = lookupInput ? lookupInput.value.trim() : '';
+        if (!ref) {
+            showAlert('Please enter a Reference # to verify.');
+            return;
+        }
+
+        if (alertBox) alertBox.classList.add('d-none');
+        if (previewCard) previewCard.classList.add('d-none');
+        if (btnLookup) {
+            btnLookup.disabled = true;
+            btnLookup.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Searching...';
+        }
+
+        try {
+            const response = await fetch("{{ route('setup.job.find-by-ref') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({ ref_no: ref })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.jobs && data.jobs.length > 0) {
+                const job = data.jobs[0];
+                document.getElementById('previewJobRef').textContent = job.ref_no || ref;
+                document.getElementById('previewJobPassenger').textContent = (job.passenger_name || 'N/A') + (job.phone_no ? ' (' + job.phone_no + ')' : '');
+                document.getElementById('previewJobPickup').textContent = job.pickup_address || 'N/A';
+                document.getElementById('previewJobDropoff').textContent = job.dropoff_address || 'N/A';
+                document.getElementById('previewJobDateTime').textContent = (job.pickup_date || '') + ' ' + (job.pickup_time || '');
+                document.getElementById('previewJobPrice').textContent = '£' + parseFloat(job.price || 0).toFixed(2);
+                document.getElementById('previewJobStatus').textContent = job.status || 'Pending';
+                
+                if (previewCard) previewCard.classList.remove('d-none');
+            } else {
+                showAlert(data.message || 'No job found with this Reference #.');
+            }
+        } catch (err) {
+            showAlert('Network error while searching for the job.');
+        } finally {
+            if (btnLookup) {
+                btnLookup.disabled = false;
+                btnLookup.innerHTML = '<i class="bi bi-search me-1"></i> Verify Job';
+            }
+        }
+    }
+
+    function showAlert(msg) {
+        if (alertBox) {
+            alertBox.textContent = msg;
+            alertBox.classList.remove('d-none');
+        }
+    }
+
+    if (btnLookup) {
+        btnLookup.addEventListener('click', lookupJob);
+    }
+
+    if (lookupInput) {
+        lookupInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                lookupJob();
+            }
+        });
+    }
+
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            const ref = lookupInput ? lookupInput.value.trim() : '';
+            if (!ref) {
+                e.preventDefault();
+                showAlert('Please enter a Reference # to delete.');
+                return;
+            }
+            if (!confirm(`Are you sure you want to PERMANENTLY DELETE job #${ref}? This action cannot be undone.`)) {
+                e.preventDefault();
             }
         });
     }
