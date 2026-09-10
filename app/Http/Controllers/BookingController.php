@@ -3146,7 +3146,7 @@ public function store(Request $request)
         'dropoff_address'=> 'required|string',
         'payment_type'   => 'required|in:cash,card,account',
         'phone_no'       => 'nullable|string',
-        'email'          => 'nullable|email',
+        'email'          => 'required|email',
         'driver_id'      => 'nullable|string',
         'account_id'     => 'nullable|string',
         'account_name'   => 'nullable|string',

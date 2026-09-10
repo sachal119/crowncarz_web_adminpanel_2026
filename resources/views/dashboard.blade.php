@@ -1089,14 +1089,14 @@ td{
               <input type="hidden" name="account_name" id="qb_account_name">
             </div>
 
-            <!-- Email (Optional) -->
+            <!-- Email Address (Required) -->
             <div class="col-12 col-md-6">
               <label class="form-label fw-bold small text-dark mb-1">
-                Email Address <span class="text-muted fw-normal" style="font-size: 11px;">(Optional)</span>
+                Email Address <span class="text-danger">*</span>
               </label>
               <div class="input-group">
                 <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-envelope-fill"></i></span>
-                <input type="email" name="email" id="qb_email" class="form-control border-start-0" placeholder="passenger@example.com" style="border-radius: 0 8px 8px 0; font-size: 12.5px;">
+                <input type="email" name="email" id="qb_email" class="form-control border-start-0" placeholder="passenger@example.com" required style="border-radius: 0 8px 8px 0; font-size: 12.5px;">
               </div>
             </div>
 
