@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <h5 class="modal-title fw-bold mb-0" id="staffBookingsModalLabel">
                                         Bookings Handled by <span id="staffBookingsModalName" class="text-warning"></span>
                                     </h5>
-                                    <small class="text-white-50">View all booking IDs and details handled by this staff member</small>
+                                    <small class="text-white-50">View all bookings and details handled by this staff member</small>
                                 </div>
                             </div>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -592,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <span class="badge bg-dark fs-6 px-3 py-2" id="staffBookingsSummary">Total Bookings: 0</span>
                                 <div class="input-group w-auto" style="max-width: 320px;">
                                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                                    <input type="text" id="staffBookingsFilterInput" class="form-control" placeholder="Search ID, Ref, Passenger...">
+                                    <input type="text" id="staffBookingsFilterInput" class="form-control" placeholder="Search Ref #, Passenger...">
                                 </div>
                             </div>
 
@@ -601,7 +601,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <thead class="table-light sticky-top">
                                         <tr>
                                             <th>Ref #</th>
-                                            <th>Booking ID</th>
                                             <th>Passenger</th>
                                             <th>Phone</th>
                                             <th>Pickup -> Dropoff</th>
@@ -1270,7 +1269,7 @@ document.addEventListener("DOMContentLoaded", function() {
         staffTableBody.innerHTML = '';
 
         if (!list || list.length === 0) {
-            staffTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No bookings found for this staff member.</td></tr>`;
+            staffTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No bookings found for this staff member.</td></tr>`;
             return;
         }
 
@@ -1284,7 +1283,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
             tr.innerHTML = `
                 <td><span class="badge bg-dark fw-bold">${b.ref_no || '-'}</span></td>
-                <td><code class="text-primary fw-bold small">${b.id || '-'}</code></td>
                 <td class="fw-semibold text-dark">${b.passenger_name || 'N/A'}</td>
                 <td><small class="text-muted">${b.phone_no || '-'}</small></td>
                 <td>
