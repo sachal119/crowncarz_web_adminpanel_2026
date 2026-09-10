@@ -118,6 +118,6 @@ window.onload = initMap;
 
 
 <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAEgGulK8GkRGGBbfmX46LxHPeq6iGiyUU&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&callback=initMap">
 </script>
 @endsection

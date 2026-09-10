@@ -58,6 +58,6 @@ function initRouteMap() {
 </script>
 
 <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAEgGulK8GkRGGBbfmX46LxHPeq6iGiyUU&callback=initRouteMap">
+    src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&callback=initRouteMap">
 </script>
 @endsection

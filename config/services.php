@@ -14,8 +14,16 @@ return [
     |
     */
     'callswitch' => [
-    'webhook_token' => env('CALLSWITCH_WEBHOOK_TOKEN'),
-],
+        'webhook_token' => env('CALLSWITCH_WEBHOOK_TOKEN'),
+    ],
+
+    'google' => [
+        'maps_api_key' => env('GOOGLE_MAPS_API_KEY', env('GOOGLE_MAP_KEY')),
+    ],
+
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY', env('GOOGLE_MAP_KEY')),
+    ],
 
     'mysms' => [
         // Keep the current key as a fallback so existing live deployments continue

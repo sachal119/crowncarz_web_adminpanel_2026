@@ -2299,7 +2299,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmaqBQNz2RLPPwXl4hcQwELLgzwwbBbNA&callback=initMap&loading=async"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&callback=initMap&loading=async"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
