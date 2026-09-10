@@ -2088,6 +2088,38 @@ $bookings = new LengthAwarePaginator(
     
  
 
+    // 📊 Day-wise Bookings Chart Data (Last 7 Days + Today + Next 7 Days = 15 Days window)
+    $dayWiseMap = [];
+    for ($i = -7; $i <= 7; $i++) {
+        $dateObj = \Carbon\Carbon::today()->addDays($i);
+        $dateKey = $dateObj->format('Y-m-d');
+        $dayWiseMap[$dateKey] = [
+            'date'        => $dateKey,
+            'label'       => $dateObj->format('D, d M'),
+            'short_label' => $dateObj->format('d M'),
+            'day_name'    => $dateObj->format('D'),
+            'count'       => 0,
+            'revenue'     => 0,
+            'is_today'    => $dateObj->isToday(),
+            'is_future'   => $dateObj->isFuture(),
+        ];
+    }
+
+    if (!empty($bookingsSnapshot) && is_array($bookingsSnapshot)) {
+        foreach ($bookingsSnapshot as $b) {
+            $dateStr = $b['pickup_datetime'] ?? $b['pickup_time'] ?? ($b['created_at'] ?? null);
+            if (!$dateStr) continue;
+            try {
+                $parsedDate = \Carbon\Carbon::parse($dateStr)->format('Y-m-d');
+                if (isset($dayWiseMap[$parsedDate])) {
+                    $dayWiseMap[$parsedDate]['count']++;
+                    $dayWiseMap[$parsedDate]['revenue'] += (float)($b['price'] ?? 0);
+                }
+            } catch (\Throwable $e) {}
+        }
+    }
+    $dayWiseChartData = array_values($dayWiseMap);
+
     // 6️⃣ Return View With Dashboard Stats
     return view('dashboard', compact(
         'bookings',
@@ -2096,7 +2128,8 @@ $bookings = new LengthAwarePaginator(
         'drivers',
         'totalUsers',
         'todaysRevenue',
-        'revenueBreakdown'
+        'revenueBreakdown',
+        'dayWiseChartData'
     ));
 
     // 5️⃣ Fetch vehicle type for each booking
@@ -6858,10 +6891,43 @@ public function search(Request $request)
         ]
     );
 
+    // 📊 Day-wise Bookings Chart Data
+    $dayWiseMap = [];
+    for ($i = -7; $i <= 7; $i++) {
+        $dateObj = \Carbon\Carbon::today()->addDays($i);
+        $dateKey = $dateObj->format('Y-m-d');
+        $dayWiseMap[$dateKey] = [
+            'date'        => $dateKey,
+            'label'       => $dateObj->format('D, d M'),
+            'short_label' => $dateObj->format('d M'),
+            'day_name'    => $dateObj->format('D'),
+            'count'       => 0,
+            'revenue'     => 0,
+            'is_today'    => $dateObj->isToday(),
+            'is_future'   => $dateObj->isFuture(),
+        ];
+    }
+
+    if (!empty($firebaseBookings) && is_array($firebaseBookings)) {
+        foreach ($firebaseBookings as $b) {
+            $dateStr = $b['pickup_datetime'] ?? $b['pickup_time'] ?? ($b['created_at'] ?? null);
+            if (!$dateStr) continue;
+            try {
+                $parsedDate = \Carbon\Carbon::parse($dateStr)->format('Y-m-d');
+                if (isset($dayWiseMap[$parsedDate])) {
+                    $dayWiseMap[$parsedDate]['count']++;
+                    $dayWiseMap[$parsedDate]['revenue'] += (float)($b['price'] ?? 0);
+                }
+            } catch (\Throwable $e) {}
+        }
+    }
+    $dayWiseChartData = array_values($dayWiseMap);
+
     return view('dashboard', [
-        'bookings' => $bookings,
-        'drivers'  => $drivers,
-        'accounts' => $accounts,
+        'bookings'         => $bookings,
+        'drivers'          => $drivers,
+        'accounts'         => $accounts,
+        'dayWiseChartData' => $dayWiseChartData,
     ]);
 }
 

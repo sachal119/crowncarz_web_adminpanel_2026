@@ -582,8 +582,41 @@ td{
         </div>
     </div>
 
+    <!-- 📊 Day-Wise Bookings Volume & Trend Graph -->
+    <div class="col-12">
+        <div class="card shadow-sm border-0" style="border-radius: 14px; background: #ffffff; border: 1px solid #eaedf1;">
+            <div class="card-header bg-transparent border-0 pt-3 pb-1 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 14px;">
+                        <i class="bi bi-graph-up-arrow text-warning"></i> Day-Wise Bookings Volume & Trend
+                    </h6>
+                    <span class="badge bg-light text-muted border fw-normal" style="font-size: 11px;">15-Day Timeline</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    @php
+                        $chartList = $dayWiseChartData ?? [];
+                        $totalWindowBookings = array_sum(array_column($chartList, 'count'));
+                        $todayBookingItem = collect($chartList)->firstWhere('is_today', true);
+                        $todayCount = $todayBookingItem['count'] ?? 0;
+                    @endphp
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1" style="font-size: 11.5px;">
+                        <i class="bi bi-calendar-check"></i> Today: <strong>{{ $todayCount }}</strong> Bookings
+                    </span>
+                    <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-50 px-2 py-1" style="font-size: 11.5px;">
+                        <i class="bi bi-collection"></i> 15-Day Total: <strong>{{ $totalWindowBookings }}</strong> Bookings
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-3 pt-1">
+                <div style="position: relative; height: 175px; width: 100%;">
+                    <canvas id="dayWiseBookingsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
   
-  <div class="col-lg-12 mt-4">
+  <div class="col-lg-12 mt-2">
         <div class="card border-0">
             <div class="card-header bg-warning bg-opacity-25 d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 text-dark">
@@ -2794,6 +2827,133 @@ document.addEventListener('DOMContentLoaded', function () {
         placesScript.defer = true;
         window.initDashboardPlacesGlobal = initDashboardPlaces;
         document.head.appendChild(placesScript);
+    }
+    // =========================================================================
+    // 📊 DAY-WISE BOOKINGS CHART.JS INITIALIZATION
+    // =========================================================================
+    const chartDataRaw = @json($dayWiseChartData ?? []);
+    const chartCanvas = document.getElementById('dayWiseBookingsChart');
+
+    if (chartCanvas && Array.isArray(chartDataRaw) && chartDataRaw.length > 0 && typeof Chart !== 'undefined') {
+        const ctx = chartCanvas.getContext('2d');
+        const shortLabels = chartDataRaw.map(d => (d.is_today ? '⭐ Today ' : '') + (d.day_name + ' ' + d.short_label));
+        const counts = chartDataRaw.map(d => d.count || 0);
+        const backgroundColors = chartDataRaw.map(d => d.is_today ? '#111827' : (d.is_future ? 'rgba(184, 115, 51, 0.75)' : 'rgba(100, 116, 139, 0.45)'));
+        const borderColors = chartDataRaw.map(d => d.is_today ? '#E6B04A' : (d.is_future ? '#B87333' : '#64748b'));
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: shortLabels,
+                datasets: [
+                    {
+                        type: 'line',
+                        label: 'Trend',
+                        data: counts,
+                        borderColor: '#E6B04A',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: chartDataRaw.map(d => d.is_today ? '#111827' : '#E6B04A'),
+                        pointBorderColor: chartDataRaw.map(d => d.is_today ? '#E6B04A' : '#ffffff'),
+                        pointBorderWidth: 2,
+                        pointRadius: chartDataRaw.map(d => d.is_today ? 6 : 3.5),
+                        pointHoverRadius: 7,
+                        tension: 0.35,
+                        fill: false,
+                        order: 1
+                    },
+                    {
+                        type: 'bar',
+                        label: 'Daily Bookings',
+                        data: counts,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.5,
+                        categoryPercentage: 0.8,
+                        order: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#111827',
+                        titleColor: '#E6B04A',
+                        bodyColor: '#ffffff',
+                        padding: 10,
+                        cornerRadius: 8,
+                        borderColor: 'rgba(230, 176, 74, 0.4)',
+                        borderWidth: 1,
+                        callbacks: {
+                            title: function(items) {
+                                if (!items.length) return '';
+                                const idx = items[0].dataIndex;
+                                const item = chartDataRaw[idx];
+                                return (item.is_today ? '⭐ TODAY - ' : '') + (item.label || item.date);
+                            },
+                            label: function(context) {
+                                if (context.dataset.type === 'line') return null;
+                                const idx = context.dataIndex;
+                                const item = chartDataRaw[idx];
+                                const count = item.count || 0;
+                                const rev = parseFloat(item.revenue || 0).toFixed(2);
+                                return [
+                                    `📋 Bookings: ${count}`,
+                                    `💷 Total Est. Fare: £${rev}`
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: function(ctx) {
+                                const idx = ctx.index;
+                                return (chartDataRaw[idx] && chartDataRaw[idx].is_today) ? '#B87333' : '#64748b';
+                            },
+                            font: function(ctx) {
+                                const idx = ctx.index;
+                                return {
+                                    size: 10.5,
+                                    weight: (chartDataRaw[idx] && chartDataRaw[idx].is_today) ? 'bold' : 'normal'
+                                };
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0,
+                            color: '#94a3b8',
+                            font: {
+                                size: 10.5
+                            }
+                        },
+                        grid: {
+                            color: '#f1f5f9',
+                            drawBorder: false
+                        }
+                    }
+                }
+            }
+        });
     }
 });
 </script>
