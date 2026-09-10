@@ -308,7 +308,25 @@ td{
 }
 
 .table-responsive {
-    overflow: visible !important;
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 7px;
+}
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 /* 🌟 Realtime Dashboard Live Animations */
@@ -405,6 +423,8 @@ td{
 
 /* 💎 Future Bookings Table UX Polish */
 .custom-dashboard-table {
+    min-width: 1380px;
+    width: 100%;
     font-size: 12px;
     border-collapse: separate;
     border-spacing: 0;
@@ -1750,7 +1770,7 @@ function buildBookingRowHtml(booking, isNew = false) {
         <td class="col-platform text-center" style="${rowStyle}">${getPlatformBadgeHtml(booking.platform, booking.partner)}</td>
         <td class="col-actions" style="${rowStyle}">
             <div class="dropdown actions-dropdown" style="position: static;">
-                <button class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 28px; height: 28px; border-radius: 6px;">
+                <button class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" style="width: 28px; height: 28px; border-radius: 6px;">
                     <i class="bi bi-three-dots-vertical"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm rounded-3">
