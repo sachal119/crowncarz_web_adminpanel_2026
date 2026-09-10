@@ -345,20 +345,79 @@ td{
     background: #1e293b !important;
     color: #fff !important;
 }
+
+/* 🌟 Fullscreen Screen-Level Search & Filter Loader */
+.dashboard-global-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease-in-out;
+}
+
+.dashboard-global-loader.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.loader-content-box {
+    background: #111827;
+    border: 1px solid rgba(230, 176, 74, 0.4);
+    border-radius: 18px;
+    padding: 22px 28px;
+    text-align: center;
+    min-width: 220px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 25px rgba(230, 176, 74, 0.2) !important;
+    animation: loaderPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.spinner-crown-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner-center-icon {
+    position: absolute;
+    font-size: 13px;
+    color: #E6B04A !important;
+}
+
+@keyframes loaderPopIn {
+    0% {
+        transform: scale(0.88) translateY(10px);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+    }
+}
 </style>
 
+<!-- 🌟 Fullscreen Screen-Level Search & Filter Loader -->
+<div id="dashboardGlobalLoader" class="dashboard-global-loader" style="display: none;">
+    <div class="loader-content-box shadow-lg">
+        <div class="spinner-crown-wrapper mb-2">
+            <div class="spinner-border" role="status" style="width: 2.6rem; height: 2.6rem; border-width: 3px; color: #E6B04A !important;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <i class="bi bi-search spinner-center-icon"></i>
+        </div>
+        <h6 class="fw-bold text-white mb-1" style="font-size: 14px; letter-spacing: 0.3px;">Searching Bookings...</h6>
+        <p class="small mb-0" style="font-size: 11.5px; color: #94a3b8 !important;">Applying filters & updating results</p>
+    </div>
+</div>
 
-<!--<div class="d-flex justify-content-between align-items-center mb-4">-->
-<!--    <h1 class="h4 text-dark fw-bold mb-0">🚗 Dashboard Overview</h1>-->
-<!--    <div>-->
-<!--        <a href="{{ route('completed.jobs') }}" class="btn btn-outline-secondary me-2">-->
-<!--            <i class="bi bi-check-circle me-1"></i> Completed Jobs-->
-<!--        </a>-->
-<!--        <a href="{{ route('booking.create') }}" class="btn" style="background-color:#B87333; color:white;" target="_blank">-->
-<!--            <i class="bi bi-plus-circle me-1"></i> Make Booking-->
-<!--        </a>-->
-<!--    </div>-->
-<!--</div>-->
 <div class="container-fluid dashboard-section">
    <div class="row g-3 mb-2">
 
@@ -2357,8 +2416,28 @@ document.addEventListener('DOMContentLoaded', function () {
     // =========================================================================
     // ⚡ AJAX DYNAMIC FILTERING & PAGINATION (NO FULL PAGE RELOAD)
     // =========================================================================
+    const globalLoader = document.getElementById('dashboardGlobalLoader');
     let searchDebounceTimer = null;
     let currentFilterAbortController = null;
+
+    function showGlobalLoader() {
+        if (globalLoader) {
+            globalLoader.style.display = 'flex';
+            globalLoader.offsetHeight;
+            globalLoader.classList.add('active');
+        }
+    }
+
+    function hideGlobalLoader() {
+        if (globalLoader) {
+            globalLoader.classList.remove('active');
+            setTimeout(() => {
+                if (!globalLoader.classList.contains('active')) {
+                    globalLoader.style.display = 'none';
+                }
+            }, 230);
+        }
+    }
 
     async function applyDashboardFilter(customUrl = null, updateBrowserHistory = true) {
         if (!searchForm || !tableContainer) return;
@@ -2384,7 +2463,8 @@ document.addEventListener('DOMContentLoaded', function () {
             fetchUrl = `${searchForm.action}?${params.toString()}`;
         }
 
-        // Smooth subtle loading state
+        // Show Fullscreen Loader & Table Loading State
+        showGlobalLoader();
         if (tableCard) {
             tableCard.style.transition = 'opacity 0.2s ease';
             tableCard.style.opacity = '0.55';
@@ -2439,6 +2519,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Filter AJAX error:', err);
             }
         } finally {
+            hideGlobalLoader();
             if (tableCard) {
                 tableCard.style.opacity = '1';
                 tableCard.style.pointerEvents = 'auto';
