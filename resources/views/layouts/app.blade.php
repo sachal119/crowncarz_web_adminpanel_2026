@@ -27,25 +27,42 @@
     body {
       display: flex;
       flex-direction: column;
-    }
     .navbar-custom {
-      background-color: #000;
+      background: #111827;
       min-height: 65px;
       position: sticky;
       top: 0;
       z-index: 1030;
       width: 100%;
       flex-shrink: 0;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .navbar-custom .navbar-brand,
-    .navbar-custom .nav-link {
+    .navbar-custom .navbar-brand {
       color: #fff;
-      font-size: 12.5px;
-      transition: color 0.2s ease;
+    }
+    .navbar-custom .nav-link {
+      color: rgba(255, 255, 255, 0.85) !important;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 13px !important;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
     }
     .navbar-custom .nav-link:hover {
-      color: #ffc107; /* Golden hover effect */
+      color: #E6B04A !important;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .navbar-custom .nav-link.active {
+      color: #ffffff !important;
+      background: rgba(230, 176, 74, 0.22) !important;
+      border: 1px solid rgba(230, 176, 74, 0.45);
+      font-weight: 700;
+    }
+    .navbar-custom .nav-link.active i {
+      color: #E6B04A !important;
     }
     .navbar-custom .dropdown-menu {
       display: none;

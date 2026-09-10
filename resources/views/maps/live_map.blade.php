@@ -6,7 +6,7 @@
 .live-map-wrapper {
     position: relative;
     width: 100%;
-    height: calc(100vh - 62px);
+    height: calc(100vh - 65px);
     overflow: hidden;
     margin: -1.5rem -1.5rem -2rem -1.5rem;
 }
@@ -37,11 +37,11 @@
 }
 
 .glass-panel {
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border: 1px solid rgba(255, 255, 255, 0.7);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
     border-radius: 14px;
 }
 
@@ -584,10 +584,7 @@
             <button class="btn btn-sm btn-close text-reset shadow-none" id="closeSidebarBtn"></button>
         </div>
         <div class="driver-list-scroll" id="driverCardsList">
-            <div class="text-center py-4 text-muted small">
-                <div class="spinner-border spinner-border-sm text-secondary mb-2" role="status"></div>
-                <div>Syncing live drivers from Firebase...</div>
-            </div>
+            <!-- Populated immediately on DOM load -->
         </div>
     </div>
 
@@ -709,7 +706,7 @@
 
 <script>
 // Global State
-let map;
+let map = null;
 let trafficLayer = null;
 let isTrafficActive = false;
 let currentMapTypeId = 'roadmap';
@@ -732,15 +729,22 @@ if (Array.isArray(initialDrivers)) {
 }
 
 // 📍 Snapchat / Heatmap Style Custom Overlay Marker Class
-class CustomDriverOverlay extends google.maps.OverlayView {
+class CustomDriverOverlay {
     constructor(driver, mapInstance, clickCallback) {
-        super();
         this.driver = driver;
+        this.map = mapInstance;
         this.lat = parseFloat(driver.latitude);
         this.lng = parseFloat(driver.longitude);
         this.clickCallback = clickCallback;
         this.div = null;
-        this.setMap(mapInstance);
+
+        if (window.google && google.maps && google.maps.OverlayView) {
+            this.overlay = new google.maps.OverlayView();
+            this.overlay.onAdd = () => this.onAdd();
+            this.overlay.draw = () => this.draw();
+            this.overlay.onRemove = () => this.onRemove();
+            this.overlay.setMap(mapInstance);
+        }
     }
 
     onAdd() {
@@ -756,15 +760,15 @@ class CustomDriverOverlay extends google.maps.OverlayView {
             }
         });
 
-        const panes = this.getPanes();
+        const panes = this.overlay.getPanes();
         if (panes && panes.overlayMouseTarget) {
             panes.overlayMouseTarget.appendChild(this.div);
         }
     }
 
     draw() {
-        if (!this.div) return;
-        const projection = this.getProjection();
+        if (!this.div || !this.overlay) return;
+        const projection = this.overlay.getProjection();
         if (!projection) return;
 
         const pos = new google.maps.LatLng(this.lat, this.lng);
@@ -787,6 +791,7 @@ class CustomDriverOverlay extends google.maps.OverlayView {
     }
 
     updateContent() {
+        if (!this.div) return;
         const d = this.driver;
         const status = normalizeStatus(d.status);
         const letter = (d.name || 'D').trim().charAt(0).toUpperCase();
@@ -855,14 +860,8 @@ function initLiveMapPage() {
 
     trafficLayer = new google.maps.TrafficLayer();
 
-    // Render initial state
+    // Render markers on map
     renderAllDrivers();
-
-    // Connect to Firebase for Real-time GPS & Status
-    initFirebaseLiveStream();
-
-    // Setup UI event handlers
-    setupUIEventHandlers();
 }
 
 window.initLiveMapPage = initLiveMapPage;
@@ -942,7 +941,7 @@ function initFirebaseLiveStream() {
             const currentSelected = driversState[selectedDriverId];
             updateDrawerData(currentSelected);
 
-            if (isFollowingDriver && currentSelected.latitude && currentSelected.longitude) {
+            if (isFollowingDriver && currentSelected.latitude && currentSelected.longitude && map) {
                 const pos = new google.maps.LatLng(
                     parseFloat(currentSelected.latitude),
                     parseFloat(currentSelected.longitude)
@@ -953,30 +952,18 @@ function initFirebaseLiveStream() {
     });
 }
 
-// 🚗 Render or Update Driver Markers on Map
+// 🚗 Render or Update Driver Markers on Map & Counts
 function renderAllDrivers() {
-    if (!map) return;
+    updateCounts();
+    renderSidebarList();
 
-    let totalCount = 0;
-    let availableCount = 0;
-    let engagedCount = 0;
-    let waitingCount = 0;
-    let breakCount = 0;
+    if (!map) return;
 
     const visibleDriverIds = new Set();
     const bounds = new google.maps.LatLngBounds();
-    let validGpsCount = 0;
 
     for (const id in driversState) {
         const driver = driversState[id];
-        const status = normalizeStatus(driver.status);
-
-        // Count stats
-        totalCount++;
-        if (status === 'available') availableCount++;
-        else if (status === 'engaged' || status === 'on_job') engagedCount++;
-        else if (status === 'waiting') waitingCount++;
-        else if (status === 'on_break' || status === 'on break') breakCount++;
 
         // Filter condition
         if (!matchesFilter(driver, activeFilter, searchQuery)) {
@@ -999,7 +986,6 @@ function renderAllDrivers() {
         const pos = { lat, lng };
         visibleDriverIds.add(id);
         bounds.extend(pos);
-        validGpsCount++;
 
         if (overlayMarkers[id]) {
             // Update existing custom overlay marker
@@ -1020,17 +1006,51 @@ function renderAllDrivers() {
             overlayMarkers[id].setVisible(false);
         }
     }
+}
 
-    // Update Counts Badges
-    document.getElementById('activeDriverCountBadge').textContent = validGpsCount;
-    document.getElementById('countAll').textContent = totalCount;
-    document.getElementById('countAvailable').textContent = availableCount;
-    document.getElementById('countEngaged').textContent = engagedCount;
-    document.getElementById('countWaiting').textContent = waitingCount;
-    document.getElementById('countBreak').textContent = breakCount;
+// 🔢 Update Counts Badges
+function updateCounts() {
+    let totalCount = 0;
+    let availableCount = 0;
+    let engagedCount = 0;
+    let waitingCount = 0;
+    let breakCount = 0;
+    let validGpsCount = 0;
 
-    // Render Sidebar List
-    renderSidebarList();
+    for (const id in driversState) {
+        const driver = driversState[id];
+        const status = normalizeStatus(driver.status);
+        totalCount++;
+
+        if (status === 'available') availableCount++;
+        else if (status === 'engaged' || status === 'on_job') engagedCount++;
+        else if (status === 'waiting') waitingCount++;
+        else if (status === 'on_break' || status === 'on break') breakCount++;
+
+        const lat = parseFloat(driver.latitude);
+        const lng = parseFloat(driver.longitude);
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+            validGpsCount++;
+        }
+    }
+
+    const badgeEl = document.getElementById('activeDriverCountBadge');
+    if (badgeEl) badgeEl.textContent = validGpsCount;
+
+    const countAllEl = document.getElementById('countAll');
+    if (countAllEl) countAllEl.textContent = totalCount;
+
+    const countAvailEl = document.getElementById('countAvailable');
+    if (countAvailEl) countAvailEl.textContent = availableCount;
+
+    const countEngagedEl = document.getElementById('countEngaged');
+    if (countEngagedEl) countEngagedEl.textContent = engagedCount;
+
+    const countWaitingEl = document.getElementById('countWaiting');
+    if (countWaitingEl) countWaitingEl.textContent = waitingCount;
+
+    const countBreakEl = document.getElementById('countBreak');
+    if (countBreakEl) countBreakEl.textContent = breakCount;
 }
 
 // 🔍 Filter & Search Helpers
@@ -1084,9 +1104,10 @@ function renderSidebarList() {
 
     if (driversArray.length === 0) {
         listContainer.innerHTML = `
-            <div class="text-center py-4 text-muted small">
-                <i class="bi bi-person-x fs-2 d-block mb-1 opacity-50"></i>
-                No matching drivers found
+            <div class="text-center py-5 text-muted small">
+                <i class="bi bi-person-x fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                <div class="fw-semibold text-dark">No Active Drivers Found</div>
+                <div class="text-muted mt-1">Drivers on duty will appear here automatically.</div>
             </div>
         `;
         return;
@@ -1096,7 +1117,7 @@ function renderSidebarList() {
     driversArray.forEach(driver => {
         const status = normalizeStatus(driver.status);
         const isSelected = selectedDriverId === driver.id;
-        const hasGps = driver.latitude && driver.longitude && !isNaN(parseFloat(driver.latitude));
+        const hasGps = driver.latitude && driver.longitude && !isNaN(parseFloat(driver.latitude)) && parseFloat(driver.latitude) !== 0;
         const letter = (driver.name || 'D').trim().charAt(0).toUpperCase();
 
         let statusClass = 'status-offline';
@@ -1138,11 +1159,15 @@ function selectDriver(driverId, panCamera = true) {
     const driver = driversState[driverId];
     if (!driver) return;
 
-    // Pan & Zoom on Map
+    // Pan & Zoom on Map if loaded
     if (panCamera && map && driver.latitude && driver.longitude) {
-        const pos = new google.maps.LatLng(parseFloat(driver.latitude), parseFloat(driver.longitude));
-        map.panTo(pos);
-        map.setZoom(16);
+        const lat = parseFloat(driver.latitude);
+        const lng = parseFloat(driver.longitude);
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+            const pos = new google.maps.LatLng(lat, lng);
+            map.panTo(pos);
+            map.setZoom(16);
+        }
     }
 
     // Refresh overlay classes
@@ -1156,7 +1181,8 @@ function selectDriver(driverId, panCamera = true) {
     updateDrawerData(driver);
 
     // Open Drawer
-    document.getElementById('driverDrawer').classList.add('open');
+    const drawerEl = document.getElementById('driverDrawer');
+    if (drawerEl) drawerEl.classList.add('open');
 
     // Update selected card highlight
     renderSidebarList();
@@ -1175,55 +1201,80 @@ function updateDrawerData(driver) {
 
     // Header Letter & Name
     const letter = (driver.name || 'D').trim().charAt(0).toUpperCase();
-    document.getElementById('drawerAvatarText').textContent = letter;
-    document.getElementById('drawerDriverName').textContent = driver.name || 'Unnamed Driver';
-    document.getElementById('drawerCallSign').textContent = driver.call_sign || 'D-000';
+    const avatarEl = document.getElementById('drawerAvatarText');
+    if (avatarEl) avatarEl.textContent = letter;
+
+    const nameEl = document.getElementById('drawerDriverName');
+    if (nameEl) nameEl.textContent = driver.name || 'Unnamed Driver';
+
+    const callSignEl = document.getElementById('drawerCallSign');
+    if (callSignEl) callSignEl.textContent = driver.call_sign || 'D-000';
     
     const badgeEl = document.getElementById('drawerStatusBadge');
-    badgeEl.className = 'status-badge ' + statusClass;
-    badgeEl.textContent = statusLabel;
+    if (badgeEl) {
+        badgeEl.className = 'status-badge ' + statusClass;
+        badgeEl.textContent = statusLabel;
+    }
 
     // Quick Contacts
     const phone = driver.phone || '';
     const callBtn = document.getElementById('drawerCallBtn');
     const smsBtn = document.getElementById('drawerSmsBtn');
-    if (phone) {
-        callBtn.href = 'tel:' + phone;
-        smsBtn.href = 'sms:' + phone;
-        callBtn.style.display = 'inline-flex';
-        smsBtn.style.display = 'inline-flex';
-    } else {
-        callBtn.style.display = 'none';
-        smsBtn.style.display = 'none';
+    if (callBtn && smsBtn) {
+        if (phone) {
+            callBtn.href = 'tel:' + phone;
+            smsBtn.href = 'sms:' + phone;
+            callBtn.style.display = 'inline-flex';
+            smsBtn.style.display = 'inline-flex';
+        } else {
+            callBtn.style.display = 'none';
+            smsBtn.style.display = 'none';
+        }
     }
 
     // Vehicle
     const reg = driver.vehicle_reg || 'NO REG';
-    document.getElementById('drawerRegPlate').textContent = reg;
-    document.getElementById('drawerVehicleModel').textContent = (driver.vehicle_make ? driver.vehicle_make + ' ' : '') + (driver.vehicle_model || 'Standard Saloon');
-    document.getElementById('drawerVehicleColor').textContent = (driver.vehicle_color || 'Color Unspecified') + (driver.vehicle_type ? ' • ' + driver.vehicle_type : '');
+    const regEl = document.getElementById('drawerRegPlate');
+    if (regEl) regEl.textContent = reg;
+
+    const modelEl = document.getElementById('drawerVehicleModel');
+    if (modelEl) modelEl.textContent = (driver.vehicle_make ? driver.vehicle_make + ' ' : '') + (driver.vehicle_model || 'Standard Saloon');
+
+    const colorEl = document.getElementById('drawerVehicleColor');
+    if (colorEl) colorEl.textContent = (driver.vehicle_color || 'Color Unspecified') + (driver.vehicle_type ? ' • ' + driver.vehicle_type : '');
 
     // GPS Telemetry
     const lat = parseFloat(driver.latitude);
     const lng = parseFloat(driver.longitude);
-    if (!isNaN(lat) && !isNaN(lng)) {
-        document.getElementById('drawerCoords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    } else {
-        document.getElementById('drawerCoords').textContent = 'GPS Signal Inactive';
+    const coordsEl = document.getElementById('drawerCoords');
+    if (coordsEl) {
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+            coordsEl.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        } else {
+            coordsEl.textContent = 'GPS Signal Inactive';
+        }
     }
 
-    document.getElementById('drawerSpeed').textContent = (driver.speed ? Math.round(driver.speed) + ' mph' : '0 mph');
-    document.getElementById('drawerLastUpdate').textContent = 'Live Connected';
-    document.getElementById('drawerAddress').textContent = driver.address || 'Reading Hub';
+    const speedEl = document.getElementById('drawerSpeed');
+    if (speedEl) speedEl.textContent = (driver.speed ? Math.round(driver.speed) + ' mph' : '0 mph');
+
+    const addressEl = document.getElementById('drawerAddress');
+    if (addressEl) addressEl.textContent = driver.address || 'Reading Hub';
 
     // Contact Card
-    document.getElementById('drawerPhone').textContent = driver.phone || 'N/A';
-    document.getElementById('drawerEmail').textContent = driver.email || 'N/A';
-    document.getElementById('drawerBF').textContent = '£' + (parseFloat(driver.brought_forward) || 0).toFixed(2);
+    const phoneEl = document.getElementById('drawerPhone');
+    if (phoneEl) phoneEl.textContent = driver.phone || 'N/A';
+
+    const emailEl = document.getElementById('drawerEmail');
+    if (emailEl) emailEl.textContent = driver.email || 'N/A';
+
+    const bfEl = document.getElementById('drawerBF');
+    if (bfEl) bfEl.textContent = '£' + (parseFloat(driver.brought_forward) || 0).toFixed(2);
 
     // Actions
     const bfHistoryUrl = "{{ url('drivers') }}/" + driver.id + "/bf-history";
-    document.getElementById('drawerBfHistoryBtn').href = bfHistoryUrl;
+    const bfBtn = document.getElementById('drawerBfHistoryBtn');
+    if (bfBtn) bfBtn.href = bfHistoryUrl;
 }
 
 // 🎛️ UI Handlers (Filters, Search, Buttons)
@@ -1248,89 +1299,125 @@ function setupUIEventHandlers() {
     }
 
     // Fit All Bounds Button
-    document.getElementById('fitBoundsBtn').addEventListener('click', () => {
-        if (!map) return;
-        const bounds = new google.maps.LatLngBounds();
-        let count = 0;
-        for (const id in overlayMarkers) {
-            const overlay = overlayMarkers[id];
-            if (overlay && overlay.div && overlay.div.style.display !== 'none') {
-                bounds.extend(overlay.getPosition());
-                count++;
+    const fitBtn = document.getElementById('fitBoundsBtn');
+    if (fitBtn) {
+        fitBtn.addEventListener('click', () => {
+            if (!map) return;
+            const bounds = new google.maps.LatLngBounds();
+            let count = 0;
+            for (const id in overlayMarkers) {
+                const overlay = overlayMarkers[id];
+                if (overlay && overlay.div && overlay.div.style.display !== 'none') {
+                    bounds.extend(overlay.getPosition());
+                    count++;
+                }
             }
-        }
-        if (count > 1) {
-            map.fitBounds(bounds);
-        } else if (count === 1) {
-            map.setCenter(bounds.getCenter());
-            map.setZoom(15);
-        } else {
-            map.setCenter({ lat: 51.4543, lng: -0.9781 });
-            map.setZoom(12);
-        }
-    });
+            if (count > 1) {
+                map.fitBounds(bounds);
+            } else if (count === 1) {
+                map.setCenter(bounds.getCenter());
+                map.setZoom(15);
+            } else {
+                map.setCenter({ lat: 51.4543, lng: -0.9781 });
+                map.setZoom(12);
+            }
+        });
+    }
 
     // Traffic Toggle
-    document.getElementById('trafficToggleBtn').addEventListener('click', function () {
-        if (!trafficLayer) return;
-        isTrafficActive = !isTrafficActive;
-        trafficLayer.setMap(isTrafficActive ? map : null);
-        this.classList.toggle('btn-warning', isTrafficActive);
-        this.classList.toggle('btn-light', !isTrafficActive);
-    });
+    const trafficBtn = document.getElementById('trafficToggleBtn');
+    if (trafficBtn) {
+        trafficBtn.addEventListener('click', function () {
+            if (!trafficLayer || !map) return;
+            isTrafficActive = !isTrafficActive;
+            trafficLayer.setMap(isTrafficActive ? map : null);
+            this.classList.toggle('btn-warning', isTrafficActive);
+            this.classList.toggle('btn-light', !isTrafficActive);
+        });
+    }
 
     // Map Style Toggle
-    document.getElementById('mapStyleToggleBtn').addEventListener('click', function () {
-        if (!map) return;
-        currentMapTypeId = (currentMapTypeId === 'roadmap') ? 'hybrid' : 'roadmap';
-        map.setMapTypeId(currentMapTypeId);
-    });
+    const mapStyleBtn = document.getElementById('mapStyleToggleBtn');
+    if (mapStyleBtn) {
+        mapStyleBtn.addEventListener('click', function () {
+            if (!map) return;
+            currentMapTypeId = (currentMapTypeId === 'roadmap') ? 'hybrid' : 'roadmap';
+            map.setMapTypeId(currentMapTypeId);
+        });
+    }
 
     // Toggle Sidebar
     const sidebarEl = document.getElementById('driverSidebar');
-    document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
-        sidebarEl.classList.toggle('collapsed');
-    });
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    if (toggleSidebarBtn && sidebarEl) {
+        toggleSidebarBtn.addEventListener('click', () => {
+            sidebarEl.classList.toggle('collapsed');
+        });
+    }
 
-    document.getElementById('closeSidebarBtn').addEventListener('click', () => {
-        sidebarEl.classList.add('collapsed');
-    });
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    if (closeSidebarBtn && sidebarEl) {
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebarEl.classList.add('collapsed');
+        });
+    }
 
     // Close Drawer
     const drawerEl = document.getElementById('driverDrawer');
-    document.getElementById('closeDrawerBtn').addEventListener('click', () => {
-        drawerEl.classList.remove('open');
-        selectedDriverId = null;
-        isFollowingDriver = false;
-        for (const id in overlayMarkers) {
-            if (overlayMarkers[id]) {
-                overlayMarkers[id].updateContent();
+    const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+    if (closeDrawerBtn && drawerEl) {
+        closeDrawerBtn.addEventListener('click', () => {
+            drawerEl.classList.remove('open');
+            selectedDriverId = null;
+            isFollowingDriver = false;
+            for (const id in overlayMarkers) {
+                if (overlayMarkers[id]) {
+                    overlayMarkers[id].updateContent();
+                }
             }
-        }
-        renderSidebarList();
-    });
+            renderSidebarList();
+        });
+    }
 
     // Focus on Map Button in Drawer
-    document.getElementById('drawerFocusMapBtn').addEventListener('click', () => {
-        if (selectedDriverId && driversState[selectedDriverId]) {
-            const d = driversState[selectedDriverId];
-            if (d.latitude && d.longitude) {
-                map.panTo({ lat: parseFloat(d.latitude), lng: parseFloat(d.longitude) });
-                map.setZoom(17);
+    const focusMapBtn = document.getElementById('drawerFocusMapBtn');
+    if (focusMapBtn) {
+        focusMapBtn.addEventListener('click', () => {
+            if (selectedDriverId && driversState[selectedDriverId] && map) {
+                const d = driversState[selectedDriverId];
+                if (d.latitude && d.longitude) {
+                    map.panTo({ lat: parseFloat(d.latitude), lng: parseFloat(d.longitude) });
+                    map.setZoom(17);
+                }
             }
-        }
-    });
+        });
+    }
 
     // Follow Live GPS Toggle
     const followBtn = document.getElementById('drawerFollowToggleBtn');
-    followBtn.addEventListener('click', function () {
-        isFollowingDriver = !isFollowingDriver;
-        this.classList.toggle('btn-danger', isFollowingDriver);
-        this.classList.toggle('btn-warning', !isFollowingDriver);
-        if (isFollowingDriver) {
-            alert('🎥 Camera is now locked to follow this driver live.');
-        }
-    });
+    if (followBtn) {
+        followBtn.addEventListener('click', function () {
+            isFollowingDriver = !isFollowingDriver;
+            this.classList.toggle('btn-danger', isFollowingDriver);
+            this.classList.toggle('btn-warning', !isFollowingDriver);
+            if (isFollowingDriver) {
+                alert('🎥 Camera is now locked to follow this driver live.');
+            }
+        });
+    }
 }
+
+// ⚡ Immediate Startup on DOM Ready
+document.addEventListener('DOMContentLoaded', function () {
+    // 1️⃣ Immediately render initial server-passed drivers
+    renderSidebarList();
+    updateCounts();
+
+    // 2️⃣ Setup all click/filter listeners
+    setupUIEventHandlers();
+
+    // 3️⃣ Start Real-time Firebase stream immediately
+    initFirebaseLiveStream();
+});
 </script>
 @endsection
