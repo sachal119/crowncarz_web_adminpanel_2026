@@ -99,9 +99,13 @@ Route::prefix('bookings')->group(function () {
     Route::get('{booking}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
     Route::get('{booking}/{id}/view', [BookingController::class, 'view'])->name('bookings.view');
     Route::get('{booking}/details-json', [BookingController::class, 'getBookingDetailsJson'])->name('bookings.detailsJson');
+    Route::get('details-json', [BookingController::class, 'getBookingDetailsJson'])->name('bookings.detailsJsonDirect');
     // Route::put('/bookings/{id}', [BookingController::class, 'update'])->name('booking.update');
 });
 
+Route::get('/bookings/details-json', [BookingController::class, 'getBookingDetailsJson']);
+Route::get('/admin/bookings/details-json', [BookingController::class, 'getBookingDetailsJson']);
+Route::get('/admin/bookings/{booking}/details-json', [BookingController::class, 'getBookingDetailsJson']);
 
 Route::post('/bookings/send-sms', [BookingController::class, 'sendSms'])
     ->name('bookings.sendSmsDashboard');

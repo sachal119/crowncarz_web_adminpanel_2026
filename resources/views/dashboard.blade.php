@@ -1641,25 +1641,9 @@ td{
 
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const collapseEl = document.getElementById('filtersCollapse');
-  const chevron = document.querySelector('.filter-chevron');
-
-  collapseEl.addEventListener('show.bs.collapse', () => {
-    chevron.classList.remove('bi-chevron-down');
-    chevron.classList.add('bi-chevron-up');
-  });
-
-  collapseEl.addEventListener('hide.bs.collapse', () => {
-    chevron.classList.remove('bi-chevron-up');
-    chevron.classList.add('bi-chevron-down');
-  });
-});
-</script>
-
-<script>
 // Global state & configurations
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '{{ csrf_token() }}';
+const DETAILS_JSON_BASE_URL = "{{ url('bookings/details-json') }}";
 let DRIVERS_MAP = (function() {
     const map = {};
     const rawDrivers = @json($drivers);
@@ -2632,10 +2616,10 @@ function bindRowEvents(context = document) {
 
         // Modal Action buttons
         const editBtn = document.getElementById('modal-btn-edit');
-        if (editBtn) editBtn.href = `/bookings/${bookingId}/edit`;
+        if (editBtn) editBtn.href = `{{ url('/bookings') }}/${encodeURIComponent(bookingId)}/edit`;
 
         const receiptBtn = document.getElementById('modal-btn-receipt');
-        if (receiptBtn) receiptBtn.href = `/bookings/${bookingId}/receipt`;
+        if (receiptBtn) receiptBtn.href = `{{ url('/receipt') }}/${encodeURIComponent(bookingId)}`;
     }
 
     async function loadBookingDetailsAndLogs(bookingId) {
@@ -2652,7 +2636,8 @@ function bindRowEvents(context = document) {
         if (timelineContainer) timelineContainer.innerHTML = '';
 
         try {
-            const res = await fetch(`/bookings/${bookingId}/details-json`, {
+            const detailsUrl = `${DETAILS_JSON_BASE_URL}?id=${encodeURIComponent(bookingId)}&booking_id=${encodeURIComponent(bookingId)}`;
+            const res = await fetch(detailsUrl, {
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
