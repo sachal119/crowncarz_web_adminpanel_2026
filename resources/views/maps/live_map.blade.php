@@ -6,29 +6,32 @@
 .live-map-wrapper {
     position: relative;
     width: 100%;
-    height: calc(100vh - 65px);
+    height: 100%;
+    min-height: calc(100vh - 65px);
     overflow: hidden;
-    margin: -1.5rem -1.5rem -2rem -1.5rem;
+    margin: 0;
+    padding: 0;
 }
 
 #liveGoogleMap {
     width: 100%;
     height: 100%;
+    min-height: calc(100vh - 65px);
     background-color: #e5e3df;
 }
 
 /* Floating Top Controls Header */
 .map-floating-topbar {
     position: absolute;
-    top: 16px;
-    left: 16px;
-    right: 16px;
-    z-index: 1050;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    z-index: 1020;
     pointer-events: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
@@ -301,11 +304,11 @@
 /* Floating Driver List Sidebar */
 .driver-sidebar {
     position: absolute;
-    top: 80px;
-    left: 16px;
-    bottom: 24px;
+    top: 72px;
+    left: 14px;
+    bottom: 20px;
     width: 320px;
-    z-index: 1040;
+    z-index: 1025;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -380,12 +383,12 @@
 /* Driver Details Drawer (Slide-in) */
 .driver-drawer {
     position: absolute;
-    top: 16px;
-    right: 16px;
-    bottom: 24px;
+    top: 14px;
+    right: 14px;
+    bottom: 20px;
     width: 380px;
-    max-width: calc(100vw - 32px);
-    z-index: 1060;
+    max-width: calc(100vw - 28px);
+    z-index: 1030;
     display: flex;
     flex-direction: column;
     overflow: hidden;

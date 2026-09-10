@@ -27,12 +27,13 @@
     body {
       display: flex;
       flex-direction: column;
+    }
     .navbar-custom {
       background: #111827;
       min-height: 65px;
       position: sticky;
       top: 0;
-      z-index: 1030;
+      z-index: 1060 !important;
       width: 100%;
       flex-shrink: 0;
       box-shadow: 0 4px 20px rgba(0,0,0,0.25);
@@ -42,7 +43,7 @@
       color: #fff;
     }
     .navbar-custom .nav-link {
-      color: rgba(255, 255, 255, 0.85) !important;
+      color: rgba(255, 255, 255, 0.88) !important;
       font-size: 13px;
       font-weight: 500;
       padding: 7px 13px !important;
@@ -57,8 +58,8 @@
     }
     .navbar-custom .nav-link.active {
       color: #ffffff !important;
-      background: rgba(230, 176, 74, 0.22) !important;
-      border: 1px solid rgba(230, 176, 74, 0.45);
+      background: rgba(230, 176, 74, 0.25) !important;
+      border: 1px solid rgba(230, 176, 74, 0.5);
       font-weight: 700;
     }
     .navbar-custom .nav-link.active i {
@@ -68,6 +69,7 @@
       display: none;
       position: absolute !important;
       will-change: transform;
+      z-index: 1070;
     }
     .navbar-custom .nav-item.dropdown:hover > .dropdown-menu,
     .navbar-custom .dropdown-menu.show {
@@ -79,6 +81,28 @@
       padding: 20px;
       width: 100%;
     }
+
+    @if(request()->routeIs('live.map'))
+    html, body {
+      height: 100vh !important;
+      overflow: hidden !important;
+    }
+    .main-content {
+      padding: 0 !important;
+      margin: 0 !important;
+      height: calc(100vh - 65px) !important;
+      overflow: hidden !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .main-content > .container-fluid {
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: 100% !important;
+    }
+    @endif
 
     /* Responsive font scaling */
     @media (max-width: 1200px) { html { font-size: 13.5px; } }
