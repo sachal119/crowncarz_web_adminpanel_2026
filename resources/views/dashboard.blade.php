@@ -650,11 +650,11 @@ td{
                         $todayBookingItem = collect($chartList)->firstWhere('is_today', true);
                         $todayCount = $todayBookingItem['count'] ?? 0;
                     @endphp
-                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-1.5 py-0.5" style="font-size: 11px;" title="Today's Bookings">
-                        <i class="bi bi-calendar-check"></i> Today: <strong>{{ $todayCount }}</strong>
+                    <span class="badge px-2 py-1 shadow-sm d-inline-flex align-items-center gap-1" style="background: #111827; color: #E6B04A; border: 1px solid rgba(230, 176, 74, 0.5); font-size: 11.5px; border-radius: 7px;" title="Today's Bookings">
+                        <i class="bi bi-calendar-check-fill" style="color: #E6B04A;"></i> Today: <strong class="text-white ms-0.5">{{ $todayCount }}</strong>
                     </span>
-                    <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-50 px-1.5 py-0.5" style="font-size: 11px;" title="15-Day Timeline Total">
-                        <i class="bi bi-collection"></i> 15D: <strong>{{ $totalWindowBookings }}</strong>
+                    <span class="badge px-2 py-1 shadow-sm d-inline-flex align-items-center gap-1" style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size: 11.5px; border-radius: 7px;" title="15-Day Timeline Total">
+                        <i class="bi bi-collection-fill" style="color: #d97706;"></i> 15D: <strong class="text-dark ms-0.5">{{ $totalWindowBookings }}</strong>
                     </span>
                 </div>
             </div>
