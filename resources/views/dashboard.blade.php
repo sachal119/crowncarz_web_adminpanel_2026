@@ -221,8 +221,6 @@ td{
   margin-bottom: 2px;
 }
 
-
-</style>
 .table-responsive {
     overflow: visible !important;
 }
