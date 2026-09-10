@@ -446,16 +446,18 @@ td{
 
                         <!-- Filter Button -->
                         <div class="col-md-3 col-5">
-                            <div class="d-flex gap-1">
-                                <button type="submit" class="btn text-white fw-bold w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 10px; border: none; font-size: 12.5px; height: 36px;">
+                            <div class="d-flex gap-1" id="filterButtonsGroup">
+                                <button type="submit" id="filterSubmitBtn" class="btn text-white fw-bold w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 10px; border: none; font-size: 12.5px; height: 36px;">
                                     <i class="bi bi-search"></i>
                                     <span>Filter</span>
                                 </button>
-                                @if(request('search') || request('date_range') || request('from_date') || request('to_date') || request('driver_id') || request('payment_type'))
-                                <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Reset All Filters" style="border-radius: 10px; width: 36px; height: 36px; flex-shrink: 0;">
-                                    <i class="bi bi-x-lg"></i>
-                                </a>
-                                @endif
+                                <div id="filterResetWrapper" class="d-flex">
+                                    @if(request('search') || request('date_range') || request('from_date') || request('to_date') || request('driver_id') || request('payment_type'))
+                                    <button type="button" id="resetFiltersBtn" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Reset All Filters" style="border-radius: 10px; width: 36px; height: 36px; flex-shrink: 0;">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -650,252 +652,10 @@ td{
     </tr>
 </thead>
 <tbody class="small" id="bookingsTableBody">
-@forelse($bookings as $booking)
-    @php
-        $isHighPrice   = ($booking['price'] ?? 0) > 50;
-        $isHidden      = ($booking['hidden'] ?? false) == true;
-
-        if ($isHidden) {
-            $rowStyle = 'background-color: yellow; color: #000;';
-        } elseif ($isHighPrice) {
-            $rowStyle = 'background-color: burlywood; color: #000;';
-        } else {
-            $rowStyle = '';
-        }
-       
-        $platform = (int) ($booking['platform'] ?? 1);
-        $partner = strtolower((string) ($booking['partner'] ?? ''));
-
-        if ($platform === 3 || $partner === 'nonstop_ai') {
-            $platformLabel = 'AI Call';
-            $platformBadge = 'bg-info text-dark';
-        } else {
-            switch ($platform) {
-                case 0:
-                    $platformLabel = 'App';
-                    $platformBadge = 'bg-danger';
-                    break;
-                case 2:
-                    $platformLabel = 'Admin';
-                    $platformBadge = 'bg-warning';
-                    break;
-                case 1:
-                default:
-                    $platformLabel = 'Web';
-                    $platformBadge = 'bg-primary';
-                    break;
-            }
-        }
-
-        $statusBadges = [
-            'pending'      => 'warning',
-            'accepted'     => 'info',
-            'declined'     => 'danger',
-            'onroute'      => 'primary',
-            'arrived'      => 'success',
-            'pickedup'     => 'success',
-            'completed'    => 'primary',
-            'job_cancelled'=> 'danger',
-            'no_show'      => 'secondary',
-        ];
-
-        $currentStatus = $booking['status'] ?? 'pending';
-        $statusBadgeClass = $statusBadges[$currentStatus] ?? 'warning';
-        $statusSelectStyle = $statusBadgeClass === 'secondary' 
-            ? '' 
-            : "background-color: var(--bs-{$statusBadgeClass}); color: var(--bs-black); border-color: var(--bs-{$statusBadgeClass});";
-
-        $paymentType = strtolower($booking['payment_type'] ?? 'unknown');
-        $paymentColors = [
-            'cash'    => '#28a745',
-            'card'    => '#0d6efd',
-            'account' => '#6f42c1',
-        ];
-        $bgColor = $paymentColors[$paymentType] ?? '#6c757d';
-        $driver = collect($drivers)->firstWhere('id', $booking['driver_id'] ?? null);
-    @endphp
-    <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row" style="{{ $rowStyle }}">
-        <td class="col-ref" style="{{ $rowStyle }}">{{ $booking['ref_no'] ?? 'N/A' }}</td>
-        <td class="col-payment" style="{{ $rowStyle }}">
-            <span class="badge rounded-pill px-3 py-2" style="background-color: {{ $bgColor }}; color: #fff;">
-                {{ ucfirst($paymentType) }}
-            </span>
-        </td>
-        <td class="col-passenger" style="{{ $rowStyle }}">{{ $booking['passenger_name'] ?? 'N/A' }}</td>
-        <td class="col-driver driver-cell" style="{{ $rowStyle }}">
-            @if($driver)
-                <span class="badge rounded-pill bg-danger bg-opacity-90 px-3 py-2 me-1 driver-badge">
-                    {{ $driver['call_sign'] ?? '' }}/{{ $driver['name'] ?? '' }}
-                </span>
-            @else
-                <span class="text-muted unassigned-driver">-</span>
-            @endif
-        </td>
-        <td class="col-phone" style="{{ $rowStyle }}">{{ $booking['phone_no'] ?? 'N/A' }}</td>
-        <td class="col-pickup" style="{{ $rowStyle }}">{{ Str::limit($booking['pickup_address'], 30) }}</td>
-        <td class="col-dropoff" style="{{ $rowStyle }}">{{ Str::limit($booking['dropoff_address'], 30) }}</td>
-        <td class="col-vias" style="{{ $rowStyle }}">
-            @if(!empty($booking['vias']))
-                {{ implode(' → ', $booking['vias']) }}
-            @else
-                -
-            @endif
-        </td>
-        <td class="col-date" style="{{ $rowStyle }}">{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '-' }}</td>
-        <td class="col-time" style="{{ $rowStyle }}">{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '-' }}</td>
-        <td class="col-vehicle" style="{{ $rowStyle }}">
-            @php
-                $type = $booking['vehicle_make'] ?? '-';
-                $badges = [
-                    'Saloon' => 'primary',
-                    'Estate' => 'success',
-                    'MPV' => 'warning',
-                    '8 Seater' => 'danger',
-                    'Executive' => 'dark',
-                ];
-                $badgeClass = $badges[$type] ?? 'secondary';
-            @endphp
-            <span class="badge bg-{{ $badgeClass }}" style="font-size: 0.85rem;">{{ $type }}</span>
-        </td>
-        <td class="col-flight" style="{{ $rowStyle }}">{{ $booking['flight_no'] ?? '-' }}</td>
-        <td class="col-price" style="{{ $rowStyle }}">{{ $booking['price'] ?? '-' }}</td>
-        <td class="col-comment" style="{{ $rowStyle }}">
-            {{ isset($booking['job_comment']) ? Str::limit($booking['job_comment'], 20) : 'No comment' }}
-        </td>
-        <td class="col-status" style="{{ $rowStyle }}">
-            <form method="POST" action="{{ route('bookings.updateStatusManual', $booking['id']) }}" class="statusForm">
-                @csrf
-                <select class="form-select form-select-sm text-black statusSelect"
-                        name="status"
-                        style="{{ $statusSelectStyle }}; width:100px;"
-                        data-booking-id="{{ $booking['id'] }}">
-                    @php
-                        $statusOptions = [
-                            'pending'       => 'Pending',
-                            'accepted'      => 'Accepted',
-                            'declined'      => 'Declined',
-                            'onroute'       => 'On Route',
-                            'arrived'       => 'Arrived',
-                            'pickedup'      => 'Picked Up',
-                            'completed'     => 'Completed',
-                            'job_cancelled' => 'Job Cancelled',
-                            'no_show'       => 'No Show',
-                        ];
-                    @endphp
-                    @foreach($statusOptions as $value => $label)
-                        <option value="{{ $value }}" {{ ($booking['status'] ?? '') == $value ? 'selected' : '' }}>
-                            {{ $label }}
-                        </option>
-                    @endforeach
-                </select>
-            </form>
-        </td>
-        <td class="col-platform" style="{{ $rowStyle }}">
-            <span class="badge {{ $platformBadge }}" style="font-size: 0.75rem;">
-                {{ $platformLabel }}
-            </span>
-        </td>
-        <td class="col-actions" style="{{ $rowStyle }}">
-            <div class="dropdown actions-dropdown" style="position: static;">
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-three-dots-vertical"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm rounded-3">
-                    <li class="action-dispatch-item" style="{{ !empty($booking['driver_id']) ? 'display:none;' : '' }}">
-                        <a class="dropdown-item d-flex align-items-center text-secondary dispatch-driver-btn"
-                           href="#"
-                           data-booking-id="{{ $booking['id'] ?? '' }}"
-                           data-bs-toggle="modal"
-                           data-bs-target="#dispatchDriverModal">
-                            <i class="bi bi-truck me-2"></i> Dispatch Driver
-                        </a>
-                    </li>
-                    <li class="action-track-item" style="{{ empty($booking['driver_id']) ? 'display:none;' : '' }}">
-                        <a class="dropdown-item d-flex align-items-center text-primary track-driver-link" href="{{ route('bookings.track', $booking['id']) }}">
-                            <i class="bi bi-geo-alt me-2"></i> Track Driver
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center text-success" href="{{ route('bookings.receipt', $booking['id']) }}">
-                            <i class="bi bi-receipt me-2"></i> Receipt
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center text-warning" href="{{ route('bookings.route', $booking['id']) }}">
-                            <i class="bi bi-map me-2"></i> Route
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center text-info" href="{{ route('bookings.return', $booking['id']) }}">
-                            <i class="bi bi-arrow-repeat me-2"></i> Create Return Job
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center text-success send-confirmation-email-btn"
-                           href="#"
-                           data-booking-id="{{ $booking['id'] ?? '' }}"
-                           data-booking-ref="{{ $booking['ref_no'] ?? '' }}"
-                           data-passenger-email="{{ $booking['email'] ?? '' }}"
-                           data-passenger-name="{{ $booking['passenger_name'] ?? '' }}">
-                            <i class="bi bi-envelope me-2"></i> Send Confirmation Email
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center text-warning send-confirmation-sms-btn"
-                           href="#"
-                           data-booking-id="{{ $booking['ref_no'] ?? '' }}"
-                           data-phone="{{ $booking['phone_no'] ?? '' }}"
-                           data-name="{{ $booking['passenger_name'] ?? '' }}"
-                           data-date="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '' }}"
-                           data-time="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '' }}"
-                           data-vehicle="{{ $booking['vehicle_make'] ?? '' }}"
-                           data-price="{{ $booking['price'] ?? '' }}"
-                           data-payment="{{ ucfirst($booking['payment_type'] ?? '') }}"
-                           data-pickup="{{ $booking['pickup_address'] ?? '' }}"
-                           data-dropoff="{{ $booking['dropoff_address'] ?? '' }}"
-                           data-flight_no="{{ $booking['flight_no'] ?? '' }}"
-                           data-via="{{ !empty($booking['vias']) ? implode(' → ', $booking['vias']) : '-' }}">
-                            <i class="bi bi-chat-left-text me-2"></i> Send Confirmation SMS
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center text-danger recall-job-btn" href="#"
-                           data-booking-id="{{ $booking['id'] ?? '' }}">
-                            <i class="bi bi-arrow-counterclockwise me-2"></i> Recall Job
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center text-secondary hide-job-btn" href="#"
-                           data-booking-id="{{ $booking['id'] ?? '' }}">
-                            <i class="bi bi-eye-slash me-2"></i> Hide Job
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center text-primary" href="{{ route('bookings.edit', $booking['id']) }}">
-                            <i class="bi bi-pencil-square me-2"></i> Edit Booking
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center text-info view-booking-btn"
-                           href="#"
-                           data-bs-toggle="modal"
-                           data-bs-target="#viewBookingModal"
-                           data-booking='@json($booking)'>
-                            <i class="bi bi-eye me-2"></i> View Booking
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </td>
-    </tr>
-@empty
-    <tr id="emptyBookingsRow">
-        <td colspan="17" class="text-center text-muted py-4">No future bookings found.</td>
-    </tr>
-@endforelse
+@include('partials.dashboard_table_rows', ['bookings' => $bookings, 'drivers' => $drivers])
 </tbody>
                 </table>
-<div class="justify-content-center mt-4">
+<div class="justify-content-center mt-4 d-flex" id="bookingsPaginationContainer">
     {{ $bookings->links('pagination::bootstrap-5') }}
 </div>
 
@@ -2551,6 +2311,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const fromInput = document.getElementById('fromDateInput');
     const toInput = document.getElementById('toDateInput');
     const searchForm = document.getElementById('dashboardSearchForm');
+    const tableContainer = document.getElementById('bookingsTableBody');
+    const paginationContainer = document.getElementById('bookingsPaginationContainer');
+    const totalCountBadge = document.getElementById('bookingsTotalCount');
+    const filterResetWrapper = document.getElementById('filterResetWrapper');
+    const tableCard = document.querySelector('#futureBookingsTable')?.closest('.card');
 
     // Default dates from request
     let defaultDates = [];
@@ -2579,12 +2344,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (selectedDates.length === 2) {
                 fromInput.value = instance.formatDate(selectedDates[0], "Y-m-d");
                 toInput.value = instance.formatDate(selectedDates[1], "Y-m-d");
+                applyDashboardFilter();
             } else if (selectedDates.length === 1) {
                 fromInput.value = instance.formatDate(selectedDates[0], "Y-m-d");
                 toInput.value = instance.formatDate(selectedDates[0], "Y-m-d");
             } else {
                 fromInput.value = '';
                 toInput.value = '';
+                applyDashboardFilter();
             }
         }
     });
@@ -2595,9 +2362,174 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Quick Date Preset Buttons
+    // =========================================================================
+    // ⚡ AJAX DYNAMIC FILTERING & PAGINATION (NO FULL PAGE RELOAD)
+    // =========================================================================
+    let searchDebounceTimer = null;
+    let currentFilterAbortController = null;
+
+    async function applyDashboardFilter(customUrl = null, updateBrowserHistory = true) {
+        if (!searchForm || !tableContainer) return;
+
+        // Abort previous in-flight filter request
+        if (currentFilterAbortController) {
+            currentFilterAbortController.abort();
+        }
+        currentFilterAbortController = new AbortController();
+
+        // Construct search URL
+        let fetchUrl;
+        if (customUrl) {
+            fetchUrl = customUrl;
+        } else {
+            const formData = new FormData(searchForm);
+            const params = new URLSearchParams();
+            for (const [k, v] of formData.entries()) {
+                if (v && v.trim() !== '') {
+                    params.set(k, v.trim());
+                }
+            }
+            fetchUrl = `${searchForm.action}?${params.toString()}`;
+        }
+
+        // Smooth subtle loading state
+        if (tableCard) {
+            tableCard.style.transition = 'opacity 0.2s ease';
+            tableCard.style.opacity = '0.55';
+            tableCard.style.pointerEvents = 'none';
+        }
+
+        try {
+            const response = await fetch(fetchUrl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                signal: currentFilterAbortController.signal
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server status ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data && data.success) {
+                // Update table rows
+                tableContainer.innerHTML = data.table_html;
+
+                // Update pagination links
+                if (paginationContainer) {
+                    paginationContainer.innerHTML = data.pagination_html || '';
+                }
+
+                // Update total badge count
+                if (totalCountBadge && typeof data.total !== 'undefined') {
+                    totalCountBadge.textContent = data.total;
+                }
+
+                // Re-bind interactive row event listeners (status change, modals, action dropdowns)
+                if (typeof bindRowEvents === 'function') {
+                    bindRowEvents(tableContainer);
+                }
+
+                // Smoothly update browser address bar
+                if (updateBrowserHistory && window.history && window.history.pushState) {
+                    window.history.pushState({ path: fetchUrl }, '', fetchUrl);
+                }
+
+                // Update reset button dynamic state
+                updateResetButtonState();
+            }
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                console.error('Filter AJAX error:', err);
+            }
+        } finally {
+            if (tableCard) {
+                tableCard.style.opacity = '1';
+                tableCard.style.pointerEvents = 'auto';
+            }
+        }
+    }
+
+    function updateResetButtonState() {
+        const sVal = document.getElementById('universalSearchInput')?.value.trim() || '';
+        const dRangeVal = document.getElementById('dateRangePicker')?.value.trim() || '';
+        const fDateVal = fromInput?.value.trim() || '';
+        const tDateVal = toInput?.value.trim() || '';
+        const driverVal = searchForm.querySelector('select[name="driver_id"]')?.value || '';
+        const payVal = searchForm.querySelector('select[name="payment_type"]')?.value || '';
+
+        const hasFilter = sVal || dRangeVal || fDateVal || tDateVal || driverVal || payVal;
+        let resetBtn = document.getElementById('resetFiltersBtn');
+        if (hasFilter) {
+            if (!resetBtn && filterResetWrapper) {
+                resetBtn = document.createElement('button');
+                resetBtn.type = 'button';
+                resetBtn.id = 'resetFiltersBtn';
+                resetBtn.className = 'btn btn-outline-secondary d-flex align-items-center justify-content-center';
+                resetBtn.title = 'Reset All Filters';
+                resetBtn.style.cssText = 'border-radius: 10px; width: 36px; height: 36px; flex-shrink: 0;';
+                resetBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                filterResetWrapper.appendChild(resetBtn);
+                attachResetListener(resetBtn);
+            }
+        } else {
+            if (resetBtn) resetBtn.remove();
+        }
+    }
+
+    function attachResetListener(btn) {
+        if (!btn) return;
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            searchForm.reset();
+            fp.clear();
+            fromInput.value = '';
+            toInput.value = '';
+            const drp = document.getElementById('dateRangePicker');
+            if (drp) drp.value = '';
+            const usi = document.getElementById('universalSearchInput');
+            if (usi) usi.value = '';
+            searchForm.querySelectorAll('select').forEach(sel => sel.value = '');
+            applyDashboardFilter("{{ route('dashboard') }}");
+        });
+    }
+
+    // Attach listener to initial reset button if rendered by blade
+    const initialResetBtn = document.getElementById('resetFiltersBtn');
+    if (initialResetBtn) attachResetListener(initialResetBtn);
+
+    // Form submit listener (Filter button / Enter key)
+    searchForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        applyDashboardFilter();
+    });
+
+    // Select dropdowns auto-apply filter on change
+    searchForm.querySelectorAll('select').forEach(sel => {
+        sel.addEventListener('change', function () {
+            applyDashboardFilter();
+        });
+    });
+
+    // Live search on keyword typing (400ms debounce)
+    const searchInput = document.getElementById('universalSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                applyDashboardFilter();
+            }, 380);
+        });
+    }
+
+    // Quick Date Preset Buttons (Instant AJAX filter)
     document.querySelectorAll('.quick-date-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
             const preset = this.getAttribute('data-preset');
             const today = new Date();
             let fromD = null;
@@ -2620,8 +2552,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 fp.clear();
                 fromInput.value = '';
                 toInput.value = '';
-                document.getElementById('dateRangePicker').value = '';
-                searchForm.submit();
+                const drp = document.getElementById('dateRangePicker');
+                if (drp) drp.value = '';
+                applyDashboardFilter("{{ route('dashboard') }}");
                 return;
             }
 
@@ -2629,9 +2562,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 fp.setDate([fromD, toD], true);
                 fromInput.value = fp.formatDate(fromD, "Y-m-d");
                 toInput.value = fp.formatDate(toD, "Y-m-d");
-                searchForm.submit();
+                applyDashboardFilter();
             }
         });
+    });
+
+    // Intercept Pagination Clicks (Smooth AJAX page change)
+    if (paginationContainer) {
+        paginationContainer.addEventListener('click', function (e) {
+            const pageLink = e.target.closest('a.page-link');
+            if (pageLink && pageLink.href) {
+                e.preventDefault();
+                applyDashboardFilter(pageLink.href);
+                const tableEl = document.getElementById('futureBookingsTable');
+                if (tableEl) {
+                    tableEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    }
+
+    // Browser Back / Forward button navigation
+    window.addEventListener('popstate', function () {
+        applyDashboardFilter(window.location.href, false);
     });
 
     // =========================================================================

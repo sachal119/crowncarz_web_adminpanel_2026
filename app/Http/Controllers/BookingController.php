@@ -2120,6 +2120,22 @@ $bookings = new LengthAwarePaginator(
     }
     $dayWiseChartData = array_values($dayWiseMap);
 
+    if (request()->ajax() || request()->wantsJson() || request()->header('X-Requested-With') === 'XMLHttpRequest' || request()->has('ajax')) {
+        $tableHtml = view('partials.dashboard_table_rows', [
+            'bookings' => $bookings,
+            'drivers'  => $drivers,
+        ])->render();
+
+        $paginationHtml = $bookings->links('pagination::bootstrap-5')->render();
+
+        return response()->json([
+            'success'         => true,
+            'table_html'      => $tableHtml,
+            'pagination_html' => $paginationHtml,
+            'total'           => $bookings->total(),
+        ]);
+    }
+
     // 6️⃣ Return View With Dashboard Stats
     return view('dashboard', compact(
         'bookings',
@@ -6921,7 +6937,24 @@ public function search(Request $request)
             } catch (\Throwable $e) {}
         }
     }
+
     $dayWiseChartData = array_values($dayWiseMap);
+
+    if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest' || $request->has('ajax')) {
+        $tableHtml = view('partials.dashboard_table_rows', [
+            'bookings' => $bookings,
+            'drivers'  => $drivers,
+        ])->render();
+
+        $paginationHtml = $bookings->links('pagination::bootstrap-5')->render();
+
+        return response()->json([
+            'success'         => true,
+            'table_html'      => $tableHtml,
+            'pagination_html' => $paginationHtml,
+            'total'           => $bookings->total(),
+        ]);
+    }
 
     return view('dashboard', [
         'bookings'         => $bookings,
