@@ -632,6 +632,20 @@ td{
                         </span>
                     </div>
                 </div>
+
+                <!-- 🚀 Make Booking Prompt (Shown after calculating price) -->
+                <div id="calcBookNowPrompt" class="p-2 mt-2 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2 animate__animated animate__fadeIn" style="display: none !important; background: #f0fdf4; border: 1px solid #86efac;">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 11.5px;">Do you want to make a booking against this?</div>
+                            <div class="text-muted" style="font-size: 10.5px;">Total Fare: <strong id="calcPromptPrice" class="text-success fw-bold">£0.00</strong></div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm text-white fw-bold px-2.5 py-1 d-flex align-items-center gap-1 shadow-sm" id="openQuickBookingModalBtn" style="background: #16a34a; border-radius: 7px; font-size: 11px; border: none;">
+                        <i class="bi bi-calendar2-plus-fill"></i> Continue & Book
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -915,6 +929,212 @@ td{
             </div>
         </form>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🚗 Quick Booking Creation Modal -->
+<div class="modal fade" id="quickBookingModal" tabindex="-1" aria-labelledby="quickBookingModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      <div class="modal-header py-3 px-4" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: rgba(230, 176, 74, 0.2); color: #E6B04A;">
+            <i class="bi bi-calendar2-check-fill fs-6"></i>
+          </div>
+          <div>
+            <h6 class="modal-title fw-bold mb-0 text-white" id="quickBookingModalLabel">Create Quick Booking</h6>
+            <small class="text-white-50" style="font-size: 11px;">Complete passenger details to confirm this booking</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form id="quickBookingForm" method="POST" action="{{ route('booking.store') }}">
+        @csrf
+        <!-- Hidden Booking Parameters from Instant Price Calculator -->
+        <input type="hidden" name="pickup_address" id="qb_pickup_address">
+        <input type="hidden" name="dropoff_address" id="qb_dropoff_address">
+        <div id="qb_via_container"></div>
+        <input type="hidden" name="vehicle_make" id="qb_vehicle_make">
+        <input type="hidden" name="pickup_date" id="qb_pickup_date">
+        <input type="hidden" name="pickup_time" id="qb_pickup_time">
+        <input type="hidden" name="price" id="qb_price">
+        <input type="hidden" name="fare" id="qb_fare">
+        <input type="hidden" name="parking" id="qb_parking">
+
+        <div class="modal-body p-4" style="background: #f8fafc;">
+          <!-- 🛣️ Journey Summary Card -->
+          <div class="card border-0 mb-3 shadow-sm" style="border-radius: 12px; background: #ffffff; border: 1px solid #e2e8f0;">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2 pb-2 border-bottom">
+                <span class="badge px-2.5 py-1.5 fw-bold" style="background: #e0f2fe; color: #0369a1; font-size: 11.5px; border-radius: 8px;">
+                  <i class="bi bi-car-front-fill me-1"></i> <span id="qbSummaryVehicle">Saloon</span>
+                </span>
+                <span class="badge px-2.5 py-1.5 fw-bold" style="background: #fef3c7; color: #92400e; font-size: 11.5px; border-radius: 8px;">
+                  <i class="bi bi-calendar3 me-1"></i> <span id="qbSummaryDateTime">--/--/---- --:--</span>
+                </span>
+                <span class="badge px-2.5 py-1.5 fw-bold" style="background: #ecfdf5; color: #065f46; font-size: 11.5px; border-radius: 8px;">
+                  <i class="bi bi-speedometer2 me-1"></i> <span id="qbSummaryDistance">0.00 Mi</span>
+                </span>
+                <span class="badge px-3 py-1.5 fw-bold ms-auto" style="background: #111827; color: #E6B04A; font-size: 13.5px; border-radius: 8px; border: 1px solid rgba(230, 176, 74, 0.4);">
+                  Total: <span id="qbSummaryFare">£0.00</span>
+                </span>
+              </div>
+
+              <div class="row g-2 text-dark small" style="font-size: 12px;">
+                <div class="col-12 col-md-6">
+                  <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-geo-alt-fill text-success mt-0.5"></i>
+                    <div>
+                      <span class="text-muted fw-semibold d-block" style="font-size: 10.5px;">PICKUP</span>
+                      <span id="qbSummaryPickup" class="fw-bold text-dark">-</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-pin-map-fill text-danger mt-0.5"></i>
+                    <div>
+                      <span class="text-muted fw-semibold d-block" style="font-size: 10.5px;">DROPOFF</span>
+                      <span id="qbSummaryDropoff" class="fw-bold text-dark">-</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12" id="qbSummaryViaRow" style="display: none;">
+                  <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-signpost-split-fill text-warning mt-0.5"></i>
+                    <div>
+                      <span class="text-muted fw-semibold d-block" style="font-size: 10.5px;">VIA STOP</span>
+                      <span id="qbSummaryVia" class="fw-bold text-dark">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 👤 Passenger & Booking Inputs -->
+          <div class="row g-3">
+            <!-- Passenger Name (Required) -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold small text-dark mb-1">
+                Passenger Name <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-person-fill"></i></span>
+                <input type="text" name="passenger_name" id="qb_passenger_name" class="form-control border-start-0" placeholder="e.g. John Smith" required style="border-radius: 0 8px 8px 0; font-size: 12.5px;">
+              </div>
+            </div>
+
+            <!-- Phone Number (Required) -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold small text-dark mb-1">
+                Phone Number <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-telephone-fill"></i></span>
+                <input type="tel" name="phone_no" id="qb_phone_no" class="form-control border-start-0" placeholder="e.g. 07123456789" required style="border-radius: 0 8px 8px 0; font-size: 12.5px;">
+              </div>
+            </div>
+
+            <!-- Payment Type -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold small text-dark mb-1">Payment Type</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-credit-card-2-front-fill"></i></span>
+                <select name="payment_type" id="qb_payment_type" class="form-select border-start-0" style="border-radius: 0 8px 8px 0; font-size: 12.5px;">
+                  <option value="cash" selected>Cash (Pay in car)</option>
+                  <option value="card">Card (Stripe payment link)</option>
+                  <option value="account">Account</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Assign Driver (Optional) -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold small text-dark mb-1">
+                Assign Driver <span class="text-muted fw-normal" style="font-size: 11px;">(Optional)</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-person-badge"></i></span>
+                <select name="driver_id" id="qb_driver_id" class="form-select border-start-0" style="border-radius: 0 8px 8px 0; font-size: 12.5px;">
+                  <option value="">-- Unallocated (Assign Later) --</option>
+                  @if(isset($drivers) && count($drivers) > 0)
+                    @foreach($drivers as $driver)
+                      @php
+                        $callSign = $driver['call_sign'] ?? 'D';
+                        $dName = $driver['name'] ?? 'Driver';
+                      @endphp
+                      <option value="{{ $driver['id'] }}">{{ $callSign }} • {{ $dName }}</option>
+                    @endforeach
+                  @endif
+                </select>
+              </div>
+            </div>
+
+            <!-- Account Selection (Hidden unless payment_type == 'account') -->
+            <div class="col-12" id="qb_account_wrapper" style="display: none;">
+              <label class="form-label fw-bold small text-dark mb-1">Select Account</label>
+              <select name="account_id" id="qb_account_id" class="form-select" style="border-radius: 8px; font-size: 12.5px;">
+                <option value="">-- Select Account --</option>
+                @if(isset($accounts) && count($accounts) > 0)
+                  @foreach($accounts as $acc)
+                    <option value="{{ $acc['id'] ?? '' }}" data-name="{{ $acc['business_name'] ?? ($acc['name'] ?? '') }}">
+                      {{ $acc['business_name'] ?? ($acc['name'] ?? 'Account') }} {{ !empty($acc['phone']) ? ' - ' . $acc['phone'] : '' }}
+                    </option>
+                  @endforeach
+                @endif
+              </select>
+              <input type="hidden" name="account_name" id="qb_account_name">
+            </div>
+
+            <!-- Email (Optional) -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold small text-dark mb-1">
+                Email Address <span class="text-muted fw-normal" style="font-size: 11px;">(Optional)</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-envelope-fill"></i></span>
+                <input type="email" name="email" id="qb_email" class="form-control border-start-0" placeholder="passenger@example.com" style="border-radius: 0 8px 8px 0; font-size: 12.5px;">
+              </div>
+            </div>
+
+            <!-- Flight No (Optional) -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold small text-dark mb-1">
+                Flight Number <span class="text-muted fw-normal" style="font-size: 11px;">(Optional)</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-airplane-fill"></i></span>
+                <input type="text" name="flight_no" id="qb_flight_no" class="form-control border-start-0" placeholder="e.g. BA123" style="border-radius: 0 8px 8px 0; font-size: 12.5px;">
+              </div>
+            </div>
+
+            <!-- Job Comments / Notes (Optional) -->
+            <div class="col-12">
+              <label class="form-label fw-bold small text-dark mb-1">
+                Comments / Special Instructions <span class="text-muted fw-normal" style="font-size: 11px;">(Optional)</span>
+              </label>
+              <textarea name="job_comment" id="qb_job_comment" rows="2" class="form-control" placeholder="Notes for driver, luggage details, child seats, etc." style="border-radius: 8px; font-size: 12.5px;"></textarea>
+            </div>
+          </div>
+
+          <!-- Alert Container for submission errors -->
+          <div id="qbAlertError" class="alert alert-danger mt-3 py-2 px-3 small" style="display: none; border-radius: 8px;"></div>
+        </div>
+
+        <div class="modal-footer py-2.5 px-4 bg-white border-top d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-sm btn-light border px-3 fw-semibold" data-bs-dismiss="modal" style="border-radius: 8px;">
+            Cancel
+          </button>
+          <button type="submit" id="qbSubmitBtn" class="btn btn-sm text-white fw-bold px-4 py-2 d-flex align-items-center gap-2 shadow-sm" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 8px; border: none;">
+            <span id="qbSubmitSpinner" class="spinner-border spinner-border-sm" style="display: none;" role="status"></span>
+            <i class="bi bi-check2-circle fs-6" id="qbSubmitIcon"></i>
+            <span id="qbSubmitText">Confirm & Create Booking</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -2661,8 +2881,106 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // =========================================================================
-    // ⚡ INSTANT PRICE CALCULATOR INTERACTION
+    // ⚡ INSTANT PRICE CALCULATOR & ADDRESS AUTOCOMPLETE (OS UK PLACES API)
     // =========================================================================
+    class DashboardAddressAutocomplete {
+        constructor(options) {
+            this.field = document.getElementById(options.fieldId);
+            this.apiKey = options.apiKey;
+            this.onSelectCallback = options.onSelect;
+            if (this.field) {
+                this.init();
+            }
+        }
+
+        init() {
+            // Wrapper around input field
+            this.wrapper = document.createElement('div');
+            this.wrapper.style.cssText = 'position: relative; flex: 1 1 auto; width: 1%;';
+            this.field.parentNode.insertBefore(this.wrapper, this.field);
+            this.wrapper.appendChild(this.field);
+
+            // Dropdown List Container
+            this.listContainer = document.createElement('ul');
+            this.listContainer.style.cssText = 'position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; z-index: 1060; list-style: none; padding: 0; margin: 4px 0 0 0; display: none; max-height: 220px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.15);';
+            this.wrapper.appendChild(this.listContainer);
+
+            let debounceTimer;
+
+            this.field.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                const query = this.field.value.trim();
+                if (query.length < 3) {
+                    this.listContainer.style.display = 'none';
+                    return;
+                }
+                debounceTimer = setTimeout(() => this.fetchOSPlaces(query), 350);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!this.wrapper.contains(e.target)) {
+                    this.listContainer.style.display = 'none';
+                }
+            });
+        }
+
+        async fetchOSPlaces(query) {
+            if (!this.apiKey) return;
+            const url = `https://api.os.uk/search/places/v1/find?query=${encodeURIComponent(query)}&key=${this.apiKey}&output_srs=EPSG:4326&maxresults=10`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                this.renderDropdown(data.results || []);
+            } catch (error) {
+                console.error('OS Places API Error:', error);
+            }
+        }
+
+        renderDropdown(results) {
+            this.listContainer.innerHTML = '';
+            if (!results || results.length === 0) {
+                this.listContainer.style.display = 'none';
+                return;
+            }
+
+            results.forEach(item => {
+                const place = item.DPA || item.LPI;
+                if (!place) return;
+
+                const addressParts = [
+                    place.ORGANISATION_NAME,
+                    place.BUILDING_NAME,
+                    place.BUILDING_NUMBER,
+                    place.THOROUGHFARE_NAME,
+                    place.POST_TOWN,
+                    place.POSTCODE
+                ].filter(Boolean);
+
+                const fullAddress = addressParts.join(', ');
+
+                const li = document.createElement('li');
+                li.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 11.5px; color: #1e293b; line-height: 1.4;';
+                li.textContent = fullAddress;
+
+                li.addEventListener('mouseenter', () => li.style.backgroundColor = '#f8fafc');
+                li.addEventListener('mouseleave', () => li.style.backgroundColor = 'transparent');
+
+                li.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    this.field.value = fullAddress;
+                    this.listContainer.style.display = 'none';
+                    if (typeof this.onSelectCallback === 'function') {
+                        setTimeout(() => this.onSelectCallback(fullAddress, place), 60);
+                    }
+                });
+
+                this.listContainer.appendChild(li);
+            });
+
+            this.listContainer.style.display = 'block';
+        }
+    }
+
     const calcPickupInput = document.getElementById('calcPickupInput');
     const calcDropoffInput = document.getElementById('calcDropoffInput');
     const calcViaInput = document.getElementById('calcViaInput');
@@ -2673,15 +2991,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const calcVehicleSelect = document.getElementById('calcVehicleSelect');
     const calcDateInput = document.getElementById('calcDateInput');
     const calcTimeInput = document.getElementById('calcTimeInput');
-    const calcParkingInput = document.getElementById('calcParkingInput');
     const getPriceBtn = document.getElementById('getInstantPriceBtn');
     const calcFinalBadge = document.getElementById('calcFinalPriceBadge');
     const calcDistText = document.getElementById('calcDistText');
-    const calcMilesInput = document.getElementById('calcMilesInput');
     const calcBreakdownText = document.getElementById('calcBreakdownText');
     const calcLoader = document.getElementById('calcLoader');
+    const calcBookNowPrompt = document.getElementById('calcBookNowPrompt');
+    const calcPromptPrice = document.getElementById('calcPromptPrice');
+    const openQuickBookingModalBtn = document.getElementById('openQuickBookingModalBtn');
 
-    let currentBaseFare = 0;
+    // Store calculated trip details in memory
+    window.currentCalculatedBooking = null;
 
     // Toggle Via Input
     if (addViaToggleBtn && calcViaWrapper) {
@@ -2714,7 +3034,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Extract UK Postcode or fallback to full address
+    // Extract UK Postcode or fallback to address
     function extractUkPostcode(addr) {
         if (!addr) return '';
         const postcodeRegex = /\b[A-Z]{1,2}\d{1,2}[A-Z]?\s*\d?[A-Z]{0,2}\b/i;
@@ -2728,6 +3048,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const dropoffRaw = calcDropoffInput?.value.trim();
 
         if (!pickupRaw || !dropoffRaw) {
+            if (calcBookNowPrompt) calcBookNowPrompt.style.setProperty('display', 'none', 'important');
             return;
         }
 
@@ -2773,9 +3094,34 @@ document.addEventListener('DOMContentLoaded', function () {
                         calcBreakdownText.textContent = `Fare: £${baseFare.toFixed(2)}`;
                     }
                 }
+
+                // Store in memory for Quick Booking Modal
+                window.currentCalculatedBooking = {
+                    pickupRaw,
+                    dropoffRaw,
+                    viaRaw: viaVal,
+                    vehicle,
+                    date,
+                    time,
+                    baseFare,
+                    parkingFee,
+                    totalFare,
+                    distance: formattedMiles
+                };
+
+                // Show Prompt: "Do you want to make a booking against this?"
+                if (calcPromptPrice) {
+                    calcPromptPrice.textContent = `£${totalFare.toFixed(2)}`;
+                }
+                if (calcBookNowPrompt) {
+                    calcBookNowPrompt.style.setProperty('display', 'flex', 'important');
+                }
             } else {
                 if (calcBreakdownText) {
                     calcBreakdownText.textContent = data.message || 'No route found';
+                }
+                if (calcBookNowPrompt) {
+                    calcBookNowPrompt.style.setProperty('display', 'none', 'important');
                 }
             }
         } catch (err) {
@@ -2800,59 +3146,247 @@ document.addEventListener('DOMContentLoaded', function () {
         calcTimeInput.addEventListener('change', fetchDashboardInstantPrice);
     }
 
-    // Google Places Autocomplete initialization on Dashboard inputs
-    function initDashboardPlaces() {
-        if (!window.google || !google.maps || !google.maps.places) return;
-        const opts = { componentRestrictions: { country: 'gb' } };
+    // Fetch Firebase Ordnance Survey Key and initialize Address Autocomplete
+    (async function initDashboardAddressAutocomplete() {
+        let apiKey = '';
+        try {
+            const res = await fetch('https://crown-carz-default-rtdb.firebaseio.com/system_settings/autocomplete_key.json');
+            apiKey = await res.json();
+        } catch (e) {
+            console.error('Failed to fetch autocomplete key from Firebase:', e);
+        }
+
+        if (!apiKey) {
+            console.warn('AddressAutocomplete: No API key loaded from Firebase.');
+            return;
+        }
 
         if (calcPickupInput) {
-            const autoPickup = new google.maps.places.Autocomplete(calcPickupInput, opts);
-            autoPickup.addListener('place_changed', function () {
-                const place = autoPickup.getPlace();
-                if (place && place.formatted_address) {
-                    calcPickupInput.value = place.formatted_address;
-                }
-                if (calcDropoffInput && calcDropoffInput.value.trim()) {
-                    fetchDashboardInstantPrice();
+            new DashboardAddressAutocomplete({
+                fieldId: 'calcPickupInput',
+                apiKey: apiKey,
+                onSelect: function () {
+                    if (calcDropoffInput && calcDropoffInput.value.trim()) {
+                        fetchDashboardInstantPrice();
+                    }
                 }
             });
         }
 
         if (calcDropoffInput) {
-            const autoDropoff = new google.maps.places.Autocomplete(calcDropoffInput, opts);
-            autoDropoff.addListener('place_changed', function () {
-                const place = autoDropoff.getPlace();
-                if (place && place.formatted_address) {
-                    calcDropoffInput.value = place.formatted_address;
-                }
-                if (calcPickupInput && calcPickupInput.value.trim()) {
-                    fetchDashboardInstantPrice();
+            new DashboardAddressAutocomplete({
+                fieldId: 'calcDropoffInput',
+                apiKey: apiKey,
+                onSelect: function () {
+                    if (calcPickupInput && calcPickupInput.value.trim()) {
+                        fetchDashboardInstantPrice();
+                    }
                 }
             });
         }
 
         if (calcViaInput) {
-            const autoVia = new google.maps.places.Autocomplete(calcViaInput, opts);
-            autoVia.addListener('place_changed', function () {
-                const place = autoVia.getPlace();
-                if (place && place.formatted_address) {
-                    calcViaInput.value = place.formatted_address;
+            new DashboardAddressAutocomplete({
+                fieldId: 'calcViaInput',
+                apiKey: apiKey,
+                onSelect: function () {
+                    fetchDashboardInstantPrice();
                 }
-                fetchDashboardInstantPrice();
             });
         }
+    })();
+
+    // =========================================================================
+    // 🚗 QUICK BOOKING MODAL & AJAX FORM SUBMISSION
+    // =========================================================================
+    const quickBookingModalEl = document.getElementById('quickBookingModal');
+    const quickBookingForm = document.getElementById('quickBookingForm');
+    const qbPaymentTypeSelect = document.getElementById('qb_payment_type');
+    const qbAccountWrapper = document.getElementById('qb_account_wrapper');
+    const qbAccountIdSelect = document.getElementById('qb_account_id');
+    const qbAccountNameInput = document.getElementById('qb_account_name');
+    const qbAlertError = document.getElementById('qbAlertError');
+    const qbSubmitBtn = document.getElementById('qbSubmitBtn');
+    const qbSubmitSpinner = document.getElementById('qbSubmitSpinner');
+    const qbSubmitIcon = document.getElementById('qbSubmitIcon');
+    const qbSubmitText = document.getElementById('qbSubmitText');
+
+    // Payment type change (Toggle Account select)
+    if (qbPaymentTypeSelect && qbAccountWrapper) {
+        qbPaymentTypeSelect.addEventListener('change', function () {
+            if (this.value === 'account') {
+                qbAccountWrapper.style.display = 'block';
+            } else {
+                qbAccountWrapper.style.display = 'none';
+                if (qbAccountIdSelect) qbAccountIdSelect.value = '';
+                if (qbAccountNameInput) qbAccountNameInput.value = '';
+            }
+        });
     }
 
-    if (window.google && window.google.maps && window.google.maps.places) {
-        initDashboardPlaces();
-    } else {
-        // Load Google Places library asynchronously if not loaded
-        const placesScript = document.createElement('script');
-        placesScript.src = "https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places&callback=initDashboardPlacesGlobal";
-        placesScript.async = true;
-        placesScript.defer = true;
-        window.initDashboardPlacesGlobal = initDashboardPlaces;
-        document.head.appendChild(placesScript);
+    // Account change -> store account name
+    if (qbAccountIdSelect && qbAccountNameInput) {
+        qbAccountIdSelect.addEventListener('change', function () {
+            const selectedOpt = this.options[this.selectedIndex];
+            qbAccountNameInput.value = selectedOpt ? (selectedOpt.getAttribute('data-name') || '') : '';
+        });
+    }
+
+    // Open Quick Booking Modal on button click
+    if (openQuickBookingModalBtn && quickBookingModalEl) {
+        openQuickBookingModalBtn.addEventListener('click', function () {
+            const bookingData = window.currentCalculatedBooking || {
+                pickupRaw: calcPickupInput?.value.trim() || '',
+                dropoffRaw: calcDropoffInput?.value.trim() || '',
+                viaRaw: calcViaWrapper?.style.display !== 'none' ? calcViaInput?.value.trim() : '',
+                vehicle: calcVehicleSelect?.value || 'Saloon',
+                date: calcDateInput?.value || '',
+                time: calcTimeInput?.value || '',
+                baseFare: 0,
+                parkingFee: 0,
+                totalFare: 0,
+                distance: '0.00 Mi'
+            };
+
+            // Populate Hidden Inputs
+            const qbPickup = document.getElementById('qb_pickup_address');
+            const qbDropoff = document.getElementById('qb_dropoff_address');
+            const qbViaContainer = document.getElementById('qb_via_container');
+            const qbVehicle = document.getElementById('qb_vehicle_make');
+            const qbDate = document.getElementById('qb_pickup_date');
+            const qbTime = document.getElementById('qb_pickup_time');
+            const qbPrice = document.getElementById('qb_price');
+            const qbFare = document.getElementById('qb_fare');
+            const qbParking = document.getElementById('qb_parking');
+
+            if (qbPickup) qbPickup.value = bookingData.pickupRaw;
+            if (qbDropoff) qbDropoff.value = bookingData.dropoffRaw;
+            if (qbVehicle) qbVehicle.value = bookingData.vehicle;
+            if (qbDate) qbDate.value = bookingData.date;
+            if (qbTime) qbTime.value = bookingData.time;
+            if (qbPrice) qbPrice.value = bookingData.totalFare;
+            if (qbFare) qbFare.value = bookingData.baseFare;
+            if (qbParking) qbParking.value = bookingData.parkingFee;
+
+            if (qbViaContainer) {
+                qbViaContainer.innerHTML = '';
+                if (bookingData.viaRaw) {
+                    const viaHidden = document.createElement('input');
+                    viaHidden.type = 'hidden';
+                    viaHidden.name = 'via_addresses[]';
+                    viaHidden.value = bookingData.viaRaw;
+                    qbViaContainer.appendChild(viaHidden);
+                }
+            }
+
+            // Populate Summary Display
+            const qbSummaryVehicle = document.getElementById('qbSummaryVehicle');
+            const qbSummaryDateTime = document.getElementById('qbSummaryDateTime');
+            const qbSummaryDistance = document.getElementById('qbSummaryDistance');
+            const qbSummaryFare = document.getElementById('qbSummaryFare');
+            const qbSummaryPickup = document.getElementById('qbSummaryPickup');
+            const qbSummaryDropoff = document.getElementById('qbSummaryDropoff');
+            const qbSummaryViaRow = document.getElementById('qbSummaryViaRow');
+            const qbSummaryVia = document.getElementById('qbSummaryVia');
+
+            if (qbSummaryVehicle) qbSummaryVehicle.textContent = bookingData.vehicle;
+            if (qbSummaryDateTime) qbSummaryDateTime.textContent = `${bookingData.date} ${bookingData.time}`;
+            if (qbSummaryDistance) qbSummaryDistance.textContent = bookingData.distance;
+            if (qbSummaryFare) qbSummaryFare.textContent = `£${parseFloat(bookingData.totalFare || 0).toFixed(2)}`;
+            if (qbSummaryPickup) qbSummaryPickup.textContent = bookingData.pickupRaw || '-';
+            if (qbSummaryDropoff) qbSummaryDropoff.textContent = bookingData.dropoffRaw || '-';
+
+            if (qbSummaryViaRow && qbSummaryVia) {
+                if (bookingData.viaRaw) {
+                    qbSummaryVia.textContent = bookingData.viaRaw;
+                    qbSummaryViaRow.style.display = 'block';
+                } else {
+                    qbSummaryViaRow.style.display = 'none';
+                }
+            }
+
+            // Reset passenger input errors
+            if (qbAlertError) qbAlertError.style.display = 'none';
+
+            // Show Modal
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(quickBookingModalEl);
+            modalInstance.show();
+        });
+    }
+
+    // Submit Quick Booking Form via AJAX
+    if (quickBookingForm) {
+        quickBookingForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            if (qbAlertError) qbAlertError.style.display = 'none';
+
+            // Button Loading State
+            if (qbSubmitBtn) qbSubmitBtn.disabled = true;
+            if (qbSubmitSpinner) qbSubmitSpinner.style.display = 'inline-block';
+            if (qbSubmitIcon) qbSubmitIcon.style.display = 'none';
+            if (qbSubmitText) qbSubmitText.textContent = 'Creating Booking...';
+
+            const formData = new FormData(quickBookingForm);
+
+            try {
+                const response = await fetch(quickBookingForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Hide Modal
+                    const modalInstance = bootstrap.Modal.getInstance(quickBookingModalEl);
+                    if (modalInstance) modalInstance.hide();
+
+                    // Reset form & prompt
+                    quickBookingForm.reset();
+                    if (calcBookNowPrompt) calcBookNowPrompt.style.setProperty('display', 'none', 'important');
+
+                    // Show Toast Notification
+                    showDashboardToast(
+                        'Booking Created',
+                        `Ref: ${data.ref_no || ''} - Booking created successfully!`,
+                        'success',
+                        5000
+                    );
+
+                    // Seamlessly refresh the bookings table without full page reload
+                    applyDashboardFilter(window.location.href, false);
+                } else {
+                    let errMsg = data.message || 'Failed to create booking. Please check required fields.';
+                    if (data.errors) {
+                        errMsg = Object.values(data.errors).flat().join('<br>');
+                    }
+                    if (qbAlertError) {
+                        qbAlertError.innerHTML = errMsg;
+                        qbAlertError.style.display = 'block';
+                    } else {
+                        showDashboardToast('Error', errMsg, 'danger');
+                    }
+                }
+            } catch (err) {
+                console.error('Quick booking submission error:', err);
+                if (qbAlertError) {
+                    qbAlertError.innerHTML = 'A network error occurred while submitting booking. Please try again.';
+                    qbAlertError.style.display = 'block';
+                } else {
+                    showDashboardToast('Error', 'Network error occurred.', 'danger');
+                }
+            } finally {
+                if (qbSubmitBtn) qbSubmitBtn.disabled = false;
+                if (qbSubmitSpinner) qbSubmitSpinner.style.display = 'none';
+                if (qbSubmitIcon) qbSubmitIcon.style.display = 'inline-block';
+                if (qbSubmitText) qbSubmitText.textContent = 'Confirm & Create Booking';
+            }
+        });
     }
     // =========================================================================
     // 📊 DAY-WISE BOOKINGS CHART.JS INITIALIZATION (1/3 TOP COLUMN)

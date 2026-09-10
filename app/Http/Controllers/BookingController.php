@@ -3146,26 +3146,33 @@ public function store(Request $request)
         'dropoff_address'=> 'required|string',
         'payment_type'   => 'required|in:cash,card,account',
         'phone_no'       => 'nullable|string',
-        'email'          => 'required|email',
+        'email'          => 'nullable|email',
+        'driver_id'      => 'nullable|string',
+        'account_id'     => 'nullable|string',
+        'account_name'   => 'nullable|string',
         'vehicle_id'     => 'nullable|string',
-        'vehicle_make' => 'nullable|string',
+        'vehicle_make'   => 'nullable|string',
         // 'price'          => 'nullable|numeric',
-// ✅ Monetary fields
-    'fare'           => 'nullable|numeric|min:0',
-    'parking'        => 'nullable|numeric|min:0',
-    'extra'          => 'nullable|numeric|min:0',
-    'waiting_fee'    => 'nullable|numeric|min:0',
-    'price'          => 'nullable|numeric|min:0',
+        // ✅ Monetary fields
+        'fare'           => 'nullable|numeric|min:0',
+        'parking'        => 'nullable|numeric|min:0',
+        'extra'          => 'nullable|numeric|min:0',
+        'waiting_fee'    => 'nullable|numeric|min:0',
+        'price'          => 'nullable|numeric|min:0',
         'pickup_date'    => 'required|date',
-        'pickup_time'    => 'required|date_format:H:i',
+        'pickup_time'    => 'required',
         'flight_no'      => 'nullable|string',
-        'via_addresses'  => 'array',
+        'via_addresses'  => 'nullable|array',
         'via_addresses.*'=> 'nullable|string',
-        'job_comment'       =>'nullable|string',
-        'child_seat' => 'nullable|boolean' ,
+        'job_comment'    => 'nullable|string',
+        'child_seat'     => 'nullable',
     ]);
 
-    $pickup_datetime = Carbon::parse($validated['pickup_date'] . ' ' . $validated['pickup_time']);
+    try {
+        $pickup_datetime = Carbon::parse($validated['pickup_date'] . ' ' . $validated['pickup_time']);
+    } catch (\Throwable $e) {
+        $pickup_datetime = Carbon::parse($validated['pickup_date']);
+    }
 
     /**
      * ==========================
@@ -3228,25 +3235,27 @@ public function store(Request $request)
         'flight_no'       => $validated['flight_no'] ?? null,
         'phone_no'        => $validated['phone_no'] ?? null,
         'status'          => 'pending',
-        'email'           => $validated['email'],
+        'email'           => $validated['email'] ?? null,
         // ⭐ NEW LINE — SAFE ADDITION ⭐
-    'vehicle_make'    => $validated['vehicle_make'] ?? null,
-    'job_comment' => $validated['job_comment'] ?? null,
-        'payment_type'    => $validated['payment_type'],
-        'driver_id'       => "",
+        'vehicle_make'    => $validated['vehicle_make'] ?? null,
+        'job_comment'     => $validated['job_comment'] ?? null,
+        'payment_type'    => $validated['payment_type'] ?? 'cash',
+        'driver_id'       => !empty($validated['driver_id']) ? $validated['driver_id'] : ($driverId ?? ""),
+        'account_id'      => $validated['account_id'] ?? null,
+        'account_name'    => $validated['account_name'] ?? null,
         'vehicle_id'      => $validated['vehicle_id'] ?? null,
         // 'price'           => $validated['price'] ?? null,
 
         // 💰 PRICE BREAKDOWN (NEW)
-    'fare'            => $validated['fare'] ?? 0,
-    'parking'         => $validated['parking'] ?? 0,
-    'extra'           => $validated['extra'] ?? 0,
-    'waiting_fee'     => $validated['waiting_fee'] ?? 0,
-    'price'           => $validated['price'] ?? 0,
+        'fare'            => $validated['fare'] ?? 0,
+        'parking'         => $validated['parking'] ?? 0,
+        'extra'           => $validated['extra'] ?? 0,
+        'waiting_fee'     => $validated['waiting_fee'] ?? 0,
+        'price'           => $validated['price'] ?? 0,
         'pickup_time'     => $pickup_datetime->toDateTimeString(),
         'created_at'      => now()->toDateTimeString(),
         'platform'        => 2, // ✅ default 1 = web
-        'child_seat'      => $validated['child_seat'],
+        'child_seat'      => $validated['child_seat'] ?? null,
         'staff_id'        => session('staff_id') ?? null,
         'staff_name'      => session('staff_name') ?? (session('staff_role') === 'super_admin' ? 'Super Admin' : null),
     ];
@@ -3471,23 +3480,29 @@ if (isset($validated['via_addresses']) && is_array($validated['via_addresses']))
 </div>
 </body>
 </html>';
-
     }
 
-    // Send email
-    Mail::html($emailBody, function ($message) use ($validated,$refNo) {
-    $message->to($validated['email'])
-    ->cc('bookings@crownairporttravels.com')
-            ->subject('CrownCarz Booking Confirmation - ' . $refNo);
-            
-            
-});
+    // Send email if provided
+    if (!empty($validated['email'])) {
+        try {
+            Mail::html($emailBody, function ($message) use ($validated, $refNo) {
+                $message->to($validated['email'])
+                    ->cc('bookings@crownairporttravels.com')
+                    ->subject('CrownCarz Booking Confirmation - ' . $refNo);
+            });
+        } catch (\Throwable $e) {
+            \Log::warning('Confirmation email sending failed: ' . $e->getMessage());
+        }
+    }
 
-
-    // Mail::raw($emailBody, function ($message) use ($validated) {
-    //     $message->to($validated['email'])
-    //             ->subject('Your CrownCarz Booking Details');
-    // });
+    if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+        return response()->json([
+            'success'    => true,
+            'message'    => 'Booking created successfully! Reference: ' . $refNo,
+            'booking_id' => $bookingId,
+            'ref_no'     => $refNo,
+        ]);
+    }
 
     return redirect()->route('booking.create')
         ->with('success', 'Booking created successfully. Payment link sent if payment type is card.');
