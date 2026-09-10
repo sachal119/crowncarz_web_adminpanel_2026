@@ -6519,55 +6519,52 @@ private function geocodeAddress($address)
         return back()->with('success', 'Booking deleted.');
     }
 
-//     public function search(Request $request)
-// {
-//     $query = Booking::query();
-
-//     if ($request->search) {
-//         $query->whereHas('passenger', function($q) use ($request) {
-//             $q->where('name', 'like', '%' . $request->search . '%');
-//         })
-//         ->orWhere('ref_no', 'like', '%' . $request->search . '%')
-//         ->orWhere('pickup_address', 'like', '%' . $request->search . '%')
-//         ->orWhere('dropoff_address', 'like', '%' . $request->search . '%')
-//         ->orWhere('mobile', 'like', '%' . $request->search . '%')
-//         ->orWhere('email', 'like', '%' . $request->search . '%');
-//     }
-
-//     if ($request->from_date) {
-//         $query->whereDate('pickup_datetime', '>=', $request->from_date);
-//     }
-
-//     if ($request->to_date) {
-//         $query->whereDate('pickup_datetime', '<=', $request->to_date);
-//     }
-
-//     if ($request->driver_id) {
-//         $query->where('driver_id', $request->driver_id);
-//     }
-
-//     if ($request->account_id) {
-//         $query->where('account_id', $request->account_id);
-//     }
-
-//     if ($request->payment_type) {
-//         $query->where('payment_type', $request->payment_type);
-//     }
-
-//     $bookings = $query->orderBy('pickup_datetime', 'asc')->get();
-
-//     $drivers = Driver::all();
-//     $accounts = Account::all();
-
-//     return view('dashboard', compact('bookings', 'drivers', 'accounts'));
-// }
-
-
 public function search(Request $request)
 {
-    // 1) Fetch bookings from Firebase
+    // 1) Fetch bookings and drivers from Firebase
     $firebaseBookings = $this->firebase->getData('bookings') ?? [];
+    $firebaseDrivers = $this->firebase->getData('drivers') ?? [];
+
+    $driversMap = [];
+    $driversList = [];
+    if (is_array($firebaseDrivers)) {
+        foreach ($firebaseDrivers as $dKey => $driver) {
+            if (!is_array($driver)) continue;
+            $driver['id'] = (string) $dKey;
+            $driversMap[(string)$dKey] = $driver;
+            if (isset($driver['id'])) {
+                $driversMap[(string)$driver['id']] = $driver;
+            }
+            $driversList[] = $driver;
+        }
+    }
+    $drivers = collect($driversList);
+
     $results = [];
+
+    // 📅 Date Range parsing
+    $fromDate = null;
+    $toDate = null;
+
+    if ($request->filled('date_range')) {
+        $parts = explode(' to ', $request->date_range);
+        if (count($parts) === 2) {
+            try { $fromDate = Carbon::parse(trim($parts[0]))->startOfDay(); } catch (\Throwable $e) {}
+            try { $toDate = Carbon::parse(trim($parts[1]))->endOfDay(); } catch (\Throwable $e) {}
+        } elseif (count($parts) === 1 && !empty(trim($parts[0]))) {
+            try { $fromDate = Carbon::parse(trim($parts[0]))->startOfDay(); } catch (\Throwable $e) {}
+            try { $toDate = Carbon::parse(trim($parts[0]))->endOfDay(); } catch (\Throwable $e) {}
+        }
+    }
+
+    if ($request->filled('from_date')) {
+        try { $fromDate = Carbon::parse($request->from_date)->startOfDay(); } catch (\Throwable $e) {}
+    }
+    if ($request->filled('to_date')) {
+        try { $toDate = Carbon::parse($request->to_date)->endOfDay(); } catch (\Throwable $e) {}
+    }
+
+    $searchTerm = $request->filled('search') ? mb_strtolower(trim($request->search)) : null;
 
     foreach ($firebaseBookings as $key => $item) {
         $normalized = $item;
@@ -6577,68 +6574,96 @@ public function search(Request $request)
         $normalized['dropoff_address'] = $item['dropoff_address'] ?? null;
         $normalized['price'] = $item['price'] ?? null;
 
-        // ✅ Only include bookings where status == "upcoming"
+        // Exclude completed, cancelled, no-show
         $status = strtolower(trim($item['status'] ?? ''));
-//         if (!in_array($status, ['upcoming', 'pending','assigned'])) {
-//     continue;
-// }
-if (in_array($status ?? null, ['completed', 'job_cancelled','no_show'])) {
-    continue;
-}
+        if (in_array($status, ['completed', 'job_cancelled', 'no_show', 'cancelled'])) {
+            continue;
+        }
 
         $match = true;
 
-        // 🔎 Search text filter
-        if ($request->filled('search')) {
-            $search = mb_strtolower($request->search);
+        // 🔎 Universal Search Keyword matching across all relevant fields
+        if ($searchTerm !== null && $searchTerm !== '') {
+            $match = false;
             $fieldsToSearch = [
                 'passenger_name',
                 'ref_no',
                 'from_postcode',
                 'to_postcode',
                 'mobile',
+                'phone_no',
+                'phone',
                 'email',
                 'pickup_address',
                 'dropoff_address',
-                'payment_type'
+                'driver_name',
+                'driver_call_sign',
+                'vehicle',
+                'vehicle_type',
+                'flight',
+                'flight_no',
+                'comments',
+                'notes',
+                'special_instructions',
+                'payment_type',
+                'account_name',
+                'account_type'
             ];
 
-            $match = false;
             foreach ($fieldsToSearch as $field) {
-                if (isset($normalized[$field]) && $normalized[$field] !== '') {
-                    if (str_contains(mb_strtolower((string)$normalized[$field]), $search)) {
+                if (!empty($normalized[$field])) {
+                    if (str_contains(mb_strtolower((string)$normalized[$field]), $searchTerm)) {
                         $match = true;
                         break;
                     }
                 }
             }
-        }
-        
-        
 
-        // 📅 From date filter
-        if ($match && $request->filled('from_date') && $normalized['pickup_datetime']) {
-            try {
-                $pickupDt = Carbon::parse($normalized['pickup_datetime']);
-                $fromDate = Carbon::parse($request->from_date);
-                if ($pickupDt->lt($fromDate)) {
-                    $match = false;
+            // Search in vias (string, array or object)
+            if (!$match && !empty($normalized['vias'])) {
+                if (is_array($normalized['vias'])) {
+                    foreach ($normalized['vias'] as $v) {
+                        $vStr = is_array($v) ? json_encode($v) : (string)$v;
+                        if (str_contains(mb_strtolower($vStr), $searchTerm)) {
+                            $match = true;
+                            break;
+                        }
+                    }
+                } elseif (str_contains(mb_strtolower((string)$normalized['vias']), $searchTerm)) {
+                    $match = true;
                 }
-            } catch (\Throwable $e) {}
-        }
+            }
 
-        // 📅 To date filter
-        if ($match && $request->filled('to_date') && $normalized['pickup_datetime']) {
-            try {
-                $pickupDt = Carbon::parse($normalized['pickup_datetime']);
-                $toDate = Carbon::parse($request->to_date);
-                if ($pickupDt->gt($toDate)) {
-                    $match = false;
+            // Search in assigned driver's name / call sign from drivers map
+            if (!$match && !empty($normalized['driver_id'])) {
+                $dId = (string) $normalized['driver_id'];
+                if (isset($driversMap[$dId])) {
+                    $dName = mb_strtolower($driversMap[$dId]['name'] ?? '');
+                    $dCall = mb_strtolower($driversMap[$dId]['call_sign'] ?? '');
+                    if (str_contains($dName, $searchTerm) || str_contains($dCall, $searchTerm)) {
+                        $match = true;
+                    }
                 }
-            } catch (\Throwable $e) {}
+            }
         }
 
-        // 🚖 Driver filter
+        // 📅 Date Range Filter
+        if ($match && ($fromDate || $toDate)) {
+            $rawDt = $normalized['pickup_datetime'] ?? ($normalized['pickup_date'] ?? null);
+            if ($rawDt) {
+                try {
+                    $pickupDt = Carbon::parse($rawDt);
+                    if ($fromDate && $pickupDt->lt($fromDate)) {
+                        $match = false;
+                    }
+                    if ($toDate && $pickupDt->gt($toDate)) {
+                        $match = false;
+                    }
+                } catch (\Throwable $e) {}
+            }
+        }
+
+        // 🚖 Driver Filter
         if ($match && $request->filled('driver_id')) {
             $recDriverId = isset($normalized['driver_id']) ? (string)$normalized['driver_id'] : null;
             if ($recDriverId !== (string)$request->driver_id) {
@@ -6646,7 +6671,7 @@ if (in_array($status ?? null, ['completed', 'job_cancelled','no_show'])) {
             }
         }
 
-        // 🏢 Account filter
+        // 🏢 Account Filter
         if ($match && $request->filled('account_id')) {
             $recAccountId = isset($normalized['account_id']) ? (string)$normalized['account_id'] : null;
             if ($recAccountId !== (string)$request->account_id) {
@@ -6654,30 +6679,16 @@ if (in_array($status ?? null, ['completed', 'job_cancelled','no_show'])) {
             }
         }
 
-        // 💳 Payment type filter
-        // 💳 Payment type filter
-if ($match && $request->filled('payment_type')) {
-
-    $recPaymentType = isset($normalized['payment_type'])
-        ? strtolower(trim((string)$normalized['payment_type']))
-        : null;
-
-    $reqPaymentType = strtolower(trim((string)$request->payment_type));
-
-    if ($recPaymentType !== $reqPaymentType) {
-        $match = false;
-    }
-}
-
-        // 🕒 ✅ Only include future bookings (pickup_datetime > now)
-        // if ($match && !empty($normalized['pickup_datetime'])) {
-        //     try {
-        //         $pickupDt = Carbon::parse($normalized['pickup_datetime']);
-        //         if ($pickupDt->isPast()) {
-        //             $match = false;
-        //         }
-        //     } catch (\Throwable $e) {}
-        // }
+        // 💳 Payment Type Filter
+        if ($match && $request->filled('payment_type')) {
+            $recPaymentType = isset($normalized['payment_type'])
+                ? strtolower(trim((string)$normalized['payment_type']))
+                : null;
+            $reqPaymentType = strtolower(trim((string)$request->payment_type));
+            if ($recPaymentType !== $reqPaymentType) {
+                $match = false;
+            }
+        }
 
         if ($match) {
             $normalized['id'] = $key;
@@ -6704,45 +6715,33 @@ if ($match && $request->filled('payment_type')) {
         return $ad->timestamp <=> $bd->timestamp;
     });
 
-    // 2) Fetch drivers from Firebase
-    $firebaseDrivers = $this->firebase->getData('drivers') ?? [];
-    $drivers = [];
-    foreach ($firebaseDrivers as $driverKey => $driver) {
-        $driver['id'] = $driverKey;
-        $drivers[] = $driver;
-    }
-    $drivers = collect($drivers);
-
-    // 3) Fetch accounts from MySQL
-    // $accounts = Account::all();
+    // Accounts from Firebase
     $accounts = $this->firebase->getData('customers') ?? [];
     
-// ================= PAGINATION =================
+    // ================= PAGINATION =================
+    $perPage = 20;
+    $currentPage = request()->get('page', 1);
 
-$perPage = 20;
-$currentPage = request()->get('page', 1);
+    // Convert filtered results to collection
+    $resultsCollection = collect($results);
 
-// Convert filtered results to collection
-$resultsCollection = collect($results);
+    // Slice results for current page
+    $currentPageItems = $resultsCollection
+        ->slice(($currentPage - 1) * $perPage, $perPage)
+        ->values();
 
-// Slice results for current page
-$currentPageItems = $resultsCollection
-    ->slice(($currentPage - 1) * $perPage, $perPage)
-    ->values();
+    // Create paginator
+    $bookings = new LengthAwarePaginator(
+        $currentPageItems,
+        $resultsCollection->count(),
+        $perPage,
+        $currentPage,
+        [
+            'path'  => request()->url(),
+            'query' => request()->query(),
+        ]
+    );
 
-// Create paginator
-$bookings = new LengthAwarePaginator(
-    $currentPageItems,
-    $resultsCollection->count(),
-    $perPage,
-    $currentPage,
-    [
-        'path'  => request()->url(),
-        'query' => request()->query(), // keeps filters in pagination links
-    ]
-);
-
-    // 4) Return data to view
     return view('dashboard', [
         'bookings' => $bookings,
         'drivers'  => $drivers,

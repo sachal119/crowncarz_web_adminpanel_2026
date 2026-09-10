@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
   /* Responsive font scaling */
   html {
@@ -259,79 +260,89 @@ td{
     
   <div class="row g-4">
 
+   <!-- 🔍 Sleek Minimal Universal Search & Date Toolbar -->
    <div class="col-12">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-light border-0 py-3">
-                <h6 class="mb-0 text-dark">
-                    <a class="text-decoration-none text-dark d-block"
-                       data-bs-toggle="collapse"
-                       href="#filtersCollapse"
-                       role="button"
-                       aria-expanded="true"
-                       aria-controls="filtersCollapse">
-                        <i class="bi bi-sliders me-2"></i> Search & Filters
-                        <i class="bi bi-chevron-down float-end filter-chevron"></i>
-                    </a>
-                </h6>
-            </div>
-            <div class="collapse" id="filtersCollapse">
-                <div class="card-body bg-light rounded-bottom p-4">
-                    <form action="{{ route('bookings.search.main') }}" method="GET">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label small fw-semibold text-muted">Keyword</label>
-                                <input type="text" name="search" class="form-control" placeholder="Search by Name, Ref#, Mobile" value="{{ request('search') }}">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small fw-semibold text-muted">Pickup Location</label>
-                                <input type="text" name="pickup" class="form-control" placeholder="Pickup Address" value="{{ request('pickup') }}">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small fw-semibold text-muted">Dropoff Location</label>
-                                <input type="text" name="dropoff" class="form-control" placeholder="Dropoff Address" value="{{ request('dropoff') }}">
+        <div class="card shadow-sm border-0" style="border-radius: 14px; background: #ffffff; border: 1px solid #eaedf1;">
+            <div class="card-body p-3">
+                <form action="{{ route('bookings.search.main') }}" method="GET" id="dashboardSearchForm">
+                    <div class="row g-2 align-items-center">
+                        <!-- Universal Keyword Search Input -->
+                        <div class="col-lg-5 col-md-12">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius: 10px 0 0 10px;">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" 
+                                       name="search" 
+                                       id="universalSearchInput"
+                                       class="form-control border-start-0 ps-0" 
+                                       placeholder="Search passenger, phone, pickup, dropoff, via, driver, ref#..." 
+                                       value="{{ request('search') }}"
+                                       style="border-radius: 0 10px 10px 0; font-size: 13.5px;">
                             </div>
                         </div>
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-3">
-                                <label class="form-label small fw-semibold text-muted">From</label>
-                                <input type="date" name="from_date" class="form-control" value="{{ request('from_date') }}" min="{{ date('Y-m-d') }}">
+
+                        <!-- Date Range Picker with Calendar Trigger -->
+                        <div class="col-lg-3 col-md-5">
+                            <div class="input-group" id="calendarWrapper">
+                                <span class="input-group-text bg-white border-end-0 text-warning" id="calendarIconBtn" style="border-radius: 10px 0 0 10px; cursor: pointer;">
+                                    <i class="bi bi-calendar3 fs-6"></i>
+                                </span>
+                                <input type="text" 
+                                       name="date_range" 
+                                       id="dateRangePicker" 
+                                       class="form-control border-start-0 ps-0 bg-white" 
+                                       placeholder="Select Dates (From - To)" 
+                                       value="{{ request('date_range') ?: (request('from_date') && request('to_date') ? request('from_date').' to '.request('to_date') : (request('from_date') ?: '')) }}"
+                                       style="border-radius: 0 10px 10px 0; font-size: 13px; cursor: pointer;">
+                                <input type="hidden" name="from_date" id="fromDateInput" value="{{ request('from_date') }}">
+                                <input type="hidden" name="to_date" id="toDateInput" value="{{ request('to_date') }}">
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label small fw-semibold text-muted">To</label>
-                                <input type="date" name="to_date" class="form-control" value="{{ request('to_date') }}">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label small fw-semibold text-muted">Driver</label>
-                                <select name="driver_id" class="form-select">
-                                    <option value="">All Drivers</option>
-                                    @foreach($drivers as $driver)
-                                        <option value="{{ $driver['id'] }}" {{ request('driver_id') == $driver['id'] ? 'selected' : '' }}>
-                                            {{ $driver['call_sign'] }} / {{ $driver['name'] ?? 'Unknown Driver' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label small fw-semibold text-muted">Payment</label>
-                                <select name="payment_type" class="form-select">
+                        </div>
+
+                        <!-- Driver Select -->
+                        <div class="col-lg-2 col-md-4">
+                            <select name="driver_id" class="form-select" style="border-radius: 10px; font-size: 13px;">
+                                <option value="">All Drivers</option>
+                                @foreach($drivers as $driver)
+                                    <option value="{{ $driver['id'] }}" {{ request('driver_id') == $driver['id'] ? 'selected' : '' }}>
+                                        {{ $driver['call_sign'] ?? 'D' }} • {{ $driver['name'] ?? 'Driver' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Payment Select & Action Buttons -->
+                        <div class="col-lg-2 col-md-3">
+                            <div class="d-flex gap-2">
+                                <select name="payment_type" class="form-select" style="border-radius: 10px; font-size: 13px;">
                                     <option value="">All Payments</option>
                                     <option value="Cash" {{ request('payment_type') == 'Cash' ? 'selected' : '' }}>Cash</option>
                                     <option value="Card" {{ request('payment_type') == 'Card' ? 'selected' : '' }}>Card</option>
                                     <option value="Account" {{ request('payment_type') == 'Account' ? 'selected' : '' }}>Account</option>
                                 </select>
+                                <button type="submit" class="btn text-white fw-bold px-3 d-flex align-items-center gap-1 shadow-sm" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 10px; border: none; white-space: nowrap;">
+                                    <i class="bi bi-search"></i>
+                                    <span class="d-none d-xl-inline">Search</span>
+                                </button>
+                                @if(request('search') || request('date_range') || request('from_date') || request('to_date') || request('driver_id') || request('payment_type'))
+                                <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Reset All Filters" style="border-radius: 10px;">
+                                    <i class="bi bi-x-lg"></i>
+                                </a>
+                                @endif
                             </div>
                         </div>
-                        <div class="col-md-12 text-end mt-3">
-                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
-                            </a>
-                            <button type="submit" class="btn ms-2" style="background-color:#B87333; color:white;">
-                                <i class="bi bi-search me-1"></i> Search
-                            </button>
-                        </div>
-                    </form>
-                    <p class="text-muted small mt-2 mb-0">Note: Tap on Top Right Icon to Collapse the search</p>
-                </div>
+                    </div>
+
+                    <!-- Quick Date Presets -->
+                    <div class="d-flex align-items-center gap-2 mt-2 pt-2 border-top flex-wrap" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted small me-1" style="font-size: 11.5px;"><i class="bi bi-lightning-charge-fill text-warning"></i> Quick Filters:</span>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="today" style="border-radius: 12px; font-size: 11.5px; border: 1px solid #e2e8f0;">Today</button>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="tomorrow" style="border-radius: 12px; font-size: 11.5px; border: 1px solid #e2e8f0;">Tomorrow</button>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="week" style="border-radius: 12px; font-size: 11.5px; border: 1px solid #e2e8f0;">Next 7 Days</button>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="clear" style="border-radius: 12px; font-size: 11.5px; border: 1px solid #e2e8f0;">All Bookings</button>
+                    </div>
+                </form>
             </div>
         </div>
    </div>
@@ -2263,7 +2274,98 @@ let selectedCallPhone = '';
     pollLatestCall();
 });
 </script>
-  
 
+<!-- Flatpickr JS & Toolbar Initialization -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const calendarIconBtn = document.getElementById('calendarIconBtn');
+    const fromInput = document.getElementById('fromDateInput');
+    const toInput = document.getElementById('toDateInput');
+    const searchForm = document.getElementById('dashboardSearchForm');
+
+    // Default dates from request
+    let defaultDates = [];
+    const reqFrom = "{{ request('from_date') }}";
+    const reqTo = "{{ request('to_date') }}";
+    const reqRange = "{{ request('date_range') }}";
+
+    if (reqFrom && reqTo) {
+        defaultDates = [reqFrom, reqTo];
+    } else if (reqFrom) {
+        defaultDates = [reqFrom];
+    } else if (reqRange) {
+        const parts = reqRange.split(' to ');
+        if (parts.length === 2) defaultDates = [parts[0].trim(), parts[1].trim()];
+        else if (parts.length === 1 && parts[0].trim()) defaultDates = [parts[0].trim()];
+    }
+
+    const fp = flatpickr("#dateRangePicker", {
+        mode: "range",
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d M Y",
+        altInputClass: "form-control border-start-0 ps-0 bg-white",
+        defaultDate: defaultDates.length > 0 ? defaultDates : null,
+        onChange: function (selectedDates, dateStr, instance) {
+            if (selectedDates.length === 2) {
+                fromInput.value = instance.formatDate(selectedDates[0], "Y-m-d");
+                toInput.value = instance.formatDate(selectedDates[1], "Y-m-d");
+            } else if (selectedDates.length === 1) {
+                fromInput.value = instance.formatDate(selectedDates[0], "Y-m-d");
+                toInput.value = instance.formatDate(selectedDates[0], "Y-m-d");
+            } else {
+                fromInput.value = '';
+                toInput.value = '';
+            }
+        }
+    });
+
+    if (calendarIconBtn) {
+        calendarIconBtn.addEventListener('click', function () {
+            fp.open();
+        });
+    }
+
+    // Quick Date Preset Buttons
+    document.querySelectorAll('.quick-date-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const preset = this.getAttribute('data-preset');
+            const today = new Date();
+            let fromD = null;
+            let toD = null;
+
+            if (preset === 'today') {
+                fromD = today;
+                toD = today;
+            } else if (preset === 'tomorrow') {
+                const tom = new Date();
+                tom.setDate(today.getDate() + 1);
+                fromD = tom;
+                toD = tom;
+            } else if (preset === 'week') {
+                const in7 = new Date();
+                in7.setDate(today.getDate() + 7);
+                fromD = today;
+                toD = in7;
+            } else if (preset === 'clear') {
+                fp.clear();
+                fromInput.value = '';
+                toInput.value = '';
+                document.getElementById('dateRangePicker').value = '';
+                searchForm.submit();
+                return;
+            }
+
+            if (fromD && toD) {
+                fp.setDate([fromD, toD], true);
+                fromInput.value = fp.formatDate(fromD, "Y-m-d");
+                toInput.value = fp.formatDate(toD, "Y-m-d");
+                searchForm.submit();
+            }
+        });
+    });
+});
+</script>
 
 @endpush
