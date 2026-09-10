@@ -854,27 +854,32 @@ public function updateStatusManual(Request $request, $id)
         |--------------------------------------------------------------------------
         */
 
-        $driverName  = "Driver";
-        $driverPhone = null;
-        $driverId = $booking['driver_id'] ?? null;
+        $driverName   = "Driver";
+        $driverPhone  = null;
+        $driverNId    = null;
+        $driverId     = $booking['driver_id'] ?? null;
 
         if ($driverId) {
 
             $drivers = $this->database->getReference('drivers')->getValue();
 
-            foreach ($drivers as $dKey => $driver) {
+            if (is_array($drivers)) {
+                foreach ($drivers as $dKey => $driver) {
 
-                if ((string)$dKey === (string)$driverId || ($driver['id'] ?? null) == $driverId) {
+                    if ((string)$dKey === (string)$driverId || ($driver['id'] ?? null) == $driverId) {
 
-                    $driverName = $driver['name'] ?? $driver['full_name'] ?? 'Driver';
-                    $driverPhone = $driver['phone'] ?? $driver['mobile'] ?? null;
-                    $driverNId = $driver['id'] ?? null;
+                        $driverName  = $driver['name'] ?? $driver['full_name'] ?? 'Driver';
+                        $driverPhone = $driver['phone'] ?? $driver['mobile'] ?? null;
+                        $driverNId   = $driver['id'] ?? $dKey;
 
-                    break;
+                        break;
+                    }
                 }
             }
         }
-        $trackingLink = rtrim(config('services.frontend.url'), '/') . "/driver-location/{$driverNId}";
+
+        $trackingLink = $driverNId ? rtrim(config('services.frontend.url', ''), '/') . "/driver-location/{$driverNId}" : '';
+
         /*
         |--------------------------------------------------------------------------
         | FETCH VEHICLE
@@ -884,16 +889,20 @@ public function updateStatusManual(Request $request, $id)
         $vehicleModel = '';
         $vehiclePlate = '';
 
-        $vehicles = $this->database->getReference('vehicles')->getValue();
+        if ($driverNId) {
+            $vehicles = $this->database->getReference('vehicles')->getValue();
 
-        foreach ($vehicles as $vehicle) {
+            if (is_array($vehicles)) {
+                foreach ($vehicles as $vehicle) {
 
-            if (($vehicle['driver_id'] ?? null) == $driverNId) {
+                    if (($vehicle['driver_id'] ?? null) == $driverNId) {
 
-                $vehicleModel = $vehicle['model'] ?? '';
-                $vehiclePlate = $vehicle['registration'] ?? '';
+                        $vehicleModel = $vehicle['model'] ?? '';
+                        $vehiclePlate = $vehicle['registration'] ?? '';
 
-                break;
+                        break;
+                    }
+                }
             }
         }
 
