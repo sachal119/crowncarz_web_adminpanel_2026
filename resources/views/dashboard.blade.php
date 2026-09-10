@@ -365,14 +365,19 @@ td{
     
   <div class="row g-4">
 
-   <!-- 🔍 Sleek Minimal Universal Search & Date Toolbar -->
-   <div class="col-12">
-        <div class="card shadow-sm border-0" style="border-radius: 14px; background: #ffffff; border: 1px solid #eaedf1;">
-            <div class="card-body p-3">
+    <!-- 🔍 50% Left Card: Search & Filter Bookings -->
+    <div class="col-12 col-xl-6">
+        <div class="card shadow-sm border-0 h-100" style="border-radius: 14px; background: #ffffff; border: 1px solid #eaedf1;">
+            <div class="card-header bg-transparent border-0 pb-1 pt-3 px-3">
+                <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 14px;">
+                    <i class="bi bi-search text-warning"></i> Search & Filter Bookings
+                </h6>
+            </div>
+            <div class="card-body p-3 pt-2">
                 <form action="{{ route('bookings.search.main') }}" method="GET" id="dashboardSearchForm">
-                    <div class="row g-2 align-items-center">
+                    <div class="row g-2 mb-2">
                         <!-- Universal Keyword Search Input -->
-                        <div class="col-lg-4 col-md-12">
+                        <div class="col-md-7 col-12">
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius: 10px 0 0 10px;">
                                     <i class="bi bi-search"></i>
@@ -381,14 +386,14 @@ td{
                                        name="search" 
                                        id="universalSearchInput"
                                        class="form-control border-start-0 ps-0" 
-                                       placeholder="Search passenger, phone, pickup, dropoff, via, driver..." 
+                                       placeholder="Search passenger, phone, pickup, driver..." 
                                        value="{{ request('search') }}"
-                                       style="border-radius: 0 10px 10px 0; font-size: 13px;">
+                                       style="border-radius: 0 10px 10px 0; font-size: 12.5px;">
                             </div>
                         </div>
 
                         <!-- Date Range Picker with Calendar Trigger -->
-                        <div class="col-lg-3 col-md-4">
+                        <div class="col-md-5 col-12">
                             <div class="input-group" id="calendarWrapper" title="Click to filter by Date Range" style="cursor: pointer;">
                                 <span class="input-group-text bg-white border-end-0 text-warning" id="calendarIconBtn" style="border-radius: 10px 0 0 10px; cursor: pointer;">
                                     <i class="bi bi-calendar-event fs-6 text-warning"></i>
@@ -399,33 +404,27 @@ td{
                                        class="form-control border-start-0 ps-0 bg-white" 
                                        placeholder="Select Dates" 
                                        value="{{ request('date_range') ?: (request('from_date') && request('to_date') ? request('from_date').' to '.request('to_date') : (request('from_date') ?: '')) }}"
-                                       style="border-radius: 0 10px 10px 0; font-size: 13px; cursor: pointer;">
+                                       style="border-radius: 0 10px 10px 0; font-size: 12.5px; cursor: pointer;">
                                 <input type="hidden" name="from_date" id="fromDateInput" value="{{ request('from_date') }}">
                                 <input type="hidden" name="to_date" id="toDateInput" value="{{ request('to_date') }}">
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Driver Select (Shows Call Sign, Name & Vehicle/Saloon) -->
-                        <div class="col-lg-3 col-md-4">
-                            <select name="driver_id" class="form-select text-dark" style="border-radius: 10px; font-size: 13px;">
+                    <div class="row g-2">
+                        <!-- Driver Select -->
+                        <div class="col-md-5 col-12">
+                            <select name="driver_id" class="form-select text-dark" style="border-radius: 10px; font-size: 12.5px;">
                                 <option value="">All Drivers (Any Vehicle)</option>
                                 @foreach($drivers as $driver)
                                     @php
                                         $callSign = $driver['call_sign'] ?? 'D';
                                         $dName = $driver['name'] ?? 'Driver';
-                                        
                                         $vehParts = [];
-                                        if (!empty($driver['vehicle_type'])) {
-                                            $vehParts[] = $driver['vehicle_type'];
-                                        }
+                                        if (!empty($driver['vehicle_type'])) $vehParts[] = $driver['vehicle_type'];
                                         $makeModel = trim(($driver['vehicle_make'] ?? '') . ' ' . ($driver['vehicle_model'] ?? ''));
-                                        if (!empty($makeModel)) {
-                                            $vehParts[] = $makeModel;
-                                        }
-                                        if (!empty($driver['vehicle_reg'])) {
-                                            $vehParts[] = $driver['vehicle_reg'];
-                                        }
-                                        
+                                        if (!empty($makeModel)) $vehParts[] = $makeModel;
+                                        if (!empty($driver['vehicle_reg'])) $vehParts[] = $driver['vehicle_reg'];
                                         $vehStr = !empty($vehParts) ? ' (' . implode(' • ', $vehParts) . ')' : '';
                                     @endphp
                                     <option value="{{ $driver['id'] }}" {{ (string)request('driver_id') === (string)$driver['id'] ? 'selected' : '' }}>
@@ -435,21 +434,25 @@ td{
                             </select>
                         </div>
 
-                        <!-- Payment Select & Action Buttons -->
-                        <div class="col-lg-2 col-md-4">
-                            <div class="d-flex gap-2">
-                                <select name="payment_type" class="form-select" style="border-radius: 10px; font-size: 13px;">
-                                    <option value="">All Payments</option>
-                                    <option value="Cash" {{ request('payment_type') == 'Cash' ? 'selected' : '' }}>Cash</option>
-                                    <option value="Card" {{ request('payment_type') == 'Card' ? 'selected' : '' }}>Card</option>
-                                    <option value="Account" {{ request('payment_type') == 'Account' ? 'selected' : '' }}>Account</option>
-                                </select>
-                                <button type="submit" class="btn text-white fw-bold px-3 d-flex align-items-center gap-1 shadow-sm" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 10px; border: none; white-space: nowrap;">
+                        <!-- Payment Select -->
+                        <div class="col-md-4 col-7">
+                            <select name="payment_type" class="form-select" style="border-radius: 10px; font-size: 12.5px;">
+                                <option value="">All Payments</option>
+                                <option value="Cash" {{ request('payment_type') == 'Cash' ? 'selected' : '' }}>Cash</option>
+                                <option value="Card" {{ request('payment_type') == 'Card' ? 'selected' : '' }}>Card</option>
+                                <option value="Account" {{ request('payment_type') == 'Account' ? 'selected' : '' }}>Account</option>
+                            </select>
+                        </div>
+
+                        <!-- Filter Button -->
+                        <div class="col-md-3 col-5">
+                            <div class="d-flex gap-1">
+                                <button type="submit" class="btn text-white fw-bold w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 10px; border: none; font-size: 12.5px; height: 36px;">
                                     <i class="bi bi-search"></i>
-                                    <span class="d-none d-xl-inline">Search</span>
+                                    <span>Filter</span>
                                 </button>
                                 @if(request('search') || request('date_range') || request('from_date') || request('to_date') || request('driver_id') || request('payment_type'))
-                                <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Reset All Filters" style="border-radius: 10px;">
+                                <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Reset All Filters" style="border-radius: 10px; width: 36px; height: 36px; flex-shrink: 0;">
                                     <i class="bi bi-x-lg"></i>
                                 </a>
                                 @endif
@@ -458,17 +461,129 @@ td{
                     </div>
 
                     <!-- Quick Date Presets -->
-                    <div class="d-flex align-items-center gap-2 mt-2 pt-2 border-top flex-wrap" style="border-color: #f1f5f9 !important;">
-                        <span class="text-muted small me-1" style="font-size: 11.5px;"><i class="bi bi-lightning-charge-fill text-warning"></i> Quick Filters:</span>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="today" style="border-radius: 12px; font-size: 11.5px; border: 1px solid #e2e8f0;">Today</button>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="tomorrow" style="border-radius: 12px; font-size: 11.5px; border: 1px solid #e2e8f0;">Tomorrow</button>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="week" style="border-radius: 12px; font-size: 11.5px; border: 1px solid #e2e8f0;">Next 7 Days</button>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="clear" style="border-radius: 12px; font-size: 11.5px; border: 1px solid #e2e8f0;">All Bookings</button>
+                    <div class="d-flex align-items-center gap-1 mt-2 pt-2 border-top flex-wrap" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted small me-1" style="font-size: 11px;"><i class="bi bi-lightning-charge-fill text-warning"></i> Quick:</span>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="today" style="border-radius: 12px; font-size: 11px; border: 1px solid #e2e8f0;">Today</button>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="tomorrow" style="border-radius: 12px; font-size: 11px; border: 1px solid #e2e8f0;">Tomorrow</button>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="week" style="border-radius: 12px; font-size: 11px; border: 1px solid #e2e8f0;">Next 7 Days</button>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="clear" style="border-radius: 12px; font-size: 11px; border: 1px solid #e2e8f0;">All Bookings</button>
                     </div>
                 </form>
             </div>
         </div>
-   </div>
+    </div>
+
+    <!-- ⚡ 50% Right Card: Get Instant Price / Quick Quote -->
+    <div class="col-12 col-xl-6">
+        <div class="card shadow-sm border-0 h-100" style="border-radius: 14px; background: #ffffff; border: 1px solid #eaedf1;">
+            <div class="card-header bg-transparent border-0 pb-1 pt-3 px-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 14px;">
+                    <i class="bi bi-calculator-fill text-warning"></i> Get Instant Price
+                </h6>
+                <div class="d-flex align-items-center gap-1">
+                    <button type="button" class="btn btn-sm btn-light py-0 px-2 text-dark" id="swapPickupDropoffBtn" title="Swap Pickup & Dropoff" style="border-radius: 8px; font-size: 11px; border: 1px solid #e2e8f0;">
+                        <i class="bi bi-arrow-left-right text-primary"></i> Swap
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light py-0 px-2 text-dark" id="addViaToggleBtn" style="border-radius: 8px; font-size: 11px; border: 1px solid #e2e8f0;">
+                        <i class="bi bi-plus-circle text-success"></i> Add Via
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-3 pt-2">
+                <div class="row g-2 mb-2">
+                    <!-- Pickup Address -->
+                    <div class="col-md-6 col-12">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-success py-1" style="border-radius: 10px 0 0 10px;">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </span>
+                            <input type="text" 
+                                   id="calcPickupInput" 
+                                   class="form-control border-start-0 ps-0" 
+                                   placeholder="Pickup address / postcode" 
+                                   style="border-radius: 0 10px 10px 0; font-size: 12.5px;">
+                        </div>
+                    </div>
+                    <!-- Dropoff Address -->
+                    <div class="col-md-6 col-12">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-danger py-1" style="border-radius: 10px 0 0 10px;">
+                                <i class="bi bi-pin-map-fill"></i>
+                            </span>
+                            <input type="text" 
+                                   id="calcDropoffInput" 
+                                   class="form-control border-start-0 ps-0" 
+                                   placeholder="Dropoff address / postcode" 
+                                   style="border-radius: 0 10px 10px 0; font-size: 12.5px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Via Address Container (Toggled via button) -->
+                <div class="row g-2 mb-2" id="calcViaWrapper" style="display: none;">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-warning py-1" style="border-radius: 10px 0 0 10px;">
+                                <i class="bi bi-signpost-split"></i>
+                            </span>
+                            <input type="text" 
+                                   id="calcViaInput" 
+                                   class="form-control border-start-0 ps-0" 
+                                   placeholder="Via stop address or postcode (Optional)" 
+                                   style="font-size: 12.5px;">
+                            <button class="btn btn-outline-secondary py-1 px-2 border-start-0" type="button" id="removeViaBtn" style="border-radius: 0 10px 10px 0;" title="Remove via">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row: Vehicle, Date, Time, Parking -->
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4 col-6">
+                        <select id="calcVehicleSelect" class="form-select" style="border-radius: 10px; font-size: 12.5px;">
+                            <option value="Saloon" selected>Saloon</option>
+                            <option value="Estate">Estate</option>
+                            <option value="Executive">Executive</option>
+                            <option value="MPV">MPV / 6 Seater</option>
+                            <option value="8 Seater">8 Seater</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <input type="date" id="calcDateInput" class="form-control" value="{{ date('Y-m-d') }}" style="border-radius: 10px; font-size: 12.5px;">
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <input type="time" id="calcTimeInput" class="form-control" value="{{ date('H:i') }}" style="border-radius: 10px; font-size: 12.5px;">
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <input type="number" step="0.5" id="calcParkingInput" class="form-control" placeholder="Park £" title="Parking (£)" style="border-radius: 10px; font-size: 12.5px;">
+                    </div>
+                </div>
+
+                <!-- Price Result Output Bar -->
+                <div class="p-2 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div class="d-flex align-items-center gap-2 small text-muted" style="font-size: 11.5px;">
+                        <span id="calcDistanceBadge" class="badge bg-secondary bg-opacity-10 text-dark border">
+                            <i class="bi bi-speedometer2 text-primary"></i> <span id="calcDistText">0.00 miles</span>
+                        </span>
+                        <span id="calcBreakdownText">Base: £0.00</span>
+                        <span id="calcLoader" class="spinner-border spinner-border-sm text-warning ms-1" style="display: none;" role="status"></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-dark text-warning fw-bold px-2 py-1 d-flex align-items-center gap-1 shadow-sm" id="getInstantPriceBtn" style="border-radius: 8px; font-size: 12px; border: 1px solid #334155;">
+                            <i class="bi bi-lightning-fill"></i> Get Price
+                        </button>
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="text-muted small fw-semibold" style="font-size: 11px;">Total:</span>
+                            <span class="badge fs-6 fw-bold px-2 py-1 shadow-sm" id="calcFinalPriceBadge" style="background: linear-gradient(135deg, #111827, #1e293b); color: #E6B04A !important; border: 1px solid rgba(230, 176, 74, 0.4); border-radius: 8px;">
+                                £0.00
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
   
   <div class="col-lg-12 mt-4">
@@ -2488,6 +2603,200 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // =========================================================================
+    // ⚡ INSTANT PRICE CALCULATOR INTERACTION
+    // =========================================================================
+    const calcPickupInput = document.getElementById('calcPickupInput');
+    const calcDropoffInput = document.getElementById('calcDropoffInput');
+    const calcViaInput = document.getElementById('calcViaInput');
+    const calcViaWrapper = document.getElementById('calcViaWrapper');
+    const addViaToggleBtn = document.getElementById('addViaToggleBtn');
+    const removeViaBtn = document.getElementById('removeViaBtn');
+    const swapBtn = document.getElementById('swapPickupDropoffBtn');
+    const calcVehicleSelect = document.getElementById('calcVehicleSelect');
+    const calcDateInput = document.getElementById('calcDateInput');
+    const calcTimeInput = document.getElementById('calcTimeInput');
+    const calcParkingInput = document.getElementById('calcParkingInput');
+    const getPriceBtn = document.getElementById('getInstantPriceBtn');
+    const calcFinalBadge = document.getElementById('calcFinalPriceBadge');
+    const calcDistText = document.getElementById('calcDistText');
+    const calcBreakdownText = document.getElementById('calcBreakdownText');
+    const calcLoader = document.getElementById('calcLoader');
+
+    let currentBaseFare = 0;
+
+    // Toggle Via Input
+    if (addViaToggleBtn && calcViaWrapper) {
+        addViaToggleBtn.addEventListener('click', function () {
+            calcViaWrapper.style.display = 'block';
+            this.style.display = 'none';
+            if (calcViaInput) calcViaInput.focus();
+        });
+    }
+
+    // Remove Via Input
+    if (removeViaBtn && calcViaWrapper) {
+        removeViaBtn.addEventListener('click', function () {
+            calcViaWrapper.style.display = 'none';
+            if (calcViaInput) calcViaInput.value = '';
+            if (addViaToggleBtn) addViaToggleBtn.style.display = 'inline-block';
+            fetchDashboardInstantPrice();
+        });
+    }
+
+    // Swap Pickup & Dropoff
+    if (swapBtn && calcPickupInput && calcDropoffInput) {
+        swapBtn.addEventListener('click', function () {
+            const temp = calcPickupInput.value;
+            calcPickupInput.value = calcDropoffInput.value;
+            calcDropoffInput.value = temp;
+            if (calcPickupInput.value && calcDropoffInput.value) {
+                fetchDashboardInstantPrice();
+            }
+        });
+    }
+
+    // Extract UK Postcode or fallback to full address
+    function extractUkPostcode(addr) {
+        if (!addr) return '';
+        const postcodeRegex = /\b[A-Z]{1,2}\d{1,2}[A-Z]?\s*\d?[A-Z]{0,2}\b/i;
+        const match = addr.match(postcodeRegex);
+        return match ? match[0].toUpperCase().trim() : addr.trim();
+    }
+
+    // Compute Total Price with Parking
+    function updateInstantTotalDisplay() {
+        const parking = parseFloat(calcParkingInput?.value) || 0;
+        const total = currentBaseFare + parking;
+        if (calcFinalBadge) {
+            calcFinalBadge.textContent = '£' + (total > 0 ? total.toFixed(2) : '0.00');
+        }
+        if (calcBreakdownText) {
+            calcBreakdownText.textContent = `Base: £${currentBaseFare.toFixed(2)}` + (parking > 0 ? ` + Park: £${parking.toFixed(2)}` : '');
+        }
+    }
+
+    // Fetch Instant Price from Backend API
+    async function fetchDashboardInstantPrice() {
+        const pickupRaw = calcPickupInput?.value.trim();
+        const dropoffRaw = calcDropoffInput?.value.trim();
+
+        if (!pickupRaw || !dropoffRaw) {
+            return;
+        }
+
+        const pickup = extractUkPostcode(pickupRaw);
+        const dropoff = extractUkPostcode(dropoffRaw);
+        const vehicle = calcVehicleSelect?.value || 'Saloon';
+        const date = calcDateInput?.value || '';
+        const time = calcTimeInput?.value || '';
+        const viaVal = calcViaWrapper?.style.display !== 'none' ? calcViaInput?.value.trim() : '';
+        const via = viaVal ? extractUkPostcode(viaVal) : '';
+
+        if (calcLoader) calcLoader.style.display = 'inline-block';
+        if (getPriceBtn) getPriceBtn.disabled = true;
+
+        try {
+            let url = `/admin/booking/get-price?vehicle_id=${encodeURIComponent(vehicle)}&pickup=${encodeURIComponent(pickup)}&dropoff=${encodeURIComponent(dropoff)}&pickup_date=${encodeURIComponent(date)}&pickup_time=${encodeURIComponent(time)}`;
+            if (via) {
+                url += `&vias[]=${encodeURIComponent(via)}`;
+            }
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data && data.success) {
+                currentBaseFare = parseFloat(data.price) || 0;
+                const distance = data.journey_distance || data.total_distance || 0;
+                if (calcDistText) {
+                    calcDistText.textContent = `${parseFloat(distance).toFixed(2)} miles`;
+                }
+                updateInstantTotalDisplay();
+            } else {
+                if (calcBreakdownText) {
+                    calcBreakdownText.textContent = data.message || 'No route found';
+                }
+            }
+        } catch (err) {
+            console.error('Price calculation error:', err);
+        } finally {
+            if (calcLoader) calcLoader.style.display = 'none';
+            if (getPriceBtn) getPriceBtn.disabled = false;
+        }
+    }
+
+    // Attach Price Calculation Event Listeners
+    if (getPriceBtn) {
+        getPriceBtn.addEventListener('click', fetchDashboardInstantPrice);
+    }
+    if (calcVehicleSelect) {
+        calcVehicleSelect.addEventListener('change', fetchDashboardInstantPrice);
+    }
+    if (calcDateInput) {
+        calcDateInput.addEventListener('change', fetchDashboardInstantPrice);
+    }
+    if (calcTimeInput) {
+        calcTimeInput.addEventListener('change', fetchDashboardInstantPrice);
+    }
+    if (calcParkingInput) {
+        calcParkingInput.addEventListener('input', updateInstantTotalDisplay);
+    }
+
+    // Google Places Autocomplete initialization on Dashboard inputs
+    function initDashboardPlaces() {
+        if (!window.google || !google.maps || !google.maps.places) return;
+        const opts = { componentRestrictions: { country: 'gb' } };
+
+        if (calcPickupInput) {
+            const autoPickup = new google.maps.places.Autocomplete(calcPickupInput, opts);
+            autoPickup.addListener('place_changed', function () {
+                const place = autoPickup.getPlace();
+                if (place && place.formatted_address) {
+                    calcPickupInput.value = place.formatted_address;
+                }
+                if (calcDropoffInput && calcDropoffInput.value.trim()) {
+                    fetchDashboardInstantPrice();
+                }
+            });
+        }
+
+        if (calcDropoffInput) {
+            const autoDropoff = new google.maps.places.Autocomplete(calcDropoffInput, opts);
+            autoDropoff.addListener('place_changed', function () {
+                const place = autoDropoff.getPlace();
+                if (place && place.formatted_address) {
+                    calcDropoffInput.value = place.formatted_address;
+                }
+                if (calcPickupInput && calcPickupInput.value.trim()) {
+                    fetchDashboardInstantPrice();
+                }
+            });
+        }
+
+        if (calcViaInput) {
+            const autoVia = new google.maps.places.Autocomplete(calcViaInput, opts);
+            autoVia.addListener('place_changed', function () {
+                const place = autoVia.getPlace();
+                if (place && place.formatted_address) {
+                    calcViaInput.value = place.formatted_address;
+                }
+                fetchDashboardInstantPrice();
+            });
+        }
+    }
+
+    if (window.google && window.google.maps && window.google.maps.places) {
+        initDashboardPlaces();
+    } else {
+        // Load Google Places library asynchronously if not loaded
+        const placesScript = document.createElement('script');
+        placesScript.src = "https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places&callback=initDashboardPlacesGlobal";
+        placesScript.async = true;
+        placesScript.defer = true;
+        window.initDashboardPlacesGlobal = initDashboardPlaces;
+        document.head.appendChild(placesScript);
+    }
 });
 </script>
 
