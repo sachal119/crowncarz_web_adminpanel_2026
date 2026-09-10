@@ -3260,7 +3260,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             this.disabled = true;
             try {
-                const response = await fetch("/bookings/send-email", {
+                const response = await fetch("{{ route('bookings.sendEmailDashboard') }}", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

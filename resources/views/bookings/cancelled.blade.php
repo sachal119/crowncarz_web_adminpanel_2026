@@ -316,7 +316,7 @@ $(document).ready(function() {
         let email = document.getElementById("emailAddress").value;
         let message = document.getElementById("emailMessage").value;
         if (!email.trim()) { alert("Please enter email"); return; }
-        fetch("/admin/bookings/send-email", {
+        fetch("{{ route('bookings.sendEmailDashboard') }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
