@@ -88,39 +88,53 @@
             });
         }
     @endphp
-    <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row" style="{{ $rowStyle }}">
-        <td class="col-ref" style="{{ $rowStyle }}">{{ $booking['ref_no'] ?? 'N/A' }}</td>
+    <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row align-middle" style="{{ $rowStyle }}">
+        <td class="col-ref fw-bold" style="{{ $rowStyle }}">
+            <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">{{ $booking['ref_no'] ?? 'N/A' }}</span>
+        </td>
         <td class="col-payment" style="{{ $rowStyle }}">
-            <span class="badge rounded-pill px-3 py-2" style="background-color: {{ $bgColor }}; color: #fff;">
+            <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs" style="background-color: {{ $bgColor }}; font-size: 10.5px; font-weight: 600;">
                 {{ ucfirst($paymentType) }}
             </span>
         </td>
-        <td class="col-passenger" style="{{ $rowStyle }}">{{ $booking['passenger_name'] ?? 'N/A' }}</td>
+        <td class="col-passenger fw-semibold" style="{{ $rowStyle }}" title="{{ $booking['passenger_name'] ?? 'N/A' }}">
+            <span class="truncate-cell" style="max-width: 125px;">{{ $booking['passenger_name'] ?? 'N/A' }}</span>
+        </td>
         <td class="col-driver driver-cell" style="{{ $rowStyle }}">
             @if($driver)
                 @php
                     $dCall = !empty($driver['call_sign']) ? $driver['call_sign'] . '/' : '';
                     $dName = $driver['name'] ?? 'Driver';
+                    $fullDriver = $dCall . $dName;
                 @endphp
-                <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">
-                    {{ $dCall }}{{ $dName }}
+                <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge truncate-cell" style="font-size: 11.5px; max-width: 130px;" title="{{ $fullDriver }}">
+                    {{ $fullDriver }}
                 </span>
             @elseif(!empty($bDriverName) || !empty($bDriverCallSign) || !empty($booking['driver']))
                 @php
                     $dCall = !empty($bDriverCallSign) ? $bDriverCallSign . '/' : '';
                     $dName = $bDriverName ?: ($booking['driver'] ?? 'Driver');
+                    $fullDriver = $dCall . $dName;
                 @endphp
-                <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">
-                    {{ $dCall }}{{ $dName }}
+                <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge truncate-cell" style="font-size: 11.5px; max-width: 130px;" title="{{ $fullDriver }}">
+                    {{ $fullDriver }}
                 </span>
             @else
-                <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>
+                <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;" title="No driver assigned yet">Not Assigned</span>
             @endif
         </td>
-        <td class="col-phone" style="{{ $rowStyle }}">{{ $booking['phone_no'] ?? 'N/A' }}</td>
-        <td class="col-pickup" style="{{ $rowStyle }}">{{ Str::limit($booking['pickup_address'] ?? '', 30) }}</td>
-        <td class="col-dropoff" style="{{ $rowStyle }}">{{ Str::limit($booking['dropoff_address'] ?? '', 30) }}</td>
-        <td class="col-vias" style="{{ $rowStyle }}">
+        <td class="col-phone font-monospace" style="{{ $rowStyle }}">
+            <a href="tel:{{ $booking['phone_no'] ?? '' }}" class="text-decoration-none text-dark" style="font-size: 11.5px;" title="{{ $booking['phone_no'] ?? 'N/A' }}">
+                {{ $booking['phone_no'] ?? 'N/A' }}
+            </a>
+        </td>
+        <td class="col-pickup" style="{{ $rowStyle }}" title="{{ $booking['pickup_address'] ?? '-' }}">
+            <span class="truncate-cell text-dark" style="max-width: 140px;">{{ $booking['pickup_address'] ?? '-' }}</span>
+        </td>
+        <td class="col-dropoff" style="{{ $rowStyle }}" title="{{ $booking['dropoff_address'] ?? '-' }}">
+            <span class="truncate-cell text-dark" style="max-width: 140px;">{{ $booking['dropoff_address'] ?? '-' }}</span>
+        </td>
+        <td class="col-vias text-center" style="{{ $rowStyle }}">
             @php
                 $viasList = [];
                 if (!empty($booking['vias'])) {
@@ -133,16 +147,16 @@
                 $viasFull = implode(' → ', $viasList);
             @endphp
             @if($viasCount > 0)
-                <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px; font-weight: 500; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle;" title="{{ $viasFull }}">
-                    <i class="bi bi-signpost-split text-warning me-1"></i>{{ Str::limit($viasFull, 16) }}
+                <span class="badge bg-light text-dark border px-2 py-1 truncate-cell" style="font-size: 11px; font-weight: 500; max-width: 115px;" title="{{ $viasFull }}">
+                    <i class="bi bi-signpost-split text-warning me-1"></i>{{ $viasFull }}
                 </span>
             @else
-                <span class="text-muted">-</span>
+                <span class="text-muted small">-</span>
             @endif
         </td>
-        <td class="col-date" style="{{ $rowStyle }}">{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '-' }}</td>
-        <td class="col-time" style="{{ $rowStyle }}">{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '-' }}</td>
-        <td class="col-vehicle" style="{{ $rowStyle }}">
+        <td class="col-date fw-semibold text-nowrap" style="{{ $rowStyle }}">{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '-' }}</td>
+        <td class="col-time font-monospace text-nowrap fw-bold" style="{{ $rowStyle }}">{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '-' }}</td>
+        <td class="col-vehicle text-center" style="{{ $rowStyle }}">
             @php
                 $type = $booking['vehicle_make'] ?? '-';
                 $badges = [
@@ -154,19 +168,30 @@
                 ];
                 $badgeClass = $badges[$type] ?? 'secondary';
             @endphp
-            <span class="badge bg-{{ $badgeClass }}" style="font-size: 0.85rem;">{{ $type }}</span>
+            <span class="badge bg-{{ $badgeClass }} px-2 py-1" style="font-size: 11px; font-weight: 600;">{{ $type }}</span>
         </td>
-        <td class="col-flight" style="{{ $rowStyle }}">{{ $booking['flight_no'] ?? '-' }}</td>
-        <td class="col-price" style="{{ $rowStyle }}">{{ $booking['price'] ?? '-' }}</td>
-        <td class="col-comment" style="{{ $rowStyle }}">
-            {{ isset($booking['job_comment']) ? Str::limit($booking['job_comment'], 20) : 'No comment' }}
+        <td class="col-flight text-nowrap" style="{{ $rowStyle }}" title="{{ $booking['flight_no'] ?? '-' }}">
+            @if(!empty($booking['flight_no']) && $booking['flight_no'] !== '-' && $booking['flight_no'] !== 'undefined')
+                <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px;">{{ $booking['flight_no'] }}</span>
+            @else
+                <span class="text-muted small">-</span>
+            @endif
+        </td>
+        <td class="col-price fw-bold text-dark text-nowrap" style="{{ $rowStyle }}">
+            £{{ is_numeric($booking['price'] ?? null) ? number_format((float)$booking['price'], 2) : ($booking['price'] ?? '-') }}
+        </td>
+        <td class="col-comment" style="{{ $rowStyle }}" title="{{ !empty($booking['job_comment']) ? $booking['job_comment'] : (!empty($booking['comments']) ? $booking['comments'] : 'No comment') }}">
+            @php
+                $comm = !empty($booking['job_comment']) ? $booking['job_comment'] : (!empty($booking['comments']) ? $booking['comments'] : 'No comment');
+            @endphp
+            <span class="truncate-cell text-muted" style="max-width: 120px; font-size: 11px;">{{ $comm }}</span>
         </td>
         <td class="col-status" style="{{ $rowStyle }}">
             <form method="POST" action="{{ route('bookings.updateStatusManual', $booking['id']) }}" class="statusForm">
                 @csrf
-                <select class="form-select form-select-sm text-black statusSelect"
+                <select class="form-select form-select-sm text-black statusSelect fw-semibold"
                         name="status"
-                        style="{{ $statusSelectStyle }}; width:100px;"
+                        style="{{ $statusSelectStyle }}; min-width: 106px; font-size: 11px; border-radius: 6px; padding: 2px 22px 2px 8px;"
                         data-booking-id="{{ $booking['id'] }}">
                     @php
                         $statusOptions = [
@@ -189,8 +214,8 @@
                 </select>
             </form>
         </td>
-        <td class="col-platform" style="{{ $rowStyle }}">
-            <span class="badge {{ $platformBadge }}" style="font-size: 0.75rem;">
+        <td class="col-platform text-center" style="{{ $rowStyle }}">
+            <span class="badge {{ $platformBadge }} px-2 py-1" style="font-size: 10.5px; font-weight: 600;">
                 {{ $platformLabel }}
             </span>
         </td>

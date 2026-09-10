@@ -402,6 +402,54 @@ td{
         transform: scale(1) translateY(0);
     }
 }
+
+/* 💎 Future Bookings Table UX Polish */
+.custom-dashboard-table {
+    font-size: 12px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.custom-dashboard-table thead th {
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #475569;
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+    padding: 11px 8px;
+    vertical-align: middle;
+}
+.custom-dashboard-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+.custom-dashboard-table tbody tr:hover {
+    background-color: #f1f5f9 !important;
+}
+.custom-dashboard-table td {
+    padding: 9px 8px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+}
+.truncate-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: middle;
+    cursor: help;
+}
+.truncate-cell:hover {
+    text-decoration: underline dotted #94a3b8;
+}
+.statusSelect {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.statusSelect:focus {
+    box-shadow: 0 0 0 2px rgba(184, 115, 51, 0.3);
+}
 </style>
 
 <!-- 🌟 Fullscreen Screen-Level Search & Filter Loader -->
@@ -682,45 +730,50 @@ td{
 
   </div>
 
-  
-  <div class="col-lg-12 mt-2">
-        <div class="card border-0">
-            <div class="card-header bg-warning bg-opacity-25 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 text-dark">
-                    📋 Future Bookings<span class="ms-2 badge bg-dark" id="bookingsTotalCount">{{ $bookings->total() }}</span>
-                </h6>
-                <span class="badge bg-success bg-opacity-75 text-white d-flex align-items-center gap-1" id="liveSyncStatus">
+  <div class="col-lg-12 mt-3">
+        <div class="card shadow-sm border-0" style="border-radius: 14px; overflow: hidden; border: 1px solid #eaedf1 !important;">
+            <div class="card-header bg-white py-3 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom" style="border-color: #f1f5f9 !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(184, 115, 51, 0.12); color: #B87333;">
+                        <i class="bi bi-calendar2-range-fill fs-6"></i>
+                    </span>
+                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 14px; letter-spacing: -0.2px;">
+                        Future Bookings
+                    </h6>
+                    <span class="badge bg-dark text-white rounded-pill px-2.5 py-1" id="bookingsTotalCount" style="font-size: 11px;">{{ $bookings->total() }}</span>
+                </div>
+                <span class="badge bg-success bg-opacity-75 text-white d-flex align-items-center gap-1.5 px-2.5 py-1.5 shadow-xs" id="liveSyncStatus" style="border-radius: 8px; font-size: 11px;">
                     <i class="bi bi-broadcast"></i> Live Sync Active
                 </span>
             </div>
-            <div class="table-responsive" style="border-radius: 0px 0px 8px 8px;">
-                <table class="table table-hover align-middle mb-0" id="futureBookingsTable">
-                   <thead class="table-light">
-    <tr>
-        <th>Ref#</th>
-        <th>Account Type</th>
-        <th>Passenger</th>
-        <th>Driver</th>
-        <th>Phone</th>
-        <th>Pickup</th>
-        <th>Dropoff</th>
-        <th>Vias</th>
-        <th>Job Date</th>
-        <th>Job Time</th>
-        <th>Vehicle</th>
-        <th>Flight</th>
-        <th>Price</th>
-        <th>Comments</th>
-        <th>Status</th>
-        <th>Plateform</th>
-        <th>Actions</th>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 custom-dashboard-table" id="futureBookingsTable">
+                   <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+    <tr class="text-uppercase text-muted" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 700;">
+        <th class="py-2.5 px-3">Ref#</th>
+        <th class="py-2.5 px-2">Account Type</th>
+        <th class="py-2.5 px-2">Passenger</th>
+        <th class="py-2.5 px-2">Driver</th>
+        <th class="py-2.5 px-2">Phone</th>
+        <th class="py-2.5 px-2">Pickup</th>
+        <th class="py-2.5 px-2">Dropoff</th>
+        <th class="py-2.5 px-2 text-center">Vias</th>
+        <th class="py-2.5 px-2">Job Date</th>
+        <th class="py-2.5 px-2">Job Time</th>
+        <th class="py-2.5 px-2 text-center">Vehicle</th>
+        <th class="py-2.5 px-2">Flight</th>
+        <th class="py-2.5 px-2">Price</th>
+        <th class="py-2.5 px-2">Comments</th>
+        <th class="py-2.5 px-2">Status</th>
+        <th class="py-2.5 px-2 text-center">Platform</th>
+        <th class="py-2.5 px-3 text-center">Actions</th>
     </tr>
 </thead>
 <tbody class="small" id="bookingsTableBody">
 @include('partials.dashboard_table_rows', ['bookings' => $bookings, 'drivers' => $drivers])
 </tbody>
                 </table>
-<div class="justify-content-center mt-4 d-flex" id="bookingsPaginationContainer">
+<div class="justify-content-center my-3 d-flex" id="bookingsPaginationContainer">
     {{ $bookings->links('pagination::bootstrap-5') }}
 </div>
 
@@ -1641,42 +1694,63 @@ function buildBookingRowHtml(booking, isNew = false) {
         statusOptionsHtml += `<option value="${val}" ${currentStatus === val ? 'selected' : ''}>${label}</option>`;
     }
 
-    const hasDriver = !!booking.driver_id;
+    const hasDriver = !!(booking.driver_id || booking.driverId || booking.driver_name || booking.driver || booking.driver_call_sign || booking.call_sign);
     const bookingJson = JSON.stringify(booking).replace(/'/g, "&apos;");
+    const pickupAddress = booking.pickup_address || '-';
+    const dropoffAddress = booking.dropoff_address || '-';
+    const passengerName = booking.passenger_name || 'N/A';
+    const flightNo = (booking.flight_no && booking.flight_no !== '-' && booking.flight_no !== 'undefined') ? booking.flight_no : '-';
+    const formattedPrice = (booking.price && !isNaN(Number(booking.price))) ? `£${Number(booking.price).toFixed(2)}` : (booking.price || '-');
 
     const highlightClass = isNew ? 'new-booking-highlight' : '';
 
     return `
-    <tr id="booking-row-${id}" data-booking-id="${id}" class="booking-table-row ${highlightClass}" style="${rowStyle}">
-        <td class="col-ref" style="${rowStyle}">${booking.ref_no || 'N/A'}</td>
+    <tr id="booking-row-${id}" data-booking-id="${id}" class="booking-table-row align-middle ${highlightClass}" style="${rowStyle}">
+        <td class="col-ref fw-bold" style="${rowStyle}">
+            <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">${booking.ref_no || 'N/A'}</span>
+        </td>
         <td class="col-payment" style="${rowStyle}">${getPaymentBadgeHtml(booking.payment_type)}</td>
-        <td class="col-passenger" style="${rowStyle}">${booking.passenger_name || 'N/A'}</td>
+        <td class="col-passenger fw-semibold" style="${rowStyle}" title="${passengerName}">
+            <span class="truncate-cell" style="max-width: 125px;">${passengerName}</span>
+        </td>
         <td class="col-driver driver-cell" style="${rowStyle}">${driverHtml}</td>
-        <td class="col-phone" style="${rowStyle}">${booking.phone_no || 'N/A'}</td>
-        <td class="col-pickup" style="${rowStyle}">${(booking.pickup_address || '').substring(0, 30)}</td>
-        <td class="col-dropoff" style="${rowStyle}">${(booking.dropoff_address || '').substring(0, 30)}</td>
-        <td class="col-vias" style="${rowStyle}">${viasText}</td>
-        <td class="col-date" style="${rowStyle}">${pickupDate}</td>
-        <td class="col-time" style="${rowStyle}">${pickupTime}</td>
-        <td class="col-vehicle" style="${rowStyle}">${getVehicleBadgeHtml(booking.vehicle_make)}</td>
-        <td class="col-flight" style="${rowStyle}">${booking.flight_no || '-'}</td>
-        <td class="col-price" style="${rowStyle}">${booking.price || '-'}</td>
-        <td class="col-comment" style="${rowStyle}">${commentText}</td>
+        <td class="col-phone font-monospace" style="${rowStyle}">
+            <a href="tel:${booking.phone_no || ''}" class="text-decoration-none text-dark" style="font-size: 11.5px;" title="${booking.phone_no || 'N/A'}">
+                ${booking.phone_no || 'N/A'}
+            </a>
+        </td>
+        <td class="col-pickup" style="${rowStyle}" title="${pickupAddress}">
+            <span class="truncate-cell text-dark" style="max-width: 140px;">${pickupAddress}</span>
+        </td>
+        <td class="col-dropoff" style="${rowStyle}" title="${dropoffAddress}">
+            <span class="truncate-cell text-dark" style="max-width: 140px;">${dropoffAddress}</span>
+        </td>
+        <td class="col-vias text-center" style="${rowStyle}">${viasText}</td>
+        <td class="col-date fw-semibold text-nowrap" style="${rowStyle}">${pickupDate}</td>
+        <td class="col-time font-monospace text-nowrap fw-bold" style="${rowStyle}">${pickupTime}</td>
+        <td class="col-vehicle text-center" style="${rowStyle}">${getVehicleBadgeHtml(booking.vehicle_make)}</td>
+        <td class="col-flight text-nowrap" style="${rowStyle}" title="${flightNo}">
+            ${flightNo !== '-' ? `<span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px;">${flightNo}</span>` : '<span class="text-muted small">-</span>'}
+        </td>
+        <td class="col-price fw-bold text-dark text-nowrap" style="${rowStyle}">${formattedPrice}</td>
+        <td class="col-comment" style="${rowStyle}" title="${commentText}">
+            <span class="truncate-cell text-muted" style="max-width: 120px; font-size: 11px;">${commentText}</span>
+        </td>
         <td class="col-status" style="${rowStyle}">
             <form method="POST" action="/bookings/${id}/update-status-manual" class="statusForm">
                 <input type="hidden" name="_token" value="${CSRF_TOKEN}">
-                <select class="form-select form-select-sm text-black statusSelect"
+                <select class="form-select form-select-sm text-black statusSelect fw-semibold"
                         name="status"
-                        style="${statusSelectStyle}; width:100px;"
+                        style="${statusSelectStyle}; min-width: 106px; font-size: 11px; border-radius: 6px; padding: 2px 22px 2px 8px;"
                         data-booking-id="${id}">
                     ${statusOptionsHtml}
                 </select>
             </form>
         </td>
-        <td class="col-platform" style="${rowStyle}">${getPlatformBadgeHtml(booking.platform, booking.partner)}</td>
+        <td class="col-platform text-center" style="${rowStyle}">${getPlatformBadgeHtml(booking.platform, booking.partner)}</td>
         <td class="col-actions" style="${rowStyle}">
             <div class="dropdown actions-dropdown" style="position: static;">
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 28px; height: 28px; border-radius: 6px;">
                     <i class="bi bi-three-dots-vertical"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm rounded-3">
@@ -2871,7 +2945,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.addEventListener('click', function (e) {
             e.preventDefault();
             searchForm.reset();
-            fp.clear();
+            if (fp) fp.clear();
             fromInput.value = '';
             toInput.value = '';
             const drp = document.getElementById('dateRangePicker');
@@ -2879,6 +2953,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const usi = document.getElementById('universalSearchInput');
             if (usi) usi.value = '';
             searchForm.querySelectorAll('select').forEach(sel => sel.value = '');
+            showDashboardToast('Filters Cleared', 'Resetting and loading all future bookings...', 'info');
             applyDashboardFilter("{{ route('dashboard') }}");
         });
     }
@@ -2934,11 +3009,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 fromD = today;
                 toD = in7;
             } else if (preset === 'clear') {
-                fp.clear();
+                if (fp) fp.clear();
                 fromInput.value = '';
                 toInput.value = '';
                 const drp = document.getElementById('dateRangePicker');
                 if (drp) drp.value = '';
+                const usi = document.getElementById('universalSearchInput');
+                if (usi) usi.value = '';
+                searchForm.querySelectorAll('select').forEach(sel => sel.value = '');
+                showDashboardToast('Filters Cleared', 'Showing all future bookings.', 'info');
                 applyDashboardFilter("{{ route('dashboard') }}");
                 return;
             }
@@ -2980,6 +3059,7 @@ document.addEventListener('DOMContentLoaded', function () {
             this.field = document.getElementById(options.fieldId);
             this.apiKey = options.apiKey;
             this.onSelectCallback = options.onSelect;
+            this.activeIndex = -1;
             if (this.field) {
                 this.init();
             }
@@ -3002,6 +3082,7 @@ document.addEventListener('DOMContentLoaded', function () {
             this.field.addEventListener('input', () => {
                 clearTimeout(debounceTimer);
                 const query = this.field.value.trim();
+                this.activeIndex = -1;
                 if (query.length < 3) {
                     this.listContainer.style.display = 'none';
                     return;
@@ -3009,9 +3090,62 @@ document.addEventListener('DOMContentLoaded', function () {
                 debounceTimer = setTimeout(() => this.fetchOSPlaces(query), 350);
             });
 
+            // Handle keyboard navigation & Enter key
+            this.field.addEventListener('keydown', (e) => {
+                const items = this.listContainer.querySelectorAll('li');
+                const isDropdownOpen = this.listContainer.style.display === 'block' && items.length > 0;
+
+                if (e.key === 'ArrowDown') {
+                    if (isDropdownOpen) {
+                        e.preventDefault();
+                        this.activeIndex = (this.activeIndex + 1) % items.length;
+                        this.updateActiveItem(items);
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    if (isDropdownOpen) {
+                        e.preventDefault();
+                        this.activeIndex = (this.activeIndex - 1 + items.length) % items.length;
+                        this.updateActiveItem(items);
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    if (isDropdownOpen) {
+                        const targetItem = this.activeIndex >= 0 ? items[this.activeIndex] : items[0];
+                        if (targetItem) {
+                            targetItem.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                            return;
+                        }
+                    }
+
+                    this.listContainer.style.display = 'none';
+                    if (typeof fetchDashboardInstantPrice === 'function') {
+                        fetchDashboardInstantPrice();
+                    }
+                } else if (e.key === 'Escape') {
+                    this.listContainer.style.display = 'none';
+                    this.activeIndex = -1;
+                }
+            });
+
             document.addEventListener('click', (e) => {
                 if (!this.wrapper.contains(e.target)) {
                     this.listContainer.style.display = 'none';
+                    this.activeIndex = -1;
+                }
+            });
+        }
+
+        updateActiveItem(items) {
+            items.forEach((item, index) => {
+                if (index === this.activeIndex) {
+                    item.style.backgroundColor = '#e0f2fe';
+                    item.style.color = '#0369a1';
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.style.backgroundColor = 'transparent';
+                    item.style.color = '#1e293b';
                 }
             });
         }
@@ -3030,12 +3164,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         renderDropdown(results) {
             this.listContainer.innerHTML = '';
+            this.activeIndex = -1;
             if (!results || results.length === 0) {
                 this.listContainer.style.display = 'none';
                 return;
             }
 
-            results.forEach(item => {
+            results.forEach((item, idx) => {
                 const place = item.DPA || item.LPI;
                 if (!place) return;
 
@@ -3051,16 +3186,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 const fullAddress = addressParts.join(', ');
 
                 const li = document.createElement('li');
+                li.setAttribute('data-index', idx);
                 li.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 11.5px; color: #1e293b; line-height: 1.4;';
                 li.textContent = fullAddress;
 
-                li.addEventListener('mouseenter', () => li.style.backgroundColor = '#f8fafc');
-                li.addEventListener('mouseleave', () => li.style.backgroundColor = 'transparent');
+                li.addEventListener('mouseenter', () => {
+                    this.activeIndex = idx;
+                    const items = this.listContainer.querySelectorAll('li');
+                    this.updateActiveItem(items);
+                });
+
+                li.addEventListener('mouseleave', () => {
+                    li.style.backgroundColor = 'transparent';
+                    li.style.color = '#1e293b';
+                });
 
                 li.addEventListener('mousedown', (e) => {
                     e.preventDefault();
                     this.field.value = fullAddress;
                     this.listContainer.style.display = 'none';
+                    this.activeIndex = -1;
                     if (typeof this.onSelectCallback === 'function') {
                         setTimeout(() => this.onSelectCallback(fullAddress, place), 60);
                     }
