@@ -5251,12 +5251,18 @@ if ($this->isLondonPostcode($pickup) || $this->isLondonPostcode($dropoff)) {
                     }
                     $finalPrice = $basePrice + $surchargeAmount + $londonSurcharge;
 
+                    // Automatically calculate airport / station / port parking fee
+                    $parkingDetails = $this->calculateParkingFee($pickup, $dropoff);
+                    $parkingFee = (float)($parkingDetails['total'] ?? (($parkingDetails['pickup_charge'] ?? 0) + ($parkingDetails['dropoff_charge'] ?? 0)));
+
                     // Return fixed price result
                     return response()->json([
                         'success' => true,
                         'type' => 'fixed',
                         'price' => round($finalPrice, 2),
                         'base_price' => round($basePrice, 2),
+                        'parking_fee' => round($parkingFee, 2),
+                        'total_with_parking' => round($finalPrice + $parkingFee, 2),
                         'surcharge_percent' => $surchargePercent,
                         'surcharge_amount' => round($surchargeAmount, 2),
                         'vehicle_type' => $vehicleId,
@@ -5444,7 +5450,10 @@ if ($this->isLondonPostcode($pickup) || $this->isLondonPostcode($dropoff)) {
     }
     $finalMileagePrice = $baseMileagePrice + $surchargeAmount + $londonSurcharge;
     
-    
+    // Automatically calculate airport / station / port parking fee
+    $parkingDetails = $this->calculateParkingFee($pickup, $dropoff);
+    $parkingFee = (float)($parkingDetails['total'] ?? (($parkingDetails['pickup_charge'] ?? 0) + ($parkingDetails['dropoff_charge'] ?? 0)));
+
     /**
      * 5️⃣ Return Final Mileage Pricing (cumulative)
      */
@@ -5453,6 +5462,8 @@ if ($this->isLondonPostcode($pickup) || $this->isLondonPostcode($dropoff)) {
         "type" => "mileage",
         "price" => round($finalMileagePrice, 2),
         "base_price" => round($baseMileagePrice, 2),
+        "parking_fee" => round($parkingFee, 2),
+        "total_with_parking" => round($finalMileagePrice + $parkingFee, 2),
         "surcharge_percent" => $surchargePercent,
         "surcharge_amount" => round($surchargeAmount, 2),
         "vehicle_type" => $vehicleId,
@@ -5646,6 +5657,10 @@ if ($this->isLondonPostcode($pickup) || $this->isLondonPostcode($dropoff)) {
     
     }
 
+    // Automatically calculate airport / station / port parking fee
+    $parkingDetails = $this->calculateParkingFee($pickup, $dropoff);
+    $parkingFee = (float)($parkingDetails['total'] ?? (($parkingDetails['pickup_charge'] ?? 0) + ($parkingDetails['dropoff_charge'] ?? 0)));
+
     /**
      * 5️⃣ Return Final Mileage Pricing (cumulative)
      */
@@ -5654,6 +5669,8 @@ if ($this->isLondonPostcode($pickup) || $this->isLondonPostcode($dropoff)) {
         "type" => "mileage",
         "price" => round($finalMileagePrice, 2),
         "base_price" => round($baseMileagePrice, 2),
+        "parking_fee" => round($parkingFee, 2),
+        "total_with_parking" => round($finalMileagePrice + $parkingFee, 2),
         "surcharge_percent" => $surchargePercent,
         "surcharge_amount" => round($surchargeAmount, 2),
         "vehicle_type" => $vehicleId,

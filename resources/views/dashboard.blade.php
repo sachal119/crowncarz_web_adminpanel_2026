@@ -538,11 +538,10 @@ td{
                     </div>
                 </div>
 
-                <!-- Row: Vehicle, Date, Time, Parking, Miles -->
+                <!-- Row: Vehicle, Date, Time -->
                 <div class="row g-2 mb-2">
-                    <div class="col-md-3 col-6">
-                        <label class="form-label mb-0 text-muted small" style="font-size: 11px;">Vehicle</label>
-                        <select id="calcVehicleSelect" class="form-select" style="border-radius: 8px; font-size: 12px;">
+                    <div class="col-md-5 col-12">
+                        <select id="calcVehicleSelect" class="form-select" style="border-radius: 10px; font-size: 12.5px;">
                             <option value="Saloon" selected>Saloon</option>
                             <option value="Estate">Estate</option>
                             <option value="Executive">Executive</option>
@@ -550,40 +549,30 @@ td{
                             <option value="8 Seater">8 Seater</option>
                         </select>
                     </div>
+                    <div class="col-md-4 col-6">
+                        <input type="date" id="calcDateInput" class="form-control" value="{{ date('Y-m-d') }}" style="border-radius: 10px; font-size: 12.5px;">
+                    </div>
                     <div class="col-md-3 col-6">
-                        <label class="form-label mb-0 text-muted small" style="font-size: 11px;">Pickup Date</label>
-                        <input type="date" id="calcDateInput" class="form-control" value="{{ date('Y-m-d') }}" style="border-radius: 8px; font-size: 12px;">
-                    </div>
-                    <div class="col-md-2 col-4">
-                        <label class="form-label mb-0 text-muted small" style="font-size: 11px;">Time</label>
-                        <input type="time" id="calcTimeInput" class="form-control" value="{{ date('H:i') }}" style="border-radius: 8px; font-size: 12px;">
-                    </div>
-                    <div class="col-md-2 col-4">
-                        <label class="form-label mb-0 text-muted small" style="font-size: 11px;">Parking (£)</label>
-                        <input type="number" step="0.5" id="calcParkingInput" class="form-control" placeholder="0.00" title="Parking (£)" style="border-radius: 8px; font-size: 12px;">
-                    </div>
-                    <div class="col-md-2 col-4">
-                        <label class="form-label mb-0 text-muted small" style="font-size: 11px;">Total Miles</label>
-                        <input type="text" id="calcMilesInput" class="form-control bg-light fw-bold text-primary" readonly value="0.00 mi" title="Total Journey Mileage" style="border-radius: 8px; font-size: 12px;">
+                        <input type="time" id="calcTimeInput" class="form-control" value="{{ date('H:i') }}" style="border-radius: 10px; font-size: 12.5px;">
                     </div>
                 </div>
 
                 <!-- Price Result Output Bar -->
                 <div class="p-2 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: #f8fafc; border: 1px solid #e2e8f0;">
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span id="calcDistanceBadge" class="badge px-2 py-1.5 fw-bold d-flex align-items-center gap-1 shadow-sm" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 12px; border-radius: 8px;">
-                            <i class="bi bi-speedometer2"></i> <span id="calcDistText">0.00 Miles</span>
+                        <span id="calcDistanceBadge" class="badge px-2.5 py-1.5 fw-bold d-flex align-items-center gap-1 shadow-sm" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size: 12px; border-radius: 8px;">
+                            <i class="bi bi-speedometer2 text-primary"></i> <span id="calcDistText">0.00 Miles</span>
                         </span>
-                        <span class="text-muted small fw-medium" id="calcBreakdownText" style="font-size: 11.5px;">Base: £0.00</span>
+                        <span class="text-muted small fw-semibold" id="calcBreakdownText" style="font-size: 12px;">Fare: £0.00</span>
                         <span id="calcLoader" class="spinner-border spinner-border-sm text-warning ms-1" style="display: none;" role="status"></span>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-sm btn-dark text-warning fw-bold px-2 py-1 d-flex align-items-center gap-1 shadow-sm" id="getInstantPriceBtn" style="border-radius: 8px; font-size: 12px; border: 1px solid #334155;">
+                        <button type="button" class="btn btn-sm text-white fw-bold px-3 py-1.5 d-flex align-items-center gap-1 shadow-sm" id="getInstantPriceBtn" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 8px; font-size: 12px; border: none;">
                             <i class="bi bi-lightning-fill"></i> Get Price
                         </button>
                         <div class="d-flex align-items-center gap-1">
                             <span class="text-muted small fw-semibold" style="font-size: 11px;">Total:</span>
-                            <span class="badge fs-6 fw-bold px-2.5 py-1 shadow-sm" id="calcFinalPriceBadge" style="background: linear-gradient(135deg, #111827, #1e293b); color: #E6B04A !important; border: 1px solid rgba(230, 176, 74, 0.4); border-radius: 8px;">
+                            <span class="badge fs-6 fw-bold px-2.5 py-1.5 shadow-sm" id="calcFinalPriceBadge" style="background: #111827; color: #E6B04A !important; border: 1px solid rgba(230, 176, 74, 0.4); border-radius: 8px; font-size: 14.5px;">
                                 £0.00
                             </span>
                         </div>
@@ -2674,18 +2663,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return match ? match[0].toUpperCase().trim() : addr.trim();
     }
 
-    // Compute Total Price with Parking
-    function updateInstantTotalDisplay() {
-        const parking = parseFloat(calcParkingInput?.value) || 0;
-        const total = currentBaseFare + parking;
-        if (calcFinalBadge) {
-            calcFinalBadge.textContent = '£' + (total > 0 ? total.toFixed(2) : '0.00');
-        }
-        if (calcBreakdownText) {
-            calcBreakdownText.textContent = `Base: £${currentBaseFare.toFixed(2)}` + (parking > 0 ? ` + Park: £${parking.toFixed(2)}` : '');
-        }
-    }
-
     // Fetch Instant Price from Backend API
     async function fetchDashboardInstantPrice() {
         const pickupRaw = calcPickupInput?.value.trim();
@@ -2716,16 +2693,27 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
 
             if (data && data.success) {
-                currentBaseFare = parseFloat(data.price) || 0;
+                const baseFare = parseFloat(data.base_price || data.price || 0);
+                const parkingFee = parseFloat(data.parking_fee || 0);
+                const totalFare = parseFloat(data.total_with_parking || (baseFare + parkingFee));
                 const distance = parseFloat(data.journey_distance || data.total_distance || 0);
-                const formattedMiles = `${distance.toFixed(2)} Miles`;
+                const formattedMiles = distance > 0 ? `${distance.toFixed(2)} Miles` : `0.00 Miles`;
+
                 if (calcDistText) {
                     calcDistText.textContent = formattedMiles;
                 }
-                if (calcMilesInput) {
-                    calcMilesInput.value = `${distance.toFixed(2)} mi`;
+
+                if (calcFinalBadge) {
+                    calcFinalBadge.textContent = `£${totalFare.toFixed(2)}`;
                 }
-                updateInstantTotalDisplay();
+
+                if (calcBreakdownText) {
+                    if (parkingFee > 0) {
+                        calcBreakdownText.textContent = `Fare: £${baseFare.toFixed(2)} + Park: £${parkingFee.toFixed(2)}`;
+                    } else {
+                        calcBreakdownText.textContent = `Fare: £${baseFare.toFixed(2)}`;
+                    }
+                }
             } else {
                 if (calcBreakdownText) {
                     calcBreakdownText.textContent = data.message || 'No route found';
@@ -2751,9 +2739,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     if (calcTimeInput) {
         calcTimeInput.addEventListener('change', fetchDashboardInstantPrice);
-    }
-    if (calcParkingInput) {
-        calcParkingInput.addEventListener('input', updateInstantTotalDisplay);
     }
 
     // Google Places Autocomplete initialization on Dashboard inputs
