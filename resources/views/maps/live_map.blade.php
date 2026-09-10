@@ -157,7 +157,7 @@
     position: absolute;
     cursor: pointer;
     transform: translate(-50%, -100%);
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), z-index 0.2s;
+    transition: left 0.6s cubic-bezier(0.25, 1, 0.5, 1), top 0.6s cubic-bezier(0.25, 1, 0.5, 1), transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), z-index 0.2s;
     user-select: none;
     z-index: 100;
 }
@@ -179,6 +179,47 @@
     align-items: center;
 }
 
+/* Radiant Snapchat Heatmap Glow Aura */
+.snap-heat-halo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 95px;
+    height: 95px;
+    border-radius: 50%;
+    transform: translate(-50%, -40%);
+    pointer-events: none;
+    opacity: 0.65;
+    filter: blur(10px);
+    z-index: -1;
+    animation: heatPulse 3s infinite ease-in-out;
+}
+
+@keyframes heatPulse {
+    0%, 100% {
+        transform: translate(-50%, -40%) scale(0.95);
+        opacity: 0.55;
+    }
+    50% {
+        transform: translate(-50%, -40%) scale(1.15);
+        opacity: 0.85;
+    }
+}
+
+.snap-status-available .snap-heat-halo {
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.85) 0%, rgba(52, 211, 153, 0.45) 45%, rgba(16, 185, 129, 0) 75%);
+}
+.snap-status-engaged .snap-heat-halo {
+    background: radial-gradient(circle, rgba(244, 63, 94, 0.9) 0%, rgba(251, 113, 133, 0.5) 45%, rgba(244, 63, 94, 0) 75%);
+}
+.snap-status-waiting .snap-heat-halo {
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.9) 0%, rgba(252, 211, 77, 0.5) 45%, rgba(245, 158, 11, 0) 75%);
+}
+.snap-status-on-break .snap-heat-halo,
+.snap-status-offline .snap-heat-halo {
+    background: radial-gradient(circle, rgba(100, 116, 139, 0.6) 0%, rgba(148, 163, 184, 0.25) 45%, rgba(100, 116, 139, 0) 75%);
+}
+
 /* Call Sign Floating Mini Badge */
 .snap-callsign-badge {
     background: #1e293b;
@@ -193,6 +234,7 @@
     white-space: nowrap;
     border: 1px solid rgba(255, 255, 255, 0.3);
     text-transform: uppercase;
+    z-index: 2;
 }
 
 /* Avatar Circular Bubble */
@@ -210,6 +252,7 @@
     position: relative;
     border: 3px solid #ffffff;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    z-index: 2;
 }
 
 /* Status Ring Themes & Gradients */
@@ -260,6 +303,7 @@
     border-top: 8px solid #ffffff;
     margin-top: -2px;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+    z-index: 2;
 }
 
 .snap-status-available .snap-pin-tip { border-top-color: #34d399; }
@@ -784,6 +828,7 @@ class CustomDriverOverlay {
         this.div.className = `snap-marker-container ${statusClass} ${isSelected ? 'selected' : ''}`;
         this.div.innerHTML = `
             <div class="snap-pin-wrapper">
+                <div class="snap-heat-halo"></div>
                 <div class="snap-callsign-badge">${callSign}</div>
                 <div class="snap-avatar-bubble">
                     <div class="snap-pulse-ring"></div>
@@ -862,20 +907,24 @@ function initFirebaseLiveStream() {
 
     const db = firebase.database();
 
-    // 1️⃣ Listen for Vehicles
+    // 1️⃣ Listen for Vehicles in Real-time
     db.ref("vehicles").on("value", (snapshot) => {
         const vehicles = snapshot.val();
         if (vehicles) {
             for (const vKey in vehicles) {
                 const v = vehicles[vKey];
                 if (v && v.driver_id) {
-                    vehiclesState[v.driver_id] = v;
-                    if (driversState[v.driver_id]) {
-                        driversState[v.driver_id].vehicle_make = v.make || driversState[v.driver_id].vehicle_make;
-                        driversState[v.driver_id].vehicle_model = v.model || driversState[v.driver_id].vehicle_model;
-                        driversState[v.driver_id].vehicle_reg = v.registration || v.plate || driversState[v.driver_id].vehicle_reg;
-                        driversState[v.driver_id].vehicle_color = v.color || driversState[v.driver_id].vehicle_color;
-                        driversState[v.driver_id].vehicle_type = v.type || driversState[v.driver_id].vehicle_type;
+                    const dId = String(v.driver_id);
+                    vehiclesState[dId] = v;
+                    for (const id in driversState) {
+                        const drv = driversState[id];
+                        if (String(id) === dId || (drv.id && String(drv.id) === dId) || (v.driver_name && drv.name === v.driver_name)) {
+                            drv.vehicle_make = v.make || drv.vehicle_make;
+                            drv.vehicle_model = v.model || drv.vehicle_model;
+                            drv.vehicle_reg = v.registration || v.plate || drv.vehicle_reg;
+                            drv.vehicle_color = v.color || drv.vehicle_color;
+                            drv.vehicle_type = v.type || drv.vehicle_type;
+                        }
                     }
                 }
             }
@@ -886,7 +935,7 @@ function initFirebaseLiveStream() {
         }
     });
 
-    // 2️⃣ Listen for Live Drivers (Coordinates, status, bearing, speed)
+    // 2️⃣ Listen for Live Drivers (Coordinates, status, bearing, speed) in Real-time
     db.ref("drivers").on("value", (snapshot) => {
         const drivers = snapshot.val();
         if (!drivers) return;
@@ -897,12 +946,13 @@ function initFirebaseLiveStream() {
             driversState[id] = {
                 ...existing,
                 ...d,
-                id: id
+                id: (d.id ? String(d.id) : String(id))
             };
 
             // Merge vehicle if cached
-            if (vehiclesState[id]) {
-                const v = vehiclesState[id];
+            const dId = driversState[id].id || id;
+            const v = vehiclesState[dId] || vehiclesState[id];
+            if (v) {
                 driversState[id].vehicle_make = v.make || driversState[id].vehicle_make;
                 driversState[id].vehicle_model = v.model || driversState[id].vehicle_model;
                 driversState[id].vehicle_reg = v.registration || v.plate || driversState[id].vehicle_reg;
@@ -965,7 +1015,7 @@ function renderAllDrivers() {
         bounds.extend(pos);
 
         if (overlayMarkers[id]) {
-            // Update existing custom overlay marker
+            // Update existing custom overlay marker (live smooth movement)
             overlayMarkers[id].updateDriver(driver);
             overlayMarkers[id].setVisible(true);
         } else {
@@ -1055,8 +1105,10 @@ function matchesFilter(driver, filter, search) {
         const callSign = (driver.call_sign || '').toLowerCase();
         const phone = (driver.phone || '').toLowerCase();
         const reg = (driver.vehicle_reg || '').toLowerCase();
+        const model = (driver.vehicle_model || '').toLowerCase();
+        const make = (driver.vehicle_make || '').toLowerCase();
 
-        if (!name.includes(q) && !callSign.includes(q) && !phone.includes(q) && !reg.includes(q)) {
+        if (!name.includes(q) && !callSign.includes(q) && !phone.includes(q) && !reg.includes(q) && !model.includes(q) && !make.includes(q)) {
             return false;
         }
     }
@@ -1104,6 +1156,18 @@ function renderSidebarList() {
         else if (status === 'waiting') { statusClass = 'status-waiting'; statusLabel = 'Waiting'; }
         else if (status === 'on_break') { statusClass = 'status-on-break'; statusLabel = 'On Break'; }
 
+        // Build rich vehicle display (e.g., MERCEDES-BENZ E220 • YG64 XSF)
+        let vehicleDisplay = 'Standard Vehicle';
+        if (driver.vehicle_make || driver.vehicle_model) {
+            const make = (driver.vehicle_make || '').trim();
+            const model = (driver.vehicle_model || '').trim();
+            const fullModel = `${make} ${model}`.trim();
+            const reg = driver.vehicle_reg ? ` • ${driver.vehicle_reg}` : '';
+            vehicleDisplay = fullModel + reg;
+        } else if (driver.vehicle_reg) {
+            vehicleDisplay = `Reg: ${driver.vehicle_reg}`;
+        }
+
         html += `
             <div class="driver-card-item ${isSelected ? 'selected' : ''}" onclick="selectDriver('${driver.id}', true)">
                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -1115,9 +1179,9 @@ function renderSidebarList() {
                     <span class="status-badge ${statusClass}">${statusLabel}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center text-muted small mt-2">
-                    <div>
+                    <div class="text-truncate" style="max-width: 190px;" title="${vehicleDisplay}">
                         <i class="bi bi-car-front text-secondary me-1"></i>
-                        <span>${driver.vehicle_model || driver.vehicle_make || 'Standard Vehicle'}</span>
+                        <span class="fw-medium">${vehicleDisplay}</span>
                     </div>
                     <div>
                         ${hasGps ? '<span class="text-success fw-bold"><i class="bi bi-geo-alt-fill"></i> Live GPS</span>' : '<span class="text-muted"><i class="bi bi-geo-alt"></i> No GPS</span>'}

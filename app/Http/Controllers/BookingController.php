@@ -61,25 +61,77 @@ protected $firebase;
             $driversData = $this->firebase->getData('drivers') ?? [];
             $vehiclesData = $this->firebase->getData('vehicles') ?? [];
 
+            // Retrieve MySQL vehicles & drivers as robust fallback/enrichment
+            $mysqlVehicles = collect();
+            try {
+                $mysqlVehicles = \App\Models\Vehicle::all();
+            } catch (\Exception $e) {}
+
+            $mysqlDrivers = collect();
+            try {
+                $mysqlDrivers = \App\Models\Driver::all();
+            } catch (\Exception $e) {}
+
             $drivers = collect();
             if (is_array($driversData)) {
-                foreach ($driversData as $id => $driver) {
+                foreach ($driversData as $key => $driver) {
                     if (!is_array($driver)) continue;
-                    $driver['id'] = (string) $id;
+                    $driverId = (string) ($driver['id'] ?? $key);
+                    $driver['id'] = $driverId;
+                    $driverName = trim($driver['name'] ?? '');
+                    $driverEmail = trim($driver['email'] ?? '');
+                    $driverPhone = trim($driver['phone'] ?? '');
 
-                    // Match vehicle
+                    // Match vehicle from Firebase vehicles or MySQL vehicles
+                    $matchedVehicle = null;
+
+                    // 1. Search in Firebase vehiclesData by driver_id or key
                     if (is_array($vehiclesData)) {
                         foreach ($vehiclesData as $v) {
-                            if (is_array($v) && (($v['driver_id'] ?? null) == $id)) {
-                                $driver['vehicle_make'] = $v['make'] ?? ($driver['vehicle_make'] ?? '');
-                                $driver['vehicle_model'] = $v['model'] ?? ($driver['vehicle_model'] ?? '');
-                                $driver['vehicle_reg'] = $v['registration'] ?? ($driver['vehicle_reg'] ?? ($v['plate'] ?? ''));
-                                $driver['vehicle_color'] = $v['color'] ?? ($driver['vehicle_color'] ?? '');
-                                $driver['vehicle_type'] = $v['type'] ?? ($driver['vehicle_type'] ?? '');
+                            if (!is_array($v)) continue;
+                            $vDriverId = (string) ($v['driver_id'] ?? '');
+                            if ($vDriverId !== '' && ($vDriverId === (string)$driverId || $vDriverId === (string)$key || (isset($driver['id']) && $vDriverId === (string)$driver['id']))) {
+                                $matchedVehicle = $v;
                                 break;
                             }
                         }
                     }
+
+                    // 2. Search in MySQL vehicles if not matched yet
+                    if (!$matchedVehicle && $mysqlVehicles->isNotEmpty()) {
+                        foreach ($mysqlVehicles as $v) {
+                            $vDriverId = (string) ($v->driver_id ?? '');
+                            if ($vDriverId !== '' && ($vDriverId === (string)$driverId || $vDriverId === (string)$key || (isset($driver['id']) && $vDriverId === (string)$driver['id']))) {
+                                $matchedVehicle = $v->toArray();
+                                break;
+                            }
+                        }
+                    }
+
+                    // 3. Search by Driver Name / Email in MySQL Drivers -> Vehicle
+                    if (!$matchedVehicle && $mysqlDrivers->isNotEmpty() && $driverName !== '') {
+                        $dbDriver = $mysqlDrivers->first(function($d) use ($driverName, $driverEmail, $driverPhone) {
+                            return (strcasecmp(trim($d->name ?? ''), $driverName) === 0) ||
+                                   ($driverEmail !== '' && strcasecmp(trim($d->email ?? ''), $driverEmail) === 0) ||
+                                   ($driverPhone !== '' && trim($d->phone ?? '') === $driverPhone);
+                        });
+
+                        if ($dbDriver) {
+                            $v = $mysqlVehicles->firstWhere('driver_id', $dbDriver->id);
+                            if ($v) {
+                                $matchedVehicle = $v->toArray();
+                            }
+                        }
+                    }
+
+                    if ($matchedVehicle) {
+                        $driver['vehicle_make'] = $matchedVehicle['make'] ?? ($driver['vehicle_make'] ?? '');
+                        $driver['vehicle_model'] = $matchedVehicle['model'] ?? ($driver['vehicle_model'] ?? '');
+                        $driver['vehicle_reg'] = $matchedVehicle['registration'] ?? ($matchedVehicle['plate'] ?? ($driver['vehicle_reg'] ?? ''));
+                        $driver['vehicle_color'] = $matchedVehicle['color'] ?? ($driver['vehicle_color'] ?? '');
+                        $driver['vehicle_type'] = $matchedVehicle['type'] ?? ($driver['vehicle_type'] ?? '');
+                    }
+
                     $drivers->push($driver);
                 }
             }
