@@ -3,6 +3,111 @@
 @section('content')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
+  /* 🌟 Custom Modern Flatpickr Calendar Styling */
+  .flatpickr-calendar {
+    border-radius: 16px !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0,0,0,0.08) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    font-family: inherit !important;
+    padding: 0 0 10px 0 !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+  }
+  .flatpickr-calendar .flatpickr-months {
+    background: linear-gradient(135deg, #111827 0%, #1e293b 100%) !important;
+    padding: 10px 8px !important;
+    position: relative !important;
+    border-radius: 14px 14px 0 0 !important;
+  }
+  .flatpickr-calendar .flatpickr-month {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    height: 40px !important;
+  }
+  .flatpickr-calendar .flatpickr-current-month {
+    padding-top: 4px !important;
+    font-size: 15px !important;
+    color: #ffffff !important;
+  }
+  .flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months,
+  .flatpickr-calendar .flatpickr-current-month input.cur-year {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+  }
+  .flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: #111827 !important;
+  }
+  .flatpickr-calendar .flatpickr-prev-month,
+  .flatpickr-calendar .flatpickr-next-month {
+    color: #E6B04A !important;
+    fill: #E6B04A !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .flatpickr-calendar .flatpickr-prev-month:hover,
+  .flatpickr-calendar .flatpickr-next-month:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    fill: #ffffff !important;
+  }
+  .flatpickr-calendar .flatpickr-weekdays {
+    background: #0f172a !important;
+    padding: 4px 0 !important;
+  }
+  .flatpickr-calendar span.flatpickr-weekday {
+    color: #E6B04A !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    letter-spacing: 0.5px !important;
+  }
+  .flatpickr-calendar .flatpickr-days {
+    padding: 8px 10px 4px 10px !important;
+  }
+  .flatpickr-calendar .dayContainer {
+    justify-content: space-around !important;
+  }
+  .flatpickr-calendar .flatpickr-day {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    color: #1e293b !important;
+    height: 38px !important;
+    line-height: 38px !important;
+    max-width: 38px !important;
+    margin: 2px !important;
+    font-size: 13.5px !important;
+  }
+  .flatpickr-calendar .flatpickr-day.selected, 
+  .flatpickr-calendar .flatpickr-day.startRange, 
+  .flatpickr-calendar .flatpickr-day.endRange {
+    background: linear-gradient(135deg, #B87333 0%, #d48b48 100%) !important;
+    border-color: #B87333 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(184, 115, 51, 0.4) !important;
+  }
+  .flatpickr-calendar .flatpickr-day.inRange {
+    background: rgba(184, 115, 51, 0.15) !important;
+    border-color: transparent !important;
+    color: #8c531b !important;
+  }
+  .flatpickr-calendar .flatpickr-day.today {
+    border-color: #E6B04A !important;
+    background: rgba(230, 176, 74, 0.12) !important;
+    font-weight: 700 !important;
+  }
+  .flatpickr-calendar .flatpickr-day:hover:not(.selected):not(.startRange):not(.endRange) {
+    background: rgba(230, 176, 74, 0.25) !important;
+    border-color: transparent !important;
+    color: #111827 !important;
+  }
+  .flatpickr-calendar:before, .flatpickr-calendar:after {
+    display: none !important;
+  }
+
   /* Responsive font scaling */
   html {
     font-size: 16px; /* base for large screens */
@@ -267,7 +372,7 @@ td{
                 <form action="{{ route('bookings.search.main') }}" method="GET" id="dashboardSearchForm">
                     <div class="row g-2 align-items-center">
                         <!-- Universal Keyword Search Input -->
-                        <div class="col-lg-5 col-md-12">
+                        <div class="col-lg-4 col-md-12">
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius: 10px 0 0 10px;">
                                     <i class="bi bi-search"></i>
@@ -276,23 +381,23 @@ td{
                                        name="search" 
                                        id="universalSearchInput"
                                        class="form-control border-start-0 ps-0" 
-                                       placeholder="Search passenger, phone, pickup, dropoff, via, driver, ref#..." 
+                                       placeholder="Search passenger, phone, pickup, dropoff, via, driver..." 
                                        value="{{ request('search') }}"
-                                       style="border-radius: 0 10px 10px 0; font-size: 13.5px;">
+                                       style="border-radius: 0 10px 10px 0; font-size: 13px;">
                             </div>
                         </div>
 
                         <!-- Date Range Picker with Calendar Trigger -->
-                        <div class="col-lg-3 col-md-5">
-                            <div class="input-group" id="calendarWrapper">
+                        <div class="col-lg-3 col-md-4">
+                            <div class="input-group" id="calendarWrapper" title="Click to filter by Date Range" style="cursor: pointer;">
                                 <span class="input-group-text bg-white border-end-0 text-warning" id="calendarIconBtn" style="border-radius: 10px 0 0 10px; cursor: pointer;">
-                                    <i class="bi bi-calendar3 fs-6"></i>
+                                    <i class="bi bi-calendar-event fs-6 text-warning"></i>
                                 </span>
                                 <input type="text" 
                                        name="date_range" 
                                        id="dateRangePicker" 
                                        class="form-control border-start-0 ps-0 bg-white" 
-                                       placeholder="Select Dates (From - To)" 
+                                       placeholder="Select Dates" 
                                        value="{{ request('date_range') ?: (request('from_date') && request('to_date') ? request('from_date').' to '.request('to_date') : (request('from_date') ?: '')) }}"
                                        style="border-radius: 0 10px 10px 0; font-size: 13px; cursor: pointer;">
                                 <input type="hidden" name="from_date" id="fromDateInput" value="{{ request('from_date') }}">
@@ -300,20 +405,38 @@ td{
                             </div>
                         </div>
 
-                        <!-- Driver Select -->
-                        <div class="col-lg-2 col-md-4">
-                            <select name="driver_id" class="form-select" style="border-radius: 10px; font-size: 13px;">
-                                <option value="">All Drivers</option>
+                        <!-- Driver Select (Shows Call Sign, Name & Vehicle/Saloon) -->
+                        <div class="col-lg-3 col-md-4">
+                            <select name="driver_id" class="form-select text-dark" style="border-radius: 10px; font-size: 13px;">
+                                <option value="">All Drivers (Any Vehicle)</option>
                                 @foreach($drivers as $driver)
-                                    <option value="{{ $driver['id'] }}" {{ request('driver_id') == $driver['id'] ? 'selected' : '' }}>
-                                        {{ $driver['call_sign'] ?? 'D' }} • {{ $driver['name'] ?? 'Driver' }}
+                                    @php
+                                        $callSign = $driver['call_sign'] ?? 'D';
+                                        $dName = $driver['name'] ?? 'Driver';
+                                        
+                                        $vehParts = [];
+                                        if (!empty($driver['vehicle_type'])) {
+                                            $vehParts[] = $driver['vehicle_type'];
+                                        }
+                                        $makeModel = trim(($driver['vehicle_make'] ?? '') . ' ' . ($driver['vehicle_model'] ?? ''));
+                                        if (!empty($makeModel)) {
+                                            $vehParts[] = $makeModel;
+                                        }
+                                        if (!empty($driver['vehicle_reg'])) {
+                                            $vehParts[] = $driver['vehicle_reg'];
+                                        }
+                                        
+                                        $vehStr = !empty($vehParts) ? ' (' . implode(' • ', $vehParts) . ')' : '';
+                                    @endphp
+                                    <option value="{{ $driver['id'] }}" {{ (string)request('driver_id') === (string)$driver['id'] ? 'selected' : '' }}>
+                                        {{ $callSign }} • {{ $dName }}{{ $vehStr }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
                         <!-- Payment Select & Action Buttons -->
-                        <div class="col-lg-2 col-md-3">
+                        <div class="col-lg-2 col-md-4">
                             <div class="d-flex gap-2">
                                 <select name="payment_type" class="form-select" style="border-radius: 10px; font-size: 13px;">
                                     <option value="">All Payments</option>
