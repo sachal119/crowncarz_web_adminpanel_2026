@@ -763,9 +763,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- Google Maps JS API -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&callback=initLiveMapPage&loading=async"></script>
-
 <script>
 // Global State
 let map = null;
@@ -900,9 +897,14 @@ class CustomDriverOverlay {
 
 // 🗺️ Initialize Google Map
 function initLiveMapPage() {
+    if (map) return;
+    const mapEl = document.getElementById("liveGoogleMap");
+    if (!mapEl) return;
+    if (!window.google || !google.maps || !google.maps.Map) return;
+
     const ukCenter = { lat: 51.4543, lng: -0.9781 }; // Reading / London Hub
 
-    map = new google.maps.Map(document.getElementById("liveGoogleMap"), {
+    map = new google.maps.Map(mapEl, {
         center: ukCenter,
         zoom: 12,
         minZoom: 6,
@@ -922,6 +924,12 @@ function initLiveMapPage() {
     });
 
     trafficLayer = new google.maps.TrafficLayer();
+
+    // Trigger map resize immediately & after delay so tiles render without requiring reload
+    google.maps.event.trigger(map, 'resize');
+    setTimeout(() => {
+        if (map) google.maps.event.trigger(map, 'resize');
+    }, 300);
 
     // Render markers on map
     renderAllDrivers();
@@ -1445,6 +1453,14 @@ function setupUIEventHandlers() {
     }
 }
 
+// Function to check and trigger map init
+function checkAndInitMap() {
+    if (map) return;
+    if (window.google && window.google.maps && window.google.maps.Map) {
+        initLiveMapPage();
+    }
+}
+
 // ⚡ Immediate Startup on DOM Ready
 document.addEventListener('DOMContentLoaded', function () {
     // 1️⃣ Immediately render initial server-passed drivers
@@ -1456,6 +1472,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 3️⃣ Start Real-time Firebase stream immediately
     initFirebaseLiveStream();
+
+    // 4️⃣ Check if Google Maps is already ready
+    checkAndInitMap();
 });
+
+// Check on full window load
+window.addEventListener('load', function () {
+    checkAndInitMap();
+    if (map) {
+        google.maps.event.trigger(map, 'resize');
+    }
+});
+
+// Window resize listener to keep map viewport fresh
+window.addEventListener('resize', function () {
+    if (map) {
+        google.maps.event.trigger(map, 'resize');
+    }
+});
+
+// Poller fallback in case callback or async script finishes after DOMContentLoaded
+let mapPollCount = 0;
+const mapPoller = setInterval(function () {
+    mapPollCount++;
+    if (map || mapPollCount > 60) {
+        clearInterval(mapPoller);
+        return;
+    }
+    if (window.google && window.google.maps && window.google.maps.Map) {
+        initLiveMapPage();
+        clearInterval(mapPoller);
+    }
+}, 100);
 </script>
+
+<!-- Google Maps JS API (Loaded after callback is defined) -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&callback=initLiveMapPage&loading=async"></script>
 @endsection
