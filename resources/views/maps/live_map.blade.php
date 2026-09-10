@@ -608,24 +608,8 @@
         </div>
 
         <div class="drawer-body">
-            <!-- Quick Contact Buttons -->
-            <div class="d-flex justify-content-around align-items-center py-2 mb-3 bg-white rounded-3 border">
-                <a href="#" class="action-btn-circle bg-success shadow-sm" id="drawerCallBtn" title="Call Driver">
-                    <i class="bi bi-telephone-fill"></i>
-                </a>
-                <a href="#" class="action-btn-circle bg-info shadow-sm" id="drawerSmsBtn" title="Send SMS">
-                    <i class="bi bi-chat-text-fill"></i>
-                </a>
-                <button class="action-btn-circle bg-dark shadow-sm border-0" id="drawerFocusMapBtn" title="Center on Map">
-                    <i class="bi bi-crosshair"></i>
-                </button>
-                <button class="action-btn-circle bg-warning text-dark shadow-sm border-0" id="drawerFollowToggleBtn" title="Follow Live GPS">
-                    <i class="bi bi-camera-video-fill"></i>
-                </button>
-            </div>
-
             <!-- Vehicle Information -->
-            <div class="detail-section-title">
+            <div class="detail-section-title mt-0">
                 <i class="bi bi-car-front-fill me-1"></i> Vehicle Information
             </div>
             <div class="detail-card mb-3">
@@ -685,16 +669,6 @@
                     <span class="label">Brought Forward (BF)</span>
                     <span class="value text-primary" id="drawerBF">£0.00</span>
                 </div>
-            </div>
-
-            <!-- Quick Management Actions -->
-            <div class="d-grid gap-2 mt-4">
-                <a href="{{ route('booking.create') }}" target="_blank" class="btn btn-warning text-dark fw-bold" id="drawerAssignBookingBtn">
-                    <i class="bi bi-calendar-plus me-1"></i> Create Booking with Driver
-                </a>
-                <a href="#" class="btn btn-outline-secondary btn-sm" id="drawerBfHistoryBtn" target="_blank">
-                    <i class="bi bi-clock-history me-1"></i> View Driver BF History
-                </a>
             </div>
         </div>
     </div>
@@ -1219,22 +1193,6 @@ function updateDrawerData(driver) {
         badgeEl.textContent = statusLabel;
     }
 
-    // Quick Contacts
-    const phone = driver.phone || '';
-    const callBtn = document.getElementById('drawerCallBtn');
-    const smsBtn = document.getElementById('drawerSmsBtn');
-    if (callBtn && smsBtn) {
-        if (phone) {
-            callBtn.href = 'tel:' + phone;
-            smsBtn.href = 'sms:' + phone;
-            callBtn.style.display = 'inline-flex';
-            smsBtn.style.display = 'inline-flex';
-        } else {
-            callBtn.style.display = 'none';
-            smsBtn.style.display = 'none';
-        }
-    }
-
     // Vehicle
     const reg = driver.vehicle_reg || 'NO REG';
     const regEl = document.getElementById('drawerRegPlate');
@@ -1273,11 +1231,6 @@ function updateDrawerData(driver) {
 
     const bfEl = document.getElementById('drawerBF');
     if (bfEl) bfEl.textContent = '£' + (parseFloat(driver.brought_forward) || 0).toFixed(2);
-
-    // Actions
-    const bfHistoryUrl = "{{ url('drivers') }}/" + driver.id + "/bf-history";
-    const bfBtn = document.getElementById('drawerBfHistoryBtn');
-    if (bfBtn) bfBtn.href = bfHistoryUrl;
 }
 
 // 🎛️ UI Handlers (Filters, Search, Buttons)
@@ -1379,33 +1332,6 @@ function setupUIEventHandlers() {
                 }
             }
             renderSidebarList();
-        });
-    }
-
-    // Focus on Map Button in Drawer
-    const focusMapBtn = document.getElementById('drawerFocusMapBtn');
-    if (focusMapBtn) {
-        focusMapBtn.addEventListener('click', () => {
-            if (selectedDriverId && driversState[selectedDriverId] && map) {
-                const d = driversState[selectedDriverId];
-                if (d.latitude && d.longitude) {
-                    map.panTo({ lat: parseFloat(d.latitude), lng: parseFloat(d.longitude) });
-                    map.setZoom(17);
-                }
-            }
-        });
-    }
-
-    // Follow Live GPS Toggle
-    const followBtn = document.getElementById('drawerFollowToggleBtn');
-    if (followBtn) {
-        followBtn.addEventListener('click', function () {
-            isFollowingDriver = !isFollowingDriver;
-            this.classList.toggle('btn-danger', isFollowingDriver);
-            this.classList.toggle('btn-warning', !isFollowingDriver);
-            if (isFollowingDriver) {
-                alert('🎥 Camera is now locked to follow this driver live.');
-            }
         });
     }
 }
