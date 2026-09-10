@@ -13,170 +13,96 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
 
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background-color: #f8f9fa;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+    }
     .navbar-custom {
-      background-color: #000; /* Top navbar black */
+      background-color: #000;
       min-height: 65px;
       position: sticky;
       top: 0;
       z-index: 1030;
       width: 100%;
+      flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     }
     .navbar-custom .navbar-brand,
     .navbar-custom .nav-link {
       color: #fff;
       font-size: 12.5px;
+      transition: color 0.2s ease;
     }
     .navbar-custom .nav-link:hover {
       color: #ffc107; /* Golden hover effect */
     }
+    .navbar-custom .dropdown-menu {
+      display: none;
+      position: absolute !important;
+      will-change: transform;
+    }
+    .navbar-custom .nav-item.dropdown:hover > .dropdown-menu,
+    .navbar-custom .dropdown-menu.show {
+      display: block !important;
+      margin-top: 0;
+    }
     .main-content {
+      flex: 1 0 auto;
       padding: 20px;
+      width: 100%;
     }
-    .nav-item.dropdown:hover .dropdown-menu {
-    display: block;
-    margin-top: 0; /* Fix slight offset */
+
+    /* Responsive font scaling */
+    @media (max-width: 1200px) { html { font-size: 13.5px; } }
+    @media (max-width: 768px) { html { font-size: 13px; } }
+
+    table { font-size: 0.95rem; }
+    .small { font-size: 0.9rem !important; }
+    h1, h2, h3, h4, h5, h6 { line-height: 1.2; }
+    th { font-size: 12px; }
+    td { font-size: 12px; }
+
+    /* Modern Dashboard Aesthetics */
+    .dashboard-section {
+      padding: 1.5rem;
+      border-radius: 12px;
     }
+    .dashboard-card {
+      border: none;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .dashboard-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    .bg-success { background: linear-gradient(135deg, #16a085, #1abc9c) !important; }
+    .bg-info { background: linear-gradient(135deg, #3498db, #5dade2) !important; }
+    .bg-danger { background: linear-gradient(135deg, #e74c3c, #ff7675) !important; }
+    .bg-secondary { background: linear-gradient(135deg, #7f8c8d, #95a5a6) !important; }
+    .bg-primary { background: linear-gradient(135deg, #2e86de, #54a0ff) !important; }
+    .bg-dark { background: linear-gradient(135deg, #2f3640, #353b48) !important; }
+    .dashboard-card .card-body { padding: 1.3rem 1rem; }
+    .dashboard-card h1 { font-size: 2rem; margin-bottom: 0.4rem; }
+    .dashboard-card h4 { font-size: 1.6rem; font-weight: 700; }
+    .dashboard-card p { font-size: 0.9rem; opacity: 0.9; }
+    .card-header { border-bottom: 1px solid #e3e6f0; font-weight: 600; }
+    #revenuePieChart { max-height: 240px; }
   </style>
-  <style>
-  /* Responsive font scaling */
-  html {
-    font-size: 16px; /* base for large screens */
-  }
-
-  @media (max-width: 1200px) {
-    html {
-      font-size: 15px;
-    }
-  }
-
-  @media (max-width: 992px) {
-    html {
-      font-size: 14px;
-    }
-  }
-
-  @media (max-width: 768px) {
-    html {
-      font-size: 13px;
-    }
-  }
-
-  @media (max-width: 576px) {
-    html {
-      font-size: 12px;
-    }
-  }
-
-  /* Optional: ensure table text doesn’t overflow */
-  table {
-    font-size: 0.95rem;
-  }
-
-  .small {
-    font-size: 0.9rem !important;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    line-height: 1.2;
-  }
-  
- th {
-  font-size: 12px ;
-}
-
-td{
-    font-size: 12px;
-}
-
-
-/* Prevent dropdown from forcing page/table scroll */
-.dropdown-menu {
-  position: absolute !important;
-  will-change: transform;
-}
-/* 🌟 Modern Dashboard Aesthetics */
-.dashboard-section {
-  padding: 1.5rem;
-  border-radius: 12px;
-}
-
-/* === Card Styles === */
-.dashboard-card {
-  border: none;
-  border-radius: 16px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  position: relative;
-  overflow: hidden;
-}
-.dashboard-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
-
-/* === Gradient backgrounds for cards === */
-.bg-success {
-  background: linear-gradient(135deg, #16a085, #1abc9c) !important;
-}
-.bg-info {
-  background: linear-gradient(135deg, #3498db, #5dade2) !important;
-}
-.bg-danger {
-  background: linear-gradient(135deg, #e74c3c, #ff7675) !important;
-}
-.bg-secondary {
-  background: linear-gradient(135deg, #7f8c8d, #95a5a6) !important;
-}
-.bg-primary {
-  background: linear-gradient(135deg, #2e86de, #54a0ff) !important;
-}
-.bg-dark {
-  background: linear-gradient(135deg, #2f3640, #353b48) !important;
-}
-
-/* === Card content === */
-.dashboard-card .card-body {
-  padding: 1.3rem 1rem;
-}
-.dashboard-card h1 {
-  font-size: 2rem;
-  margin-bottom: 0.4rem;
-}
-.dashboard-card h4 {
-  font-size: 1.6rem;
-  font-weight: 700;
-}
-.dashboard-card p {
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-/* === Section headers === */
-.card-header {
-  border-bottom: 1px solid #e3e6f0;
-  font-weight: 600;
-}
-
-/* === Map container === */
-#map {
-  border-radius: 0 0 16px 16px;
-}
-
-/* === Pie Chart === */
-#revenuePieChart {
-  max-height: 240px;
-}
-
-/* === Responsive tweaks === */
-@media (max-width: 768px) {
-  .dashboard-card h1 {
-    font-size: 1.6rem;
-  }
-  .dashboard-card h4 {
-    font-size: 1.3rem;
-  }
-}
-</style>
 </head>
 
 @php
@@ -386,84 +312,49 @@ td{
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Load metrics from LocalStorage safely
-    const totalUsers = parseInt(localStorage.getItem("totalUsers")) || 0;
-    const todaysRevenue = parseFloat(localStorage.getItem("todaysRevenue")) || 0.00;
-    const revenueBreakdown = JSON.parse(localStorage.getItem("revenueBreakdown")) || { Cash: 0, Card: 0, Account: 0 };
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+      try {
+          const totalUsers = parseInt(localStorage.getItem("totalUsers")) || 0;
+          const todaysRevenue = parseFloat(localStorage.getItem("todaysRevenue")) || 0.00;
+          const rawBreakdown = localStorage.getItem("revenueBreakdown");
+          const revenueBreakdown = rawBreakdown ? JSON.parse(rawBreakdown) : { Cash: 0, Card: 0, Account: 0 };
 
-    const totalUsersEl = document.getElementById("totalUsersDisplay");
-    if (totalUsersEl) totalUsersEl.textContent = totalUsers;
+          const totalUsersEl = document.getElementById("totalUsersDisplay");
+          if (totalUsersEl) totalUsersEl.textContent = totalUsers;
 
-    const todaysRevenueEl = document.getElementById("todaysRevenueDisplay");
-    if (todaysRevenueEl) todaysRevenueEl.textContent = `£${todaysRevenue.toFixed(2)}`;
+          const todaysRevenueEl = document.getElementById("todaysRevenueDisplay");
+          if (todaysRevenueEl) todaysRevenueEl.textContent = `£${todaysRevenue.toFixed(2)}`;
 
-    // Create pie chart using LocalStorage data
-    const ctx = document.getElementById('revenuePieChart');
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: Object.keys(revenueBreakdown),
-                datasets: [{
-                    data: Object.values(revenueBreakdown),
-                    backgroundColor: ['#1abc9c', '#3498db', '#f39c12'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-    }
-});
-</script>
-<!--  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
-<!--<script>-->
-<!--document.addEventListener("DOMContentLoaded", function() {-->
-<!--  const ctx = document.getElementById('revenuePieChart');-->
-<!--  if (ctx) {-->
-<!--    new Chart(ctx, {-->
-<!--      type: 'pie',-->
-<!--      data: {-->
-<!--        labels: {!! json_encode(array_keys($revenueBreakdown)) !!},-->
-<!--        datasets: [{-->
-<!--          data: {!! json_encode(array_values($revenueBreakdown)) !!},-->
-<!--          backgroundColor: ['#1abc9c', '#3498db', '#f39c12'],-->
-<!--          borderWidth: 1-->
-<!--        }]-->
-<!--      },-->
-<!--      options: {-->
-<!--        plugins: {-->
-<!--          legend: {-->
-<!--            display: true,-->
-<!--            position: 'bottom'-->
-<!--          }-->
-<!--        }-->
-<!--      }-->
-<!--    });-->
-<!--  }-->
-<!--});-->
-<!--</script>-->
-
-<!--<script>-->
-    <!--// Load and display from LocalStorage-->
-<!--    const totalUsers = parseInt(localStorage.getItem("totalUsers")) || 0;-->
-<!--    const todaysRevenue = parseFloat(localStorage.getItem("todaysRevenue")) || 0.00;-->
-
-<!--    document.getElementById("totalUsersDisplay").textContent = totalUsers;-->
-<!--    document.getElementById("todaysRevenueDisplay").textContent = `£${todaysRevenue.toFixed(2)}`;-->
-
-<!--</script>-->
-
-
-
+          const ctx = document.getElementById('revenuePieChart');
+          if (ctx && typeof Chart !== 'undefined') {
+              new Chart(ctx, {
+                  type: 'pie',
+                  data: {
+                      labels: Object.keys(revenueBreakdown),
+                      datasets: [{
+                          data: Object.values(revenueBreakdown),
+                          backgroundColor: ['#1abc9c', '#3498db', '#f39c12'],
+                          borderWidth: 1
+                      }]
+                  },
+                  options: {
+                      responsive: false,
+                      animation: false,
+                      plugins: {
+                          legend: {
+                              display: true,
+                              position: 'bottom'
+                          }
+                      }
+                  }
+              });
+          }
+      } catch(e) {
+          console.warn('Dashboard metrics init:', e);
+      }
+  });
+  </script>
 
   @stack('scripts')
 </body>

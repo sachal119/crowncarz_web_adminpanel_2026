@@ -1067,6 +1067,8 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 
+@endsection
+
 {{-- JavaScript to maintain active tab on error/submit --}}
 @push('scripts')
 <script>
@@ -1130,8 +1132,7 @@ console.log(id);
         }
     });
 </script>
-@endpush
-@push('scripts')
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const addressInput = document.getElementById('driver_address');
@@ -1163,7 +1164,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
-@push('scripts')
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const lookupInput = document.getElementById('lookup_ref_no');
@@ -1336,5 +1337,3 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 @endpush
-
-@endsection
