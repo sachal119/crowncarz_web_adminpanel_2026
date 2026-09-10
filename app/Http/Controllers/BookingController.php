@@ -1893,8 +1893,13 @@ if ($driversSnapshot) {
     if (is_array($driversData)) {
         foreach ($driversData as $key => $driver) {
             if (!is_array($driver)) continue;
-            $driverId = (string) ($driver['id'] ?? $key);
-            $driver['id'] = $driverId;
+            $rawId = $driver['id'] ?? null;
+            $driverKey = (string) $key;
+            $driver['key'] = $driverKey;
+            $driver['firebase_key'] = $driverKey;
+            $driver['id'] = $driverKey;
+            $driver['raw_id'] = (string) ($rawId ?? $driverKey);
+            $driver['driver_id'] = (string) ($rawId ?? $driverKey);
             $driverName = trim($driver['name'] ?? '');
 
             // Match vehicle from Firebase or MySQL
@@ -1903,7 +1908,7 @@ if ($driversSnapshot) {
                 foreach ($vehiclesData as $v) {
                     if (!is_array($v)) continue;
                     $vDriverId = (string) ($v['driver_id'] ?? '');
-                    if ($vDriverId !== '' && ($vDriverId === (string)$driverId || $vDriverId === (string)$key || (isset($driver['id']) && $vDriverId === (string)$driver['id']))) {
+                    if ($vDriverId !== '' && ($vDriverId === $driverKey || $vDriverId === (string)$rawId)) {
                         $matchedVehicle = $v;
                         break;
                     }
@@ -1912,7 +1917,7 @@ if ($driversSnapshot) {
             if (!$matchedVehicle && $mysqlVehicles->isNotEmpty()) {
                 foreach ($mysqlVehicles as $v) {
                     $vDriverId = (string) ($v->driver_id ?? '');
-                    if ($vDriverId !== '' && ($vDriverId === (string)$driverId || $vDriverId === (string)$key || (isset($driver['id']) && $vDriverId === (string)$driver['id']))) {
+                    if ($vDriverId !== '' && ($vDriverId === $driverKey || $vDriverId === (string)$rawId)) {
                         $matchedVehicle = $v->toArray();
                         break;
                     }
@@ -2321,7 +2326,15 @@ public function recallJob($id)
         return redirect()->route('login')->with('error', 'Please login first.');
     }
     try {
-        $ref = $this->firebase->updateData("bookings/{$id}", ['driver_id' => '']);
+        $ref = $this->firebase->updateData("bookings/{$id}", [
+            'driver_id'        => '',
+            'driver_name'      => '',
+            'driver'           => '',
+            'driver_call_sign' => '',
+            'call_sign'        => '',
+            'status'           => 'pending',
+            'updated_at'       => now()->toISOString(),
+        ]);
 
         if (!$ref) {
             if (request()->wantsJson() || request()->ajax()) {
@@ -2467,8 +2480,8 @@ public function dispatchDriver(Request $request)
             ], 422);
         }
 
-        $bookingId = $request->booking_id;
-        $driverId = $request->driver_id;
+        $bookingId = (string) $request->booking_id;
+        $driverId = (string) $request->driver_id;
 
         // ✅ Fetch booking
         $bookingRef = $this->database->getReference("bookings/{$bookingId}");
@@ -2477,44 +2490,61 @@ public function dispatchDriver(Request $request)
             return response()->json(['error' => 'Booking not found'], 404);
         }
 
-        // ✅ Fetch driver
+        // ✅ Fetch driver by key, or fallback to search by id/name/call_sign
         $driverRef = $this->database->getReference("drivers/{$driverId}");
         $existingDriver = $driverRef->getValue();
+        if (!$existingDriver) {
+            $allDrivers = $this->firebase->getData('drivers') ?? [];
+            if (is_array($allDrivers)) {
+                foreach ($allDrivers as $k => $d) {
+                    if (!is_array($d)) continue;
+                    if ((string)$k === $driverId 
+                        || (string)($d['id'] ?? '') === $driverId 
+                        || (string)($d['raw_id'] ?? '') === $driverId
+                        || (string)($d['driver_id'] ?? '') === $driverId
+                        || strcasecmp(trim($d['name'] ?? ''), $driverId) === 0
+                        || strcasecmp(trim($d['call_sign'] ?? ''), $driverId) === 0) {
+                        $driverId = (string) $k;
+                        $existingDriver = $d;
+                        $driverRef = $this->database->getReference("drivers/{$driverId}");
+                        break;
+                    }
+                }
+            }
+        }
+
         if (!$existingDriver) {
             return response()->json(['error' => 'Driver not found'], 404);
         }
 
-        // ✅ Prevent re-assignment
-        if (isset($existingBooking['driver_id']) && !empty($existingBooking['driver_id'])) {
-            return response()->json([
-                'error' => 'Booking is already assigned to a driver'
-            ], 409);
-        }
-
         // ✅ Update booking
         $bookingData = [
-            'driver_id' => $driverId,
-            'status' => 'assigned',
-            'updated_at' => now()->toISOString(),
+            'driver_id'        => $driverId,
+            'driver_name'      => $existingDriver['name'] ?? null,
+            'driver'           => $existingDriver['name'] ?? null,
+            'driver_call_sign' => $existingDriver['call_sign'] ?? null,
+            'call_sign'        => $existingDriver['call_sign'] ?? null,
+            'status'           => 'assigned',
+            'updated_at'       => now()->toISOString(),
         ];
         $bookingRef->update($bookingData);
         
         // Send SMS to Driver
         if (!empty($existingDriver['phone'])) {
+            try {
+                $smsMessage =
+                    "Dear {$existingDriver['name']},\n\n" .
+                    "A new job has been assigned to you.\n" .
+                    "Ref: " . ($existingBooking['ref_no'] ?? '') . "\n" .
+                    "Pickup: " . ($existingBooking['pickup_address'] ?? '') . "\n" .
+                    "Dropoff: " . ($existingBooking['dropoff_address'] ?? '') . "\n\n" .
+                    "Please check your app.";
 
-            $smsMessage =
-                "Dear {$existingDriver['name']},\n\n" .
-                "A new job has been assigned to you.\n" .
-                "Ref: {$existingBooking['ref_no']}\n" .
-                "Pickup: {$existingBooking['pickup_address']}\n" .
-                "Dropoff: {$existingBooking['dropoff_address']}\n\n" .
-                "Please check your app.";
-
-            // Fire SMS API request
-            Http::post(route('sms.login'), [
-                'mobile'  => $existingDriver['phone'],
-                'message' => $smsMessage
-            ]);
+                Http::post(route('sms.login'), [
+                    'mobile'  => $existingDriver['phone'],
+                    'message' => $smsMessage
+                ]);
+            } catch (\Throwable $e) {}
         }
 
         // --- Fetch vehicle image ---
@@ -2551,43 +2581,47 @@ public function dispatchDriver(Request $request)
         ];
         
         if (!empty($existingDriver['email'])) {
-    try {
-        Mail::to($existingDriver['email'])
-            ->send(new \App\Mail\DriverBookingAssignedMail($bookingDetails));
-    } catch (\Exception $e) {
-        \Log::error('Mail Error: ' . $e->getMessage());
-    }
-}
+            try {
+                Mail::to($existingDriver['email'])
+                    ->send(new \App\Mail\DriverBookingAssignedMail($bookingDetails));
+            } catch (\Exception $e) {
+                \Log::error('Mail Error: ' . $e->getMessage());
+            }
+        }
         
-        
-        
-        
-        $usersSnap = $this->database->getReference('users')->getSnapshot()->getValue();
-$passengerKey = null;
-foreach($usersSnap as $key => $user){
-    if($user['name'] === $existingBooking['passenger_name']){
-        $passengerKey = $key;
-        break;
-    }
-}
+        try {
+            $usersSnap = $this->database->getReference('users')->getSnapshot()->getValue();
+            $passengerKey = null;
+            if (is_array($usersSnap)) {
+                foreach($usersSnap as $key => $user){
+                    if(is_array($user) && isset($user['name']) && $user['name'] === ($existingBooking['passenger_name'] ?? '')){
+                        $passengerKey = $key;
+                        break;
+                    }
+                }
+            }
 
-if($passengerKey){
-    $this->sendFirebaseNotification($passengerKey, "Driver Assigned", "A driver ({$existingDriver['name']}) has been assigned to your booking ({$existingBooking['ref_no']}).", 'user');
-}
+            if($passengerKey){
+                $this->sendFirebaseNotification($passengerKey, "Driver Assigned", "A driver ({$existingDriver['name']}) has been assigned to your booking (" . ($existingBooking['ref_no'] ?? '') . ").", 'user');
+            }
+        } catch (\Throwable $e) {}
 
+        try {
+            $driverSnap = $this->database->getReference('drivers')->getSnapshot()->getValue();
+            $driverKey = null;
+            if (is_array($driverSnap)) {
+                foreach($driverSnap as $key => $driver){
+                    if(is_array($driver) && (string)$key === (string)$driverId){
+                        $driverKey = $key;
+                        break;
+                    }
+                }
+            }
 
-$driverSnap = $this->database->getReference('drivers')->getSnapshot()->getValue();
-$passengerKey = null;
-foreach($driverSnap as $key => $driver){
-    if($driver['name'] === $existingDriver['name']){
-        $passengerKey = $key;
-        break;
-    }
-}
-
-if($passengerKey){
-    $this->sendFirebaseNotification($passengerKey, "New Job Assigned", "You have a new job assigned. Ref: ({$existingBooking['ref_no']})", 'driver');
-}
+            if($driverKey){
+                $this->sendFirebaseNotification($driverKey, "New Job Assigned", "You have a new job assigned. Ref: (" . ($existingBooking['ref_no'] ?? '') . ")", 'driver');
+            }
+        } catch (\Throwable $e) {}
 
         // --- Send Firebase notification to passenger ---
         // if(isset($existingBooking['passenger_id'])){
@@ -6671,8 +6705,13 @@ public function search(Request $request)
     if (is_array($firebaseDrivers)) {
         foreach ($firebaseDrivers as $dKey => $driver) {
             if (!is_array($driver)) continue;
-            $driverId = (string) ($driver['id'] ?? $dKey);
-            $driver['id'] = $driverId;
+            $rawId = $driver['id'] ?? null;
+            $driverKey = (string) $dKey;
+            $driver['key'] = $driverKey;
+            $driver['firebase_key'] = $driverKey;
+            $driver['id'] = $driverKey;
+            $driver['raw_id'] = (string) ($rawId ?? $driverKey);
+            $driver['driver_id'] = (string) ($rawId ?? $driverKey);
             $driverName = trim($driver['name'] ?? '');
 
             // Match vehicle from Firebase or MySQL
@@ -6681,7 +6720,7 @@ public function search(Request $request)
                 foreach ($firebaseVehicles as $v) {
                     if (!is_array($v)) continue;
                     $vDriverId = (string) ($v['driver_id'] ?? '');
-                    if ($vDriverId !== '' && ($vDriverId === (string)$driverId || $vDriverId === (string)$dKey || (isset($driver['id']) && $vDriverId === (string)$driver['id']))) {
+                    if ($vDriverId !== '' && ($vDriverId === $driverKey || $vDriverId === (string)$rawId)) {
                         $matchedVehicle = $v;
                         break;
                     }
@@ -6690,7 +6729,7 @@ public function search(Request $request)
             if (!$matchedVehicle && $mysqlVehicles->isNotEmpty()) {
                 foreach ($mysqlVehicles as $v) {
                     $vDriverId = (string) ($v->driver_id ?? '');
-                    if ($vDriverId !== '' && ($vDriverId === (string)$driverId || $vDriverId === (string)$dKey || (isset($driver['id']) && $vDriverId === (string)$driver['id']))) {
+                    if ($vDriverId !== '' && ($vDriverId === $driverKey || $vDriverId === (string)$rawId)) {
                         $matchedVehicle = $v->toArray();
                         break;
                     }
@@ -6714,8 +6753,8 @@ public function search(Request $request)
                 $driver['vehicle_type'] = $matchedVehicle['type'] ?? ($driver['vehicle_type'] ?? '');
             }
 
-            $driversMap[(string)$dKey] = $driver;
-            $driversMap[(string)$driverId] = $driver;
+            $driversMap[$driverKey] = $driver;
+            if ($rawId) $driversMap[(string)$rawId] = $driver;
             $drivers->push($driver);
         }
     }

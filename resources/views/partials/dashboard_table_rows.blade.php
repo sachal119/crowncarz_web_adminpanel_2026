@@ -67,9 +67,13 @@
         $driver = null;
         if ($bDriverId !== '' && isset($drivers)) {
             $driver = collect($drivers)->first(function($d) use ($bDriverId) {
-                $dId = (string)($d['id'] ?? '');
-                $dKey = (string)($d['key'] ?? '');
-                return ($dId !== '' && $dId === $bDriverId) || ($dKey !== '' && $dKey === $bDriverId);
+                return (string)($d['id'] ?? '') === $bDriverId 
+                    || (string)($d['key'] ?? '') === $bDriverId
+                    || (string)($d['firebase_key'] ?? '') === $bDriverId
+                    || (string)($d['raw_id'] ?? '') === $bDriverId
+                    || (string)($d['driver_id'] ?? '') === $bDriverId
+                    || strcasecmp(trim($d['name'] ?? ''), $bDriverId) === 0
+                    || strcasecmp(trim($d['call_sign'] ?? ''), $bDriverId) === 0;
             });
         }
         if (!$driver && $bDriverName !== '' && isset($drivers)) {
@@ -190,13 +194,16 @@
                 {{ $platformLabel }}
             </span>
         </td>
+        @php
+            $hasDriver = !empty($driver) || !empty($bDriverId) || !empty($bDriverName) || !empty($booking['driver']);
+        @endphp
         <td class="col-actions" style="{{ $rowStyle }}">
             <div class="dropdown actions-dropdown" style="position: static;">
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-three-dots-vertical"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm rounded-3">
-                    <li class="action-dispatch-item" style="{{ !empty($booking['driver_id']) ? 'display:none;' : '' }}">
+                    <li class="action-dispatch-item" style="{{ $hasDriver ? 'display:none;' : '' }}">
                         <a class="dropdown-item d-flex align-items-center text-secondary dispatch-driver-btn"
                            href="#"
                            data-booking-id="{{ $booking['id'] ?? '' }}"
@@ -205,7 +212,7 @@
                             <i class="bi bi-truck me-2"></i> Dispatch Driver
                         </a>
                     </li>
-                    <li class="action-track-item" style="{{ empty($booking['driver_id']) ? 'display:none;' : '' }}">
+                    <li class="action-track-item" style="{{ !$hasDriver ? 'display:none;' : '' }}">
                         <a class="dropdown-item d-flex align-items-center text-primary track-driver-link" href="{{ route('bookings.track', $booking['id']) }}">
                             <i class="bi bi-geo-alt me-2"></i> Track Driver
                         </a>
@@ -253,7 +260,7 @@
                             <i class="bi bi-chat-left-text me-2"></i> Send Confirmation SMS
                         </a>
                     </li>
-                    <li>
+                    <li class="action-recall-item" style="{{ !$hasDriver ? 'display:none;' : '' }}">
                         <a class="dropdown-item d-flex align-items-center text-danger recall-job-btn" href="#"
                            data-booking-id="{{ $booking['id'] ?? '' }}">
                             <i class="bi bi-arrow-counterclockwise me-2"></i> Recall Job

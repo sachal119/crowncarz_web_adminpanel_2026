@@ -1304,7 +1304,32 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 // Global state & configurations
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '{{ csrf_token() }}';
-let DRIVERS_MAP = @json(collect($drivers)->keyBy('id'));
+let DRIVERS_MAP = (function() {
+    const map = {};
+    const rawDrivers = @json($drivers);
+    const addDriver = (d) => {
+        if (!d || typeof d !== 'object') return;
+        const k = d.id || d.key || d.firebase_key || d.raw_id;
+        if (k) map[String(k)] = d;
+        if (d.id) map[String(d.id)] = d;
+        if (d.key) map[String(d.key)] = d;
+        if (d.firebase_key) map[String(d.firebase_key)] = d;
+        if (d.raw_id) map[String(d.raw_id)] = d;
+        if (d.driver_id) map[String(d.driver_id)] = d;
+    };
+    if (Array.isArray(rawDrivers)) {
+        rawDrivers.forEach(addDriver);
+    } else if (rawDrivers && typeof rawDrivers === 'object') {
+        Object.entries(rawDrivers).forEach(([k, d]) => {
+            if (d && typeof d === 'object') {
+                d.id = d.id || k;
+                addDriver(d);
+                map[String(k)] = d;
+            }
+        });
+    }
+    return map;
+})();
 const knownBookingIds = new Set();
 let isInitialFirebaseLoadDone = false;
 
@@ -1508,19 +1533,32 @@ function getDriverBadgeHtml(booking) {
     if (dId && DRIVERS_MAP[dId]) {
         driver = DRIVERS_MAP[dId];
     } else if (dId) {
-        driver = Object.values(DRIVERS_MAP).find(d => String(d.id) === dId || String(d.key || '') === dId);
+        driver = Object.values(DRIVERS_MAP).find(d => 
+            String(d.id || '') === dId || 
+            String(d.key || '') === dId || 
+            String(d.firebase_key || '') === dId || 
+            String(d.raw_id || '') === dId || 
+            String(d.driver_id || '') === dId ||
+            String(d.name || '').toLowerCase() === dId.toLowerCase() ||
+            String(d.call_sign || '').toLowerCase() === dId.toLowerCase()
+        );
     }
     if (!driver && dName) {
-        driver = Object.values(DRIVERS_MAP).find(d => String(d.name || '').toLowerCase() === dName.toLowerCase() || String(d.call_sign || '').toLowerCase() === dName.toLowerCase());
+        driver = Object.values(DRIVERS_MAP).find(d => 
+            String(d.name || '').toLowerCase() === dName.toLowerCase() || 
+            String(d.call_sign || '').toLowerCase() === dName.toLowerCase()
+        );
     }
     if (!driver && dCall) {
-        driver = Object.values(DRIVERS_MAP).find(d => String(d.call_sign || '').toLowerCase() === dCall.toLowerCase());
+        driver = Object.values(DRIVERS_MAP).find(d => 
+            String(d.call_sign || '').toLowerCase() === dCall.toLowerCase()
+        );
     }
 
     if (driver) {
         const callSign = driver.call_sign ? `${driver.call_sign}/` : '';
         return `<span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">${callSign}${driver.name || 'Driver'}</span>`;
-    } else if (dName || dCall || (booking.driver && typeof booking.driver === 'string')) {
+    } else if (dName || dCall || (booking.driver && typeof booking.driver === 'string' && booking.driver.trim() !== '')) {
         const fallbackCall = dCall ? `${dCall}/` : '';
         const fallbackName = dName || booking.driver;
         return `<span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">${fallbackCall}${fallbackName}</span>`;
@@ -1699,7 +1737,7 @@ function buildBookingRowHtml(booking, isNew = false) {
                             <i class="bi bi-chat-left-text me-2"></i> Send Confirmation SMS
                         </a>
                     </li>
-                    <li>
+                    <li class="action-recall-item" style="${!hasDriver ? 'display:none;' : ''}">
                         <a class="dropdown-item d-flex align-items-center text-danger recall-job-btn" href="#"
                            data-booking-id="${id}">
                             <i class="bi bi-arrow-counterclockwise me-2"></i> Recall Job
@@ -1748,14 +1786,16 @@ function updateBookingRowData(booking) {
     const driverCell = row.querySelector('.driver-cell');
     const dispatchItem = row.querySelector('.action-dispatch-item');
     const trackItem = row.querySelector('.action-track-item');
+    const recallItem = row.querySelector('.action-recall-item');
 
     if (driverCell) {
         driverCell.innerHTML = getDriverBadgeHtml(booking);
     }
 
-    const hasDriver = !!(booking.driver_id || booking.driverId || booking.driver_name || booking.driver);
+    const hasDriver = !!(booking.driver_id || booking.driverId || booking.driver_name || booking.driver || booking.driver_call_sign || booking.call_sign);
     if (dispatchItem) dispatchItem.style.display = hasDriver ? 'none' : '';
     if (trackItem) trackItem.style.display = hasDriver ? '' : 'none';
+    if (recallItem) recallItem.style.display = hasDriver ? '' : 'none';
 
     // Update view-booking-btn data-booking
     const viewBtn = row.querySelector('.view-booking-btn');
@@ -1917,8 +1957,10 @@ function bindRowEvents(context = document) {
                         if (driverCell) driverCell.innerHTML = `<span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>`;
                         const dispatchItem = row.querySelector('.action-dispatch-item');
                         const trackItem = row.querySelector('.action-track-item');
+                        const recallItem = row.querySelector('.action-recall-item');
                         if (dispatchItem) dispatchItem.style.display = '';
                         if (trackItem) trackItem.style.display = 'none';
+                        if (recallItem) recallItem.style.display = 'none';
                     }
                 } else {
                     showDashboardToast('Error', data?.message || 'Failed to recall job.', 'danger');
@@ -2103,9 +2145,17 @@ function initFirebase() {
     const driverRef = db.ref("drivers");
     driverRef.on("value", (snapshot) => {
         const drivers = snapshot.val();
-        if (drivers) {
+        if (drivers && typeof drivers === 'object') {
             for (const [id, d] of Object.entries(drivers)) {
-                DRIVERS_MAP[id] = { id, ...d };
+                if (d && typeof d === 'object') {
+                    const dObj = { id, key: id, firebase_key: id, ...d };
+                    DRIVERS_MAP[id] = dObj;
+                    if (d.id) DRIVERS_MAP[String(d.id)] = dObj;
+                    if (d.key) DRIVERS_MAP[String(d.key)] = dObj;
+                    if (d.firebase_key) DRIVERS_MAP[String(d.firebase_key)] = dObj;
+                    if (d.raw_id) DRIVERS_MAP[String(d.raw_id)] = dObj;
+                    if (d.driver_id) DRIVERS_MAP[String(d.driver_id)] = dObj;
+                }
             }
         }
     });
@@ -2304,17 +2354,25 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Update row in table immediately
                     const row = document.getElementById('booking-row-' + bookingId);
                     if (row) {
-                        const driver = DRIVERS_MAP[selectedDriverId];
-                        const driverName = driver ? `${driver.call_sign || ''}/${driver.name || ''}` : 'Assigned';
+                        const driver = DRIVERS_MAP[selectedDriverId] || Object.values(DRIVERS_MAP).find(d => 
+                            String(d.id || '') === selectedDriverId || 
+                            String(d.key || '') === selectedDriverId || 
+                            String(d.firebase_key || '') === selectedDriverId || 
+                            String(d.raw_id || '') === selectedDriverId
+                        );
+                        const callSign = (driver && driver.call_sign) ? `${driver.call_sign}/` : '';
+                        const dName = driver ? (driver.name || 'Driver') : 'Assigned';
                         const driverCell = row.querySelector('.driver-cell');
                         if (driverCell) {
-                            driverCell.innerHTML = `<span class="badge rounded-pill bg-danger bg-opacity-90 px-3 py-2 me-1 driver-badge">${driverName}</span>`;
+                            driverCell.innerHTML = `<span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">${callSign}${dName}</span>`;
                         }
 
                         const dispatchItem = row.querySelector('.action-dispatch-item');
                         const trackItem = row.querySelector('.action-track-item');
+                        const recallItem = row.querySelector('.action-recall-item');
                         if (dispatchItem) dispatchItem.style.display = 'none';
                         if (trackItem) trackItem.style.display = '';
+                        if (recallItem) recallItem.style.display = '';
                     }
                 } else {
                     const errorMsg = data?.error || data?.message || 'Failed to dispatch driver.';
