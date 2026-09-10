@@ -918,9 +918,11 @@ public function customer(Request $request)
             }
         }
 
-        // 🔹 Add Default Values
-        $booking['fare']     = $booking['price'] ?? 0.00;
-        $booking['parking']  = $booking['parking'] ?? 0.00;
+        // 🔹 Add Default Values (Base Fare = Price - Parking)
+        $totalPrice          = (float) ($booking['price'] ?? 0.00);
+        $parking             = (float) ($booking['parking'] ?? 0.00);
+        $booking['parking']  = $parking;
+        $booking['fare']     = max(0.00, $totalPrice - $parking);
         $booking['comments'] = $booking['job_comment'] ?? 'N/A';
 
         $customers[] = (object) $booking;
@@ -1297,10 +1299,12 @@ public function sendCustomerReport(Request $request)
             }
         }
 
-        // 🔹 Add Extra Data
+        // 🔹 Add Extra Data (Base Fare = Price - Parking)
         $booking['id']       = $key;
-        $booking['fare']     = $booking['price'] ?? 0.00;
-        $booking['parking']  = $booking['parking'] ?? 0.00;
+        $totalPrice          = (float) ($booking['price'] ?? 0.00);
+        $parking             = (float) ($booking['parking'] ?? 0.00);
+        $booking['parking']  = $parking;
+        $booking['fare']     = max(0.00, $totalPrice - $parking);
         $booking['comments'] = $booking['job_comment'] ?? 'N/A';
 
         $filteredBookings[] = (object) $booking;

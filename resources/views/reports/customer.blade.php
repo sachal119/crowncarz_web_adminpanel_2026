@@ -315,9 +315,9 @@
                         @endphp
                         @forelse($customers as $booking)
                             @php
-                                $fare = $booking->price ?? 0.00;
-                                $parking = $booking->parking ?? 0.00;
-                                $comments = $booking->ref_no ?? 'N/A';
+                                $totalPrice = (float) ($booking->price ?? 0.00);
+                                $parking = (float) ($booking->parking ?? 0.00);
+                                $fare = isset($booking->fare) ? (float) $booking->fare : max(0.00, $totalPrice - $parking);
                                 $totalFare += $fare;
                                 $totalParking += $parking;
                             @endphp
@@ -336,7 +336,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" style="text-align: center; color: #6c757d;">No records found for the selected period.</td>
+                                <td colspan="9" style="text-align: center; color: #6c757d;">No records found for the selected period.</td>
                             </tr>
                         @endforelse
                     </tbody>

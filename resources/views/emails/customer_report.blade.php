@@ -507,11 +507,11 @@
                 @foreach ($customers as $b)
 
                     @php 
-
-                        $totalFare += $b->price ?? 0; 
-
-                        $totalParking += $b->parking ?? 0;
-
+                        $totalPrice = (float) ($b->price ?? 0);
+                        $parking = (float) ($b->parking ?? 0);
+                        $fare = isset($b->fare) ? (float) $b->fare : max(0.00, $totalPrice - $parking);
+                        $totalFare += $fare; 
+                        $totalParking += $parking;
                     @endphp
 
                     <tr>
@@ -524,9 +524,9 @@
 
                         <td>{{ $b->dropoff_address ?? 'N/A' }}</td>
 
-                        <td class="text-right">{{ number_format($b->price ?? 0, 2) }}</td>
+                        <td class="text-right">{{ number_format($fare, 2) }}</td>
 
-                        <td class="text-right">{{ number_format($b->parking ?? 0, 2) }}</td>
+                        <td class="text-right">{{ number_format($parking, 2) }}</td>
 
                          <!--<td>{{ $b->comments ?? 'N/A' }}</td> -->
 
