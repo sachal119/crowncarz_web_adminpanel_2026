@@ -2024,7 +2024,7 @@ function buildBookingRowHtml(booking, isNew = false) {
             <span class="truncate-cell text-muted" style="max-width: 120px; font-size: 11px;">${commentText}</span>
         </td>
         <td class="col-status" style="${rowStyle}">
-            <form method="POST" action="/bookings/${id}/update-status-manual" class="statusForm">
+            <form method="POST" action="{{ url('bookings') }}/${encodeURIComponent(id)}/update-status-manual" class="statusForm">
                 <input type="hidden" name="_token" value="${CSRF_TOKEN}">
                 <select class="form-select form-select-sm text-black statusSelect fw-semibold"
                         name="status"
@@ -2098,7 +2098,7 @@ function buildBookingRowHtml(booking, isNew = false) {
                             <i class="bi bi-chat-left-text me-2"></i> Send Confirmation SMS
                         </a>
                     </li>
-                    <li class="action-recall-item" style="${!hasDriver ? 'display:none;' : ''}">
+                    <li class="action-recall-item" style="${hasDriver ? '' : 'display:none;'}">
                         <a class="dropdown-item d-flex align-items-center text-danger recall-job-btn" href="#"
                            data-booking-id="${id}">
                             <i class="bi bi-arrow-counterclockwise me-2"></i> Recall Job
@@ -2111,7 +2111,7 @@ function buildBookingRowHtml(booking, isNew = false) {
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item d-flex align-items-center text-primary" href="/bookings/${id}/edit">
+                        <a class="dropdown-item d-flex align-items-center text-primary" href="{{ url('/bookings') }}/${encodeURIComponent(id)}/edit">
                             <i class="bi bi-pencil-square me-2"></i> Edit Booking
                         </a>
                     </li>
@@ -2177,13 +2177,8 @@ function removeBookingRowFromTable(bookingId) {
         if (row && row.parentNode) {
             row.remove();
             updateBookingsCountBadge(-1);
-
-            const tbody = document.getElementById('bookingsTableBody');
-            if (tbody && tbody.querySelectorAll('.booking-table-row').length === 0) {
-                tbody.innerHTML = `<tr id="emptyBookingsRow"><td colspan="17" class="text-center text-muted py-4">No future bookings found.</td></tr>`;
-            }
         }
-    }, 450);
+    }, 300);
 }
 
 // ⚡ Bind dynamic events to interactive elements (delegated / direct)
@@ -2238,9 +2233,15 @@ function bindRowEvents(context = document) {
             const executeStatusUpdate = async () => {
                 const formData = new FormData(form);
                 formData.set('status', selected);
+                formData.set('booking_id', bookingId);
+                formData.set('_token', CSRF_TOKEN);
                 select.disabled = true;
                 try {
-                    const response = await fetch(form.action, {
+                    let actionUrl = form ? form.action : '';
+                    if (!actionUrl || actionUrl === window.location.href) {
+                        actionUrl = `{{ url('bookings') }}/${encodeURIComponent(bookingId)}/update-status-manual`;
+                    }
+                    const response = await fetch(actionUrl, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': CSRF_TOKEN,
@@ -2275,15 +2276,29 @@ function bindRowEvents(context = document) {
             };
 
             if (requiresConfirm) {
-                modal.show();
-                confirmBtn.onclick = () => {
-                    modal.hide();
+                const handleConfirm = () => {
                     executeStatusUpdate();
-                };
-                cancelBtn.onclick = () => {
                     modal.hide();
-                    this.value = previousStatus;
+                    cleanup();
                 };
+
+                const handleCancel = () => {
+                    select.value = previousStatus;
+                    modal.hide();
+                    cleanup();
+                };
+
+                const cleanup = () => {
+                    confirmBtn.removeEventListener('click', handleConfirm);
+                    cancelBtn.removeEventListener('click', handleCancel);
+                    modalEl.removeEventListener('hidden.bs.modal', handleCancel);
+                };
+
+                confirmBtn.addEventListener('click', handleConfirm);
+                cancelBtn.addEventListener('click', handleCancel);
+                modalEl.addEventListener('hidden.bs.modal', handleCancel, { once: true });
+
+                modal.show();
             } else {
                 executeStatusUpdate();
             }
@@ -2302,7 +2317,8 @@ function bindRowEvents(context = document) {
 
             const row = document.getElementById('booking-row-' + bookingId);
             try {
-                const response = await fetch(`/bookings/${bookingId}/recall`, {
+                const recallUrl = `{{ url('bookings') }}/${encodeURIComponent(bookingId)}/recall`;
+                const response = await fetch(recallUrl, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': CSRF_TOKEN,
@@ -2347,7 +2363,8 @@ function bindRowEvents(context = document) {
 
             const row = document.getElementById('booking-row-' + bookingId);
             try {
-                const response = await fetch(`/bookings/${bookingId}/hide`, {
+                const hideUrl = `{{ url('bookings') }}/${encodeURIComponent(bookingId)}/hide`;
+                const response = await fetch(hideUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -56,41 +56,12 @@ Route::post('fixed-prices/update/{id}', [PricingController::class, 'update'])
 
 
 
-Route::post('bookings/{id}/update-status-manual', [BookingController::class, 'updateStatusManual'])
-    ->name('bookings.updateStatusManual');
-    
-// BF History screen
-Route::get('/drivers/{driverId}/bf-history', [SetupController::class, 'bfHistory'])
-    ->name('drivers.bf.history');
-
-// Add / Subtract BF
-Route::post('/drivers/{driverId}/bf-update', [SetupController::class, 'updateBF'])
-    ->name('drivers.bf.update');
-    
-Route::put('/drivers/{driverId}/bf/update/{transactionId}', 
-    [SetupController::class, 'updateBalanceHistory']
-)->name('drivers.bf.edit');
-
-Route::delete('/drivers/{driverId}/bf/delete/{transactionId}', 
-    [SetupController::class, 'deleteBalanceHistory']
-)->name('drivers.bf.delete');    
-
-
-// Route::put('/drivers/{driverId}/bf/update/{transactionId}', 
-//     [DriverController::class, 'updateBalanceHistory']
-// )->name('drivers.bf.edit');
-
-// Route::delete('/drivers/{driverId}/bf/delete/{transactionId}', 
-//     [DriverController::class, 'deleteBalanceHistory']
-// )->name('drivers.bf.delete');
-  
-
+Route::post('bookings/{id}/update-status-manual', [BookingController::class, 'updateStatusManual'])->name('bookings.updateStatusManual');
+Route::post('admin/bookings/{id}/update-status-manual', [BookingController::class, 'updateStatusManual']);
+Route::post('admin/bookings/update-status-manual', [BookingController::class, 'updateStatusManual']);
+Route::post('bookings/update-status-manual', [BookingController::class, 'updateStatusManual']);
 
 Route::prefix('bookings')->group(function () {
-
-    // Route::get('{booking}/track', [BookingController::class, 'track'])->name('bookings.track');
-    // Route::get('{booking}/receipt', [BookingController::class, 'receipt'])->name('bookings.receipt');
-    // Route::get('{booking}/duplicate', [BookingController::class, 'duplicate'])->name('bookings.duplicate');
     Route::get('{booking}/return', [BookingController::class, 'returnJob'])->name('bookings.return');
     Route::post('{booking}/send-email', [BookingController::class, 'sendConfirmationEmail'])->name('bookings.sendEmail');
     Route::post('{booking}/send-sms', [BookingController::class, 'sendConfirmationSMS'])->name('bookings.sendSMS');
@@ -106,10 +77,15 @@ Route::prefix('bookings')->group(function () {
 Route::get('/bookings/details-json', [BookingController::class, 'getBookingDetailsJson']);
 Route::get('/admin/bookings/details-json', [BookingController::class, 'getBookingDetailsJson']);
 Route::get('/admin/bookings/{booking}/details-json', [BookingController::class, 'getBookingDetailsJson']);
+Route::post('/admin/bookings/{booking}/recall', [BookingController::class, 'recallJob']);
+Route::post('/admin/bookings/{booking}/hide', [BookingController::class, 'hideJob']);
+Route::get('/admin/bookings/{booking}/edit', [BookingController::class, 'edit']);
 
 Route::post('/bookings/send-sms', [BookingController::class, 'sendSms'])
     ->name('bookings.sendSmsDashboard');
+Route::post('/admin/bookings/send-sms', [BookingController::class, 'sendSms']);
 Route::post('/bookings/send-email', [BookingController::class, 'sendEmaildashboard']);
+Route::post('/admin/bookings/send-email', [BookingController::class, 'sendEmaildashboard']);
 
 // Route::prefix('admin/dashboard')->name('admin.dashboard.')->group(function () {
 //     Route::post('/bookings/send-email', [BookingController::class, 'sendEmaildashboard'])
