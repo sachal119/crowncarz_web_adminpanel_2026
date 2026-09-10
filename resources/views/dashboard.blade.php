@@ -1575,6 +1575,8 @@ function bindRowEvents(context = document) {
             }
 
             const executeStatusUpdate = async () => {
+                const formData = new FormData(form);
+                formData.set('status', selected);
                 select.disabled = true;
                 try {
                     const response = await fetch(form.action, {
@@ -1584,7 +1586,7 @@ function bindRowEvents(context = document) {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        body: new FormData(form)
+                        body: formData
                     });
 
                     const data = await response.json().catch(() => null);
@@ -1599,7 +1601,8 @@ function bindRowEvents(context = document) {
                         }
                     } else {
                         select.value = previousStatus;
-                        showDashboardToast('Error', data?.message || 'Failed to update status.', 'danger');
+                        const errMsg = data?.errors?.status ? data.errors.status.join(', ') : (data?.message || 'Failed to update status.');
+                        showDashboardToast('Error', errMsg, 'danger');
                     }
                 } catch (err) {
                     console.error('Status update error:', err);
