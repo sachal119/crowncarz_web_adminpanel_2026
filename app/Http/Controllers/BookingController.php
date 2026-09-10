@@ -3013,7 +3013,9 @@ public function store(Request $request)
         'pickup_time'     => $pickup_datetime->toDateTimeString(),
         'created_at'      => now()->toDateTimeString(),
         'platform'        => 2, // ✅ default 1 = web
-        'child_seat' => $validated['child_seat']
+        'child_seat'      => $validated['child_seat'],
+        'staff_id'        => session('staff_id') ?? null,
+        'staff_name'      => session('staff_name') ?? (session('staff_role') === 'super_admin' ? 'Super Admin' : null),
     ];
     
     // print_r($bookingData);

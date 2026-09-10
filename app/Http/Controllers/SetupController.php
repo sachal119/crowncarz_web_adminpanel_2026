@@ -94,25 +94,54 @@ public function index()
     try {
         // Fetch all data from Firebase
         // NOTE: The Firebase service must handle deserialization (JSON to PHP Array/Object)
-        $staffData = $this->firebase->getData('staff');
-        $driversData = $this->firebase->getData('drivers');
-        $vehiclesData = $this->firebase->getData('vehicles');
-        $customersData = $this->firebase->getData('customers');
+        $staffData = $this->firebase->getData('staff') ?? [];
+        $driversData = $this->firebase->getData('drivers') ?? [];
+        $vehiclesData = $this->firebase->getData('vehicles') ?? [];
+        $customersData = $this->firebase->getData('customers') ?? [];
+        $bookingsData = $this->firebase->getData('bookings') ?? [];
 
-        // Convert data to Laravel Collections for easy iteration in the view, 
-        // or ensure your Firebase service handles this conversion.
-        $staff = collect($staffData);
+        // Attach dealt bookings to each staff member
+        $staff = collect($staffData)->map(function ($member, $key) use ($bookingsData) {
+            $memberId = (string) ($member['id'] ?? $key);
+            $memberName = strtolower(trim($member['name'] ?? ''));
+            $memberEmail = strtolower(trim($member['email'] ?? ''));
+
+            $handledBookings = [];
+            foreach ($bookingsData as $bKey => $b) {
+                $staffId = (string) ($b['staff_id'] ?? $b['created_by_staff_id'] ?? $b['updated_by_staff_id'] ?? $b['dispatched_by_staff_id'] ?? '');
+                $staffName = strtolower(trim($b['staff_name'] ?? $b['created_by_staff_name'] ?? $b['operator'] ?? $b['created_by'] ?? ''));
+                $staffEmail = strtolower(trim($b['staff_email'] ?? $b['operator_email'] ?? ''));
+
+                if (
+                    ($staffId !== '' && $staffId === $memberId) ||
+                    ($memberName !== '' && $staffName !== '' && ($staffName === $memberName || str_contains($staffName, $memberName))) ||
+                    ($memberEmail !== '' && $staffEmail !== '' && $staffEmail === $memberEmail)
+                ) {
+                    $handledBookings[] = [
+                        'id' => (string) $bKey,
+                        'ref_no' => $b['ref_no'] ?? $bKey,
+                        'passenger_name' => $b['passenger_name'] ?? 'N/A',
+                        'phone_no' => $b['phone_no'] ?? 'N/A',
+                        'pickup_address' => $b['pickup_address'] ?? 'N/A',
+                        'dropoff_address' => $b['dropoff_address'] ?? 'N/A',
+                        'pickup_date' => $b['pickup_date'] ?? '',
+                        'pickup_time' => $b['pickup_time'] ?? '',
+                        'price' => $b['price'] ?? 0,
+                        'status' => ucfirst($b['status'] ?? 'pending'),
+                        'payment_type' => ucfirst($b['payment_type'] ?? 'N/A'),
+                        'created_at' => $b['created_at'] ?? 'N/A',
+                    ];
+                }
+            }
+
+            $member['bookings'] = $handledBookings;
+            $member['bookings_count'] = count($handledBookings);
+            return $member;
+        });
+
         $drivers = collect($driversData);
         $vehicles = collect($vehiclesData);
         $customers = collect($customersData);
-        
-        
-        
-
-        // Since Firebase data doesn't automatically include relationships (like 'vehicle.driver'),
-        // you might need to handle the linkage manually in the view or controller 
-        // if your Firebase data structure is flat.
-        // For simplicity, we are passing the raw collections/arrays.
 
         return view('setup.index', compact('staff', 'drivers', 'vehicles', 'customers'));
     

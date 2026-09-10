@@ -402,6 +402,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <th>Staff member</th>
                                     <th>Contact</th>
                                     <th>Role</th>
+                                    <th>Dealt Bookings</th>
                                     <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
@@ -428,6 +429,27 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 {{ ucfirst($memberRole) }}
                                             </span>
                                         </td>
+                                        <td>
+                                            @php
+                                                $staffBookings = $member['bookings'] ?? [];
+                                                $bCount = count($staffBookings);
+                                            @endphp
+                                            @if($bCount > 0)
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-primary fw-semibold staff-bookings-btn shadow-sm"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#staffBookingsModal"
+                                                        data-staff-name="{{ $member['name'] }}"
+                                                        data-staff-id="{{ $member['id'] }}"
+                                                        data-bookings='@json($staffBookings)'>
+                                                    <i class="bi bi-briefcase me-1"></i> {{ $bCount }} {{ Str::plural('Booking', $bCount) }}
+                                                </button>
+                                            @else
+                                                <span class="badge rounded-pill text-bg-light border text-muted px-3 py-2">
+                                                    0 Bookings
+                                                </span>
+                                            @endif
+                                        </td>
                                         <td class="text-end" style="min-width: 210px;">
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-dark staff-action-btn manage-staff-btn"
@@ -451,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="text-center py-5 text-muted">
+                                        <td colspan="5" class="text-center py-5 text-muted">
                                             <i class="bi bi-people fs-2 d-block mb-2"></i>No staff members added yet.
                                         </td>
                                     </tr>
@@ -545,6 +567,58 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <button type="submit" class="btn btn-custom px-4"><i class="bi bi-check2-circle me-1"></i>Save Changes</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff Bookings Modal -->
+            <div class="modal fade" id="staffBookingsModal" tabindex="-1" aria-labelledby="staffBookingsModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-xl">
+                    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+                        <div class="modal-header bg-dark text-white py-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-briefcase-fill fs-4 me-2 text-warning"></i>
+                                <div>
+                                    <h5 class="modal-title fw-bold mb-0" id="staffBookingsModalLabel">
+                                        Bookings Handled by <span id="staffBookingsModalName" class="text-warning"></span>
+                                    </h5>
+                                    <small class="text-white-50">View all booking IDs and details handled by this staff member</small>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4 bg-light">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                                <span class="badge bg-dark fs-6 px-3 py-2" id="staffBookingsSummary">Total Bookings: 0</span>
+                                <div class="input-group w-auto" style="max-width: 320px;">
+                                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="staffBookingsFilterInput" class="form-control" placeholder="Search ID, Ref, Passenger...">
+                                </div>
+                            </div>
+
+                            <div class="table-responsive bg-white rounded-3 shadow-sm border" style="max-height: 480px; overflow-y: auto;">
+                                <table class="table table-hover align-middle mb-0" id="staffBookingsTable">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Ref #</th>
+                                            <th>Booking ID</th>
+                                            <th>Passenger</th>
+                                            <th>Phone</th>
+                                            <th>Pickup -> Dropoff</th>
+                                            <th>Date & Time</th>
+                                            <th>Fare (£)</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="staffBookingsTableBody">
+                                        <!-- Dynamically populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-white">
+                            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1181,6 +1255,84 @@ document.addEventListener("DOMContentLoaded", function() {
             if (!confirm(`Are you sure you want to PERMANENTLY DELETE job #${ref}? This action cannot be undone.`)) {
                 e.preventDefault();
             }
+        });
+    }
+
+    // Staff Bookings Modal Logic
+    let currentStaffBookings = [];
+    const staffTableBody = document.getElementById('staffBookingsTableBody');
+    const staffNameSpan = document.getElementById('staffBookingsModalName');
+    const staffSummaryBadge = document.getElementById('staffBookingsSummary');
+    const staffFilterInput = document.getElementById('staffBookingsFilterInput');
+
+    function renderStaffBookings(list) {
+        if (!staffTableBody) return;
+        staffTableBody.innerHTML = '';
+
+        if (!list || list.length === 0) {
+            staffTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No bookings found for this staff member.</td></tr>`;
+            return;
+        }
+
+        list.forEach(b => {
+            const tr = document.createElement('tr');
+            const statusLower = (b.status || '').toLowerCase();
+            let statusBadge = 'bg-warning text-dark';
+            if (statusLower === 'completed') statusBadge = 'bg-success';
+            else if (statusLower === 'cancelled') statusBadge = 'bg-danger';
+            else if (statusLower === 'accepted') statusBadge = 'bg-info text-dark';
+
+            tr.innerHTML = `
+                <td><span class="badge bg-dark fw-bold">${b.ref_no || '-'}</span></td>
+                <td><code class="text-primary fw-bold small">${b.id || '-'}</code></td>
+                <td class="fw-semibold text-dark">${b.passenger_name || 'N/A'}</td>
+                <td><small class="text-muted">${b.phone_no || '-'}</small></td>
+                <td>
+                    <div class="small fw-semibold text-dark" style="max-width: 280px;">
+                        <div class="text-truncate text-success" title="${b.pickup_address}"><i class="bi bi-geo-alt me-1"></i>${b.pickup_address || '-'}</div>
+                        <div class="text-truncate text-danger" title="${b.dropoff_address}"><i class="bi bi-flag me-1"></i>${b.dropoff_address || '-'}</div>
+                    </div>
+                </td>
+                <td><small class="text-muted">${b.pickup_date || ''} ${b.pickup_time || ''}</small></td>
+                <td class="fw-bold text-success">£${parseFloat(b.price || 0).toFixed(2)}</td>
+                <td><span class="badge ${statusBadge}">${b.status || 'Pending'}</span></td>
+            `;
+            staffTableBody.appendChild(tr);
+        });
+    }
+
+    document.querySelectorAll('.staff-bookings-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const staffName = this.dataset.staffName || 'Staff Member';
+            try {
+                currentStaffBookings = JSON.parse(this.dataset.bookings || '[]');
+            } catch(e) {
+                currentStaffBookings = [];
+            }
+            if (staffNameSpan) staffNameSpan.textContent = staffName;
+            if (staffSummaryBadge) staffSummaryBadge.textContent = `Total Bookings: ${currentStaffBookings.length}`;
+            if (staffFilterInput) staffFilterInput.value = '';
+            renderStaffBookings(currentStaffBookings);
+        });
+    });
+
+    if (staffFilterInput) {
+        staffFilterInput.addEventListener('input', function() {
+            const q = this.value.toLowerCase().trim();
+            if (!q) {
+                renderStaffBookings(currentStaffBookings);
+                return;
+            }
+            const filtered = currentStaffBookings.filter(b => {
+                return (b.ref_no && b.ref_no.toLowerCase().includes(q)) ||
+                       (b.id && b.id.toLowerCase().includes(q)) ||
+                       (b.passenger_name && b.passenger_name.toLowerCase().includes(q)) ||
+                       (b.phone_no && b.phone_no.toLowerCase().includes(q)) ||
+                       (b.pickup_address && b.pickup_address.toLowerCase().includes(q)) ||
+                       (b.dropoff_address && b.dropoff_address.toLowerCase().includes(q)) ||
+                       (b.status && b.status.toLowerCase().includes(q));
+            });
+            renderStaffBookings(filtered);
         });
     }
 });
