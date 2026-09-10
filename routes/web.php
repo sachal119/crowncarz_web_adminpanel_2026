@@ -56,6 +56,22 @@ Route::post('fixed-prices/update/{id}', [PricingController::class, 'update'])
 
 
 
+// BF History screen
+Route::get('/drivers/{driverId}/bf-history', [SetupController::class, 'bfHistory'])
+    ->name('drivers.bf.history');
+
+// Add / Subtract BF
+Route::post('/drivers/{driverId}/bf-update', [SetupController::class, 'updateBF'])
+    ->name('drivers.bf.update');
+    
+Route::put('/drivers/{driverId}/bf/update/{transactionId}', 
+    [SetupController::class, 'updateBalanceHistory']
+)->name('drivers.bf.edit');
+
+Route::delete('/drivers/{driverId}/bf/delete/{transactionId}', 
+    [SetupController::class, 'deleteBalanceHistory']
+)->name('drivers.bf.delete');
+
 Route::post('bookings/{id}/update-status-manual', [BookingController::class, 'updateStatusManual'])->name('bookings.updateStatusManual');
 Route::post('admin/bookings/{id}/update-status-manual', [BookingController::class, 'updateStatusManual']);
 Route::post('admin/bookings/update-status-manual', [BookingController::class, 'updateStatusManual']);
