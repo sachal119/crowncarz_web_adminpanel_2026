@@ -57,19 +57,28 @@
       transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
+      border: 1px solid transparent;
     }
     .navbar-custom .nav-link:hover {
       color: #E6B04A !important;
       background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(230, 176, 74, 0.25);
     }
     .navbar-custom .nav-link.active {
       color: #ffffff !important;
-      background: rgba(230, 176, 74, 0.25) !important;
-      border: 1px solid rgba(230, 176, 74, 0.5);
+      background: rgba(230, 176, 74, 0.22) !important;
+      border: 1px solid rgba(230, 176, 74, 0.6) !important;
       font-weight: 700;
+      box-shadow: 0 0 12px rgba(230, 176, 74, 0.18);
     }
     .navbar-custom .nav-link.active i {
       color: #E6B04A !important;
+    }
+    .navbar-custom .dropdown-item.active,
+    .navbar-custom .dropdown-item:active {
+      background-color: #E6B04A !important;
+      color: #111827 !important;
+      font-weight: 600;
     }
     .navbar-custom .dropdown-menu {
       display: none;
@@ -187,11 +196,11 @@
 
       <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
         <ul class="navbar-nav">
-          <li class="nav-item me-3"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-grid-fill me-1"></i>Dashboard</a></li>
-          <li class="nav-item me-3"><a class="nav-link {{ request()->routeIs('live.map') ? 'active' : '' }}" href="{{ route('live.map') }}"><i class="bi bi-geo-alt-fill me-1 text-warning"></i>Live Map</a></li>
-          <li class="nav-item me-3"><a class="nav-link" href="{{ route('booking.create') }}"  target="_blank"><i class="bi bi-calendar-plus me-1"></i>Make Booking</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-grid-fill me-1"></i>Dashboard</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('live.map') ? 'active' : '' }}" href="{{ route('live.map') }}"><i class="bi bi-geo-alt-fill me-1"></i>Map</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('booking.create') ? 'active' : '' }}" href="{{ route('booking.create') }}" target="_blank"><i class="bi bi-calendar-plus me-1"></i>Booking</a></li>
           @if(session('staff_role', 'super_admin') !== 'collaborator')
-          <li class="nav-item dropdown me-3">
+          <li class="nav-item dropdown me-2">
   <a class="nav-link dropdown-toggle" href="#" id="statsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="bi bi-bar-chart-fill me-1"></i>Stats
   </a>
@@ -284,49 +293,40 @@
 </li>
           @endif
           
-          <li class="nav-item me-3"><a class="nav-link" href="{{ route('completed.jobs') }}"><i class="bi bi-check-circle me-1"></i>Completed Jobs</a></li>
-          <li class="nav-item me-3"><a class="nav-link" href="{{ route('previous.bookings') }}"><i class="bi bi-check-circle me-1"></i>Previous Jobs</a></li>
-          <li class="nav-item me-3"><a class="nav-link" href="{{ route('bookings.cancelled') }}"><i class="bi bi-check-circle me-1"></i>Cancelled Jobs</a></li>
-          
-          
-          
-          
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('completed.jobs', 'bookings.search') ? 'active' : '' }}" href="{{ route('completed.jobs') }}"><i class="bi bi-check-circle-fill me-1"></i>Completed</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('previous.bookings', 'previous.bookings.search') ? 'active' : '' }}" href="{{ route('previous.bookings') }}"><i class="bi bi-clock-history me-1"></i>Previous</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('bookings.cancelled', 'cancelled.bookings.search') ? 'active' : '' }}" href="{{ route('bookings.cancelled') }}"><i class="bi bi-x-circle-fill me-1"></i>Cancelled</a></li>
           
           <!-- Messages Dropdown -->
 @if(session('staff_role', 'super_admin') !== 'collaborator')
-<li class="nav-item dropdown me-3">
-
-            
-              <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <li class="nav-item dropdown me-2">
+              <a class="nav-link dropdown-toggle {{ request()->routeIs('messages.*', 'messages.all') ? 'active' : '' }}" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-chat-dots-fill me-1"></i>Messages
               </a>
-              <ul class="dropdown-menu" aria-labelledby="messagesDropdown">
+              <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="messagesDropdown" style="border-radius: 12px;">
                 <li><h6 class="dropdown-header">Customer</h6></li>
-                <li><a class="dropdown-item" href="{{ route('messages.customer.booking') }}">Booking Confirmation SMS</a></li>
-                <li><a class="dropdown-item" href="{{ route('messages.customer.onroute') }}">Onroute SMS</a></li>
-                <li><a class="dropdown-item" href="{{ route('messages.customer.arrival') }}">Arrival SMS</a></li>
-                <li><a class="dropdown-item" href="{{ route('messages.customer.complete') }}">Job Complete SMS</a></li>
+                <li><a class="dropdown-item {{ request()->routeIs('messages.customer.booking') ? 'active' : '' }}" href="{{ route('messages.customer.booking') }}">Booking Confirmation SMS</a></li>
+                <li><a class="dropdown-item {{ request()->routeIs('messages.customer.onroute') ? 'active' : '' }}" href="{{ route('messages.customer.onroute') }}">Onroute SMS</a></li>
+                <li><a class="dropdown-item {{ request()->routeIs('messages.customer.arrival') ? 'active' : '' }}" href="{{ route('messages.customer.arrival') }}">Arrival SMS</a></li>
+                <li><a class="dropdown-item {{ request()->routeIs('messages.customer.complete') ? 'active' : '' }}" href="{{ route('messages.customer.complete') }}">Job Complete SMS</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><h6 class="dropdown-header">Driver</h6></li>
-                <li><a class="dropdown-item" href="{{ route('messages.driver.details') }}">Job Details SMS</a></li>
-                <!--<li><a class="dropdown-item" href="{{ route('messages.driver.change') }}">Job Change SMS</a></li>-->
-                <!--<li><a class="dropdown-item" href="{{ route('messages.driver.office') }}">Office to Driver Messages</a></li>-->
+                <li><a class="dropdown-item {{ request()->routeIs('messages.driver.details') ? 'active' : '' }}" href="{{ route('messages.driver.details') }}">Job Details SMS</a></li>
               </ul>
           </li>
-          <li class="nav-item dropdown me-3">
-              <a class="nav-link dropdown-toggle" href="#" id="pricingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <li class="nav-item dropdown me-2">
+              <a class="nav-link dropdown-toggle {{ (request()->routeIs('pricing.*') || request()->routeIs('locations.*')) ? 'active' : '' }}" href="#" id="pricingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-currency-pound me-1"></i>Pricing
               </a>
-              <ul class="dropdown-menu" aria-labelledby="pricingDropdown">
-                <li><a class="dropdown-item" href="{{ route('pricing.fixed') }}">Fixed Pricing</a></li>
-                <li><a class="dropdown-item" href="{{ route('pricing.mileage') }}">Mileage Pricing</a></li>
-                <li><a class="dropdown-item" href="{{ route('locations.index') }}">Location Based Pricing</a></li>
+              <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="pricingDropdown" style="border-radius: 12px;">
+                <li><a class="dropdown-item {{ request()->routeIs('pricing.fixed') ? 'active' : '' }}" href="{{ route('pricing.fixed') }}">Fixed Pricing</a></li>
+                <li><a class="dropdown-item {{ request()->routeIs('pricing.mileage') ? 'active' : '' }}" href="{{ route('pricing.mileage') }}">Mileage Pricing</a></li>
+                <li><a class="dropdown-item {{ request()->routeIs('locations.index') ? 'active' : '' }}" href="{{ route('locations.index') }}">Location Based Pricing</a></li>
               </ul>
           </li>
-          
 
-          <li class="nav-item me-3"><a class="nav-link" href="{{ route('reports') }}"><i class="bi bi-graph-up me-1"></i>Reports</a></li>
-          <li class="nav-item me-3"><a class="nav-link" href="{{ route('setup') }}"><i class="bi bi-gear me-1"></i>Setup Office</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('reports', 'reports.*') ? 'active' : '' }}" href="{{ route('reports') }}"><i class="bi bi-graph-up me-1"></i>Reports</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('setup', 'setup.*') ? 'active' : '' }}" href="{{ route('setup') }}"><i class="bi bi-gear-fill me-1"></i>Setup</a></li>
 @endif
           @if (!session('admin_logged_in'))
     <!-- Show Login -->
