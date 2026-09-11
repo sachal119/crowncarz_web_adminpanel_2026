@@ -522,7 +522,7 @@
                     </div>
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span class="text-muted">Driver Commission (20%):</span>
-                        <strong class="text-danger">- £{{ number_format($commission, 2) }}</strong>
+                        <strong class="text-dark">£{{ number_format($commission, 2) }}</strong>
                     </div>
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span class="text-muted">Account Jobs Total:</span>

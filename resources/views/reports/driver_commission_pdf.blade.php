@@ -266,7 +266,7 @@
             <td class="summary-box" style="margin-right: 4%;">
                 <table style="width: 100%;">
                     <tr><td>Total Work Amount:</td><td class="text-end"><strong>£{{ number_format($total_fare ?? 0, 2) }}</strong></td></tr>
-                    <tr><td>Driver Commission (20%):</td><td class="text-end text-danger"><strong>- £{{ number_format($commission ?? 0, 2) }}</strong></td></tr>
+                    <tr><td>Driver Commission (20%):</td><td class="text-end"><strong>£{{ number_format($commission ?? 0, 2) }}</strong></td></tr>
                     <tr><td>Account Jobs Total:</td><td class="text-end"><strong>£{{ number_format($totals['account_fare'] ?? ($totals['account_total'] ?? 0), 2) }}</strong></td></tr>
                     <tr><td>Total Jobs:</td><td class="text-end"><strong>{{ number_format($total_jobs ?? (count($account_bookings) + count($cash_bookings))) }}</strong></td></tr>
                 </table>
