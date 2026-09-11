@@ -30,13 +30,15 @@
     }
     .navbar-custom {
       background: #111827;
-      min-height: 65px;
+      min-height: 48px;
+      padding-top: 2px;
+      padding-bottom: 2px;
       position: sticky;
       top: 0;
       z-index: 1020 !important;
       width: 100%;
       flex-shrink: 0;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     .modal-backdrop {
@@ -47,13 +49,15 @@
     }
     .navbar-custom .navbar-brand {
       color: #fff;
+      padding-top: 0;
+      padding-bottom: 0;
     }
     .navbar-custom .nav-link {
       color: rgba(255, 255, 255, 0.88) !important;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 500;
-      padding: 7px 13px !important;
-      border-radius: 8px;
+      padding: 5px 10px !important;
+      border-radius: 7px;
       transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
@@ -93,7 +97,7 @@
     }
     .main-content {
       flex: 1 0 auto;
-      padding: 20px;
+      padding: 16px 20px;
       width: 100%;
     }
 
@@ -105,7 +109,7 @@
     .main-content {
       padding: 0 !important;
       margin: 0 !important;
-      height: calc(100vh - 65px) !important;
+      height: calc(100vh - 48px) !important;
       overflow: hidden !important;
       width: 100% !important;
       max-width: 100% !important;
@@ -187,8 +191,8 @@
     margin-left: 16px;
     margin-right: 16px;
 ">
-      <a class="navbar-brand mx-auto" href="{{ route('dashboard') }}">
-        <img src="{{ asset('public/images/logo.png') }}" alt="Crown Carz Logo" style="width: 75px;">
+      <a class="navbar-brand mx-auto py-0" href="{{ route('dashboard') }}">
+        <img src="{{ asset('public/images/logo.png') }}" alt="Crown Carz Logo" style="height: 34px; width: auto;">
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
         <span class="navbar-toggler-icon"></span>
@@ -293,9 +297,29 @@
 </li>
           @endif
           
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('completed.jobs', 'bookings.search') ? 'active' : '' }}" href="{{ route('completed.jobs') }}"><i class="bi bi-check-circle-fill me-1"></i>Completed</a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('previous.bookings', 'previous.bookings.search') ? 'active' : '' }}" href="{{ route('previous.bookings') }}"><i class="bi bi-clock-history me-1"></i>Previous</a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('bookings.cancelled', 'cancelled.bookings.search') ? 'active' : '' }}" href="{{ route('bookings.cancelled') }}"><i class="bi bi-x-circle-fill me-1"></i>Cancelled</a></li>
+          <!-- History Dropdown -->
+          <li class="nav-item dropdown me-2">
+              <a class="nav-link dropdown-toggle {{ request()->routeIs('completed.jobs', 'bookings.search', 'previous.bookings', 'previous.bookings.search', 'bookings.cancelled', 'cancelled.bookings.search') ? 'active' : '' }}" href="#" id="historyDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-clock-history me-1"></i>History
+              </a>
+              <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="historyDropdown" style="border-radius: 12px; min-width: 210px;">
+                <li>
+                  <a class="dropdown-item d-flex align-items-center {{ request()->routeIs('completed.jobs', 'bookings.search') ? 'active' : '' }}" href="{{ route('completed.jobs') }}">
+                    <i class="bi bi-check-circle-fill me-2 text-success"></i>Completed Bookings
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item d-flex align-items-center {{ request()->routeIs('previous.bookings', 'previous.bookings.search') ? 'active' : '' }}" href="{{ route('previous.bookings') }}">
+                    <i class="bi bi-calendar-check-fill me-2 text-warning"></i>Previous Bookings
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item d-flex align-items-center {{ request()->routeIs('bookings.cancelled', 'cancelled.bookings.search') ? 'active' : '' }}" href="{{ route('bookings.cancelled') }}">
+                    <i class="bi bi-x-circle-fill me-2 text-danger"></i>Cancelled Bookings
+                  </a>
+                </li>
+              </ul>
+          </li>
           
           <!-- Messages Dropdown -->
 @if(session('staff_role', 'super_admin') !== 'collaborator')
@@ -342,11 +366,11 @@
       
 
 @if (session('admin_logged_in'))
-      <form class="d-flex ms-auto" method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to log out of Crown Carz Admin Panel?');">
+      <form class="d-flex ms-auto my-auto" method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to log out of Crown Carz Admin Panel?');">
         @csrf
-        <button type="submit" class="btn btn-danger"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
+        <button type="submit" class="btn btn-sm btn-danger py-1 px-2.5 d-flex align-items-center" style="font-size: 12px; border-radius: 6px;"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
       </form>
-      @endif
+@endif
     </div>
   </nav>
 
