@@ -399,7 +399,7 @@ private function getDriverCommissionData($driverId, $from, $to)
 
         if (
             empty($booking['driver_id']) ||
-            $booking['driver_id'] !== $driverId ||
+            (string)$booking['driver_id'] !== (string)$driverId ||
             empty($booking['created_at'])
         ) {
             continue;
@@ -410,10 +410,26 @@ private function getDriverCommissionData($driverId, $from, $to)
             continue;
         }
 
-        // 🔹 IMPORTANT: use FARE, not price
-        $fare     = (float) ($booking['fare'] ?? $booking['price'] ?? 0);
-        $parking  = (float) ($booking['parking'] ?? 0);
-        $type     = strtolower($booking['payment_type'] ?? 'account');
+        // 🔹 Extract Fare: If fare is > 0, use it. Otherwise fallback to price / total_price / amount.
+        $rawFare = isset($booking['fare']) && is_numeric($booking['fare']) ? (float)$booking['fare'] : 0.0;
+        $rawPrice = isset($booking['price']) && is_numeric($booking['price']) ? (float)$booking['price'] : 0.0;
+        if ($rawPrice <= 0) {
+            $rawPrice = (float)($booking['total_price'] ?? $booking['final_price'] ?? $booking['amount'] ?? $booking['base_fare'] ?? $booking['driver_fare'] ?? 0.0);
+        }
+
+        $parking = isset($booking['parking']) && is_numeric($booking['parking']) ? (float)$booking['parking'] : 0.0;
+        $extra = isset($booking['extra']) && is_numeric($booking['extra']) ? (float)$booking['extra'] : 0.0;
+        $waitingFee = isset($booking['waiting_fee']) && is_numeric($booking['waiting_fee']) ? (float)$booking['waiting_fee'] : 0.0;
+
+        if ($rawFare > 0) {
+            $fare = $rawFare;
+        } elseif ($rawPrice > 0) {
+            $fare = $rawPrice;
+        } else {
+            $fare = 0.0;
+        }
+
+        $type = strtolower(trim($booking['payment_type'] ?? 'account'));
 
         $item = [
             'date'       => $bookingDate,
@@ -421,25 +437,26 @@ private function getDriverCommissionData($driverId, $from, $to)
             'booking_id' => $booking['ref_no'] ?? '-',
             'from'       => $booking['pickup_address'] ?? '-',
             'to'         => $booking['dropoff_address'] ?? '-',
-            'via' => $booking['via'] ?? '-',
+            'via'        => $booking['via'] ?? '-',
             'fare'       => $fare,
-            'waiting_fee' => $booking['waiting_fee'] ?? '-',
-            'extra' => $booking['extra'] ?? '-',
+            'waiting_fee' => $waitingFee > 0 ? number_format($waitingFee, 2) : ($booking['waiting_fee'] ?? '-'),
+            'extra'      => $extra,
             'parking'    => $parking,
             'vehicle'    => $booking['vehicle_make'] ?? '-',
             'created_at' => $booking['created_at']
         ];
 
-        if ($type === 'cash') {
+        if ($type === 'cash' || $type === 'pay in car') {
             // 💵 CASH JOB
             $cashBookings[] = $item;
             $totals['cash_fare'] += $fare;
-
+            $totals['extra_cash'] = ($totals['extra_cash'] ?? 0.0) + $extra;
         } else {
             // 🏦 ACCOUNT JOB
             $accountBookings[] = $item;
             $totals['account_fare'] += $fare;
             $totals['parking'] += $parking; // ✅ parking only here
+            $totals['extra'] = ($totals['extra'] ?? 0.0) + $extra;
         }
     }
 
