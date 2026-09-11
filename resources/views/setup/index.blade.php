@@ -607,6 +607,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             <th>Date & Time</th>
                                             <th>Fare (£)</th>
                                             <th>Status</th>
+                                            <th class="text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody id="staffBookingsTableBody">
@@ -621,6 +622,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
             </div>
+
+            <!-- Booking Details Modal Component -->
+            @include('partials.view_booking_modal')
         </div>
 
 
@@ -1270,32 +1274,80 @@ document.addEventListener("DOMContentLoaded", function() {
         staffTableBody.innerHTML = '';
 
         if (!list || list.length === 0) {
-            staffTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No bookings found for this staff member.</td></tr>`;
+            staffTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No bookings found for this staff member.</td></tr>`;
             return;
         }
 
-        list.forEach(b => {
+        list.forEach((b, index) => {
             const tr = document.createElement('tr');
+            tr.className = 'staff-booking-row';
+            tr.style.cursor = 'pointer';
+            tr.title = 'Click to view full booking details & activity history';
+
             const statusLower = (b.status || '').toLowerCase();
             let statusBadge = 'bg-warning text-dark';
             if (statusLower === 'completed') statusBadge = 'bg-success';
-            else if (statusLower === 'cancelled') statusBadge = 'bg-danger';
-            else if (statusLower === 'accepted') statusBadge = 'bg-info text-dark';
+            else if (statusLower === 'cancelled' || statusLower === 'declined' || statusLower === 'job_cancelled') statusBadge = 'bg-danger';
+            else if (statusLower === 'accepted' || statusLower === 'allocated' || statusLower === 'dispatched') statusBadge = 'bg-info text-dark';
+
+            const esc = (typeof window.escapeBookingHtml === 'function') ? window.escapeBookingHtml : (str) => {
+                if (str === null || str === undefined) return '';
+                return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            };
+
+            const refDisplay = esc(b.ref_no || b.id || '-');
+            const passengerDisplay = esc(b.passenger_name || 'N/A');
+            const phoneDisplay = esc(b.phone_no || '-');
+            const pickupDisplay = esc(b.pickup_address || '-');
+            const dropoffDisplay = esc(b.dropoff_address || '-');
+            const dateDisplay = esc((b.pickup_date || '') + ' ' + (b.pickup_time || ''));
+            const fareDisplay = parseFloat(b.price || 0).toFixed(2);
+            const statusDisplay = esc(b.status || 'Pending');
 
             tr.innerHTML = `
-                <td><span class="badge bg-dark fw-bold">${b.ref_no || '-'}</span></td>
-                <td class="fw-semibold text-dark">${b.passenger_name || 'N/A'}</td>
-                <td><small class="text-muted">${b.phone_no || '-'}</small></td>
+                <td><span class="badge bg-dark fw-bold staff-ref-badge" style="cursor: pointer;">${refDisplay}</span></td>
+                <td class="fw-semibold text-dark">${passengerDisplay}</td>
+                <td><small class="text-muted">${phoneDisplay}</small></td>
                 <td>
                     <div class="small fw-semibold text-dark" style="max-width: 280px;">
-                        <div class="text-truncate text-success" title="${b.pickup_address}"><i class="bi bi-geo-alt me-1"></i>${b.pickup_address || '-'}</div>
-                        <div class="text-truncate text-danger" title="${b.dropoff_address}"><i class="bi bi-flag me-1"></i>${b.dropoff_address || '-'}</div>
+                        <div class="text-truncate text-success" title="${pickupDisplay}"><i class="bi bi-geo-alt me-1"></i>${pickupDisplay}</div>
+                        <div class="text-truncate text-danger" title="${dropoffDisplay}"><i class="bi bi-flag me-1"></i>${dropoffDisplay}</div>
                     </div>
                 </td>
-                <td><small class="text-muted">${b.pickup_date || ''} ${b.pickup_time || ''}</small></td>
-                <td class="fw-bold text-success">£${parseFloat(b.price || 0).toFixed(2)}</td>
-                <td><span class="badge ${statusBadge}">${b.status || 'Pending'}</span></td>
+                <td><small class="text-muted">${dateDisplay}</small></td>
+                <td class="fw-bold text-success">£${fareDisplay}</td>
+                <td><span class="badge ${statusBadge}">${statusDisplay}</span></td>
+                <td class="text-center" onclick="event.stopPropagation();">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 view-booking-staff-btn px-2.5 py-1" 
+                            style="font-size: 11.5px; border-radius: 6px; font-weight: 600;"
+                            data-booking-id="${esc(b.id || b.booking_id || '')}"
+                            title="View Full Booking Details">
+                        <i class="bi bi-eye"></i> View
+                    </button>
+                </td>
             `;
+
+            // Clicking on row opens the details modal
+            tr.addEventListener('click', function(e) {
+                if (e.target.closest('button') || e.target.closest('a')) return;
+                if (typeof window.openViewBookingModal === 'function') {
+                    window.openViewBookingModal(b);
+                }
+            });
+
+            // Action button click
+            const viewBtn = tr.querySelector('.view-booking-staff-btn');
+            if (viewBtn) {
+                viewBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof window.openViewBookingModal === 'function') {
+                        window.openViewBookingModal(b);
+                    }
+                });
+            }
+
             staffTableBody.appendChild(tr);
         });
     }
