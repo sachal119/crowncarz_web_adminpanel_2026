@@ -145,7 +145,7 @@
     <div class="meta-details">
         <div class="billing-from">
             <div class="billing-from-label">Driver Details</div>
-            <strong>{{ $data['driver']['name'] ?? 'N/A' }}</strong><br>
+            <strong>{{ $data['driver']['name'] ?? 'N/A' }}</strong>@if(!empty($data['driver']['call_sign'] ?? $data['driver']['callsign'] ?? null)) ({{ $data['driver']['call_sign'] ?? $data['driver']['callsign'] }})@endif<br>
             {{ $data['driver']['email'] ?? 'N/A' }}<br>
             {{ $data['driver']['phone'] ?? 'N/A' }}
         </div>

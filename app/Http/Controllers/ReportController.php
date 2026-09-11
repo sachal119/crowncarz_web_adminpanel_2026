@@ -50,7 +50,8 @@ public function index()
             if (!empty($driver['id']) && !empty($driver['name'])) {
                 $driversList[] = [
                     'id' => $driver['id'],
-                    'name' => $driver['name']
+                    'name' => $driver['name'],
+                    'call_sign' => $driver['call_sign'] ?? $driver['callsign'] ?? ''
                 ];
             }
         }
@@ -225,13 +226,19 @@ public function downloadDriverCommission(Request $request)
 
     $data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to);
     $driverName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $data['driver']['name'] ?? 'Driver');
-    $callsign = preg_replace('/[^a-zA-Z0-9_-]/', '_', (string)($driverId ?? '0'));
+    $callsignRaw = $data['driver']['call_sign'] ?? $data['driver']['callsign'] ?? '';
+    $callsign = preg_replace('/[^a-zA-Z0-9_-]/', '_', (string)$callsignRaw);
     $dateStr = date('d-m-Y');
     $minutesStr = date('Hi');
-    $fileName = "{$driverName}_{$callsign}_{$dateStr}_{$minutesStr}.pdf";
+    if (!empty($callsign)) {
+        $fileName = "{$driverName}_{$callsign}_{$dateStr}_{$minutesStr}.pdf";
+    } else {
+        $fileName = "{$driverName}_{$dateStr}_{$minutesStr}.pdf";
+    }
 
-    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.driver_commission_pdf', $data)
-        ->setPaper('a4', 'landscape');
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.driver_commission_pdf', array_merge($data, [
+        'driverId' => $driverId
+    ]))->setPaper('a4', 'landscape');
 
     return $pdf->download($fileName);
 }

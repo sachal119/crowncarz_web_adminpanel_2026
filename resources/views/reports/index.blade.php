@@ -76,7 +76,7 @@
     <select name="driver_id" id="driverSelect" class="form-select" required>
         <option value="">-- Select Driver --</option>
         @foreach($driversList as $driver)
-            <option value="{{ $driver['id'] }}">{{ $driver['name'] }} - {{ $driver['id'] }}</option>
+            <option value="{{ $driver['id'] }}">{{ !empty($driver['call_sign']) ? '[' . $driver['call_sign'] . '] ' : '' }}{{ $driver['name'] }}</option>
         @endforeach
     </select>
 </div>

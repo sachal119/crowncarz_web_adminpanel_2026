@@ -150,7 +150,7 @@
             </td>
             <td class="meta-box">
                 <div class="meta-label">Driver</div>
-                <div class="meta-value">{{ $driver['name'] ?? 'Unknown Driver' }} ({{ $driverId ?? ($driver['id'] ?? '-') }})</div>
+                <div class="meta-value">{{ $driver['name'] ?? 'Unknown Driver' }}@if(!empty($driver['call_sign'] ?? $driver['callsign'] ?? null)) ({{ $driver['call_sign'] ?? $driver['callsign'] }})@endif</div>
             </td>
             <td class="meta-box">
                 <div class="meta-label">From</div>

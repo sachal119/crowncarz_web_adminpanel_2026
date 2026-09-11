@@ -324,7 +324,7 @@
                 <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
                     <div class="meta-pill">
                         <i class="bi bi-person-circle text-primary me-2"></i>
-                        <span><strong>Driver:</strong> {{ $driver['name'] ?? 'Unknown Driver' }} <span class="text-muted">({{ $driverId ?? '-' }})</span></span>
+                        <span><strong>Driver:</strong> {{ $driver['name'] ?? 'Unknown Driver' }}@if(!empty($driver['call_sign'] ?? $driver['callsign'] ?? null)) <span class="text-muted">({{ $driver['call_sign'] ?? $driver['callsign'] }})</span>@endif</span>
                     </div>
                     <div class="meta-pill">
                         <i class="bi bi-calendar3 text-warning me-2"></i>
@@ -370,7 +370,7 @@
             </div>
             <div class="print-meta-box">
                 <span class="print-meta-label">Driver</span>
-                <span class="print-meta-value">{{ $driver['name'] ?? 'Unknown Driver' }} ({{ $driverId ?? '-' }})</span>
+                <span class="print-meta-value">{{ $driver['name'] ?? 'Unknown Driver' }}@if(!empty($driver['call_sign'] ?? $driver['callsign'] ?? null)) ({{ $driver['call_sign'] ?? $driver['callsign'] }})@endif</span>
             </div>
             <div class="print-meta-box">
                 <span class="print-meta-label">From</span>
@@ -597,7 +597,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // 🔸 Helper to generate filename: drivername_callsign_date_minutes
     function getStatementFilename() {
         const rawDriverName = @json($driver['name'] ?? 'Driver');
-        const rawCallsign = @json((string)($driverId ?? ($driver['callsign'] ?? '0')));
+        const rawCallsign = @json((string)($driver['call_sign'] ?? $driver['callsign'] ?? ''));
         
         // Clean special characters
         const driverName = rawDriverName.trim().replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
@@ -608,7 +608,10 @@ document.addEventListener("DOMContentLoaded", function() {
         const dateStr = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
         const minutesStr = `${pad(now.getHours())}${pad(now.getMinutes())}`;
         
-        return `${driverName}_${callsign}_${dateStr}_${minutesStr}.pdf`;
+        if (callsign) {
+            return `${driverName}_${callsign}_${dateStr}_${minutesStr}.pdf`;
+        }
+        return `${driverName}_${dateStr}_${minutesStr}.pdf`;
     }
 
     // 🔸 Export as PDF (Exact Print View Output)
@@ -649,7 +652,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             </div>
                             <div style="border: 1px solid #dee2e6; background: #fafafa; padding: 7px 10px; border-radius: 4px;">
                                 <span style="color: #64748b; display: block; font-size: 7.5pt; font-weight: 700; text-transform: uppercase;">Driver</span>
-                                <span style="color: #0f172a; display: block; font-size: 9.5pt; font-weight: 700; margin-top: 2px;">{{ $driver['name'] ?? 'Unknown Driver' }} ({{ $driverId ?? '-' }})</span>
+                                <span style="color: #0f172a; display: block; font-size: 9.5pt; font-weight: 700; margin-top: 2px;">{{ $driver['name'] ?? 'Unknown Driver' }}@if(!empty($driver['call_sign'] ?? $driver['callsign'] ?? null)) ({{ $driver['call_sign'] ?? $driver['callsign'] }})@endif</span>
                             </div>
                             <div style="border: 1px solid #dee2e6; background: #fafafa; padding: 7px 10px; border-radius: 4px;">
                                 <span style="color: #64748b; display: block; font-size: 7.5pt; font-weight: 700; text-transform: uppercase;">From</span>
