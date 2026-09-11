@@ -159,10 +159,11 @@ td{
 }
 
 
-/* Prevent dropdown from forcing page/table scroll */
-.dropdown-menu {
-  position: absolute !important;
-  will-change: transform;
+/* Dropdown Menu Styles & Elevation */
+.actions-dropdown .dropdown-menu {
+  z-index: 1060;
+  min-width: 195px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
 }
 /* 🌟 Modern Dashboard Aesthetics */
 .dashboard-section {
@@ -331,9 +332,10 @@ td{
 
 .table-responsive {
     overflow-x: auto !important;
-    overflow-y: hidden;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
     width: 100%;
+    min-height: 280px;
 }
 
 .table-responsive::-webkit-scrollbar {
@@ -773,8 +775,8 @@ td{
   </div>
 
   <div class="col-lg-12 mt-3">
-        <div class="card shadow-sm border-0" style="border-radius: 14px; overflow: hidden; border: 1px solid #eaedf1 !important;">
-            <div class="card-header bg-white py-2.5 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom" style="border-color: #f1f5f9 !important;">
+        <div class="card shadow-sm border-0" style="border-radius: 14px; border: 1px solid #eaedf1 !important;">
+            <div class="card-header bg-white py-2.5 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom" style="border-top-left-radius: 13px; border-top-right-radius: 13px; border-color: #f1f5f9 !important;">
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(184, 115, 51, 0.12); color: #B87333;">
                         <i class="bi bi-calendar2-range-fill fs-6"></i>
@@ -2050,8 +2052,8 @@ function buildBookingRowHtml(booking, isNew = false) {
         </td>
         <td class="col-platform text-center" style="${rowStyle}">${getPlatformBadgeHtml(booking.platform, booking.partner)}</td>
         <td class="col-actions" style="${rowStyle}">
-            <div class="dropdown actions-dropdown" style="position: static;">
-                <button class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" style="width: 28px; height: 28px; border-radius: 6px;">
+            <div class="dropdown actions-dropdown">
+                <button class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' data-bs-boundary="viewport" aria-expanded="false" style="width: 28px; height: 28px; border-radius: 6px;">
                     <i class="bi bi-three-dots-vertical"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm rounded-3">
