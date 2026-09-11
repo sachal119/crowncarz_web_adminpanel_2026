@@ -3,31 +3,53 @@
 @section('content')
 <style>
     :root {
-        --gold-light: #fce38a;
+        --gold-light: #fff8eb;
         --gold: #f4a261;
         --gold-dark: #b5651d;
         --brown: #7a4419;
+        --primary-accent: #E6B04A;
+    }
+
+    .nav-tabs {
+        border-bottom: 2px solid #eadfd5;
+        gap: 6px;
     }
 
     .nav-tabs .nav-link {
         color: var(--brown);
         border: 1px solid transparent;
+        border-radius: 10px 10px 0 0;
+        font-weight: 600;
+        padding: 10px 18px;
+        transition: all 0.2s ease;
+    }
+
+    .nav-tabs .nav-link:hover {
+        background-color: #fbf7f2;
+        border-color: #eadfd5 #eadfd5 transparent;
+        color: var(--gold-dark);
     }
 
     .nav-tabs .nav-link.active {
-        background-color: var(--gold-dark);
+        background: linear-gradient(135deg, var(--gold-dark), #cf7925);
         color: white;
-        border-radius: 5px 5px 0 0;
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(181, 101, 29, 0.25);
     }
 
     .btn-custom {
-        background-color: var(--gold);
-        color: white;
+        background: linear-gradient(135deg, #E6B04A, #d49a37);
+        color: #1a150d;
         border: none;
+        font-weight: 700;
+        border-radius: 8px;
+        transition: all 0.2s ease;
     }
 
     .btn-custom:hover {
-        background-color: var(--gold-dark);
+        background: linear-gradient(135deg, #d49a37, #b5651d);
+        color: white;
+        box-shadow: 0 4px 10px rgba(181, 101, 29, 0.2);
     }
 
     .form-control:focus, .form-select:focus {
@@ -37,7 +59,9 @@
 
     label {
         color: var(--brown);
-        font-weight: 500;
+        font-weight: 600;
+        font-size: 0.88rem;
+        margin-bottom: 4px;
     }
 
     h2, h3 {
@@ -55,13 +79,133 @@
     }
 
     .form-card {
-        background-color: var(--gold-light);
-        border: 1px solid var(--gold-dark);
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        background: #ffffff;
+        border: 1px solid #eadfd5;
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 0 8px 24px rgba(83, 50, 24, 0.06);
         margin-bottom: 20px;
     }
+
+    .form-card-title {
+        color: var(--gold-dark);
+        font-weight: 700;
+        font-size: 1.15rem;
+        border-bottom: 2px solid #f6ede3;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .setup-directory {
+        background: #fff;
+        border: 1px solid #eadfd5;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(83, 50, 24, 0.08);
+        overflow: hidden;
+    }
+
+    .setup-directory-header {
+        padding: 18px 20px;
+        background: linear-gradient(135deg, #fffaf3, #fff);
+        border-bottom: 1px solid #eadfd5;
+    }
+
+    .setup-table {
+        margin-bottom: 0;
+    }
+
+    .setup-table th {
+        border: 0;
+        background: #fbf7f2;
+        color: #7a4419;
+        font-size: 0.76rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 12px 16px;
+        font-weight: 700;
+    }
+
+    .setup-table td {
+        border-color: #f0e8df;
+        padding: 14px 16px;
+        vertical-align: middle;
+    }
+
+    .driver-avatar {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #b5651d, #e49a52);
+        color: white;
+        font-weight: 700;
+        flex: 0 0 40px;
+    }
+
+    .callsign-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+        font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+        font-weight: 700;
+        padding: 4px 9px;
+        border-radius: 6px;
+        font-size: 0.84rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .reg-plate {
+        background: #0f172a;
+        color: #fbbf24;
+        font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+        font-weight: 700;
+        font-size: 0.82rem;
+        padding: 3px 8px;
+        border-radius: 5px;
+        border: 1px solid #334155;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: inline-block;
+    }
+
+    .vehicle-item-badge {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 6px 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.15s ease;
+    }
+
+    .vehicle-item-badge:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .status-available { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .status-on_job { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+    .status-break { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+    .status-waiting { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
 
     .staff-directory {
         background: #fff;
@@ -148,17 +292,51 @@
     }
 </style>
 
-{{-- Create a Driver Lookup Map for the Vehicles Table --}}
+{{-- Driver & Vehicle Mapping Logic --}}
 @php
-    // Assuming $drivers is a Laravel Collection or array of arrays from Firebase
     $driverLookup = [];
-    foreach ($drivers as $driver) {
-        // Use a unique ID or a generated key for lookup, assuming Firebase pushes have a unique key.
-        // If the 'id' field is present in the driver object/array, use that.
-        // If not, you'll need to pass the Firebase key from the controller.
-        // For this example, we assume a key named 'id' exists on the driver array.
-        if (isset($driver['id'])) {
-             $driverLookup[$driver['id']] = $driver['name'];
+    $driverCallSignLookup = [];
+    $driverStatusLookup = [];
+    $driverVehiclesMap = [];
+
+    foreach ($drivers as $dKey => $driver) {
+        $dId = (string)($driver['id'] ?? $dKey);
+        $driverLookup[$dId] = $driver['name'] ?? 'Unknown';
+        $driverCallSignLookup[$dId] = $driver['call_sign'] ?? $driver['callsign'] ?? '';
+        $driverStatusLookup[$dId] = $driver['status'] ?? 'available';
+        $driverVehiclesMap[$dId] = [];
+
+        if ($dKey && (string)$dKey !== $dId) {
+            $driverLookup[(string)$dKey] = $driver['name'] ?? 'Unknown';
+            $driverCallSignLookup[(string)$dKey] = $driver['call_sign'] ?? $driver['callsign'] ?? '';
+            $driverStatusLookup[(string)$dKey] = $driver['status'] ?? 'available';
+            $driverVehiclesMap[(string)$dKey] = [];
+        }
+    }
+
+    foreach ($vehicles as $vKey => $vehicle) {
+        $vDriverId = (string)($vehicle['driver_id'] ?? '');
+        if ($vDriverId !== '') {
+            if (isset($driverVehiclesMap[$vDriverId])) {
+                $driverVehiclesMap[$vDriverId][] = $vehicle;
+            }
+            foreach ($drivers as $dKey => $driver) {
+                if ((string)($driver['id'] ?? '') === $vDriverId || (string)$dKey === $vDriverId) {
+                    $dRealId = (string)($driver['id'] ?? $dKey);
+                    if (isset($driverVehiclesMap[$dRealId])) {
+                        $alreadyExists = false;
+                        foreach ($driverVehiclesMap[$dRealId] as $existingV) {
+                            if (($existingV['registration'] ?? '') === ($vehicle['registration'] ?? '') && ($existingV['make'] ?? '') === ($vehicle['make'] ?? '')) {
+                                $alreadyExists = true;
+                                break;
+                            }
+                        }
+                        if (!$alreadyExists) {
+                            $driverVehiclesMap[$dRealId][] = $vehicle;
+                        }
+                    }
+                }
+            }
         }
     }
 @endphp
@@ -369,21 +547,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
     <ul class="nav nav-tabs" id="setupTabs" role="tablist">
         <li class="nav-item">
-            <button class="nav-link @if(!session('active_tab') || session('active_tab') == 'staff') active @endif" id="staff-tab" data-bs-toggle="tab" data-bs-target="#staff" type="button">Add Staff</button>
+            <button class="nav-link @if(!session('active_tab') || session('active_tab') == 'staff') active @endif" id="staff-tab" data-bs-toggle="tab" data-bs-target="#staff" type="button">
+                <i class="bi bi-people-fill me-1"></i> Staff Directory
+            </button>
         </li>
         <li class="nav-item">
-            <button class="nav-link @if(session('active_tab') == 'driver') active @endif" id="driver-tab" data-bs-toggle="tab" data-bs-target="#driver" type="button">Add Driver</button>
+            <button class="nav-link @if(session('active_tab') == 'driver') active @endif" id="driver-tab" data-bs-toggle="tab" data-bs-target="#driver" type="button">
+                <i class="bi bi-person-badge-fill me-1"></i> Drivers Directory
+            </button>
         </li>
         <li class="nav-item">
-            <button class="nav-link @if(session('active_tab') == 'vehicle') active @endif" id="vehicle-tab" data-bs-toggle="tab" data-bs-target="#vehicle" type="button">Add Vehicle</button>
+            <button class="nav-link @if(session('active_tab') == 'vehicle') active @endif" id="vehicle-tab" data-bs-toggle="tab" data-bs-target="#vehicle" type="button">
+                <i class="bi bi-car-front-fill me-1"></i> Vehicles Directory
+            </button>
         </li>
         <li class="nav-item">
-            <button class="nav-link @if(session('active_tab') == 'customer') active @endif" id="customer-tab" data-bs-toggle="tab" data-bs-target="#customer" type="button">Add Customer Account</button>
+            <button class="nav-link @if(session('active_tab') == 'customer') active @endif" id="customer-tab" data-bs-toggle="tab" data-bs-target="#customer" type="button">
+                <i class="bi bi-buildings-fill me-1"></i> Customer Accounts
+            </button>
         </li>
     </ul>
 
     <div class="tab-content mt-3">
 
+        {{-- 1. Staff Tab --}}
         <div class="tab-pane fade @if(!session('active_tab') || session('active_tab') == 'staff') show active @endif" id="staff" role="tabpanel">
             <div class="row">
                 <div class="col-lg-8">
@@ -485,17 +672,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
 
                 <div class="col-lg-4">
-                    <h3 class="text-center">Add Staff</h3>
                     <div class="form-card">
+                        <div class="form-card-title">
+                            <i class="bi bi-person-plus-fill text-warning"></i> Add Staff Member
+                        </div>
                         <form method="POST" action="{{ route('setup.staff.store') }}">
                             @csrf
                             <div class="mb-3">
                                 <label>Name</label>
-                                <input type="text" name="name" class="form-control" required value="{{ old('name') }}">
+                                <input type="text" name="name" class="form-control" placeholder="Full name" required value="{{ old('name') }}">
                             </div>
                             <div class="mb-3">
                                 <label>Email</label>
-                                <input type="email" name="email" class="form-control" required value="{{ old('email') }}">
+                                <input type="email" name="email" class="form-control" placeholder="staff@crowncarz.com" required value="{{ old('email') }}">
                             </div>
                             <div class="mb-3">
                                 <label>Password</label>
@@ -507,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                             <div class="mb-3">
                                 <label>Phone Number</label>
-                                <input type="text" name="phone" class="form-control" required value="{{ old('phone') }}">
+                                <input type="text" name="phone" class="form-control" placeholder="Phone number" required value="{{ old('phone') }}">
                             </div>
                             <div class="mb-3">
                                 <label>Role</label>
@@ -516,55 +705,50 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin — full access</option>
                                 </select>
                             </div>
-                            <div class="alert alert-light border small py-2">
+                            <div class="alert alert-light border small py-2 mb-3">
                                 <i class="bi bi-envelope-check me-1"></i>Login credentials will be emailed automatically.
                             </div>
-                            <button type="submit" class="btn btn-custom w-100">
-                                <i class="bi bi-person-plus me-1"></i>Create &amp; Email Credentials
+                            <button type="submit" class="btn btn-custom w-100 py-2.5">
+                                <i class="bi bi-person-plus me-1"></i> Add Staff Member
                             </button>
                         </form>
                     </div>
                 </div>
             </div>
 
+            <!-- Manage Staff Modal -->
             <div class="modal fade" id="manageStaffModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content border-0 shadow rounded-4">
-                        <form method="POST" id="manageStaffForm">
+                        <form id="manageStaffForm" method="POST">
                             @csrf
-                            @method('PUT')
                             <div class="modal-header border-0 pb-0">
                                 <div>
                                     <h5 class="modal-title fw-bold">Manage Staff Access</h5>
-                                    <div class="text-muted small" id="manageStaffName"></div>
+                                    <p class="text-muted small mb-0" id="manageStaffName"></p>
                                 </div>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body pt-4">
                                 <div class="mb-3">
-                                    <label class="form-label">Role</label>
+                                    <label class="form-label fw-bold">Role</label>
                                     <select name="role" id="manageStaffRole" class="form-select" required>
-                                        <option value="collaborator">Collaborator — bookings only</option>
-                                        <option value="admin">Admin — full access</option>
+                                        <option value="collaborator">Collaborator — limited to bookings</option>
+                                        <option value="admin">Admin — full office access</option>
                                     </select>
                                 </div>
-                                <div class="alert alert-light border small text-muted">
-                                    <i class="bi bi-info-circle me-1"></i> Leave password fields blank if you only want to update the role.
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">New Password (optional)</label>
+                                    <input type="password" name="password" class="form-control" minlength="8" placeholder="Leave blank to keep current password">
                                 </div>
-                                <div class="row g-3">
-                                    <div class="col-sm-6">
-                                        <label class="form-label">New Password</label>
-                                        <input type="password" name="password" class="form-control" minlength="8" autocomplete="new-password">
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <label class="form-label">Confirm Password</label>
-                                        <input type="password" name="password_confirmation" class="form-control" minlength="8" autocomplete="new-password">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Confirm New Password</label>
+                                    <input type="password" name="password_confirmation" class="form-control" minlength="8" placeholder="Confirm password if changing">
                                 </div>
                             </div>
                             <div class="modal-footer border-0">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-custom px-4"><i class="bi bi-check2-circle me-1"></i>Save Changes</button>
+                                <button type="submit" class="btn btn-primary px-4">Save Changes</button>
                             </div>
                         </form>
                     </div>
@@ -576,42 +760,40 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="modal-dialog modal-dialog-centered modal-xl">
                     <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
                         <div class="modal-header bg-dark text-white py-3">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-briefcase-fill fs-4 me-2 text-warning"></i>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-briefcase-fill text-warning fs-5"></i>
                                 <div>
                                     <h5 class="modal-title fw-bold mb-0" id="staffBookingsModalLabel">
                                         Bookings Handled by <span id="staffBookingsModalName" class="text-warning"></span>
                                     </h5>
-                                    <small class="text-white-50">View all bookings and details handled by this staff member</small>
+                                    <span class="badge bg-secondary rounded-pill mt-1" id="staffBookingsSummary">0 Bookings</span>
                                 </div>
                             </div>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body p-4 bg-light">
-                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                                <span class="badge bg-dark fs-6 px-3 py-2" id="staffBookingsSummary">Total Bookings: 0</span>
-                                <div class="input-group w-auto" style="max-width: 320px;">
-                                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                                    <input type="text" id="staffBookingsFilterInput" class="form-control" placeholder="Search Ref #, Passenger...">
+                            <div class="mb-3">
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                    <input type="text" class="form-control border-start-0" id="staffBookingsFilterInput" placeholder="Filter bookings by Ref #, passenger, phone, address, status...">
                                 </div>
                             </div>
-
-                            <div class="table-responsive bg-white rounded-3 shadow-sm border" style="max-height: 480px; overflow-y: auto;">
-                                <table class="table table-hover align-middle mb-0" id="staffBookingsTable">
-                                    <thead class="table-light sticky-top">
+                            <div class="table-responsive bg-white rounded-3 border shadow-sm" style="max-height: 520px; overflow-y: auto;">
+                                <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                                    <thead class="table-dark sticky-top">
                                         <tr>
                                             <th>Ref #</th>
                                             <th>Passenger</th>
                                             <th>Phone</th>
-                                            <th>Pickup -> Dropoff</th>
-                                            <th>Date & Time</th>
-                                            <th>Fare (£)</th>
+                                            <th>Route (Pickup &rarr; Dropoff)</th>
+                                            <th>Date / Time</th>
+                                            <th>Price</th>
                                             <th>Status</th>
                                             <th class="text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody id="staffBookingsTableBody">
-                                        <!-- Dynamically populated via JS -->
+                                        <!-- Dynamically filled via JavaScript -->
                                     </tbody>
                                 </table>
                             </div>
@@ -627,442 +809,523 @@ document.addEventListener('DOMContentLoaded', function () {
             @include('partials.view_booking_modal')
         </div>
 
-
-        <!--<div class="tab-pane fade @if(session('active_tab') == 'driver') show active @endif" id="driver" role="tabpanel">-->
-        <!--    <div class="row">-->
-        <!--        <div class="col-md-8">-->
-        <!--            <h3>Existing Drivers</h3>-->
-        <!--            <div class="table-responsive">-->
-        <!--                <table class="table table-striped table-bordered">-->
-        <!--                    <thead class="bg-warning card-header">-->
-        <!--                        <tr>-->
-        <!--                            <th>#</th>-->
-        <!--                            <th>Name</th>-->
-        <!--                            <th>Email</th>-->
-        <!--                            <th>Phone</th>-->
-        <!--                            <th>Status</th>-->
-        <!--                            <th>Location</th>-->
-        <!--                        </tr>-->
-        <!--                    </thead>-->
-        <!--                    <tbody>-->
-        <!--                        @forelse($drivers as $driver)-->
-        <!--                            <tr>-->
-        <!--                                {{-- Accessing array elements --}}-->
-        <!--                                <td>{{ $loop->iteration }}</td>-->
-        <!--                                <td>{{ $driver['name'] ?? 'N/A' }}</td>-->
-        <!--                                <td>{{ $driver['email'] ?? 'N/A' }}</td>-->
-        <!--                                <td>{{ $driver['phone'] ?? 'N/A' }}</td>-->
-        <!--                                <td>-->
-        <!--                                    @php $status = $driver['status'] ?? 'N/A'; @endphp-->
-        <!--                                    <span class="badge bg-{{ $status == 'available' ? 'success' : ($status == 'on_job' ? 'primary' : 'secondary') }}">-->
-        <!--                                        {{ ucfirst(str_replace('_', ' ', $status)) }}-->
-        <!--                                    </span>-->
-        <!--                                </td>-->
-        <!--                                <td>{{ $driver['latitude'] ?? 'N/A' }}, {{ $driver['longitude'] ?? 'N/A' }}</td>-->
-        <!--                            </tr>-->
-        <!--                        @empty-->
-        <!--                            <tr>-->
-        <!--                                <td colspan="6" class="text-center">No drivers added yet.</td>-->
-        <!--                            </tr>-->
-        <!--                        @endforelse-->
-        <!--                    </tbody>-->
-        <!--                </table>-->
-        <!--            </div>-->
-        <!--        </div>-->
-
-        <!--        <div class="col-md-4">-->
-        <!--            <h3 class="text-center">Add Driver</h3>-->
-        <!--            <div class="form-card">-->
-        <!--                <form method="POST" action="{{ route('setup.driver.store') }}">-->
-        <!--                    @csrf-->
-        <!--                    <div class="mb-3">-->
-        <!--                        <label>Name</label>-->
-        <!--                        <input type="text" name="name" class="form-control" required value="{{ old('name') }}">-->
-        <!--                    </div>-->
-        <!--                    <div class="mb-3">-->
-        <!--                        <label>Email</label>-->
-        <!--                        <input type="email" name="email" class="form-control" required value="{{ old('email') }}">-->
-        <!--                    </div>-->
-        <!--                    <div class="mb-3">-->
-        <!--                        <label>Phone Number</label>-->
-        <!--                        <input type="text" name="phone" class="form-control" required value="{{ old('phone') }}">-->
-        <!--                    </div>-->
-        <!--                    <div class="mb-3">-->
-        <!--                        <label>Status</label>-->
-        <!--                        <select name="status" class="form-select" required>-->
-        <!--                            <option value="">-- Select Status --</option>-->
-        <!--                            <option value="available" {{ old('status') == 'available' ? 'selected' : '' }}>Available</option>-->
-        <!--                            <option value="on_job" {{ old('status') == 'on_job' ? 'selected' : '' }}>On Job</option>-->
-        <!--                            <option value="break" {{ old('status') == 'break' ? 'selected' : '' }}>Break</option>-->
-        <!--                            <option value="waiting" {{ old('status') == 'waiting' ? 'selected' : '' }}>Waiting</option>-->
-        <!--                        </select>-->
-        <!--                    </div>-->
-        <!--                    <div class="mb-3">-->
-        <!--                        <label>Latitude</label>-->
-        <!--                        <input type="text" name="latitude" class="form-control" value="{{ old('latitude') }}">-->
-        <!--                    </div>-->
-        <!--                    <div class="mb-3">-->
-        <!--                        <label>Longitude</label>-->
-        <!--                        <input type="text" name="longitude" class="form-control" value="{{ old('longitude') }}">-->
-        <!--                    </div>-->
-        <!--                    <button type="submit" class="btn btn-custom w-100">Add Driver</button>-->
-        <!--                </form>-->
-        <!--            </div>-->
-        <!--        </div>-->
-        <!--    </div>-->
-        <!--</div>-->
-        
+        {{-- 2. Drivers Tab (With Assigned Vehicle Details) --}}
         <div class="tab-pane fade @if(session('active_tab') == 'driver') show active @endif" id="driver" role="tabpanel">
-    <div class="row">
-        <div class="col-md-9">
-            <h3>Existing Drivers</h3>
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered">
-                    <thead class="bg-warning card-header">
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Call Sign</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Status</th>
-                            <th>Address</th>
-                            <th>Location</th>
-                            <th>BF</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($drivers as $driver)
-                            <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $driver['name'] ?? 'N/A' }}</td>
-                                <td>{{ $driver['call_sign'] ?? 'N/A' }}</td>
-                                <td>{{ $driver['email'] ?? 'N/A' }}</td>
-                                <td>{{ $driver['phone'] ?? 'N/A' }}</td>
-                                <td>
-                                    @php $status = $driver['status'] ?? 'N/A'; @endphp
-                                    <span class="badge bg-{{ $status == 'available' ? 'success' : ($status == 'on_job' ? 'primary' : 'secondary') }}">
-                                        {{ ucfirst(str_replace('_', ' ', $status)) }}
-                                    </span>
-                                </td>
-                                <td>{{ $driver['address'] ?? 'N/A' }}</td>
-                                <td>{{ $driver['latitude'] ?? 'N/A' }}, {{ $driver['longitude'] ?? 'N/A' }}</td>
-                                <td>{{ $driver['brought_forward'] ?? 'N/A'}}</td>
-<td>
-    <a href="{{ route('drivers.bf.history', $driver['id']) }}"
-       class="btn btn-sm btn-outline-warning">
-        BF Details
-    </a>
-    <button 
-        class="btn btn-sm btn-outline-primary edit-driver-btn"
-        data-id="{{ $driver['id'] }}"
-        data-name="{{ $driver['name'] }}"
-        data-call_sign="{{ $driver['call_sign'] }}"
-        data-email="{{ $driver['email'] }}"
-        data-phone="{{ $driver['phone'] }}"
-        data-status="{{ $driver['status'] }}"
-        data-address="{{ $driver['address'] ?? '-' }}"
-        data-latitude="{{ $driver['latitude'] ?? '-' }}"
-        data-longitude="{{ $driver['longitude'] ?? '-' }}"
-        data-bs-toggle="modal"
-        data-bs-target="#editDriverModal"
-    >
-        Edit
-    </button>
-</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="text-center">No drivers added yet.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <h3 class="text-center">Add Driver</h3>
-            <div class="form-card">
-                <form method="POST" action="{{ route('setup.driver.store') }}">
-                    @csrf
-                    <div class="mb-3">
-                        <label>Name</label>
-                        <input type="text" name="name" class="form-control" required value="{{ old('name') }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Call Sign</label>
-                        <input type="text" name="call_sign" class="form-control" placeholder="e.g. D-101" value="{{ old('call_sign') }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Email</label>
-                        <input type="email" name="email" class="form-control" required value="{{ old('email') }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Phone Number</label>
-                        <input type="text" name="phone" class="form-control" required value="{{ old('phone') }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Status</label>
-                        <select name="status" class="form-select" required>
-                            <option value="">-- Select Status --</option>
-                            <option value="available" {{ old('status') == 'available' ? 'selected' : '' }}>Available</option>
-                            <option value="on_job" {{ old('status') == 'on_job' ? 'selected' : '' }}>On Job</option>
-                            <option value="break" {{ old('status') == 'break' ? 'selected' : '' }}>Break</option>
-                            <option value="waiting" {{ old('status') == 'waiting' ? 'selected' : '' }}>Waiting</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Address</label>
-                        <input type="text" id="driver_address" name="address" class="form-control" placeholder="Enter driver address" value="{{ old('address') }}" required>
-                        <div id="address-status" class="small text-muted mt-1"></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Latitude</label>
-                        <input type="text" id="latitude" name="latitude" class="form-control" value="{{ old('latitude') }}" readonly>
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Longitude</label>
-                        <input type="text" id="longitude" name="longitude" class="form-control" value="{{ old('longitude') }}" readonly>
-                    </div>
-
-                    <button type="submit" class="btn btn-custom w-100">Add Driver</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="editDriverModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <form method="POST" id="editDriverForm">
-            @csrf
-            @method('PUT')
-
-            <div class="modal-content">
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title">Update Driver</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body">
-                    <input type="hidden" id="edit_driver_id">
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label>Name</label>
-                            <input type="text" name="name" id="edit_name" class="form-control" required>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label>Call Sign</label>
-                            <input type="text" name="call_sign" id="edit_call_sign" class="form-control">
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label>Email</label>
-                            <input type="email" name="email" id="edit_email" class="form-control" required>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label>Phone</label>
-                            <input type="text" name="phone" id="edit_phone" class="form-control" required>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label>Status</label>
-                            <select name="status" id="edit_status" class="form-select">
-                                <option value="available">Available</option>
-                                <option value="on_job">On Job</option>
-                                <option value="break">Break</option>
-                                <option value="waiting">Waiting</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-12 mb-3">
-                            <label>Address</label>
-                            <input type="text" name="address" id="edit_address" class="form-control">
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label>Latitude</label>
-                            <input type="text" name="latitude" id="edit_latitude" class="form-control" readonly>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label>Longitude</label>
-                            <input type="text" name="longitude" id="edit_longitude" class="form-control" readonly>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success w-100">
-                        Update Driver
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-
-
-        <div class="tab-pane fade @if(session('active_tab') == 'vehicle') show active @endif" id="vehicle" role="tabpanel">
             <div class="row">
-                <div class="col-md-8">
-                    <h3>Existing Vehicles</h3>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered">
-                            <thead class="bg-warning card-header">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Make</th>
-                                    <th>Model</th>
-                                    <th>Color</th>
-                                    <th>Registration</th>
-                                    <th>Assigned Driver</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($vehicles as $vehicle)
+                <div class="col-lg-9">
+                    <div class="setup-directory mb-4">
+                        <div class="setup-directory-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h3 class="mb-1"><i class="bi bi-person-badge-fill text-warning me-2"></i>Existing Drivers</h3>
+                                <p class="text-muted small mb-0">Driver profiles, call signs, assigned vehicles, and real-time status.</p>
+                            </div>
+                            <span class="badge rounded-pill text-bg-dark px-3 py-2"><i class="bi bi-people-fill me-1"></i>{{ $drivers->count() }} Drivers</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table setup-table align-middle">
+                                <thead>
                                     <tr>
-                                        {{-- Accessing array elements --}}
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $vehicle['make'] ?? 'N/A' }}</td>
-                                        <td>{{ $vehicle['model'] ?? 'N/A' }}</td>
-                                        <td>{{ $vehicle['color'] ?? 'N/A' }}</td>
-                                        <td>{{ $vehicle['registration'] ?? 'N/A' }}</td>
-                                        {{-- Lookup driver name from the map created above --}}
-                                        <td>{{ $driverLookup[$vehicle['driver_id']] ?? 'Unassigned' }}</td>
+                                        <th>#</th>
+                                        <th>Driver</th>
+                                        <th>Call Sign</th>
+                                        <th>Assigned Vehicle</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th>Address & Location</th>
+                                        <th>BF</th>
+                                        <th>Actions</th>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center">No vehicles added yet.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @forelse($drivers as $driver)
+                                        @php
+                                            $dIdKey = (string)($driver['id'] ?? $loop->index);
+                                            $assignedVehicles = $driverVehiclesMap[$dIdKey] ?? ($driverVehiclesMap[(string)($driver['id'] ?? '')] ?? []);
+                                            $status = strtolower($driver['status'] ?? 'available');
+                                            $bfVal = (float)($driver['brought_forward'] ?? 0);
+                                        @endphp
+                                        <tr>
+                                            <td><span class="text-muted fw-bold">{{ $loop->iteration }}</span></td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2.5">
+                                                    <span class="driver-avatar">{{ strtoupper(substr($driver['name'] ?? 'D', 0, 1)) }}</span>
+                                                    <div>
+                                                        <div class="fw-bold text-dark">{{ $driver['name'] ?? 'N/A' }}</div>
+                                                        <div class="text-muted small">Driver #{{ $driver['id'] ?? $loop->iteration }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if(!empty($driver['call_sign']))
+                                                    <span class="callsign-badge">
+                                                        <i class="bi bi-broadcast"></i> {{ $driver['call_sign'] }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-light text-muted border">No CallSign</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if(!empty($assignedVehicles) && count($assignedVehicles) > 0)
+                                                    <div class="d-flex flex-column gap-1.5" style="min-width: 170px;">
+                                                        @foreach($assignedVehicles as $v)
+                                                            <div class="vehicle-item-badge">
+                                                                <span class="reg-plate">{{ $v['registration'] ?? 'N/A' }}</span>
+                                                                <div class="small">
+                                                                    <div class="fw-semibold text-dark leading-tight">{{ $v['make'] ?? '' }} {{ $v['model'] ?? '' }}</div>
+                                                                    @if(!empty($v['color']))
+                                                                        <span class="text-muted" style="font-size: 11px;"><i class="bi bi-circle-fill me-1 text-secondary" style="font-size: 7px;"></i>{{ $v['color'] }}</span>
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <span class="badge rounded-pill bg-light text-muted border px-2.5 py-1.5">
+                                                        <i class="bi bi-dash-circle me-1"></i>No Vehicle
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <div class="small fw-semibold text-dark"><i class="bi bi-envelope me-1 text-muted"></i>{{ $driver['email'] ?? 'N/A' }}</div>
+                                                <div class="small text-muted mt-1"><i class="bi bi-telephone me-1"></i>{{ $driver['phone'] ?? 'N/A' }}</div>
+                                            </td>
+                                            <td>
+                                                <span class="status-pill status-{{ $status }}">
+                                                    <i class="bi bi-circle-fill" style="font-size: 6px;"></i>
+                                                    {{ ucfirst(str_replace('_', ' ', $status)) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if(!empty($driver['address']) && $driver['address'] !== '-')
+                                                    <div class="small text-dark text-truncate" style="max-width: 170px;" title="{{ $driver['address'] }}">
+                                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ $driver['address'] }}
+                                                    </div>
+                                                @endif
+                                                @if(!empty($driver['latitude']) && $driver['latitude'] !== '-' && $driver['latitude'] !== 'N/A')
+                                                    <div class="small text-muted font-monospace mt-0.5" style="font-size: 11px;">
+                                                        {{ round((float)$driver['latitude'], 4) }}, {{ round((float)$driver['longitude'], 4) }}
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted small">N/A</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($bfVal > 0)
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">
+                                                        £{{ number_format($bfVal, 2) }}
+                                                    </span>
+                                                @elseif($bfVal < 0)
+                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">
+                                                        -£{{ number_format(abs($bfVal), 2) }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-light text-muted border fw-semibold">
+                                                        £0.00
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td style="min-width: 160px;">
+                                                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                                                    <a href="{{ route('drivers.bf.history', $driver['id']) }}"
+                                                       class="btn btn-sm btn-outline-warning fw-semibold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: 11.5px; border-radius: 7px; padding: 4px 8px;">
+                                                        <i class="bi bi-receipt"></i> BF Details
+                                                    </a>
+                                                    <button 
+                                                        class="btn btn-sm btn-outline-primary fw-semibold shadow-sm edit-driver-btn d-inline-flex align-items-center gap-1"
+                                                        style="font-size: 11.5px; border-radius: 7px; padding: 4px 8px;"
+                                                        data-id="{{ $driver['id'] }}"
+                                                        data-name="{{ $driver['name'] }}"
+                                                        data-call_sign="{{ $driver['call_sign'] ?? '' }}"
+                                                        data-email="{{ $driver['email'] ?? '' }}"
+                                                        data-phone="{{ $driver['phone'] ?? '' }}"
+                                                        data-status="{{ $driver['status'] ?? 'available' }}"
+                                                        data-address="{{ $driver['address'] ?? '' }}"
+                                                        data-latitude="{{ $driver['latitude'] ?? '' }}"
+                                                        data-longitude="{{ $driver['longitude'] ?? '' }}"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editDriverModal"
+                                                    >
+                                                        <i class="bi bi-pencil-square"></i> Edit
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="9" class="text-center py-5 text-muted">
+                                                <i class="bi bi-people fs-2 d-block mb-2"></i>No drivers added yet.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-md-4">
-                    <h3 class="text-center">Add Vehicle</h3>
+                <div class="col-lg-3">
                     <div class="form-card">
-                        <form method="POST" action="{{ route('setup.vehicle.store') }}">
+                        <div class="form-card-title">
+                            <i class="bi bi-person-plus-fill text-warning"></i> Add Driver
+                        </div>
+                        <form method="POST" action="{{ route('setup.driver.store') }}">
                             @csrf
-                            <!--<div class="mb-3">-->
-                            <!--    <label>Make</label>-->
-                            <!--    <input type="text" name="make" class="form-control" required value="{{ old('make') }}">-->
-                            <!--</div>-->
                             <div class="mb-3">
-    <label>Make</label>
-    <select name="make" class="form-control" required>
-        <option value="" disabled selected>-- Select Make --</option>
-        <option value="Saloon" {{ old('make') == 'Saloon' ? 'selected' : '' }}>Saloon</option>
-        <option value="Estate" {{ old('make') == 'Estate' ? 'selected' : '' }}>Estate</option>
-        <option value="MPV" {{ old('make') == 'MPV' ? 'selected' : '' }}>MPV</option>
-        <option value="8 Seater" {{ old('make') == '8 Seater' ? 'selected' : '' }}>8 Seater</option>
-        <option value="Executive" {{ old('make') == 'Executive' ? 'selected' : '' }}>Executive</option>
-    </select>
-</div>
+                                <label>Name</label>
+                                <input type="text" name="name" class="form-control" placeholder="Driver Full Name" required value="{{ old('name') }}">
+                            </div>
 
                             <div class="mb-3">
-                                <label>Model</label>
-                                <input type="text" name="model" class="form-control" required value="{{ old('model') }}">
+                                <label>Call Sign</label>
+                                <input type="text" name="call_sign" class="form-control" placeholder="e.g. D-101, 099" value="{{ old('call_sign') }}">
                             </div>
+
                             <div class="mb-3">
-                                <label>Color</label>
-                                <input type="text" name="color" class="form-control" required value="{{ old('color') }}">
+                                <label>Email</label>
+                                <input type="email" name="email" class="form-control" placeholder="driver@email.com" required value="{{ old('email') }}">
                             </div>
+
                             <div class="mb-3">
-                                <label>Registration Number</label>
-                                <input type="text" name="registration" class="form-control" required value="{{ old('registration') }}">
+                                <label>Phone Number</label>
+                                <input type="text" name="phone" class="form-control" placeholder="07xxxxxxxxx" required value="{{ old('phone') }}">
                             </div>
+
                             <div class="mb-3">
-                                <label>Driver</label>
-                                <select name="driver_id" class="form-select" required>
-                                    <option value="">-- Select Driver --</option>
-                                    {{-- Iterating over the drivers data from Firebase --}}
-                                    @foreach($drivers as $driver)
-                                        <option value="{{ $driver['id'] ?? '' }}" {{ old('driver_id') == ($driver['id'] ?? '') ? 'selected' : '' }}>
-                                            {{ $driver['name'] ?? 'Unknown Driver' }}
-                                        </option>
-                                    @endforeach
+                                <label>Status</label>
+                                <select name="status" class="form-select" required>
+                                    <option value="available" {{ old('status') == 'available' ? 'selected' : '' }}>Available</option>
+                                    <option value="on_job" {{ old('status') == 'on_job' ? 'selected' : '' }}>On Job</option>
+                                    <option value="break" {{ old('status') == 'break' ? 'selected' : '' }}>Break</option>
+                                    <option value="waiting" {{ old('status') == 'waiting' ? 'selected' : '' }}>Waiting</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn btn-custom w-100">Add Vehicle</button>
+
+                            <div class="mb-3">
+                                <label>Address</label>
+                                <input type="text" id="driver_address" name="address" class="form-control" placeholder="Enter driver base address" value="{{ old('address') }}" required>
+                                <div id="address-status" class="small text-muted mt-1"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Latitude</label>
+                                <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Auto-filled from address" value="{{ old('latitude') }}" readonly>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Longitude</label>
+                                <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Auto-filled from address" value="{{ old('longitude') }}" readonly>
+                            </div>
+
+                            <button type="submit" class="btn btn-custom w-100 py-2.5">
+                                <i class="bi bi-person-plus me-1"></i> Add Driver
+                            </button>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="tab-pane fade @if(session('active_tab') == 'customer') show active @endif" id="customer" role="tabpanel">
+        {{-- Edit Driver Modal --}}
+        <div class="modal fade" id="editDriverModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <form method="POST" id="editDriverForm">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+                        <div class="modal-header bg-dark text-white py-3">
+                            <h5 class="modal-title fw-bold">
+                                <i class="bi bi-pencil-square text-warning me-2"></i>Update Driver Profile
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body p-4 bg-light">
+                            <input type="hidden" id="edit_driver_id">
+
+                            <div class="row g-3 bg-white p-3 rounded-3 border">
+                                <div class="col-md-6">
+                                    <label>Full Name</label>
+                                    <input type="text" name="name" id="edit_name" class="form-control" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label>Call Sign</label>
+                                    <input type="text" name="call_sign" id="edit_call_sign" class="form-control" placeholder="e.g. D-101">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label>Email Address</label>
+                                    <input type="email" name="email" id="edit_email" class="form-control" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label>Phone Number</label>
+                                    <input type="text" name="phone" id="edit_phone" class="form-control" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label>Driver Status</label>
+                                    <select name="status" id="edit_status" class="form-select">
+                                        <option value="available">Available</option>
+                                        <option value="on_job">On Job</option>
+                                        <option value="break">Break</option>
+                                        <option value="waiting">Waiting</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label>Address</label>
+                                    <input type="text" name="address" id="edit_address" class="form-control">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label>Latitude</label>
+                                    <input type="text" name="latitude" id="edit_latitude" class="form-control" readonly>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label>Longitude</label>
+                                    <input type="text" name="longitude" id="edit_longitude" class="form-control" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer bg-white border-0">
+                            <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                                <i class="bi bi-check2-circle me-1"></i> Update Driver
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- 3. Vehicles Tab (With Assigned Driver Details) --}}
+        <div class="tab-pane fade @if(session('active_tab') == 'vehicle') show active @endif" id="vehicle" role="tabpanel">
             <div class="row">
-                <div class="col-md-8">
-                    <h3>Existing Customer Accounts</h3>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered">
-                            <thead class="bg-warning card-header">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Business Name</th>
-                                    <th>Address</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($customers as $customer)
+                <div class="col-lg-8">
+                    <div class="setup-directory mb-4">
+                        <div class="setup-directory-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h3 class="mb-1"><i class="bi bi-car-front-fill text-warning me-2"></i>Existing Vehicles</h3>
+                                <p class="text-muted small mb-0">Fleet categories, registration plates, colors, and assigned drivers.</p>
+                            </div>
+                            <span class="badge rounded-pill text-bg-dark px-3 py-2"><i class="bi bi-car-front me-1"></i>{{ $vehicles->count() }} Vehicles</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table setup-table align-middle">
+                                <thead>
                                     <tr>
-                                        {{-- Accessing array elements --}}
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $customer['business_name'] ?? 'N/A' }}</td>
-                                        <td>{{ $customer['address'] ?? 'N/A' }}</td>
-                                        <td>{{ $customer['email'] ?? 'N/A' }}</td>
-                                        <td>{{ $customer['phone'] ?? 'N/A' }}</td>
+                                        <th>#</th>
+                                        <th>Vehicle / Category</th>
+                                        <th>Registration</th>
+                                        <th>Color</th>
+                                        <th>Assigned Driver</th>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center">No customer accounts added yet.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @forelse($vehicles as $vehicle)
+                                        @php
+                                            $vDriverId = (string)($vehicle['driver_id'] ?? '');
+                                            $assignedDriverName = $driverLookup[$vDriverId] ?? null;
+                                            $assignedDriverCallSign = $driverCallSignLookup[$vDriverId] ?? null;
+                                        @endphp
+                                        <tr>
+                                            <td><span class="text-muted fw-bold">{{ $loop->iteration }}</span></td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2.5">
+                                                    <div class="driver-avatar" style="background: linear-gradient(135deg, #334155, #64748b);">
+                                                        <i class="bi bi-car-front-fill text-warning fs-5"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold text-dark">{{ $vehicle['make'] ?? 'N/A' }}</div>
+                                                        <div class="text-muted small">{{ $vehicle['model'] ?? 'Standard' }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="reg-plate fs-7 shadow-sm">
+                                                    {{ $vehicle['registration'] ?? 'N/A' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if(!empty($vehicle['color']))
+                                                    <span class="badge bg-light text-dark border px-2.5 py-1.5 fw-semibold">
+                                                        <i class="bi bi-palette-fill me-1 text-muted"></i>{{ $vehicle['color'] }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-muted small">N/A</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($assignedDriverName && $assignedDriverName !== 'Unknown')
+                                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                        @if(!empty($assignedDriverCallSign))
+                                                            <span class="callsign-badge">
+                                                                <i class="bi bi-broadcast"></i> {{ $assignedDriverCallSign }}
+                                                            </span>
+                                                        @endif
+                                                        <span class="fw-bold text-dark">{{ $assignedDriverName }}</span>
+                                                    </div>
+                                                @else
+                                                    <span class="badge rounded-pill bg-secondary-subtle text-secondary border px-2.5 py-1.5">
+                                                        <i class="bi bi-person-x me-1"></i>Unassigned
+                                                    </span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center py-5 text-muted">
+                                                <i class="bi bi-car-front fs-2 d-block mb-2"></i>No vehicles added yet.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-md-4">
-                    <h3 class="text-center">Add Customer Account</h3>
+                <div class="col-lg-4">
                     <div class="form-card">
+                        <div class="form-card-title">
+                            <i class="bi bi-plus-circle-fill text-warning"></i> Add Vehicle
+                        </div>
+                        <form method="POST" action="{{ route('setup.vehicle.store') }}">
+                            @csrf
+                            <div class="mb-3">
+                                <label>Make / Category</label>
+                                <select name="make" class="form-select" required>
+                                    <option value="" disabled selected>-- Select Make --</option>
+                                    <option value="Saloon" {{ old('make') == 'Saloon' ? 'selected' : '' }}>Saloon</option>
+                                    <option value="Estate" {{ old('make') == 'Estate' ? 'selected' : '' }}>Estate</option>
+                                    <option value="MPV" {{ old('make') == 'MPV' ? 'selected' : '' }}>MPV</option>
+                                    <option value="8 Seater" {{ old('make') == '8 Seater' ? 'selected' : '' }}>8 Seater</option>
+                                    <option value="Executive" {{ old('make') == 'Executive' ? 'selected' : '' }}>Executive</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Model</label>
+                                <input type="text" name="model" class="form-control" placeholder="e.g. Mercedes E-Class, Toyota Prius" required value="{{ old('model') }}">
+                            </div>
+                            <div class="mb-3">
+                                <label>Color</label>
+                                <input type="text" name="color" class="form-control" placeholder="e.g. Black, Silver, White" required value="{{ old('color') }}">
+                            </div>
+                            <div class="mb-3">
+                                <label>Registration Number</label>
+                                <input type="text" name="registration" class="form-control" placeholder="e.g. LEN-2302" required value="{{ old('registration') }}">
+                            </div>
+                            <div class="mb-3">
+                                <label>Assign to Driver</label>
+                                <select name="driver_id" class="form-select" required>
+                                    <option value="">-- Select Driver --</option>
+                                    @foreach($drivers as $driver)
+                                        <option value="{{ $driver['id'] ?? '' }}" {{ old('driver_id') == ($driver['id'] ?? '') ? 'selected' : '' }}>
+                                            {{ !empty($driver['call_sign']) ? '[' . $driver['call_sign'] . '] ' : '' }}{{ $driver['name'] ?? 'Unknown Driver' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-custom w-100 py-2.5">
+                                <i class="bi bi-plus-circle me-1"></i> Add Vehicle
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- 4. Customer Accounts Tab --}}
+        <div class="tab-pane fade @if(session('active_tab') == 'customer') show active @endif" id="customer" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="setup-directory mb-4">
+                        <div class="setup-directory-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h3 class="mb-1"><i class="bi bi-buildings-fill text-warning me-2"></i>Existing Customer Accounts</h3>
+                                <p class="text-muted small mb-0">Corporate and business account profiles and billing information.</p>
+                            </div>
+                            <span class="badge rounded-pill text-bg-dark px-3 py-2"><i class="bi bi-buildings me-1"></i>{{ $customers->count() }} Accounts</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table setup-table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Business Name</th>
+                                        <th>Address</th>
+                                        <th>Contact Information</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($customers as $customer)
+                                        <tr>
+                                            <td><span class="text-muted fw-bold">{{ $loop->iteration }}</span></td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2.5">
+                                                    <div class="driver-avatar" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
+                                                        <i class="bi bi-building fs-5 text-white"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold text-dark">{{ $customer['business_name'] ?? 'N/A' }}</div>
+                                                        <div class="text-muted small">Account #{{ $customer['id'] ?? $loop->iteration }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="small text-dark text-truncate" style="max-width: 250px;">
+                                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ $customer['address'] ?? 'N/A' }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="small fw-semibold text-dark"><i class="bi bi-envelope me-1 text-muted"></i>{{ $customer['email'] ?? 'N/A' }}</div>
+                                                <div class="small text-muted mt-1"><i class="bi bi-telephone me-1"></i>{{ $customer['phone'] ?? 'N/A' }}</div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 text-muted">
+                                                <i class="bi bi-buildings fs-2 d-block mb-2"></i>No customer accounts added yet.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="form-card">
+                        <div class="form-card-title">
+                            <i class="bi bi-plus-circle-fill text-warning"></i> Add Customer Account
+                        </div>
                         <form method="POST" action="{{ route('setup.customer.store') }}">
                             @csrf
                             <div class="mb-3">
                                 <label>Business Name</label>
-                                <input type="text" name="business_name" class="form-control" required value="{{ old('business_name') }}">
+                                <input type="text" name="business_name" class="form-control" placeholder="e.g. Acme Corp Ltd" required value="{{ old('business_name') }}">
                             </div>
                             <div class="mb-3">
                                 <label>Address</label>
-                                <input type="text" name="address" class="form-control" required value="{{ old('address') }}">
+                                <input type="text" name="address" class="form-control" placeholder="Office / Billing address" required value="{{ old('address') }}">
                             </div>
                             <div class="mb-3">
                                 <label>Email</label>
-                                <input type="email" name="email" class="form-control" required value="{{ old('email') }}">
+                                <input type="email" name="email" class="form-control" placeholder="billing@company.com" required value="{{ old('email') }}">
                             </div>
                             <div class="mb-3">
                                 <label>Phone Number</label>
-                                <input type="text" name="phone" class="form-control" required value="{{ old('phone') }}">
+                                <input type="text" name="phone" class="form-control" placeholder="Contact phone number" required value="{{ old('phone') }}">
                             </div>
-                            <button type="submit" class="btn btn-custom w-100">Add Customer Account</button>
+                            <button type="submit" class="btn btn-custom w-100 py-2.5">
+                                <i class="bi bi-plus-circle me-1"></i> Add Customer Account
+                            </button>
                         </form>
                     </div>
                 </div>
