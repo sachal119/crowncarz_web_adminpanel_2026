@@ -223,6 +223,7 @@ Route::get('/previous_bookings/search', [BookingController::class, 'searchPrevio
     Route::get('/bookings/cancelled', [BookingController::class, 'cancelledBookings'])->name('bookings.cancelled');
 
 Route::get('/cancelled_bookings/search', [BookingController::class, 'searchCancelledBookings'])->name('cancelled.bookings.search');
+Route::get('/bookings/history-counts', [BookingController::class, 'getHistoryCounts'])->name('bookings.history.counts');
 
 
 

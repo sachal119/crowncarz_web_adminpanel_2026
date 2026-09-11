@@ -201,8 +201,8 @@
       <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
         <ul class="navbar-nav">
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-grid-fill me-1"></i>Dashboard</a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('live.map') ? 'active' : '' }}" href="{{ route('live.map') }}"><i class="bi bi-geo-alt-fill me-1"></i>Map</a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('booking.create') ? 'active' : '' }}" href="{{ route('booking.create') }}" target="_blank"><i class="bi bi-calendar-plus me-1"></i>Booking</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('live.map') ? 'active' : '' }}" href="{{ route('live.map') }}"><i class="bi bi-geo-alt-fill me-1"></i>Live Driver Map</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('booking.create') ? 'active' : '' }}" href="{{ route('booking.create') }}" target="_blank"><i class="bi bi-calendar-plus me-1"></i>Create Booking</a></li>
           @if(session('staff_role', 'super_admin') !== 'collaborator')
           <li class="nav-item dropdown me-2">
   <a class="nav-link dropdown-toggle" href="#" id="statsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -302,20 +302,23 @@
               <a class="nav-link dropdown-toggle {{ request()->routeIs('completed.jobs', 'bookings.search', 'previous.bookings', 'previous.bookings.search', 'bookings.cancelled', 'cancelled.bookings.search') ? 'active' : '' }}" href="#" id="historyDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-clock-history me-1"></i>History
               </a>
-              <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="historyDropdown" style="border-radius: 12px; min-width: 210px;">
+              <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="historyDropdown" style="border-radius: 12px; min-width: 250px;">
                 <li>
-                  <a class="dropdown-item d-flex align-items-center {{ request()->routeIs('completed.jobs', 'bookings.search') ? 'active' : '' }}" href="{{ route('completed.jobs') }}">
-                    <i class="bi bi-check-circle-fill me-2 text-success"></i>Completed Bookings
+                  <a class="dropdown-item d-flex align-items-center justify-content-between py-2 {{ request()->routeIs('completed.jobs', 'bookings.search') ? 'active' : '' }}" href="{{ route('completed.jobs') }}">
+                    <span class="d-flex align-items-center"><i class="bi bi-check-circle-fill me-2 text-success"></i>Completed Bookings</span>
+                    <span class="badge rounded-pill bg-success text-white ms-2 px-2 py-1" id="navHistoryCompletedCount" style="font-size: 11px; font-weight: 600;">-</span>
                   </a>
                 </li>
                 <li>
-                  <a class="dropdown-item d-flex align-items-center {{ request()->routeIs('previous.bookings', 'previous.bookings.search') ? 'active' : '' }}" href="{{ route('previous.bookings') }}">
-                    <i class="bi bi-calendar-check-fill me-2 text-warning"></i>Previous Bookings
+                  <a class="dropdown-item d-flex align-items-center justify-content-between py-2 {{ request()->routeIs('previous.bookings', 'previous.bookings.search') ? 'active' : '' }}" href="{{ route('previous.bookings') }}">
+                    <span class="d-flex align-items-center"><i class="bi bi-calendar-check-fill me-2 text-warning"></i>Previous Bookings</span>
+                    <span class="badge rounded-pill bg-warning text-dark ms-2 px-2 py-1" id="navHistoryPreviousCount" style="font-size: 11px; font-weight: 600;">-</span>
                   </a>
                 </li>
                 <li>
-                  <a class="dropdown-item d-flex align-items-center {{ request()->routeIs('bookings.cancelled', 'cancelled.bookings.search') ? 'active' : '' }}" href="{{ route('bookings.cancelled') }}">
-                    <i class="bi bi-x-circle-fill me-2 text-danger"></i>Cancelled Bookings
+                  <a class="dropdown-item d-flex align-items-center justify-content-between py-2 {{ request()->routeIs('bookings.cancelled', 'cancelled.bookings.search') ? 'active' : '' }}" href="{{ route('bookings.cancelled') }}">
+                    <span class="d-flex align-items-center"><i class="bi bi-x-circle-fill me-2 text-danger"></i>Cancelled Bookings</span>
+                    <span class="badge rounded-pill bg-danger text-white ms-2 px-2 py-1" id="navHistoryCancelledCount" style="font-size: 11px; font-weight: 600;">-</span>
                   </a>
                 </li>
               </ul>
@@ -508,6 +511,46 @@
           } catch(e) {}
       }
       setInterval(trapDebugger, 400);
+  })();
+  </script>
+
+  <script>
+  (function() {
+      function updateNavHistoryCounts() {
+          try {
+              const cached = JSON.parse(sessionStorage.getItem('nav_history_counts') || '{}');
+              if (cached && typeof cached.completed !== 'undefined') {
+                  setNavBadges(cached.completed, cached.previous, cached.cancelled);
+              }
+          } catch (e) {}
+
+          fetch("{{ route('bookings.history.counts') }}")
+              .then(res => res.json())
+              .then(data => {
+                  if (data && data.status) {
+                      setNavBadges(data.completed, data.previous, data.cancelled);
+                      try {
+                          sessionStorage.setItem('nav_history_counts', JSON.stringify(data));
+                      } catch (e) {}
+                  }
+              })
+              .catch(err => {});
+      }
+
+      function setNavBadges(completed, previous, cancelled) {
+          const compEl = document.getElementById('navHistoryCompletedCount');
+          const prevEl = document.getElementById('navHistoryPreviousCount');
+          const cancEl = document.getElementById('navHistoryCancelledCount');
+          if (compEl) compEl.textContent = completed ?? 0;
+          if (prevEl) prevEl.textContent = previous ?? 0;
+          if (cancEl) cancEl.textContent = cancelled ?? 0;
+      }
+
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', updateNavHistoryCounts);
+      } else {
+          updateNavHistoryCounts();
+      }
   })();
   </script>
 

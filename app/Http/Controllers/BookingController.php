@@ -253,6 +253,50 @@ public function cancelledBookings()
     }
 }
 
+public function getHistoryCounts()
+{
+    try {
+        $bookingsRef = $this->database->getReference('bookings')->getValue() ?? [];
+
+        $today = Carbon::today();
+        $completedCount = 0;
+        $previousCount = 0;
+        $cancelledCount = 0;
+
+        foreach ($bookingsRef as $booking) {
+            $status = isset($booking['status']) ? strtolower(trim($booking['status'])) : '';
+            if ($status === 'completed') {
+                $completedCount++;
+            }
+            if ($status === 'job_cancelled' || $status === 'cancelled') {
+                $cancelledCount++;
+            }
+            if (!empty($booking['pickup_time'])) {
+                try {
+                    $pickupTime = Carbon::parse($booking['pickup_time']);
+                    if ($pickupTime->lt($today)) {
+                        $previousCount++;
+                    }
+                } catch (\Throwable $e) {}
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'completed' => $completedCount,
+            'previous' => $previousCount,
+            'cancelled' => $cancelledCount,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => false,
+            'completed' => 0,
+            'previous' => 0,
+            'cancelled' => 0,
+        ]);
+    }
+}
+
 public function searchCancelledBookings(Request $request)
 {
     $bookingsRef = $this->database->getReference('bookings');
