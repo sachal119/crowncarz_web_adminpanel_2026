@@ -206,29 +206,34 @@ public function downloadDriverCommission(Request $request)
     $from = $request->from;
     $to   = $request->to;
     
+    $firebaseDrivers = $this->firebase->getData('drivers') ?? [];
     $firebaseDriverKey = null;
 
-foreach ($firebaseDrivers as $key => $driver) {
-    if ((int) ($driver['id'] ?? 0) === (int) $driverId) {
-        $firebaseDriverKey = $key; // ✅ -OkYXg9gLrYYL59Ce37J
-        break;
+    foreach ($firebaseDrivers as $key => $driver) {
+        if ((int) ($driver['id'] ?? 0) === (int) $driverId) {
+            $firebaseDriverKey = $key;
+            break;
+        }
     }
-}
 
-
-if (!$firebaseDriverKey) {
-    return response()->json([
-        'status' => false,
-        'message' => 'Driver not found in Firebase'
-    ], 404);
-}
+    if (!$firebaseDriverKey) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Driver not found in Firebase'
+        ], 404);
+    }
 
     $data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to);
+    $driverName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $data['driver']['name'] ?? 'Driver');
+    $callsign = preg_replace('/[^a-zA-Z0-9_-]/', '_', (string)($driverId ?? '0'));
+    $dateStr = date('d-m-Y');
+    $minutesStr = date('Hi');
+    $fileName = "{$driverName}_{$callsign}_{$dateStr}_{$minutesStr}.pdf";
 
     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.driver_commission_pdf', $data)
-        ->setPaper('a4', 'portrait');
+        ->setPaper('a4', 'landscape');
 
-    return $pdf->download("driver_statement_{$driverId}_{$from}_to_{$to}.pdf");
+    return $pdf->download($fileName);
 }
 
 
