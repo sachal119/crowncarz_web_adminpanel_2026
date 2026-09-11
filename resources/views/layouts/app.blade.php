@@ -404,6 +404,89 @@
   });
   </script>
 
+  <!-- 🛡️ DevTools & Source Code Protection -->
+  <script>
+  (function() {
+      'use strict';
+
+      // 1. Disable Right-Click Context Menu
+      document.addEventListener('contextmenu', function(e) {
+          e.preventDefault();
+          return false;
+      }, { capture: true });
+
+      // 2. Block DevTools Shortcut Keys
+      document.addEventListener('keydown', function(e) {
+          // F12
+          if (e.key === 'F12' || e.keyCode === 123) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+          }
+
+          // Ctrl+Shift+I / Cmd+Option+I (Inspect)
+          // Ctrl+Shift+J / Cmd+Option+J (Console)
+          // Ctrl+Shift+C / Cmd+Option+C (Elements)
+          // Ctrl+Shift+K / Cmd+Option+K (Firefox Console)
+          if ((e.ctrlKey || e.metaKey) && e.shiftKey && (
+              e.key === 'I' || e.key === 'i' || e.keyCode === 73 ||
+              e.key === 'J' || e.key === 'j' || e.keyCode === 74 ||
+              e.key === 'C' || e.key === 'c' || e.keyCode === 67 ||
+              e.key === 'K' || e.key === 'k' || e.keyCode === 75
+          )) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+          }
+
+          // Cmd+Option+I / Cmd+Option+J / Cmd+Option+C (Mac Safari/Chrome shortcuts)
+          if (e.metaKey && e.altKey && (
+              e.key === 'I' || e.key === 'i' || e.keyCode === 73 ||
+              e.key === 'J' || e.key === 'j' || e.keyCode === 74 ||
+              e.key === 'C' || e.key === 'c' || e.keyCode === 67
+          )) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+          }
+
+          // Ctrl+U / Cmd+Option+U (View Page Source)
+          if (((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u' || e.keyCode === 85)) ||
+              (e.metaKey && e.altKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85))) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+          }
+
+          // Ctrl+S / Cmd+S (Save Page)
+          if ((e.ctrlKey || e.metaKey) && (e.key === 'S' || e.key === 's' || e.keyCode === 83)) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+          }
+      }, { capture: true });
+
+      // 3. Clear and Nullify Console
+      try {
+          const noop = function() {};
+          const methods = ['log', 'debug', 'info', 'warn', 'error', 'table', 'trace', 'dir', 'dirxml', 'group', 'groupCollapsed', 'groupEnd', 'time', 'timeEnd', 'profile', 'profileEnd', 'count'];
+          for (let i = 0; i < methods.length; i++) {
+              console[methods[i]] = noop;
+          }
+      } catch(e) {}
+
+      // 4. Continuous Debugger Trap (Freezes DevTools if forced open)
+      function trapDebugger() {
+          try {
+              (function() {
+                  Function('debugger')();
+              })();
+          } catch(e) {}
+      }
+      setInterval(trapDebugger, 400);
+  })();
+  </script>
+
   @stack('scripts')
 </body>
 </html>
