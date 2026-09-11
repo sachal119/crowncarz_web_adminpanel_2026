@@ -35,6 +35,7 @@ public function update(Request $request, $id)
         'latitude' => 'nullable|string',
         'longitude' => 'nullable|string',
         'brought_forward' => 'nullable|numeric',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
     ]);
 
     // 1️⃣ Get all drivers
@@ -58,12 +59,17 @@ public function update(Request $request, $id)
         return back()->with('error', 'Driver not found.');
     }
 
+    $imageUrl = null;
+    if ($request->hasFile('image') && $request->file('image')->isValid()) {
+        $imageUrl = $this->firebase->uploadFile($request->file('image'), 'drivers');
+    }
+
     // 4️⃣ Update correct Firebase node
     $driverRef = $this->firebase
         ->getDatabase()
         ->getReference('drivers/' . $firebaseKey);
 
-    $driverRef->update([
+    $updateData = [
         'name' => $request->name,
         'call_sign' => $request->call_sign,
         'email' => $request->email,
@@ -72,9 +78,15 @@ public function update(Request $request, $id)
         'address' => $request->address,
         'latitude' => $request->latitude,
         'longitude' => $request->longitude,
-        //'brought_forward' => $request->brought_forward ?? 0,
         'updated_at' => now()->toDateTimeString(),
-    ]);
+    ];
+
+    if ($imageUrl) {
+        $updateData['image'] = $imageUrl;
+        $updateData['profile_image'] = $imageUrl;
+    }
+
+    $driverRef->update($updateData);
 
     return back()
         ->with('success', 'Driver updated successfully!')
@@ -376,10 +388,11 @@ public function updateSuperAdminPassword(Request $request)
             'email'     => 'required|email|unique:drivers,email',
             'phone'     => 'required|string|max:255',
             'status'    => 'required|in:available,on_job,break,waiting',
-            'latitude'  => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'latitude'  => 'nullable',
+            'longitude' => 'nullable',
             'call_sign' => 'nullable|string',
-            'address' => 'nullable|string',
+            'address'   => 'nullable|string',
+            'image'     => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
         ]);
         
         if ($validator->fails()) {
@@ -389,45 +402,33 @@ public function updateSuperAdminPassword(Request $request)
                 ->with('active_tab', 'driver'); // Redirect back to the driver tab
         }
 
-    //     $driver = Driver::create([
-    //         'name'      => $request->name,
-    //         'email'     => $request->email,
-    //         'phone'     => $request->phone,
-    //         'status'    => $request->status,
-    //         'latitude'  => $request->latitude,
-    //         'longitude' => $request->longitude,
-    //     ]);
-        
-    //     // Get the validated data array
-    // $validatedData = $validator->validated();
+        $imageUrl = null;
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $imageUrl = $this->firebase->uploadFile($request->file('image'), 'drivers');
+        }
 
-    // // 1. Store in SQL Database (Eloquent)
-    // // Use $validatedData to ensure all validated fields are used, even if they are nullable.
-    // // Ensure your Driver model has mass-assignment protection set up (fillable/guarded).
-    // $driver = Driver::create($validatedData);
+        // 1️⃣ Store in SQL
+        $sqlData = $request->only(['name', 'email', 'phone', 'status', 'latitude', 'longitude']);
+        $driver = Driver::create($sqlData);
 
-    // // 2. Store in Firebase Realtime Database
-    // // We pass the clean, validated array to the Firebase service.
-    // // If you only want to save specific fields to Firebase, use:
-    // // $firebaseData = $request->only(['name', 'email', 'phone', 'status', 'call_sign', 'address']);
-    
-    // // Using the full validated data for consistency, with the 'id' from the SQL database
-    // $firebaseData = $validatedData;
+        // 2️⃣ Store in Firebase WITH SQL ID
+        $firebaseData = [
+            'id' => $driver->id,
+            'name' => $request->name,
+            'call_sign' => $request->call_sign ?? '',
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'status' => $request->status ?? 'available',
+            'address' => $request->address ?? '',
+            'latitude' => $request->latitude ?? '',
+            'longitude' => $request->longitude ?? '',
+            'image' => $imageUrl,
+            'profile_image' => $imageUrl,
+            'brought_forward' => 0,
+            'created_at' => now()->toDateTimeString(),
+        ];
 
-    //     // $driverRef = app('firebase.database')->getReference('drivers')->push($validator);
-
-    //   $this->firebase->pushData('drivers', $firebaseData);
-       
-       // 1️⃣ Store in SQL
-    $driver = Driver::create($validator->validated());
-
-    // 2️⃣ Store in Firebase WITH SQL ID
-    $firebaseData = array_merge(
-        $validator->validated(),
-        ['id' => $driver->id] // 🔥 THIS IS THE KEY FIX
-    );
-
-    $this->firebase->pushData('drivers', $firebaseData);
+        $this->firebase->pushData('drivers', $firebaseData);
 
         return redirect()->route('setup')->with('success', 'Driver added successfully.')->with('active_tab', 'driver');
     }

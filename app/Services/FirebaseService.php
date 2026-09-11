@@ -120,6 +120,45 @@ class FirebaseService
     }
     
 
+    // 🚀 Upload file to Firebase Storage with local fallback
+    public function uploadFile($file, $folder = 'drivers')
+    {
+        try {
+            $bucket = $this->storage->getBucket();
+            $extension = $file->getClientOriginalExtension() ?: 'jpg';
+            $fileName = $folder . '/' . uniqid('driver_') . '_' . time() . '.' . $extension;
+
+            $bucket->upload(
+                fopen($file->getRealPath(), 'r'),
+                [
+                    'name' => $fileName,
+                    'predefinedAcl' => 'publicRead'
+                ]
+            );
+
+            return sprintf(
+                'https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media',
+                $bucket->name(),
+                urlencode($fileName)
+            );
+        } catch (\Exception $e) {
+            \Log::error('Firebase Storage upload error: ' . $e->getMessage());
+            try {
+                $destDir = public_path('uploads/' . $folder);
+                if (!file_exists($destDir)) {
+                    mkdir($destDir, 0777, true);
+                }
+                $extension = $file->getClientOriginalExtension() ?: 'jpg';
+                $localName = uniqid('driver_') . '_' . time() . '.' . $extension;
+                $file->move($destDir, $localName);
+                return asset('uploads/' . $folder . '/' . $localName);
+            } catch (\Exception $localErr) {
+                \Log::error('Local storage fallback upload error: ' . $localErr->getMessage());
+                return null;
+            }
+        }
+    }
+
     // 🚀 Send FCM notification to a topic
     public function sendNotificationToTopic(string $topic, string $title, string $body)
     {

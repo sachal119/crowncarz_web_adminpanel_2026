@@ -812,14 +812,19 @@ document.addEventListener('DOMContentLoaded', function () {
         {{-- 2. Drivers Tab (With Assigned Vehicle Details) --}}
         <div class="tab-pane fade @if(session('active_tab') == 'driver') show active @endif" id="driver" role="tabpanel">
             <div class="row">
-                <div class="col-lg-9">
+                <div class="col-12">
                     <div class="setup-directory mb-4">
                         <div class="setup-directory-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
                                 <h3 class="mb-1"><i class="bi bi-person-badge-fill text-warning me-2"></i>Existing Drivers</h3>
                                 <p class="text-muted small mb-0">Driver profiles, call signs, assigned vehicles, and real-time status.</p>
                             </div>
-                            <span class="badge rounded-pill text-bg-dark px-3 py-2"><i class="bi bi-people-fill me-1"></i>{{ $drivers->count() }} Drivers</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-warning fw-bold shadow-sm d-inline-flex align-items-center gap-1.5" data-bs-toggle="modal" data-bs-target="#addDriverModal">
+                                    <i class="bi bi-person-plus-fill"></i> Add Driver
+                                </button>
+                                <span class="badge rounded-pill text-bg-dark px-3 py-2"><i class="bi bi-people-fill me-1"></i>{{ $drivers->count() }} Drivers</span>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table setup-table align-middle">
@@ -843,12 +848,18 @@ document.addEventListener('DOMContentLoaded', function () {
                                             $assignedVehicles = $driverVehiclesMap[$dIdKey] ?? ($driverVehiclesMap[(string)($driver['id'] ?? '')] ?? []);
                                             $status = strtolower($driver['status'] ?? 'available');
                                             $bfVal = (float)($driver['brought_forward'] ?? 0);
+                                            $driverPhoto = $driver['image'] ?? $driver['profile_image'] ?? null;
                                         @endphp
                                         <tr>
                                             <td><span class="text-muted fw-bold">{{ $loop->iteration }}</span></td>
                                             <td>
                                                 <div class="d-flex align-items-center gap-2.5">
-                                                    <span class="driver-avatar">{{ strtoupper(substr($driver['name'] ?? 'D', 0, 1)) }}</span>
+                                                    @if(!empty($driverPhoto))
+                                                        <img src="{{ $driverPhoto }}" alt="{{ $driver['name'] ?? 'Driver' }}" class="rounded-3 shadow-sm border" style="width: 40px; height: 40px; object-fit: cover; flex-shrink: 0;" onerror="this.onerror=null; this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');">
+                                                        <span class="driver-avatar d-none">{{ strtoupper(substr($driver['name'] ?? 'D', 0, 1)) }}</span>
+                                                    @else
+                                                        <span class="driver-avatar">{{ strtoupper(substr($driver['name'] ?? 'D', 0, 1)) }}</span>
+                                                    @endif
                                                     <div>
                                                         <div class="fw-bold text-dark">{{ $driver['name'] ?? 'N/A' }}</div>
                                                         <div class="text-muted small">Driver #{{ $driver['id'] ?? $loop->iteration }}</div>
@@ -931,6 +942,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                         <i class="bi bi-receipt"></i> BF Details
                                                     </a>
                                                     <button 
+                                                        type="button"
                                                         class="btn btn-sm btn-outline-primary fw-semibold shadow-sm edit-driver-btn d-inline-flex align-items-center gap-1"
                                                         style="font-size: 11.5px; border-radius: 7px; padding: 4px 8px;"
                                                         data-id="{{ $driver['id'] }}"
@@ -942,6 +954,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                         data-address="{{ $driver['address'] ?? '' }}"
                                                         data-latitude="{{ $driver['latitude'] ?? '' }}"
                                                         data-longitude="{{ $driver['longitude'] ?? '' }}"
+                                                        data-image="{{ $driverPhoto ?? '' }}"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#editDriverModal"
                                                     >
@@ -962,73 +975,95 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="col-lg-3">
-                    <div class="form-card">
-                        <div class="form-card-title">
-                            <i class="bi bi-person-plus-fill text-warning"></i> Add Driver
+        {{-- Add Driver Modal --}}
+        <div class="modal fade" id="addDriverModal" tabindex="-1" aria-labelledby="addDriverModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <form method="POST" action="{{ route('setup.driver.store') }}" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+                        <div class="modal-header bg-dark text-white py-3">
+                            <h5 class="modal-title fw-bold" id="addDriverModalLabel">
+                                <i class="bi bi-person-plus-fill text-warning me-2"></i>Add New Driver
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form method="POST" action="{{ route('setup.driver.store') }}">
-                            @csrf
-                            <div class="mb-3">
-                                <label>Name</label>
-                                <input type="text" name="name" class="form-control" placeholder="Driver Full Name" required value="{{ old('name') }}">
-                            </div>
 
-                            <div class="mb-3">
-                                <label>Call Sign</label>
-                                <input type="text" name="call_sign" class="form-control" placeholder="e.g. D-101, 099" value="{{ old('call_sign') }}">
-                            </div>
+                        <div class="modal-body p-4 bg-light">
+                            <div class="bg-white p-3 rounded-3 border">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Driver Name <span class="text-danger">*</span></label>
+                                        <input type="text" name="name" class="form-control" placeholder="Driver Full Name" required value="{{ old('name') }}">
+                                    </div>
 
-                            <div class="mb-3">
-                                <label>Email</label>
-                                <input type="email" name="email" class="form-control" placeholder="driver@email.com" required value="{{ old('email') }}">
-                            </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Call Sign</label>
+                                        <input type="text" name="call_sign" class="form-control" placeholder="e.g. D-101, 099" value="{{ old('call_sign') }}">
+                                    </div>
 
-                            <div class="mb-3">
-                                <label>Phone Number</label>
-                                <input type="text" name="phone" class="form-control" placeholder="07xxxxxxxxx" required value="{{ old('phone') }}">
-                            </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                                        <input type="email" name="email" class="form-control" placeholder="driver@email.com" required value="{{ old('email') }}">
+                                    </div>
 
-                            <div class="mb-3">
-                                <label>Status</label>
-                                <select name="status" class="form-select" required>
-                                    <option value="available" {{ old('status') == 'available' ? 'selected' : '' }}>Available</option>
-                                    <option value="on_job" {{ old('status') == 'on_job' ? 'selected' : '' }}>On Job</option>
-                                    <option value="break" {{ old('status') == 'break' ? 'selected' : '' }}>Break</option>
-                                    <option value="waiting" {{ old('status') == 'waiting' ? 'selected' : '' }}>Waiting</option>
-                                </select>
-                            </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+                                        <input type="text" name="phone" class="form-control" placeholder="07xxxxxxxxx" required value="{{ old('phone') }}">
+                                    </div>
 
-                            <div class="mb-3">
-                                <label>Address</label>
-                                <input type="text" id="driver_address" name="address" class="form-control" placeholder="Enter driver base address" value="{{ old('address') }}" required>
-                                <div id="address-status" class="small text-muted mt-1"></div>
-                            </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Driver Photo / Profile Image <span class="badge bg-secondary-subtle text-secondary small fw-normal">Optional</span></label>
+                                        <input type="file" name="image" class="form-control" accept="image/*">
+                                        <div class="form-text small text-muted">Upload photo (JPEG, PNG, WEBP - Max 5MB). Stored in Firebase Storage.</div>
+                                    </div>
 
-                            <div class="mb-3">
-                                <label>Latitude</label>
-                                <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Auto-filled from address" value="{{ old('latitude') }}" readonly>
-                            </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                                        <select name="status" class="form-select" required>
+                                            <option value="available" {{ old('status') == 'available' ? 'selected' : '' }}>Available</option>
+                                            <option value="on_job" {{ old('status') == 'on_job' ? 'selected' : '' }}>On Job</option>
+                                            <option value="break" {{ old('status') == 'break' ? 'selected' : '' }}>Break</option>
+                                            <option value="waiting" {{ old('status') == 'waiting' ? 'selected' : '' }}>Waiting</option>
+                                        </select>
+                                    </div>
 
-                            <div class="mb-3">
-                                <label>Longitude</label>
-                                <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Auto-filled from address" value="{{ old('longitude') }}" readonly>
-                            </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold">Base Address <span class="text-danger">*</span></label>
+                                        <input type="text" id="driver_address" name="address" class="form-control" placeholder="Enter driver base address (e.g., Reading Train Station)" value="{{ old('address') }}" required>
+                                        <div id="address-status" class="small text-muted mt-1"></div>
+                                    </div>
 
-                            <button type="submit" class="btn btn-custom w-100 py-2.5">
-                                <i class="bi bi-person-plus me-1"></i> Add Driver
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Latitude</label>
+                                        <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Auto-filled from address" value="{{ old('latitude') }}" readonly>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Longitude</label>
+                                        <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Auto-filled from address" value="{{ old('longitude') }}" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer bg-white border-top">
+                            <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-warning fw-bold px-4">
+                                <i class="bi bi-person-plus-fill me-1"></i> Save Driver
                             </button>
-                        </form>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
 
         {{-- Edit Driver Modal --}}
         <div class="modal fade" id="editDriverModal" tabindex="-1">
             <div class="modal-dialog modal-lg modal-dialog-centered">
-                <form method="POST" id="editDriverForm">
+                <form method="POST" id="editDriverForm" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -1045,27 +1080,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
                             <div class="row g-3 bg-white p-3 rounded-3 border">
                                 <div class="col-md-6">
-                                    <label>Full Name</label>
+                                    <label class="form-label fw-semibold">Full Name</label>
                                     <input type="text" name="name" id="edit_name" class="form-control" required>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label>Call Sign</label>
+                                    <label class="form-label fw-semibold">Call Sign</label>
                                     <input type="text" name="call_sign" id="edit_call_sign" class="form-control" placeholder="e.g. D-101">
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label>Email Address</label>
+                                    <label class="form-label fw-semibold">Email Address</label>
                                     <input type="email" name="email" id="edit_email" class="form-control" required>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label>Phone Number</label>
+                                    <label class="form-label fw-semibold">Phone Number</label>
                                     <input type="text" name="phone" id="edit_phone" class="form-control" required>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label>Driver Status</label>
+                                    <label class="form-label fw-semibold">Driver Status</label>
                                     <select name="status" id="edit_status" class="form-select">
                                         <option value="available">Available</option>
                                         <option value="on_job">On Job</option>
@@ -1075,17 +1110,27 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label>Address</label>
+                                    <label class="form-label fw-semibold">Update Photo <span class="badge bg-secondary-subtle text-secondary small fw-normal">Optional</span></label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img id="edit_driver_preview_img" src="" alt="Driver" class="rounded-3 border d-none" style="width: 40px; height: 40px; object-fit: cover;">
+                                        <input type="file" name="image" class="form-control" accept="image/*">
+                                    </div>
+                                    <div class="form-text small text-muted">Leave empty to keep existing photo.</div>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Base Address</label>
                                     <input type="text" name="address" id="edit_address" class="form-control">
+                                    <div id="edit-address-status" class="small text-muted mt-1"></div>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label>Latitude</label>
+                                    <label class="form-label fw-semibold">Latitude</label>
                                     <input type="text" name="latitude" id="edit_latitude" class="form-control" readonly>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label>Longitude</label>
+                                    <label class="form-label fw-semibold">Longitude</label>
                                     <input type="text" name="longitude" id="edit_longitude" class="form-control" readonly>
                                 </div>
                             </div>
@@ -1355,22 +1400,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelectorAll('.edit-driver-btn').forEach(button => {
         button.addEventListener('click', function () {
-
             const id = this.dataset.id;
+            document.getElementById('editDriverForm').action = `/admin/setup/driver/${id}`;
 
-console.log(id);
-            document.getElementById('editDriverForm').action =
-                `/admin/setup/driver/${id}`;
+            document.getElementById('edit_name').value = this.dataset.name || '';
+            document.getElementById('edit_call_sign').value = this.dataset.call_sign || '';
+            document.getElementById('edit_email').value = this.dataset.email || '';
+            document.getElementById('edit_phone').value = this.dataset.phone || '';
+            document.getElementById('edit_status').value = this.dataset.status || 'available';
+            document.getElementById('edit_address').value = this.dataset.address || '';
+            document.getElementById('edit_latitude').value = this.dataset.latitude ?? '';
+            document.getElementById('edit_longitude').value = this.dataset.longitude ?? '';
 
-            document.getElementById('edit_name').value = this.dataset.name;
-            document.getElementById('edit_call_sign').value = this.dataset.call_sign;
-            document.getElementById('edit_email').value = this.dataset.email;
-            document.getElementById('edit_phone').value = this.dataset.phone;
-            document.getElementById('edit_status').value = this.dataset.status;
-            document.getElementById('edit_address').value = this.dataset.address;
-            document.getElementById('edit_latitude').value = this.dataset.latitude ?? '-';
-            document.getElementById('edit_longitude').value = this.dataset.longitude ?? '-';
-            //document.getElementById('edit_brought_forward').value = this.dataset.brought_forward;
+            const previewImg = document.getElementById('edit_driver_preview_img');
+            if (previewImg) {
+                if (this.dataset.image && this.dataset.image.trim() !== '') {
+                    previewImg.src = this.dataset.image;
+                    previewImg.classList.remove('d-none');
+                } else {
+                    previewImg.src = '';
+                    previewImg.classList.add('d-none');
+                }
+            }
         });
     });
 });
@@ -1402,33 +1453,38 @@ console.log(id);
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const addressInput = document.getElementById('driver_address');
-    const latInput = document.getElementById('latitude');
-    const lonInput = document.getElementById('longitude');
-    const statusDiv = document.getElementById('address-status');
+    function setupGeocoding(addressInputId, latInputId, lonInputId, statusDivId) {
+        const addressInput = document.getElementById(addressInputId);
+        const latInput = document.getElementById(latInputId);
+        const lonInput = document.getElementById(lonInputId);
+        const statusDiv = document.getElementById(statusDivId);
 
-    if (addressInput) {
-        addressInput.addEventListener('blur', async function () {
-            const address = this.value.trim();
-            if (!address) return;
+        if (addressInput && latInput && lonInput) {
+            addressInput.addEventListener('blur', async function () {
+                const address = this.value.trim();
+                if (!address) return;
 
-            statusDiv.textContent = "Fetching coordinates...";
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-                const data = await res.json();
-                if (data.length > 0) {
-                    latInput.value = data[0].lat;
-                    lonInput.value = data[0].lon;
-                    statusDiv.textContent = "✅ Coordinates fetched successfully.";
-                } else {
-                    statusDiv.textContent = "⚠️ Address not found.";
+                if (statusDiv) statusDiv.textContent = "Fetching coordinates...";
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+                    const data = await res.json();
+                    if (data.length > 0) {
+                        latInput.value = data[0].lat;
+                        lonInput.value = data[0].lon;
+                        if (statusDiv) statusDiv.textContent = "✅ Coordinates fetched successfully.";
+                    } else {
+                        if (statusDiv) statusDiv.textContent = "⚠️ Address not found.";
+                    }
+                } catch (e) {
+                    console.error(e);
+                    if (statusDiv) statusDiv.textContent = "❌ Error fetching coordinates.";
                 }
-            } catch (e) {
-                console.error(e);
-                statusDiv.textContent = "❌ Error fetching coordinates.";
-            }
-        });
+            });
+        }
     }
+
+    setupGeocoding('driver_address', 'latitude', 'longitude', 'address-status');
+    setupGeocoding('edit_address', 'edit_latitude', 'edit_longitude', 'edit-address-status');
 });
 </script>
 
