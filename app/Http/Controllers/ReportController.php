@@ -410,7 +410,7 @@ private function getDriverCommissionData($driverId, $from, $to)
             continue;
         }
 
-        // 🔹 Extract Fare: If fare is > 0, use it. Otherwise fallback to price / total_price / amount.
+        // 🔹 Extract Base Fare: Total Price excludes parking, extras, waiting fee (which are displayed in separate columns)
         $rawFare = isset($booking['fare']) && is_numeric($booking['fare']) ? (float)$booking['fare'] : 0.0;
         $rawPrice = isset($booking['price']) && is_numeric($booking['price']) ? (float)$booking['price'] : 0.0;
         if ($rawPrice <= 0) {
@@ -420,11 +420,16 @@ private function getDriverCommissionData($driverId, $from, $to)
         $parking = isset($booking['parking']) && is_numeric($booking['parking']) ? (float)$booking['parking'] : 0.0;
         $extra = isset($booking['extra']) && is_numeric($booking['extra']) ? (float)$booking['extra'] : 0.0;
         $waitingFee = isset($booking['waiting_fee']) && is_numeric($booking['waiting_fee']) ? (float)$booking['waiting_fee'] : 0.0;
+        $additionalCharges = $parking + $extra + $waitingFee;
 
-        if ($rawFare > 0) {
+        if ($rawFare > 0 && ($rawPrice <= 0 || $rawFare < $rawPrice)) {
+            // rawFare is already base fare
             $fare = $rawFare;
         } elseif ($rawPrice > 0) {
-            $fare = $rawPrice;
+            // Price is Total Price, so Base Fare = Total Price - Parking - Extra - Waiting Fee
+            $fare = max(0.0, $rawPrice - $additionalCharges);
+        } elseif ($rawFare > 0) {
+            $fare = max(0.0, $rawFare - $additionalCharges);
         } else {
             $fare = 0.0;
         }
