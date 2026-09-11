@@ -108,35 +108,56 @@
     }
 
     .setup-directory-header {
-        padding: 18px 20px;
-        background: linear-gradient(135deg, #fffaf3, #fff);
+        padding: 18px 22px;
+        background: linear-gradient(135deg, #fffaf3, #ffffff);
         border-bottom: 1px solid #eadfd5;
     }
 
     .setup-table {
         margin-bottom: 0;
+        width: 100%;
     }
 
-    .setup-table th {
-        border: 0;
+    .setup-table thead th {
         background: #fbf7f2;
         color: #7a4419;
-        font-size: 0.76rem;
-        letter-spacing: 0.04em;
+        font-size: 0.74rem;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
-        padding: 12px 16px;
+        padding: 13px 16px;
         font-weight: 700;
+        border-bottom: 1px solid #eadfd5;
+        white-space: nowrap;
+    }
+
+    .setup-table tbody tr.driver-row {
+        transition: all 0.15s ease-in-out;
+        border-bottom: 1px solid #f2ebe3;
+    }
+
+    .setup-table tbody tr.driver-row:hover {
+        background-color: #fffbf7;
     }
 
     .setup-table td {
-        border-color: #f0e8df;
-        padding: 14px 16px;
+        padding: 13px 16px;
         vertical-align: middle;
+        border-color: #f2ebe3;
+    }
+
+    .driver-avatar-thumb {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        object-fit: cover;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        border: 1.5px solid #e2e8f0;
     }
 
     .driver-avatar {
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -144,43 +165,47 @@
         background: linear-gradient(135deg, #b5651d, #e49a52);
         color: white;
         font-weight: 700;
-        flex: 0 0 40px;
+        font-size: 1.05rem;
+        flex: 0 0 44px;
+        box-shadow: 0 2px 6px rgba(181, 101, 29, 0.25);
     }
 
     .callsign-badge {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        background-color: #fef3c7;
+        gap: 5px;
+        background: #fffbeb;
         color: #92400e;
-        border: 1px solid #fde68a;
+        border: 1px solid #fcd34d;
         font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
         font-weight: 700;
         padding: 4px 9px;
-        border-radius: 6px;
-        font-size: 0.84rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        border-radius: 7px;
+        font-size: 0.82rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        letter-spacing: 0.3px;
     }
 
-    .reg-plate {
-        background: #0f172a;
-        color: #fbbf24;
+    .reg-plate-uk {
+        background: #fbbf24;
+        color: #0f172a;
         font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
-        font-weight: 700;
-        font-size: 0.82rem;
-        padding: 3px 8px;
-        border-radius: 5px;
-        border: 1px solid #334155;
-        letter-spacing: 0.5px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        font-weight: 800;
+        font-size: 0.78rem;
+        padding: 2px 7px;
+        border-radius: 4px;
+        border: 1px solid #d97706;
+        letter-spacing: 0.8px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08);
         display: inline-block;
+        white-space: nowrap;
     }
 
     .vehicle-item-badge {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
         border-radius: 8px;
-        padding: 6px 10px;
+        padding: 5px 9px;
         display: inline-flex;
         align-items: center;
         gap: 8px;
@@ -192,20 +217,37 @@
         border-color: #cbd5e1;
     }
 
-    .status-pill {
+    .status-pill-modern {
         display: inline-flex;
         align-items: center;
         gap: 6px;
         padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 600;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        text-transform: capitalize;
+        white-space: nowrap;
     }
 
-    .status-available { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-    .status-on_job { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+    .status-dot-pulse {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .status-available { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .status-available .status-dot-pulse { background: #16a34a; box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25); }
+
+    .status-on_job { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+    .status-on_job .status-dot-pulse { background: #4f46e5; box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25); }
+
     .status-break { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
-    .status-waiting { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+    .status-break .status-dot-pulse { background: #ca8a04; box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.25); }
+
+    .status-waiting { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+    .status-waiting .status-dot-pulse { background: #9333ea; box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.25); }
 
     .staff-directory {
         background: #fff;
@@ -814,31 +856,72 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="row">
                 <div class="col-12">
                     <div class="setup-directory mb-4">
-                        <div class="setup-directory-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div>
-                                <h3 class="mb-1"><i class="bi bi-person-badge-fill text-warning me-2"></i>Existing Drivers</h3>
-                                <p class="text-muted small mb-0">Driver profiles, call signs, assigned vehicles, and real-time status.</p>
+                        {{-- Directory Header --}}
+                        <div class="setup-directory-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-3 bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 1.4rem;">
+                                    <i class="bi bi-person-badge-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h3 class="mb-0 fw-bold text-dark">Existing Drivers</h3>
+                                        <span class="badge rounded-pill text-bg-dark px-3 py-1.5"><i class="bi bi-people-fill me-1"></i>{{ $drivers->count() }} Drivers</span>
+                                    </div>
+                                    <p class="text-muted small mb-0 mt-0.5">Driver profiles, call signs, fleet assignments, real-time status, and accounts.</p>
+                                </div>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <button type="button" class="btn btn-warning fw-bold shadow-sm d-inline-flex align-items-center gap-1.5" data-bs-toggle="modal" data-bs-target="#addDriverModal">
-                                    <i class="bi bi-person-plus-fill"></i> Add Driver
+                                <button type="button" class="btn btn-warning fw-bold shadow-sm d-inline-flex align-items-center gap-2 px-3 py-2" data-bs-toggle="modal" data-bs-target="#addDriverModal">
+                                    <i class="bi bi-person-plus-fill fs-6"></i> Add Driver
                                 </button>
-                                <span class="badge rounded-pill text-bg-dark px-3 py-2"><i class="bi bi-people-fill me-1"></i>{{ $drivers->count() }} Drivers</span>
                             </div>
                         </div>
+
+                        {{-- Search & Filter Controls Toolbar --}}
+                        <div class="p-3 bg-light bg-opacity-75 border-bottom">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-5 col-lg-5">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                        <input type="text" id="driverSearchInput" class="form-control border-start-0 bg-white" placeholder="Search by name, call sign, reg #, phone, email, address..." autocomplete="off">
+                                        <button class="btn btn-outline-secondary border-start-0 bg-white text-muted d-none" type="button" id="driverSearchClearBtn" title="Clear Search"><i class="bi bi-x-circle-fill"></i></button>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <select id="driverStatusFilter" class="form-select bg-white">
+                                        <option value="">All Statuses</option>
+                                        <option value="available">Available</option>
+                                        <option value="on_job">On Job</option>
+                                        <option value="break">On Break</option>
+                                        <option value="waiting">Waiting</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-4 col-lg-2">
+                                    <select id="driverVehicleFilter" class="form-select bg-white">
+                                        <option value="">All Fleets</option>
+                                        <option value="has_vehicle">With Vehicle</option>
+                                        <option value="no_vehicle">No Vehicle</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-lg-3 text-lg-end text-muted small mt-2 mt-lg-0">
+                                    <span>Showing <strong id="driverVisibleCount" class="text-dark">{{ $drivers->count() }}</strong> of <strong>{{ $drivers->count() }}</strong> drivers</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table setup-table align-middle">
                                 <thead>
                                     <tr>
-                                        <th>#</th>
+                                        <th style="width: 50px;">#</th>
                                         <th>Driver</th>
                                         <th>Call Sign</th>
                                         <th>Assigned Vehicle</th>
-                                        <th>Contact</th>
-                                        <th>Status</th>
+                                        <th>Contact Details</th>
+                                        <th>Live Status</th>
                                         <th>Address & Location</th>
-                                        <th>BF</th>
-                                        <th>Actions</th>
+                                        <th>BF Balance</th>
+                                        <th class="text-end" style="padding-right: 20px;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -849,20 +932,37 @@ document.addEventListener('DOMContentLoaded', function () {
                                             $status = strtolower($driver['status'] ?? 'available');
                                             $bfVal = (float)($driver['brought_forward'] ?? 0);
                                             $driverPhoto = $driver['image'] ?? $driver['profile_image'] ?? null;
+                                            
+                                            // Search string compilation for vehicle
+                                            $vSearchParts = [];
+                                            foreach ($assignedVehicles as $v) {
+                                                $vSearchParts[] = ($v['registration'] ?? '') . ' ' . ($v['make'] ?? '') . ' ' . ($v['model'] ?? '');
+                                            }
+                                            $vSearchStr = implode(' ', $vSearchParts);
                                         @endphp
-                                        <tr>
+                                        <tr class="driver-row"
+                                            data-name="{{ strtolower($driver['name'] ?? '') }}"
+                                            data-callsign="{{ strtolower($driver['call_sign'] ?? '') }}"
+                                            data-email="{{ strtolower($driver['email'] ?? '') }}"
+                                            data-phone="{{ strtolower($driver['phone'] ?? '') }}"
+                                            data-status="{{ $status }}"
+                                            data-vehicles="{{ strtolower($vSearchStr) }}"
+                                            data-address="{{ strtolower($driver['address'] ?? '') }}"
+                                            data-has-vehicle="{{ count($assignedVehicles) > 0 ? 'yes' : 'no' }}">
                                             <td><span class="text-muted fw-bold">{{ $loop->iteration }}</span></td>
                                             <td>
-                                                <div class="d-flex align-items-center gap-2.5">
+                                                <div class="d-flex align-items-center gap-3">
                                                     @if(!empty($driverPhoto))
-                                                        <img src="{{ $driverPhoto }}" alt="{{ $driver['name'] ?? 'Driver' }}" class="rounded-3 shadow-sm border" style="width: 40px; height: 40px; object-fit: cover; flex-shrink: 0;" onerror="this.onerror=null; this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');">
+                                                        <img src="{{ $driverPhoto }}" alt="{{ $driver['name'] ?? 'Driver' }}" class="driver-avatar-thumb" onerror="this.onerror=null; this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');">
                                                         <span class="driver-avatar d-none">{{ strtoupper(substr($driver['name'] ?? 'D', 0, 1)) }}</span>
                                                     @else
                                                         <span class="driver-avatar">{{ strtoupper(substr($driver['name'] ?? 'D', 0, 1)) }}</span>
                                                     @endif
                                                     <div>
-                                                        <div class="fw-bold text-dark">{{ $driver['name'] ?? 'N/A' }}</div>
-                                                        <div class="text-muted small">Driver #{{ $driver['id'] ?? $loop->iteration }}</div>
+                                                        <div class="fw-bold text-dark fs-6 leading-tight">{{ $driver['name'] ?? 'N/A' }}</div>
+                                                        <div class="d-flex align-items-center gap-1.5 mt-1">
+                                                            <span class="badge bg-light text-muted border" style="font-size: 11px;">ID #{{ $driver['id'] ?? $loop->iteration }}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -880,11 +980,11 @@ document.addEventListener('DOMContentLoaded', function () {
                                                     <div class="d-flex flex-column gap-1.5" style="min-width: 170px;">
                                                         @foreach($assignedVehicles as $v)
                                                             <div class="vehicle-item-badge">
-                                                                <span class="reg-plate">{{ $v['registration'] ?? 'N/A' }}</span>
+                                                                <span class="reg-plate-uk">{{ $v['registration'] ?? 'N/A' }}</span>
                                                                 <div class="small">
                                                                     <div class="fw-semibold text-dark leading-tight">{{ $v['make'] ?? '' }} {{ $v['model'] ?? '' }}</div>
                                                                     @if(!empty($v['color']))
-                                                                        <span class="text-muted" style="font-size: 11px;"><i class="bi bi-circle-fill me-1 text-secondary" style="font-size: 7px;"></i>{{ $v['color'] }}</span>
+                                                                        <span class="text-muted" style="font-size: 11px;"><i class="bi bi-circle-fill me-1 text-secondary" style="font-size: 6px;"></i>{{ $v['color'] }}</span>
                                                                     @endif
                                                                 </div>
                                                             </div>
@@ -897,24 +997,24 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 @endif
                                             </td>
                                             <td>
-                                                <div class="small fw-semibold text-dark"><i class="bi bi-envelope me-1 text-muted"></i>{{ $driver['email'] ?? 'N/A' }}</div>
-                                                <div class="small text-muted mt-1"><i class="bi bi-telephone me-1"></i>{{ $driver['phone'] ?? 'N/A' }}</div>
+                                                <div class="small fw-semibold text-dark"><i class="bi bi-envelope me-1.5 text-muted"></i>{{ $driver['email'] ?? 'N/A' }}</div>
+                                                <div class="small text-muted mt-1"><i class="bi bi-telephone me-1.5 text-muted"></i>{{ $driver['phone'] ?? 'N/A' }}</div>
                                             </td>
                                             <td>
-                                                <span class="status-pill status-{{ $status }}">
-                                                    <i class="bi bi-circle-fill" style="font-size: 6px;"></i>
+                                                <span class="status-pill-modern status-{{ $status }}">
+                                                    <span class="status-dot-pulse"></span>
                                                     {{ ucfirst(str_replace('_', ' ', $status)) }}
                                                 </span>
                                             </td>
                                             <td>
                                                 @if(!empty($driver['address']) && $driver['address'] !== '-')
-                                                    <div class="small text-dark text-truncate" style="max-width: 170px;" title="{{ $driver['address'] }}">
+                                                    <div class="small text-dark text-truncate" style="max-width: 180px;" title="{{ $driver['address'] }}">
                                                         <i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ $driver['address'] }}
                                                     </div>
                                                 @endif
                                                 @if(!empty($driver['latitude']) && $driver['latitude'] !== '-' && $driver['latitude'] !== 'N/A')
                                                     <div class="small text-muted font-monospace mt-0.5" style="font-size: 11px;">
-                                                        {{ round((float)$driver['latitude'], 4) }}, {{ round((float)$driver['longitude'], 4) }}
+                                                        <i class="bi bi-crosshair me-1 text-secondary"></i>{{ round((float)$driver['latitude'], 4) }}, {{ round((float)$driver['longitude'], 4) }}
                                                     </div>
                                                 @else
                                                     <span class="text-muted small">N/A</span>
@@ -922,29 +1022,30 @@ document.addEventListener('DOMContentLoaded', function () {
                                             </td>
                                             <td>
                                                 @if($bfVal > 0)
-                                                    <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">
-                                                        £{{ number_format($bfVal, 2) }}
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold px-2.5 py-1.5">
+                                                        +£{{ number_format($bfVal, 2) }}
                                                     </span>
                                                 @elseif($bfVal < 0)
-                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">
+                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold px-2.5 py-1.5">
                                                         -£{{ number_format(abs($bfVal), 2) }}
                                                     </span>
                                                 @else
-                                                    <span class="badge bg-light text-muted border fw-semibold">
+                                                    <span class="badge bg-light text-muted border fw-semibold px-2.5 py-1.5">
                                                         £0.00
                                                     </span>
                                                 @endif
                                             </td>
-                                            <td style="min-width: 160px;">
-                                                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                                            <td class="text-end" style="padding-right: 20px;">
+                                                <div class="d-inline-flex align-items-center gap-1.5">
                                                     <a href="{{ route('drivers.bf.history', $driver['id']) }}"
-                                                       class="btn btn-sm btn-outline-warning fw-semibold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: 11.5px; border-radius: 7px; padding: 4px 8px;">
-                                                        <i class="bi bi-receipt"></i> BF Details
+                                                       class="btn btn-sm btn-outline-warning fw-semibold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: 11.5px; border-radius: 7px; padding: 5px 9px;"
+                                                       title="View BF History">
+                                                        <i class="bi bi-receipt"></i> BF
                                                     </a>
                                                     <button 
                                                         type="button"
                                                         class="btn btn-sm btn-outline-primary fw-semibold shadow-sm edit-driver-btn d-inline-flex align-items-center gap-1"
-                                                        style="font-size: 11.5px; border-radius: 7px; padding: 4px 8px;"
+                                                        style="font-size: 11.5px; border-radius: 7px; padding: 5px 9px;"
                                                         data-id="{{ $driver['id'] }}"
                                                         data-name="{{ $driver['name'] }}"
                                                         data-call_sign="{{ $driver['call_sign'] ?? '' }}"
@@ -957,6 +1058,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                         data-image="{{ $driverPhoto ?? '' }}"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#editDriverModal"
+                                                        title="Edit Driver Details"
                                                     >
                                                         <i class="bi bi-pencil-square"></i> Edit
                                                     </button>
@@ -970,6 +1072,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                             </td>
                                         </tr>
                                     @endforelse
+                                    <tr id="driverNoResultsRow" style="display: none;">
+                                        <td colspan="9" class="text-center py-5 text-muted">
+                                            <i class="bi bi-search fs-2 d-block mb-2 text-warning"></i>
+                                            <div class="fw-semibold">No matching drivers found</div>
+                                            <div class="small text-muted mt-1">Try searching with a different name, call sign, vehicle, or clear filters.</div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1424,6 +1533,88 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // Driver Directory Real-time Search and Filter Logic
+    const driverSearchInput = document.getElementById('driverSearchInput');
+    const driverSearchClearBtn = document.getElementById('driverSearchClearBtn');
+    const driverStatusFilter = document.getElementById('driverStatusFilter');
+    const driverVehicleFilter = document.getElementById('driverVehicleFilter');
+    const driverRows = document.querySelectorAll('.driver-row');
+    const driverVisibleCount = document.getElementById('driverVisibleCount');
+    const driverNoResultsRow = document.getElementById('driverNoResultsRow');
+
+    function filterDriverTable() {
+        const query = (driverSearchInput ? driverSearchInput.value : '').toLowerCase().trim();
+        const statusVal = (driverStatusFilter ? driverStatusFilter.value : '').toLowerCase().trim();
+        const vehicleVal = (driverVehicleFilter ? driverVehicleFilter.value : '').trim();
+
+        if (driverSearchClearBtn) {
+            if (query.length > 0) {
+                driverSearchClearBtn.classList.remove('d-none');
+            } else {
+                driverSearchClearBtn.classList.add('d-none');
+            }
+        }
+
+        let visibleCount = 0;
+
+        driverRows.forEach(row => {
+            const name = row.dataset.name || '';
+            const callsign = row.dataset.callsign || '';
+            const email = row.dataset.email || '';
+            const phone = row.dataset.phone || '';
+            const status = row.dataset.status || '';
+            const vehicles = row.dataset.vehicles || '';
+            const address = row.dataset.address || '';
+            const hasVehicle = row.dataset.hasVehicle || 'no';
+
+            const matchesQuery = !query || 
+                name.includes(query) || 
+                callsign.includes(query) || 
+                email.includes(query) || 
+                phone.includes(query) || 
+                vehicles.includes(query) || 
+                address.includes(query) || 
+                status.includes(query);
+
+            const matchesStatus = !statusVal || status === statusVal;
+            const matchesVehicle = !vehicleVal || 
+                (vehicleVal === 'has_vehicle' && hasVehicle === 'yes') || 
+                (vehicleVal === 'no_vehicle' && hasVehicle === 'no');
+
+            if (matchesQuery && matchesStatus && matchesVehicle) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (driverVisibleCount) {
+            driverVisibleCount.textContent = visibleCount;
+        }
+
+        if (driverNoResultsRow) {
+            driverNoResultsRow.style.display = (visibleCount === 0 && driverRows.length > 0) ? '' : 'none';
+        }
+    }
+
+    if (driverSearchInput) {
+        driverSearchInput.addEventListener('input', filterDriverTable);
+    }
+    if (driverStatusFilter) {
+        driverStatusFilter.addEventListener('change', filterDriverTable);
+    }
+    if (driverVehicleFilter) {
+        driverVehicleFilter.addEventListener('change', filterDriverTable);
+    }
+    if (driverSearchClearBtn) {
+        driverSearchClearBtn.addEventListener('click', function() {
+            driverSearchInput.value = '';
+            filterDriverTable();
+            driverSearchInput.focus();
+        });
+    }
 });
 </script>
 
