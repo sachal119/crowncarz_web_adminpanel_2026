@@ -163,45 +163,46 @@
         {{ ucfirst(str_replace('_', ' ', $currentStatus)) }}
     </span>
 </td>
-            <!--<td>-->
-            <!--  <div class="dropdown">-->
-            <!--    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">-->
-            <!--      <i class="bi bi-three-dots-vertical"></i>-->
-            <!--    </button>-->
-            <!--    <ul class="dropdown-menu dropdown-menu-end">-->
-            <!--      <li>-->
-            <!--        <a class="dropdown-item d-flex align-items-center" href="{{ route('bookings.edit', $booking['id']) }}">-->
-            <!--          <i class="bi bi-pencil me-2"></i> Edit Job-->
-            <!--        </a>-->
-            <!--      </li>-->
-                  <!-- Send Confirmation Email -->
-            <!--      <li>-->
-            <!--        <a class="dropdown-item d-flex align-items-center text-success send-confirmation-email-btn"-->
-            <!--           href="#"-->
-            <!--           data-booking-id="{{ $booking['id'] ?? '' }}"-->
-            <!--           data-passenger-email="{{ $booking['email'] ?? '' }}"-->
-            <!--           data-passenger-name="{{ $booking['passenger_name'] }}">-->
-            <!--            <i class="bi bi-envelope me-2"></i> Send Confirmation Email-->
-            <!--        </a>-->
-            <!--      </li>-->
-            <!--      <li>-->
-            <!--        <a class="dropdown-item d-flex align-items-center text-success" href="{{ route('bookings.receipt', $booking['id']) }}">-->
-            <!--          <i class="bi bi-receipt me-2"></i> Receipt-->
-            <!--        </a>-->
-            <!--      </li>-->
-            <!--      <li>-->
-            <!--        <a class="dropdown-item d-flex align-items-center text-info" href="{{ route('bookings.return', $booking['id']) }}">-->
-            <!--          <i class="bi bi-arrow-repeat me-2"></i> Create Return Job-->
-            <!--        </a>-->
-            <!--      </li>-->
-            <!--      <li>-->
-            <!--        <a class="dropdown-item d-flex align-items-center" href="{{ route('bookings.edit', $booking['id']) }}">-->
-            <!--          <i class="bi bi-box-arrow-in-right me-2"></i> ReOpen Job-->
-            <!--        </a>-->
-            <!--      </li>-->
-            <!--    </ul>-->
-            <!--  </div>-->
-            <!--</td>-->
+            {{-- Actions column currently hidden
+            <td>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center" href="{{ route('bookings.edit', $booking['id'] ?? '') }}">
+                      <i class="bi bi-pencil me-2"></i> Edit Job
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center text-success send-confirmation-email-btn"
+                       href="#"
+                       data-booking-id="{{ $booking['id'] ?? '' }}"
+                       data-passenger-email="{{ $booking['email'] ?? '' }}"
+                       data-passenger-name="{{ $booking['passenger_name'] ?? '' }}">
+                        <i class="bi bi-envelope me-2"></i> Send Confirmation Email
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center text-success" href="{{ route('bookings.receipt', $booking['id'] ?? '') }}">
+                      <i class="bi bi-receipt me-2"></i> Receipt
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center text-info" href="{{ route('bookings.return', $booking['id'] ?? '') }}">
+                      <i class="bi bi-arrow-repeat me-2"></i> Create Return Job
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center" href="{{ route('bookings.edit', $booking['id'] ?? '') }}">
+                      <i class="bi bi-box-arrow-in-right me-2"></i> ReOpen Job
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </td>
+            --}}
           </tr>
           @empty
           <tr>

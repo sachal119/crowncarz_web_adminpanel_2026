@@ -140,7 +140,7 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li>
-                    <a class="dropdown-item d-flex align-items-center" href="{{ route('bookings.edit', $booking['id']) }}">
+                    <a class="dropdown-item d-flex align-items-center" href="{{ route('bookings.edit', $booking['id'] ?? '') }}">
                       <i class="bi bi-pencil me-2"></i> Edit Job
                     </a>
                   </li>
@@ -150,22 +150,22 @@
                        href="#"
                        data-booking-id="{{ $booking['id'] ?? '' }}"
                        data-passenger-email="{{ $booking['email'] ?? '' }}"
-                       data-passenger-name="{{ $booking['passenger_name'] }}">
+                       data-passenger-name="{{ $booking['passenger_name'] ?? '' }}">
                         <i class="bi bi-envelope me-2"></i> Send Confirmation Email
                     </a>
                   </li>
                   <li>
-                    <a class="dropdown-item d-flex align-items-center text-success" href="{{ route('bookings.receipt', $booking['id']) }}">
+                    <a class="dropdown-item d-flex align-items-center text-success" href="{{ route('bookings.receipt', $booking['id'] ?? '') }}">
                       <i class="bi bi-receipt me-2"></i> Receipt
                     </a>
                   </li>
                   <li>
-                    <a class="dropdown-item d-flex align-items-center text-info" href="{{ route('bookings.return', $booking['id']) }}">
+                    <a class="dropdown-item d-flex align-items-center text-info" href="{{ route('bookings.return', $booking['id'] ?? '') }}">
                       <i class="bi bi-arrow-repeat me-2"></i> Create Return Job
                     </a>
                   </li>
                   <li>
-                    <a class="dropdown-item d-flex align-items-center" href="{{ route('bookings.edit', $booking['id']) }}">
+                    <a class="dropdown-item d-flex align-items-center" href="{{ route('bookings.edit', $booking['id'] ?? '') }}">
                       <i class="bi bi-box-arrow-in-right me-2"></i> ReOpen Job
                     </a>
                   </li>

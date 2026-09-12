@@ -82,7 +82,7 @@
     <strong>Booking ID:</strong>
 </td>
 <td class="details-value text-light" width="65%" align="right" style="padding-right:8px;">
-    {{ $booking['ref_no'] }}
+    {{ $booking['ref_no'] ?? $booking['id'] ?? 'N/A' }}
 </td>
 </tr>
 </table>

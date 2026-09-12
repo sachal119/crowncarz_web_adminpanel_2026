@@ -5,12 +5,12 @@
     <div class="card shadow-sm border-0">
         <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">🚘 Track Driver</h5>
-            <span class="badge bg-light text-dark">Booking Ref: {{ $booking['ref_no'] }}</span>
+            <span class="badge bg-light text-dark">Booking Ref: {{ $booking['ref_no'] ?? $booking['id'] ?? 'N/A' }}</span>
         </div>
 
         <div class="card-body">
-            <p><strong>Pickup:</strong> {{ $booking['pickup_address'] }}</p>
-            <p><strong>Dropoff:</strong> {{ $booking['dropoff_address'] }}</p>
+            <p><strong>Pickup:</strong> {{ $booking['pickup_address'] ?? 'N/A' }}</p>
+            <p><strong>Dropoff:</strong> {{ $booking['dropoff_address'] ?? 'N/A' }}</p>
 
             <div id="map" style="height: 520px; border-radius: 10px;"></div>
         </div>
@@ -24,8 +24,8 @@ let directionsService;
 let directionsRenderer;
 
 const driverId = "{{ $booking['driver_id'] ?? '' }}";
-const pickupAddress = "{{ $booking['pickup_address'] }}";
-const dropoffAddress = "{{ $booking['dropoff_address'] }}";
+const pickupAddress = "{{ $booking['pickup_address'] ?? '' }}";
+const dropoffAddress = "{{ $booking['dropoff_address'] ?? '' }}";
 
 function initMap() {
 

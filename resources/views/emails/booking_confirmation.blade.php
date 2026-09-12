@@ -1,5 +1,5 @@
 @php
-$paymentType = strtolower($booking['payment_type']);
+$paymentType = strtolower($booking['payment_type'] ?? 'cash');
 
 if ($paymentType === 'cash') {
     $paymentLabel = 'Pay in Car';
@@ -7,6 +7,8 @@ if ($paymentType === 'cash') {
     $paymentLabel = 'Payment Received';
 } elseif ($paymentType === 'account') {
     $paymentLabel = 'Account';
+} else {
+    $paymentLabel = ucfirst($paymentType);
 }
 @endphp
 
