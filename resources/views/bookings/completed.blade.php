@@ -97,17 +97,17 @@
         <tbody>
           @forelse ($completedBookings as $booking)
           <tr style="border-bottom: 1px solid #F5DEB3;">
-            <td class="text-dark fw-semibold">{{ $booking['ref_no'] }}</td>
-            <td>{{ $booking['passenger_name'] }}<br><small>{{ $booking['phone_no'] ?? '' }}</small></td>
+            <td class="text-dark fw-semibold">{{ $booking['ref_no'] ?? $booking['id'] ?? '-' }}</td>
+            <td>{{ $booking['passenger_name'] ?? '-' }}<br><small>{{ $booking['phone_no'] ?? '' }}</small></td>
             <td>
-              {{ Str::limit($booking['pickup_address'], 35) }}
+              {{ Str::limit($booking['pickup_address'] ?? '-', 35) }}
               <br><small class="text-muted">Pickup Location</small>
             </td>
             <td>
-              {{ Str::limit($booking['dropoff_address'], 35) }}
+              {{ Str::limit($booking['dropoff_address'] ?? '-', 35) }}
               <br><small class="text-muted">Dropoff Location</small>
             </td>
-            <td>{{ \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y, h:i A') }}</td>
+            <td>{{ !empty($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y, h:i A') : '-' }}</td>
             <td>{{ !empty($booking['driver_name']) ? $booking['driver_name'] : 'Not Assigned' }}</td>
             <td>{{ !empty($booking['price']) ? $booking['price'] : '-' }}</td>
             @php

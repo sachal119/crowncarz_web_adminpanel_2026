@@ -210,9 +210,13 @@ public function cancelledBookings()
 
         if ($bookingsRef) {
             foreach ($bookingsRef as $key => $booking) {
+                if (!is_array($booking)) {
+                    continue;
+                }
 
+                $status = strtolower($booking['status'] ?? '');
                 // only cancelled bookings
-                if (isset($booking['status']) && strtolower($booking['status']) !== 'job_cancelled') {
+                if ($status !== 'job_cancelled' && $status !== 'cancelled') {
                     continue;
                 }
                 
@@ -312,13 +316,16 @@ public function searchCancelledBookings(Request $request)
 
     if ($bookingsData) {
         foreach ($bookingsData as $key => $booking) {
+            if (!is_array($booking)) {
+                continue;
+            }
             $driverId = $booking['driver_id'] ?? null;
-$booking['driver_name'] = $driverId && isset($driversMap[$driverId])
-    ? $driversMap[$driverId]
-    : 'Not Assigned';
+            $booking['driver_name'] = $driverId && isset($driversMap[$driverId])
+                ? $driversMap[$driverId]
+                : 'Not Assigned';
             
-            
-            if (isset($booking['status']) && strtolower($booking['status']) === 'job_cancelled') {
+            $status = strtolower($booking['status'] ?? '');
+            if ($status === 'job_cancelled' || $status === 'cancelled') {
                 $booking['id'] = $key;
                 $cancelledBookings->push($booking);
             }
