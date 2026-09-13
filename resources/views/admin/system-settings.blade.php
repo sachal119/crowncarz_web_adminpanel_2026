@@ -138,16 +138,40 @@
                                 @if(!empty($waStatus['tenant']['name'] ?? null))
                                     <div class="text-muted small">Tenant: <strong>{{ $waStatus['tenant']['name'] }}</strong></div>
                                 @endif
-                            @elseif(!empty($waStatus['qr']))
+                            @elseif(!empty($waStatus['qr']) || ($waStatus['status'] ?? '') === 'QR_REQUIRED')
+                                @php
+                                    $connectUrl = $waStatus['connect_url'] ?? (!empty($waStatus['tenant']['id']) ? rtrim($waStatus['base_url'] ?? 'https://sachalabdullah.shop', '/') . '/connect?session=' . urlencode($waStatus['tenant']['id']) : null);
+                                @endphp
                                 <h5 class="fw-bold text-dark mb-2">Scan QR Code with WhatsApp</h5>
                                 <p class="text-muted small mb-3">
                                     Open WhatsApp on your phone &gt; <strong>Linked Devices</strong> &gt; <strong>Link a Device</strong> and point your camera at this QR code:
                                 </p>
-                                <div class="bg-white p-3 rounded-4 shadow-sm border d-inline-block mb-3">
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={{ urlencode($waStatus['qr']) }}" 
-                                         alt="WhatsApp QR Code" class="img-fluid rounded-3" style="width: 200px; height: 200px;">
+                                
+                                <!-- QR Display Box -->
+                                <div class="bg-white p-3 rounded-4 shadow-sm border d-inline-flex justify-content-center align-items-center mb-2" style="min-width: 220px; min-height: 220px;">
+                                    <div id="waQrCodeContainer" class="d-flex justify-content-center align-items-center">
+                                        @if(!empty($waStatus['qr']))
+                                            <img id="waQrImg" 
+                                                 src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={{ urlencode($waStatus['qr']) }}" 
+                                                 onerror="this.onerror=null; this.src='https://quickchart.io/qr?size=220&text={{ urlencode($waStatus['qr']) }}';"
+                                                 alt="WhatsApp QR Code" class="img-fluid rounded-3" style="width: 200px; height: 200px;">
+                                        @else
+                                            <div class="text-muted small p-3">Generating QR code...</div>
+                                        @endif
+                                    </div>
                                 </div>
-                                <div class="text-muted small d-flex align-items-center justify-content-center gap-2">
+
+                                <!-- Direct Link if QR fails or user prefers web link -->
+                                @if(!empty($connectUrl))
+                                    <div class="mt-2 mb-3">
+                                        <a href="{{ $connectUrl }}" target="_blank" class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-xs">
+                                            <i class="bi bi-box-arrow-up-right me-1"></i> Open Connection Page in New Tab
+                                        </a>
+                                        <div class="text-muted mt-1" style="font-size: 11.5px;">(Agar QR code nazar na aye tou upar wale link se open karein)</div>
+                                    </div>
+                                @endif
+
+                                <div class="text-muted small d-flex align-items-center justify-content-center gap-2 mt-2">
                                     <span class="spinner-grow spinner-grow-sm text-success" role="status"></span>
                                     <span>Waiting for scan... (Auto-polling)</span>
                                 </div>
@@ -258,12 +282,53 @@
 </div>
 
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 let waPollingInterval = null;
 
+function drawQRCode(containerId, qrText) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!qrText) {
+        container.innerHTML = '<div class="text-muted small p-3">Generating QR code...</div>';
+        return;
+    }
+
+    try {
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(container, {
+                text: qrText,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            return;
+        }
+    } catch (e) {
+        console.warn("Client QRCode generator error, falling back to images:", e);
+    }
+
+    // Fallback if QRCode.js library fails to load
+    const img = document.createElement('img');
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrText)}`;
+    img.onerror = function() {
+        this.onerror = null;
+        this.src = `https://quickchart.io/qr?size=220&text=${encodeURIComponent(qrText)}`;
+    };
+    img.alt = "WhatsApp QR Code";
+    img.className = "img-fluid rounded-3";
+    img.style.width = "200px";
+    img.style.height = "200px";
+    container.appendChild(img);
+}
+
 async function checkWhatsAppStatus() {
     try {
-        const res = await fetch("{{ route('whatsapp.status.ajax') }}", {
+        const res = await fetch("{{ route('whatsapp.status') }}", {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
@@ -305,7 +370,7 @@ function renderWhatsAppStatus(data) {
             </div>
             ${data.tenant?.name ? `<div class="text-muted small">Tenant: <strong>${data.tenant.name}</strong></div>` : ''}
         `;
-    } else if (data.qr) {
+    } else if (data.qr || data.status === 'QR_REQUIRED') {
         // Start polling if not already started
         if (!waPollingInterval) {
             waPollingInterval = setInterval(checkWhatsAppStatus, 5000);
@@ -317,21 +382,41 @@ function renderWhatsAppStatus(data) {
             </span>
         `;
 
-        const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.qr)}`;
+        const gatewayBaseUrl = data.base_url || document.getElementById('waGatewayUrl')?.value.trim() || 'https://sachalabdullah.shop';
+        const connectUrl = data.connect_url || (data.tenant?.id ? `${gatewayBaseUrl.replace(/\/$/, '')}/connect?session=${encodeURIComponent(data.tenant.id)}` : null);
+
+        let directLinkHtml = '';
+        if (connectUrl) {
+            directLinkHtml = `
+                <div class="mt-2 mb-3">
+                    <a href="${connectUrl}" target="_blank" class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-xs">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Open Connection Page in New Tab
+                    </a>
+                    <div class="text-muted mt-1" style="font-size: 11.5px;">(Agar QR code nazar na aye tou upar wale link se open karein)</div>
+                </div>
+            `;
+        }
 
         detailsContainer.innerHTML = `
             <h5 class="fw-bold text-dark mb-2">Scan QR Code with WhatsApp</h5>
             <p class="text-muted small mb-3">
                 Open WhatsApp on your phone &gt; <strong>Linked Devices</strong> &gt; <strong>Link a Device</strong> and point your camera at this QR code:
             </p>
-            <div class="bg-white p-3 rounded-4 shadow-sm border d-inline-block mb-3">
-                <img src="${qrImgUrl}" alt="WhatsApp QR Code" class="img-fluid rounded-3" style="width: 200px; height: 200px;">
+            <div class="bg-white p-3 rounded-4 shadow-sm border d-inline-flex justify-content-center align-items-center mb-2" style="min-width: 220px; min-height: 220px;">
+                <div id="waQrCodeContainer" class="d-flex justify-content-center align-items-center"></div>
             </div>
-            <div class="text-muted small d-flex align-items-center justify-content-center gap-2">
+            ${directLinkHtml}
+            <div class="text-muted small d-flex align-items-center justify-content-center gap-2 mt-2">
                 <span class="spinner-grow spinner-grow-sm text-success" role="status"></span>
                 <span>Waiting for scan... (Auto-polling)</span>
             </div>
         `;
+
+        if (data.qr) {
+            drawQRCode('waQrCodeContainer', data.qr);
+        } else {
+            document.getElementById('waQrCodeContainer').innerHTML = '<div class="text-muted small p-3">Generating QR code...</div>';
+        }
     } else if (data.status === 'NOT_CONFIGURED') {
         badgeContainer.innerHTML = `
             <span class="badge bg-secondary text-white fw-semibold px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.9rem;">
@@ -468,6 +553,11 @@ document.addEventListener('DOMContentLoaded', function() {
             btnToggleMask.innerHTML = isMasked ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
         });
     }
+
+    // Initial render of QR code via client-side QRCode.js if available
+    @if(!empty($waStatus['qr']))
+        drawQRCode('waQrCodeContainer', @json($waStatus['qr']));
+    @endif
 
     // Auto start polling if QR code is already visible
     @if(($waStatus['status'] ?? '') === 'QR_REQUIRED' || !empty($waStatus['qr']))

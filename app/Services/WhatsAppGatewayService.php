@@ -111,24 +111,34 @@ class WhatsAppGatewayService
                 $connected = (bool) ($data['connected'] ?? false);
                 $status = $data['status'] ?? ($connected ? 'CONNECTED' : 'DISCONNECTED');
 
+                $connectUrl = $data['connect_url'] ?? null;
+                if ($connectUrl && !str_starts_with($connectUrl, 'http')) {
+                    $connectUrl = rtrim($this->baseUrl, '/') . '/' . ltrim($connectUrl, '/');
+                } elseif (!$connectUrl && !empty($tenant['id'])) {
+                    $connectUrl = rtrim($this->baseUrl, '/') . '/connect?session=' . urlencode($tenant['id']);
+                }
+
                 return [
-                    'connected' => $connected,
-                    'status'    => $status,
-                    'qr'        => $data['qr'] ?? null,
-                    'phone'     => $phone,
-                    'tenant'    => $tenant,
-                    'connect_url' => $data['connect_url'] ?? null
+                    'connected'   => $connected,
+                    'status'      => $status,
+                    'qr'          => $data['qr'] ?? null,
+                    'phone'       => $phone,
+                    'tenant'      => $tenant,
+                    'connect_url' => $connectUrl,
+                    'base_url'    => $this->baseUrl
                 ];
             }
 
             $errorData = $response->json();
             return [
-                'connected' => false,
-                'status'    => 'ERROR',
-                'qr'        => null,
-                'phone'     => null,
-                'tenant'    => null,
-                'message'   => $errorData['message'] ?? 'Gateway returned error: HTTP ' . $response->status()
+                'connected'   => false,
+                'status'      => 'ERROR',
+                'qr'          => null,
+                'phone'       => null,
+                'tenant'      => null,
+                'connect_url' => null,
+                'base_url'    => $this->baseUrl,
+                'message'     => $errorData['message'] ?? 'Gateway returned error: HTTP ' . $response->status()
             ];
         } catch (Throwable $e) {
             Log::error('WhatsApp Status Check Error: ' . $e->getMessage());
