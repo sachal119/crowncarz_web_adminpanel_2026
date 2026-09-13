@@ -1359,27 +1359,24 @@ function replacePlaceholders(template, data) {
 }
 
 // -------------------
-// RECIPIENT VALIDATION
+// RECIPIENT VALIDATION (Accepts any international country format)
 function getRecipientNumber() {
     const input = document.getElementById("sms_recipient");
-    const number = input.value.trim();
+    const number = input ? input.value.trim() : "";
     const errorEl = document.getElementById("sms_recipient_error");
 
-    // if (!/^44\d{9,12}$/.test(number)) {
-    //     errorEl.style.display = "block";
-    //     return null;
-    // } else {
-    //     errorEl.style.display = "none";
-    //     return number;
-    // }
-    if (!/^\d{9,12}$/.test(number)) {
-    errorEl.style.display = "block";
-    return null;
-} else {
-    errorEl.style.display = "none";
-    return number;
-}
+    if (!number) {
+        if (errorEl) {
+            errorEl.innerText = "Please enter recipient number.";
+            errorEl.style.display = "block";
+        }
+        return null;
+    }
 
+    if (errorEl) {
+        errorEl.style.display = "none";
+    }
+    return number;
 }
 
 
@@ -1574,30 +1571,61 @@ document.getElementById("btn-arrived-sms").addEventListener("click", () => loadS
 document.getElementById("btn-complete-sms").addEventListener("click", () => loadSMS("complete"));
 
 async function sendWhatsAppMessage(mobile, message) {
+    const btn = document.getElementById("btn-send-whatsapp-modal");
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending...';
+    }
+
     try {
+        const bookingIdInput = document.querySelector('input[name="booking_id"]') || document.querySelector('#bookingId') || document.querySelector('input[name="id"]');
+        const bookingId = bookingIdInput ? bookingIdInput.value : '';
+
         const response = await fetch(@json(route('bookings.sendWhatsAppDashboard')), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "Accept": "application/json",
                 "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
             },
-            body: JSON.stringify({ phone: mobile, message: message })
+            body: JSON.stringify({ 
+                booking_id: bookingId,
+                phone: mobile, 
+                message: message 
+            })
         });
 
-        const result = await response.json();
-        if (response.ok && result?.success === true) {
-            alert("✅ WhatsApp Message Sent Successfully!");
+        const result = await response.json().catch(() => null);
+        console.log("WhatsApp API Response:", response.status, result);
+
+        if (response.ok && (result?.success === true || result?.status === 'success')) {
+            alert("✅ " + (result?.message || "WhatsApp Message Sent Successfully!"));
             const modalEl = document.getElementById("smsModal");
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();
             return;
         }
 
-        const errorMessage = result?.message || "Failed to send WhatsApp message.";
-        alert(`❌ ${errorMessage}`);
+        // Show detailed error message from backend
+        let errMsg = result?.message || result?.error || `Server Error (${response.status})`;
+        if (result?.details?.message && result.details.message !== errMsg) {
+            errMsg += `\nDetails: ${result.details.message}`;
+        }
+        if (result?.errors) {
+            const validationErrors = Object.values(result.errors).flat().join("\n");
+            errMsg += `\nValidation: ${validationErrors}`;
+        }
+
+        alert(`❌ WhatsApp Error:\n${errMsg}`);
     } catch (err) {
         console.error("WhatsApp Sending Failed:", err);
-        alert("Failed to send WhatsApp message");
+        alert(`❌ WhatsApp Network Error:\n${err.message || 'Unable to connect to server'}`);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
     }
 }
 

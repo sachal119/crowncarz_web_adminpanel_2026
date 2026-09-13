@@ -7742,24 +7742,27 @@ public function searchBookings(Request $request)
     public function sendWhatsApp(Request $request, WhatsAppGatewayService $wa)
     {
         $request->validate([
-            'booking_id' => 'required|string',
-            'phone' => 'required|string|max:30',
-            'message' => 'required|string|max:4000',
+            'booking_id' => 'nullable|string',
+            'phone'      => 'required|string|max:35',
+            'message'    => 'required|string|max:4000',
         ]);
 
-        $result = $wa->sendTextMessage(
-            (string) $request->string('phone')->trim(),
-            (string) $request->string('message')
-        );
+        $phone = (string) $request->string('phone')->trim();
+        $message = (string) $request->string('message');
 
-        if ($result['success'] ?? false) {
-            $this->recordBookingActivity($request->booking_id, 'WhatsApp Sent', 'Sent WhatsApp message to ' . $request->phone . '.');
+        $result = $wa->sendTextMessage($phone, $message);
+
+        if (($result['success'] ?? false) && $request->filled('booking_id')) {
+            $this->recordBookingActivity($request->booking_id, 'WhatsApp Sent', 'Sent WhatsApp message to ' . $phone . '.');
         }
 
         return response()->json([
-            'status' => ($result['success'] ?? false) ? 'success' : 'error',
+            'success' => $result['success'] ?? false,
+            'status'  => ($result['success'] ?? false) ? 'success' : 'error',
+            'message' => $result['message'] ?? (($result['success'] ?? false) ? 'WhatsApp message sent successfully.' : 'Failed to send WhatsApp message.'),
+            'details' => $result['details'] ?? null,
             ...$result,
-        ], ($result['success'] ?? false) ? 200 : 502);
+        ], ($result['success'] ?? false) ? 200 : 400);
     }
 
     public function sendReceiptWhatsApp(Request $request, $bookingId, WhatsAppGatewayService $wa)

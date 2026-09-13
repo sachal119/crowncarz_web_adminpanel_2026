@@ -59,7 +59,7 @@ class WhatsAppGatewayService
 
     /**
      * Format phone number to international standard (digits only without leading + or 00).
-     * Automatically converts UK 07... numbers to 447...
+     * Automatically handles Pakistani (03xx -> 923xx), UK (07xx -> 447xx), and international prefixes.
      */
     public function formatPhoneNumber(string $phone): string
     {
@@ -67,13 +67,17 @@ class WhatsAppGatewayService
         $cleaned = preg_replace('/[^\d+]/', '', trim($phone));
         $cleaned = ltrim($cleaned, '+');
 
-        // Remove double zero prefix if present (e.g. 0044 -> 44)
+        // Remove double zero prefix if present (e.g. 0044 -> 44, 0092 -> 92)
         if (str_starts_with($cleaned, '00')) {
             $cleaned = substr($cleaned, 2);
         }
 
-        // Convert UK standard format (07... or 01... or 02...) to 44...
-        if (str_starts_with($cleaned, '0')) {
+        // Pakistani mobile numbers starting with 03 (e.g. 0321..., 0300...) -> 923...
+        if (str_starts_with($cleaned, '03') && strlen($cleaned) >= 10 && strlen($cleaned) <= 11) {
+            $cleaned = '92' . substr($cleaned, 1);
+        }
+        // UK mobile and landline numbers starting with 07, 01, 02, 08, 09 -> 44...
+        elseif (preg_match('/^0[12789]/', $cleaned) && strlen($cleaned) >= 10 && strlen($cleaned) <= 11) {
             $cleaned = '44' . substr($cleaned, 1);
         }
 
