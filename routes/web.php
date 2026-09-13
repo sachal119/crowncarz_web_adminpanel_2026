@@ -109,7 +109,8 @@ Route::post('/bookings/send-email', [BookingController::class, 'sendEmaildashboa
 Route::post('/admin/bookings/send-email', [BookingController::class, 'sendEmaildashboard']);
 
 // WhatsApp Gateway Connection Routes
-Route::get('/admin/whatsapp/status', [WhatsAppConnectionController::class, 'getStatus'])->name('whatsapp.status.ajax');
+Route::get('/admin/whatsapp/status', [WhatsAppConnectionController::class, 'getStatus'])->name('whatsapp.status');
+Route::get('/whatsapp/status', [WhatsAppConnectionController::class, 'getStatus'])->name('whatsapp.status.ajax');
 Route::post('/admin/whatsapp/settings', [WhatsAppConnectionController::class, 'saveSettings'])->name('whatsapp.settings.save');
 Route::post('/admin/whatsapp/test', [WhatsAppConnectionController::class, 'sendTestMessage'])->name('whatsapp.test.send');
 
