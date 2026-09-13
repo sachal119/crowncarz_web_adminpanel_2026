@@ -786,6 +786,7 @@
 
       <div class="modal-footer">
         <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-success" id="btn-send-whatsapp-modal"><i class="bi bi-whatsapp me-1"></i> Send WhatsApp</button>
         <button class="btn btn-primary" id="btn-send-sms-modal">Send SMS</button>
       </div>
 
@@ -1571,6 +1572,42 @@ document.getElementById("btn-confirm-sms").addEventListener("click", () => loadS
 document.getElementById("btn-onroute-sms").addEventListener("click", () => loadSMS("onroute"));
 document.getElementById("btn-arrived-sms").addEventListener("click", () => loadSMS("arrival"));
 document.getElementById("btn-complete-sms").addEventListener("click", () => loadSMS("complete"));
+
+async function sendWhatsAppMessage(mobile, message) {
+    try {
+        const response = await fetch(@json(route('bookings.sendWhatsAppDashboard')), {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ phone: mobile, message: message })
+        });
+
+        const result = await response.json();
+        if (response.ok && result?.success === true) {
+            alert("✅ WhatsApp Message Sent Successfully!");
+            const modalEl = document.getElementById("smsModal");
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            return;
+        }
+
+        const errorMessage = result?.message || "Failed to send WhatsApp message.";
+        alert(`❌ ${errorMessage}`);
+    } catch (err) {
+        console.error("WhatsApp Sending Failed:", err);
+        alert("Failed to send WhatsApp message");
+    }
+}
+
+// Send directly from modal preview
+document.getElementById("btn-send-whatsapp-modal")?.addEventListener("click", () => {
+    const message = document.querySelector("#smsMessage").value;
+    const recipient = getRecipientNumber();
+    if (!recipient) return;
+    sendWhatsAppMessage(recipient, message);
+});
 
 // Send directly from modal preview
 document.getElementById("btn-send-sms-modal").addEventListener("click", () => {

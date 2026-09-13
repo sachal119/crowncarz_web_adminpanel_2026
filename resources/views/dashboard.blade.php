@@ -889,6 +889,43 @@ td{
     </div>
 </div>
 
+<!-- Send WhatsApp Modal -->
+<div class="modal fade" id="sendWhatsAppModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #075E54 0%, #128C7E 100%);">
+                <h6 class="modal-title mb-0 fw-bold"><i class="bi bi-whatsapp me-2"></i> Send WhatsApp Message</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <input type="hidden" id="waBookingId">
+                <input type="hidden" id="waRawBookingId">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Recipient WhatsApp Phone Number</label>
+                    <input type="text" id="waPhone" class="form-control rounded-3" placeholder="+447123456789">
+                    <div class="form-text text-muted">Auto-formatted for WhatsApp (e.g. 07... or 447...)</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Confirmation Message</label>
+                    <textarea id="waMessage" class="form-control rounded-3" rows="6"></textarea>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-success flex-grow-1 fw-semibold py-2 rounded-3" id="sendWhatsAppNowBtn" style="background-color: #128C7E; border-color: #128C7E;">
+                        <i class="bi bi-send-fill me-1"></i> Send Confirmation
+                    </button>
+                    <button class="btn btn-outline-success fw-semibold py-2 rounded-3" id="sendWhatsAppReceiptBtn" title="Generate & Send PDF Receipt directly via WhatsApp">
+                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Send PDF Receipt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 
@@ -1846,6 +1883,7 @@ function buildBookingRowHtml(booking, isNew = false) {
                         <a class="dropdown-item d-flex align-items-center text-warning send-confirmation-sms-btn"
                            href="#"
                            data-booking-id="${booking.ref_no || id}"
+                           data-raw-id="${id}"
                            data-phone="${booking.phone_no || ''}"
                            data-name="${booking.passenger_name || ''}"
                            data-date="${pickupDate}"
@@ -1858,6 +1896,25 @@ function buildBookingRowHtml(booking, isNew = false) {
                            data-flight_no="${booking.flight_no || ''}"
                            data-via="${viasText}">
                             <i class="bi bi-chat-left-text me-2"></i> Send Confirmation SMS
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center text-success send-confirmation-whatsapp-btn"
+                           href="#"
+                           data-booking-id="${booking.ref_no || id}"
+                           data-raw-id="${id}"
+                           data-phone="${booking.phone_no || ''}"
+                           data-name="${booking.passenger_name || ''}"
+                           data-date="${pickupDate}"
+                           data-time="${pickupTime}"
+                           data-vehicle="${booking.vehicle_make || ''}"
+                           data-price="${booking.price || ''}"
+                           data-payment="${booking.payment_type ? booking.payment_type.charAt(0).toUpperCase() + booking.payment_type.slice(1) : ''}"
+                           data-pickup="${booking.pickup_address || ''}"
+                           data-dropoff="${booking.dropoff_address || ''}"
+                           data-flight_no="${booking.flight_no || ''}"
+                           data-via="${viasText}">
+                            <i class="bi bi-whatsapp me-2"></i> Send Confirmation WhatsApp
                         </a>
                     </li>
                     <li class="action-recall-item" style="${hasDriver ? '' : 'display:none;'}">
@@ -2550,6 +2607,59 @@ Website: www.crowncarz.com`;
         });
     }
 
+    // Quick WhatsApp trigger from inside View Booking modal
+    const modalQuickWaBtn = document.getElementById('modal-btn-whatsapp');
+    if (modalQuickWaBtn) {
+        modalQuickWaBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!activeViewBookingData) return;
+            const b = activeViewBookingData;
+            const bookingId = b.id || b.booking_id || '';
+            const phone = b.phone_no || '';
+            const passengerName = b.passenger_name || '';
+            const pickupDate = b.pickup_date || '';
+            const pickupTime = b.pickup_time || '';
+            const vehicleType = b.vehicle_make || b.vehicle_id || '';
+            const price = b.price || '';
+            const payment = b.payment_type || '';
+            const pickup = b.pickup_address || '';
+            const dropoff = b.dropoff_address || '';
+            const via = Array.isArray(b.vias) ? b.vias.join(', ') : (b.vias || '-');
+            const flight_no = b.flight_no || '';
+
+            const waModalEl = document.getElementById('sendWhatsAppModal');
+            if (!waModalEl) return;
+
+            document.getElementById('waBookingId').value = b.ref_no || bookingId;
+            document.getElementById('waRawBookingId').value = bookingId;
+            document.getElementById('waPhone').value = phone;
+
+            const messageTemplate = `Dear ${passengerName},
+
+Please find booking confirmation for job reference: ${b.ref_no || bookingId}
+Job Date: ${pickupDate}
+Job Time: ${pickupTime}
+Phone No: ${phone}
+Pickup: ${pickup}
+Dropoff: ${dropoff}
+Via: ${via}
+Flight No: ${flight_no}
+Vehicle Type: ${vehicleType}
+Total Fare: £${price}
+Payment Type: ${payment}
+
+Kind Regards,
+Crown Carz Ltd.
+Tel: +44(0)1189 47 47 47
+Email: info@crowncarz.com
+Website: www.crowncarz.com`;
+
+            document.getElementById('waMessage').value = messageTemplate;
+            const waModal = bootstrap.Modal.getOrCreateInstance(waModalEl);
+            waModal.show();
+        });
+    }
+
     // Quick Email trigger from inside View Booking modal
     const modalQuickEmailBtn = document.getElementById('modal-btn-email');
     if (modalQuickEmailBtn) {
@@ -2639,6 +2749,55 @@ Website: www.crowncarz.com`;
 
             document.getElementById('smsMessage').value = messageTemplate;
             const modal = new bootstrap.Modal(document.getElementById('sendSmsModal'));
+            modal.show();
+        });
+    });
+
+    // Send WhatsApp Modal trigger
+    context.querySelectorAll('.send-confirmation-whatsapp-btn:not([data-bound="true"])').forEach(btn => {
+        btn.setAttribute('data-bound', 'true');
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const bookingId = this.dataset.bookingId || '';
+            const rawId = this.dataset.rawId || bookingId;
+            const phone = this.dataset.phone || '';
+            const passengerName = this.dataset.name || '';
+            const pickupDate = this.dataset.date || '';
+            const pickupTime = this.dataset.time || '';
+            const vehicleType = this.dataset.vehicle || '';
+            const price = this.dataset.price || '';
+            const payment = this.dataset.payment || '';
+            const pickup = this.dataset.pickup || '';
+            const dropoff = this.dataset.dropoff || '';
+            const via = this.dataset.via || '-';
+            const flight_no = this.dataset.flight_no || '';
+
+            document.getElementById('waBookingId').value = bookingId;
+            document.getElementById('waRawBookingId').value = rawId;
+            document.getElementById('waPhone').value = phone;
+
+            const messageTemplate = `Dear ${passengerName},
+
+Please find booking confirmation for job reference: ${bookingId}
+Job Date: ${pickupDate}
+Job Time: ${pickupTime}
+Phone No: ${phone}
+Pickup: ${pickup}
+Dropoff: ${dropoff}
+Via: ${via}
+Flight No: ${flight_no}
+Vehicle Type: ${vehicleType}
+Total Fare: £${price}
+Payment Type: ${payment}
+
+Kind Regards,
+Crown Carz Ltd.
+Tel: +44(0)1189 47 47 47
+Email: info@crowncarz.com
+Website: www.crowncarz.com`;
+
+            document.getElementById('waMessage').value = messageTemplate;
+            const modal = new bootstrap.Modal(document.getElementById('sendWhatsAppModal'));
             modal.show();
         });
     });
@@ -2989,6 +3148,102 @@ document.addEventListener('DOMContentLoaded', function () {
                 showDashboardToast('Error', 'Error sending SMS.', 'danger');
             } finally {
                 this.disabled = false;
+            }
+        });
+    }
+
+    // 🟢 Send WhatsApp Message Submit Handler (AJAX)
+    const sendWaBtn = document.getElementById("sendWhatsAppNowBtn");
+    if (sendWaBtn) {
+        sendWaBtn.addEventListener("click", async function () {
+            const bookingId = document.getElementById("waBookingId").value;
+            const phone = document.getElementById("waPhone").value;
+            const message = document.getElementById("waMessage").value;
+
+            if (!phone.trim()) {
+                showDashboardToast('Required', 'Please enter WhatsApp phone number', 'warning');
+                return;
+            }
+            if (!message.trim()) {
+                showDashboardToast('Required', 'Please enter message content', 'warning');
+                return;
+            }
+
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending...';
+            try {
+                const response = await fetch("{{ route('bookings.sendWhatsAppDashboard') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "X-CSRF-TOKEN": CSRF_TOKEN
+                    },
+                    body: JSON.stringify({ booking_id: bookingId, phone, message })
+                });
+
+                const data = await response.json();
+                if (response.ok && (data.success === true || data.status === 'success')) {
+                    showDashboardToast('WhatsApp Sent', 'WhatsApp confirmation sent successfully!', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById("sendWhatsAppModal"));
+                    if (modal) modal.hide();
+                } else {
+                    showDashboardToast('WhatsApp Failed', data.message || 'WhatsApp message failed to send.', 'danger');
+                }
+            } catch (err) {
+                console.error('WhatsApp send error:', err);
+                showDashboardToast('Error', 'Network error sending WhatsApp message.', 'danger');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-send-fill me-1"></i> Send Confirmation';
+            }
+        });
+    }
+
+    // 🟢 Send WhatsApp PDF Receipt Handler (AJAX)
+    const sendWaReceiptBtn = document.getElementById("sendWhatsAppReceiptBtn");
+    if (sendWaReceiptBtn) {
+        sendWaReceiptBtn.addEventListener("click", async function () {
+            const rawBookingId = document.getElementById("waRawBookingId").value || document.getElementById("waBookingId").value;
+            const phone = document.getElementById("waPhone").value;
+
+            if (!phone.trim()) {
+                showDashboardToast('Required', 'Please enter WhatsApp phone number', 'warning');
+                return;
+            }
+
+            if (!rawBookingId) {
+                showDashboardToast('Required', 'Booking ID not found', 'warning');
+                return;
+            }
+
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generating PDF...';
+            try {
+                const response = await fetch(`{{ url('/booking') }}/${encodeURIComponent(rawBookingId)}/send-receipt-whatsapp`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "X-CSRF-TOKEN": CSRF_TOKEN
+                    },
+                    body: JSON.stringify({ phone: phone })
+                });
+
+                const data = await response.json();
+                if (response.ok && (data.success === true || data.status === 'success')) {
+                    showDashboardToast('Receipt Sent', 'Official booking PDF receipt sent on WhatsApp!', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById("sendWhatsAppModal"));
+                    if (modal) modal.hide();
+                } else {
+                    showDashboardToast('Receipt Failed', data.message || 'Failed to send WhatsApp receipt.', 'danger');
+                }
+            } catch (err) {
+                console.error('WhatsApp receipt error:', err);
+                showDashboardToast('Error', 'Network error sending PDF receipt.', 'danger');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-file-earmark-pdf-fill me-1"></i> Send PDF Receipt';
             }
         });
     }

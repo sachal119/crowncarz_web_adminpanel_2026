@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 // use Mail;
 use App\Mail\CustomerReportMail;
 use App\Mail\TurnoverReportMail;
+use App\Services\WhatsAppGatewayService;
 
 
 class ReportController extends Controller
@@ -1544,4 +1545,236 @@ public function getDriverEmail($id)
 
 
 
+    /**
+     * 🟢 Send Driver Commission Statement PDF via WhatsApp Gateway
+     */
+    public function sendDriverCommissionWhatsApp(Request $request, WhatsAppGatewayService $wa)
+    {
+        $request->validate([
+            'driver_id' => 'required',
+            'from'      => 'required',
+            'to'        => 'required',
+            'phone'     => 'nullable|string|max:30',
+        ]);
+
+        $driverId = $request->driver_id;
+        $from     = $request->from;
+        $to       = $request->to;
+
+        // Fetch driver from Firebase
+        $firebaseDrivers = $this->firebase->getData("drivers") ?? [];
+        $firebaseDriverKey = null;
+        $driverData = null;
+
+        foreach ($firebaseDrivers as $key => $driver) {
+            if ((int) ($driver['id'] ?? 0) === (int) $driverId || (string)($driver['id'] ?? '') === (string)$driverId) {
+                $firebaseDriverKey = $key;
+                $driverData = $driver;
+                break;
+            }
+        }
+
+        if (!$firebaseDriverKey) {
+            return response()->json(['success' => false, 'message' => 'Driver not found in system.'], 404);
+        }
+
+        $phone = $request->input('phone') ?: ($driverData['phone'] ?? null);
+        if (!$phone) {
+            return response()->json(['success' => false, 'message' => 'Driver WhatsApp phone number is required.'], 422);
+        }
+
+        try {
+            $data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to);
+            $driverName = $data['driver']['name'] ?? 'Driver';
+            $callsignRaw = $data['driver']['call_sign'] ?? $data['driver']['callsign'] ?? '';
+            $dateStr = date('d-m-Y');
+            $minutesStr = date('Hi');
+            $fileName = !empty($callsignRaw) 
+                ? "{$driverName}_{$callsignRaw}_{$dateStr}_{$minutesStr}.pdf" 
+                : "{$driverName}_{$dateStr}_{$minutesStr}.pdf";
+
+            $pdf = Pdf::loadView('reports.driver_commission_pdf', array_merge($data, [
+                'driverId' => $driverId
+            ]))->setPaper('a4', 'landscape');
+
+            $rawPdf = $pdf->output();
+
+            $formattedFrom = \Carbon\Carbon::parse($from)->format('d M Y');
+            $formattedTo   = \Carbon\Carbon::parse($to)->format('d M Y');
+
+            $caption = "Dear {$driverName},\n\nPlease find attached your Driver Commission Statement for the period {$formattedFrom} to {$formattedTo}.\n\nThank you,\nCrown Carz Management";
+
+            $result = $wa->sendPdfBinary(
+                phone: (string) $phone,
+                rawPdfContent: $rawPdf,
+                fileName: $fileName,
+                caption: $caption
+            );
+
+            return response()->json($result, ($result['success'] ?? false) ? 200 : 502);
+        } catch (\Throwable $e) {
+            \Log::error('Driver Commission WhatsApp Send Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to generate/send statement: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 🟢 Send Turnover Report PDF via WhatsApp Gateway
+     */
+    public function sendTurnoverWhatsApp(Request $request, WhatsAppGatewayService $wa)
+    {
+        $request->validate([
+            'phone' => 'required|string|max:30',
+            'from'  => 'required|date',
+            'to'    => 'required|date',
+        ]);
+
+        $from = $request->from;
+        $to   = $request->to;
+        $phone = $request->phone;
+
+        try {
+            $totals = $this->getTurnoverData($from, $to);
+            $invoiceDate = date('d M Y');
+
+            $pdf = Pdf::loadView('reports.turnover_export_pdf', [
+                'totals'      => $totals,
+                'from'        => $from,
+                'to'          => $to,
+                'invoiceDate' => $invoiceDate,
+            ]);
+
+            $rawPdf = $pdf->output();
+            $fileName = "Turnover_Report_{$from}_to_{$to}.pdf";
+
+            $formattedFrom = \Carbon\Carbon::parse($from)->format('d M Y');
+            $formattedTo   = \Carbon\Carbon::parse($to)->format('d M Y');
+
+            $caption = "Crown Carz - Official Turnover Report\nPeriod: {$formattedFrom} to {$formattedTo}\nGenerated on: {$invoiceDate}";
+
+            $result = $wa->sendPdfBinary(
+                phone: (string) $phone,
+                rawPdfContent: $rawPdf,
+                fileName: $fileName,
+                caption: $caption
+            );
+
+            return response()->json($result, ($result['success'] ?? false) ? 200 : 502);
+        } catch (\Throwable $e) {
+            \Log::error('Turnover WhatsApp Send Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to generate/send turnover report: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 🟢 Send Customer Report PDF via WhatsApp Gateway
+     */
+    public function sendCustomerReportWhatsApp(Request $request, WhatsAppGatewayService $wa)
+    {
+        $request->validate([
+            'phone'         => 'required|string|max:30',
+            'from'          => 'nullable|date',
+            'to'            => 'nullable|date',
+            'customer_id'   => 'nullable',
+            'customer_type' => 'nullable'
+        ]);
+
+        $from = $request->from;
+        $to   = $request->to;
+        $type = $request->customer_type;
+        $customerId = $request->customer_id;
+        $phone = $request->phone;
+
+        $firebaseBookings = $this->firebase->getData('bookings') ?? [];
+        $customersData    = $this->firebase->getData('customers') ?? [];
+
+        // Selected Customer Details
+        $selectedCustomerEmail = null;
+        $selectedCustomerName  = null;
+
+        if ($customerId) {
+            foreach ($customersData as $customer) {
+                if (isset($customer['id']) && $customer['id'] == $customerId) {
+                    $selectedCustomerEmail = strtolower(trim($customer['email'] ?? ''));
+                    $selectedCustomerName  = $customer['business_name'] ?? 'Customer';
+                    break;
+                }
+            }
+        }
+
+        $filteredBookings = [];
+
+        foreach ($firebaseBookings as $key => $booking) {
+            if (!isset($booking['pickup_time'])) {
+                continue;
+            }
+
+            $pickupTime = \Carbon\Carbon::parse($booking['pickup_time']);
+
+            if ($from && $to) {
+                $fromDate = \Carbon\Carbon::parse($from)->startOfDay();
+                $toDate   = \Carbon\Carbon::parse($to)->endOfDay();
+                if (!$pickupTime->between($fromDate, $toDate)) {
+                    continue;
+                }
+            }
+
+            if ($type && strtolower($booking['payment_type'] ?? '') !== strtolower($type)) {
+                continue;
+            }
+
+            if (strtolower($booking['status'] ?? '') !== 'completed') {
+                continue;
+            }
+
+            if ($customerId) {
+                $bookingEmail = strtolower(trim($booking['email'] ?? ''));
+                $bookingType = $booking['payment_type'] ?? '';
+                if ($bookingType !== $type || $bookingEmail !== $selectedCustomerEmail) {
+                    continue;
+                }
+            }
+
+            $totalPrice          = (float) ($booking['price'] ?? 0.00);
+            $parking             = (float) ($booking['parking'] ?? 0.00);
+            $booking['id']       = $key;
+            $booking['parking']  = $parking;
+            $booking['fare']     = max(0.00, $totalPrice - $parking);
+            $booking['comments'] = $booking['job_comment'] ?? 'N/A';
+
+            $filteredBookings[] = (object) $booking;
+        }
+
+        usort($filteredBookings, function ($a, $b) {
+            $timeA = \Carbon\Carbon::parse($a->pickup_time);
+            $timeB = \Carbon\Carbon::parse($b->pickup_time);
+            return $timeA->lt($timeB) ? -1 : ($timeA->gt($timeB) ? 1 : 0);
+        });
+
+        try {
+            $pdf = Pdf::loadView('reports.customer_report_pdf', [
+                'customers' => $filteredBookings,
+                'from'      => $from,
+                'to'        => $to,
+            ]);
+
+            $rawPdf = $pdf->output();
+            $fileName = "Customer_Report_{$from}_to_{$to}.pdf";
+
+            $customerLabel = $selectedCustomerName ?: 'Customer';
+            $caption = "Dear {$customerLabel},\n\nPlease find attached your Customer Booking Statement for the period {$from} to {$to}.\n\nThank you for choosing Crown Carz.";
+
+            $result = $wa->sendPdfBinary(
+                phone: (string) $phone,
+                rawPdfContent: $rawPdf,
+                fileName: $fileName,
+                caption: $caption
+            );
+
+            return response()->json($result, ($result['success'] ?? false) ? 200 : 502);
+        } catch (\Throwable $e) {
+            \Log::error('Customer Report WhatsApp Send Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to generate/send customer report: ' . $e->getMessage()], 500);
+        }
+    }
 }

@@ -20,6 +20,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\QuickLinkController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\SMSController;
+use App\Http\Controllers\WhatsAppConnectionController;
 use App\Http\Controllers\AdminPageController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\CallSwitchWebhookController;
@@ -81,6 +82,7 @@ Route::prefix('bookings')->group(function () {
     Route::get('{booking}/return', [BookingController::class, 'returnJob'])->name('bookings.return');
     Route::post('{booking}/send-email', [BookingController::class, 'sendConfirmationEmail'])->name('bookings.sendEmail');
     Route::post('{booking}/send-sms', [BookingController::class, 'sendConfirmationSMS'])->name('bookings.sendSMS');
+    Route::post('{booking}/send-whatsapp', [BookingController::class, 'sendConfirmationWhatsApp'])->name('bookings.sendWhatsApp');
     Route::post('{booking}/recall', [BookingController::class, 'recallJob'])->name('bookings.recall');
     Route::post('{booking}/hide', [BookingController::class, 'hideJob'])->name('bookings.hide');
     Route::get('{booking}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
@@ -99,17 +101,17 @@ Route::get('/admin/bookings/{booking}/edit', [BookingController::class, 'edit'])
 
 Route::post('/bookings/send-sms', [BookingController::class, 'sendSms'])
     ->name('bookings.sendSmsDashboard');
+Route::post('/bookings/send-whatsapp', [BookingController::class, 'sendWhatsApp'])
+    ->name('bookings.sendWhatsAppDashboard');
+Route::post('/admin/bookings/send-whatsapp', [BookingController::class, 'sendWhatsApp']);
 Route::post('/bookings/send-email', [BookingController::class, 'sendEmaildashboard'])
     ->name('bookings.sendEmailDashboard');
 Route::post('/admin/bookings/send-email', [BookingController::class, 'sendEmaildashboard']);
 
-// Route::prefix('admin/dashboard')->name('admin.dashboard.')->group(function () {
-//     Route::post('/bookings/send-email', [BookingController::class, 'sendEmaildashboard'])
-//         ->name('bookings.sendEmail');
-// });
-
-
-
+// WhatsApp Gateway Connection Routes
+Route::get('/admin/whatsapp/status', [WhatsAppConnectionController::class, 'getStatus'])->name('whatsapp.status.ajax');
+Route::post('/admin/whatsapp/settings', [WhatsAppConnectionController::class, 'saveSettings'])->name('whatsapp.settings.save');
+Route::post('/admin/whatsapp/test', [WhatsAppConnectionController::class, 'sendTestMessage'])->name('whatsapp.test.send');
 
 Route::get('/payment/success', [BookingController::class, 'paymentSuccess'])->name('payment.success');
 Route::get('/payment/cancel', [BookingController::class, 'paymentCancel'])->name('payment.cancel');
@@ -119,9 +121,11 @@ Route::post('/sms/send', [SmsController::class, 'sendSMS'])->name('sms.send');
 
 
 Route::post('/booking/{booking}/send-confirmation-email', [BookingController::class, 'sendConfirmationEmail']);
+Route::post('/booking/{booking}/send-confirmation-whatsapp', [BookingController::class, 'sendConfirmationWhatsApp']);
 Route::post('/booking/{bookingId}/recurring', [BookingController::class, 'createRecurring']);
 Route::post('/booking/{booking}/return-job', [BookingController::class, 'createReturnJob']);
 Route::post('/booking/{booking}/send-receipt-email', [BookingController::class, 'sendReceiptEmail']);
+Route::post('/booking/{booking}/send-receipt-whatsapp', [BookingController::class, 'sendReceiptWhatsApp'])->name('booking.sendReceiptWhatsApp');
 // web.php
 Route::post('/booking/{booking}/payment', [BookingController::class, 'createStripePayment']);
 
@@ -244,6 +248,8 @@ Route::get('/reports', [ReportController::class, 'index'])->name('reports');
 Route::get('/reports/driver-commission', [ReportController::class, 'driverCommission'])->name('reports.driver_commission');
 Route::get('/reports/driver-commission/download', [ReportController::class, 'downloadDriverCommission'])
     ->name('reports.driver_commission.download');
+Route::post('/send-driver-commission-whatsapp', [ReportController::class, 'sendDriverCommissionWhatsApp'])
+    ->name('send.driver.commission.whatsapp');
 
 Route::get('/get-driver-email/{id}', [ReportController::class, 'getDriverEmail']);
 // Route::post('/send-driver-commission-email', [ReportController::class, 'sendCommissionEmail']);
@@ -254,12 +260,15 @@ Route::get('/reports/turnover/download', [ReportController::class, 'downloadTurn
     ->name('reports.turnover.download');
 Route::post('/reports/turnover/send-email', [ReportController::class, 'sendTurnoverEmail'])
     ->name('reports.turnover.send-email');
+Route::post('/reports/turnover/send-whatsapp', [ReportController::class, 'sendTurnoverWhatsApp'])
+    ->name('reports.turnover.send-whatsapp');
 
 Route::get('/reports/customer', [ReportController::class, 'customer'])->name('reports.customer');
 Route::get('/reports/customer/download', [ReportController::class, 'downloadCustomerReport'])
     ->name('reports.customer.download');
     
 Route::post('/send-customer-report', [ReportController::class, 'sendCustomerReport'])->name('send.customer.report');
+Route::post('/send-customer-report-whatsapp', [ReportController::class, 'sendCustomerReportWhatsApp'])->name('send.customer.report.whatsapp');
 
 
 

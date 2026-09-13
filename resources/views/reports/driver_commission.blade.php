@@ -347,6 +347,10 @@
                     <i class="bi bi-envelope-fill"></i>
                     <span>Email</span>
                 </button>
+                <button type="button" class="btn btn-success shadow-sm d-inline-flex align-items-center gap-2" id="whatsappCommissionBtn" data-driver-id="{{ $driverId ?? '' }}" style="background-color: #128C7E; border-color: #128C7E; font-weight: 600;">
+                    <i class="bi bi-whatsapp"></i>
+                    <span>WhatsApp</span>
+                </button>
             </div>
         </div>
     </div>
@@ -591,6 +595,35 @@
     </div>
 </div>
 
+<!-- 🔸 WhatsApp Modal -->
+<div class="modal fade" id="whatsappCommissionModal" tabindex="-1" aria-labelledby="whatsappCommissionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header rounded-top-4" style="background: linear-gradient(135deg, #075E54 0%, #128C7E 100%); color: #fff;">
+                <h5 class="modal-title fw-bold" id="whatsappCommissionModalLabel">
+                    <i class="bi bi-whatsapp me-2"></i> Send Statement via WhatsApp
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="whatsappCommissionForm">
+                    <div class="mb-3">
+                        <label for="driverWhatsAppPhone" class="form-label fw-semibold text-secondary">Driver WhatsApp Phone Number</label>
+                        <input type="text" class="form-control" id="driverWhatsAppPhone" name="phone" placeholder="e.g. 07123456789 or 447123456789" required>
+                        <div class="form-text text-muted">The statement will be automatically attached and sent as a PDF to this number.</div>
+                    </div>
+                    <div class="text-end mt-4">
+                        <button type="button" class="btn btn-light px-3 me-2" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success px-4 fw-semibold" id="sendWhatsAppCommissionBtn" style="background-color: #128C7E; border-color: #128C7E;">
+                            <i class="bi bi-whatsapp me-1"></i> Send PDF Statement
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
 
@@ -801,6 +834,75 @@ document.addEventListener("DOMContentLoaded", function() {
             sendBtn.innerHTML = '<i class="bi bi-send-fill me-1"></i> Send Statement';
         }
     });
+
+    // 🔸 WhatsApp Button Trigger
+    const whatsappBtn = document.getElementById("whatsappCommissionBtn");
+    if (whatsappBtn) {
+        whatsappBtn.addEventListener("click", async function() {
+            const driverId = this.dataset.driverId;
+            const driverPhone = @json($driver['phone'] ?? '');
+
+            if (driverPhone) {
+                document.getElementById("driverWhatsAppPhone").value = driverPhone;
+                new bootstrap.Modal(document.getElementById("whatsappCommissionModal")).show();
+            } else if (driverId) {
+                try {
+                    const response = await fetch(`/get-driver-email/${driverId}`);
+                    const data = await response.json();
+                    document.getElementById("driverWhatsAppPhone").value = data.phone || "";
+                } catch (e) {}
+                new bootstrap.Modal(document.getElementById("whatsappCommissionModal")).show();
+            } else {
+                new bootstrap.Modal(document.getElementById("whatsappCommissionModal")).show();
+            }
+        });
+    }
+
+    // 🔸 Send WhatsApp Form Submit
+    const whatsappForm = document.getElementById("whatsappCommissionForm");
+    if (whatsappForm) {
+        whatsappForm.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const sendBtn = document.getElementById("sendWhatsAppCommissionBtn");
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending PDF via WhatsApp...';
+
+            const phone = document.getElementById("driverWhatsAppPhone").value.trim();
+
+            try {
+                const response = await fetch("{{ route('send.driver.commission.whatsapp') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({
+                        phone: phone,
+                        from: "{{ $from }}",
+                        to: "{{ $to }}",
+                        driver_id: "{{ $driverId ?? '' }}",
+                        _token: "{{ csrf_token() }}"
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok && (result.success || result.status === 'success')) {
+                    alert("✅ Driver Commission PDF statement sent successfully on WhatsApp!");
+                    const modalInst = bootstrap.Modal.getInstance(document.getElementById("whatsappCommissionModal"));
+                    if (modalInst) modalInst.hide();
+                } else {
+                    alert("❌ " + (result.message || "Failed to send WhatsApp statement."));
+                }
+            } catch (err) {
+                console.error("WhatsApp Send Error:", err);
+                alert("⚠️ Network error sending WhatsApp statement.");
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="bi bi-whatsapp me-1"></i> Send PDF Statement';
+            }
+        });
+    }
 
 });
 </script>

@@ -36,6 +36,7 @@ use Kreait\Firebase\Database;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use App\Services\MySmsService;
+use App\Services\WhatsAppGatewayService;
 
 class BookingController extends Controller
 {
@@ -7688,30 +7689,125 @@ public function searchBookings(Request $request)
             ...$result,
         ], $result['success'] ? 200 : 502);
     }
-    
-    
-    public function sendSms(Request $request, MySmsService $smsService)
-{
-    $request->validate([
-        'booking_id' => 'required|string',
-        'phone' => 'required|string|max:30',
-        'message' => 'required|string|max:2000',
-    ]);
 
-    $result = $smsService->send(
-        (string) $request->string('phone')->trim(),
-        (string) $request->string('message')
-    );
+    // Send Confirmation WhatsApp
+    public function sendConfirmationWhatsApp(Request $request, $bookingId, WhatsAppGatewayService $wa) {
+        $booking = $this->firebase->getData("bookings/{$bookingId}");
 
-    if ($result['success'] ?? false) {
-        $this->recordBookingActivity($request->booking_id, 'SMS Sent', 'Sent SMS notification to ' . $request->phone . '.');
+        if (empty($booking) || empty($booking['phone_no'])) {
+            return response()->json([
+                'status' => 'error',
+                'success' => false,
+                'message' => 'Booking phone number was not found.',
+            ], 422);
+        }
+
+        $message = $request->input('message')
+            ?: "Dear ".($booking['passenger_name'] ?? 'Customer').",\n\nYour booking with Crown Carz (Ref: ".($booking['ref_no'] ?? $bookingId).") has been confirmed.\n\nThank you for choosing Crown Carz.";
+        $result = $wa->sendTextMessage((string) $booking['phone_no'], (string) $message);
+
+        if ($result['success'] ?? false) {
+            $this->recordBookingActivity($bookingId, 'WhatsApp Sent', 'Sent WhatsApp confirmation to ' . $booking['phone_no'] . '.');
+        }
+
+        return response()->json([
+            'status' => $result['success'] ? 'success' : 'error',
+            ...$result,
+        ], $result['success'] ? 200 : 502);
     }
 
-    return response()->json([
-        'status' => $result['success'] ? 'success' : 'error',
-        ...$result,
-    ], $result['success'] ? 200 : 502);
-}
+    public function sendSms(Request $request, MySmsService $smsService)
+    {
+        $request->validate([
+            'booking_id' => 'required|string',
+            'phone' => 'required|string|max:30',
+            'message' => 'required|string|max:2000',
+        ]);
+
+        $result = $smsService->send(
+            (string) $request->string('phone')->trim(),
+            (string) $request->string('message')
+        );
+
+        if ($result['success'] ?? false) {
+            $this->recordBookingActivity($request->booking_id, 'SMS Sent', 'Sent SMS notification to ' . $request->phone . '.');
+        }
+
+        return response()->json([
+            'status' => $result['success'] ? 'success' : 'error',
+            ...$result,
+        ], $result['success'] ? 200 : 502);
+    }
+
+    public function sendWhatsApp(Request $request, WhatsAppGatewayService $wa)
+    {
+        $request->validate([
+            'booking_id' => 'required|string',
+            'phone' => 'required|string|max:30',
+            'message' => 'required|string|max:4000',
+        ]);
+
+        $result = $wa->sendTextMessage(
+            (string) $request->string('phone')->trim(),
+            (string) $request->string('message')
+        );
+
+        if ($result['success'] ?? false) {
+            $this->recordBookingActivity($request->booking_id, 'WhatsApp Sent', 'Sent WhatsApp message to ' . $request->phone . '.');
+        }
+
+        return response()->json([
+            'status' => ($result['success'] ?? false) ? 'success' : 'error',
+            ...$result,
+        ], ($result['success'] ?? false) ? 200 : 502);
+    }
+
+    public function sendReceiptWhatsApp(Request $request, $bookingId, WhatsAppGatewayService $wa)
+    {
+        $booking = $this->firebase->getData("bookings/{$bookingId}");
+
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
+        }
+
+        $booking['id'] = $bookingId;
+        $phone = $request->input('phone') ?: ($booking['phone_no'] ?? null);
+
+        if (!$phone) {
+            return response()->json(['success' => false, 'message' => 'Passenger phone number is missing.'], 422);
+        }
+
+        try {
+            $pdf = Pdf::setOptions([
+                'dpi' => 150,
+                'defaultFont' => 'Helvetica',
+                'isRemoteEnabled' => true
+            ])->loadView('receipts.booking', compact('booking'));
+
+            $rawPdf = $pdf->output();
+            $refNo = $booking['ref_no'] ?? $bookingId;
+            $passengerName = $booking['passenger_name'] ?? 'Customer';
+
+            $caption = $request->input('caption') 
+                ?: "Dear {$passengerName},\n\nPlease find attached your official booking receipt for job ref: {$refNo}.\n\nThank you for choosing Crown Carz.\nTel: +44(0)1189 47 47 47\nWebsite: www.crowncarz.com";
+
+            $result = $wa->sendPdfBinary(
+                phone: (string) $phone,
+                rawPdfContent: $rawPdf,
+                fileName: "Receipt-{$refNo}.pdf",
+                caption: $caption
+            );
+
+            if ($result['success'] ?? false) {
+                $this->recordBookingActivity($bookingId, 'WhatsApp Receipt Sent', 'Sent PDF receipt via WhatsApp to ' . $phone . '.');
+            }
+
+            return response()->json($result, ($result['success'] ?? false) ? 200 : 502);
+        } catch (\Throwable $e) {
+            Log::error('Error sending WhatsApp receipt: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to generate/send receipt: ' . $e->getMessage()], 500);
+        }
+    }
 
 public function sendEmaildashboard(Request $request)
 {

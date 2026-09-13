@@ -259,13 +259,13 @@
             🖨️ Print
         </button>
         
-        <button class="btn btn-warning text-dark" id="emailReport" data-customer-email="{{ $customers->email ?? '' }}">
-    ✉️ Email Report
-</button>
+        <button class="btn btn-warning text-dark fw-semibold" id="emailReport" data-customer-email="{{ $customers->email ?? '' }}">
+            <i class="bi bi-envelope me-1"></i> Email Report
+        </button>
 
-        <!--<button class="btn btn-warning text-dark" id="emailReport">-->
-        <!--    ✉️ Email Report-->
-        <!--</button>-->
+        <button class="btn btn-success fw-semibold" id="whatsappCustomerReport" style="background-color: #128C7E; border-color: #128C7E;">
+            <i class="bi bi-whatsapp me-1"></i> WhatsApp Report
+        </button>
     </div>
 
     <!-- Report Header -->
@@ -405,6 +405,43 @@
   </div>
 </div>
 
+<!-- WhatsApp Modal -->
+<div class="modal fade" id="customerWhatsAppModal" tabindex="-1" aria-labelledby="customerWhatsAppModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header bg-success bg-opacity-25" style="background-color: #e8f5e9;">
+        <h5 class="modal-title fw-semibold text-dark" id="customerWhatsAppModalLabel">
+            <i class="bi bi-whatsapp text-success me-1"></i> Send Customer Report via WhatsApp
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="sendCustomerWhatsAppForm">
+            @csrf
+
+            <div class="mb-3">
+                <label for="customerWhatsAppPhone" class="form-label fw-semibold">Recipient WhatsApp Number:</label>
+                <input type="text" class="form-control" id="customerWhatsAppPhone" name="phone" value="{{ $selectedCustomerPhone ?? '' }}" placeholder="e.g. 07123456789 or 447123456789" required>
+                <div class="form-text text-muted">The complete Customer Statement will be generated as PDF and delivered on WhatsApp.</div>
+            </div>
+
+            <input type="hidden" name="from" value="{{ $from }}">
+            <input type="hidden" name="to" value="{{ $to }}">
+            <input type="hidden" name="customer_id" value="{{ $customerId }}">
+            <input type="hidden" name="customer_type" value="{{ $type }}">
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success fw-semibold" id="btnSendCustomerWhatsApp" style="background-color: #128C7E; border-color: #128C7E;">
+                    <i class="bi bi-whatsapp me-1"></i> Send PDF via WhatsApp
+                </button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 document.getElementById('emailReport').addEventListener('click', function() {
     var modal = new bootstrap.Modal(document.getElementById('emailModal'));
@@ -415,12 +452,12 @@ document.getElementById('sendEmailForm').addEventListener('submit', function(e) 
     e.preventDefault();
     let formData = new FormData(this);
     fetch("{{ route('send.customer.report') }}", {
-    method: "POST",
-    body: formData,
-    headers: {
-        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
-    }
-})
+        method: "POST",
+        body: formData,
+        headers: {
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
+        }
+    })
     .then(res => res.json())
     .then(data => {
         if(data.success){
@@ -432,6 +469,60 @@ document.getElementById('sendEmailForm').addEventListener('submit', function(e) 
     })
     .catch(() => alert('⚠️ Something went wrong!'));
 });
+
+// WhatsApp Customer Report
+const waCustBtn = document.getElementById('whatsappCustomerReport');
+const waCustModalEl = document.getElementById('customerWhatsAppModal');
+const waCustForm = document.getElementById('sendCustomerWhatsAppForm');
+const waCustSubmitBtn = document.getElementById('btnSendCustomerWhatsApp');
+
+if (waCustBtn && waCustModalEl) {
+    waCustBtn.addEventListener('click', function () {
+        const modal = new bootstrap.Modal(waCustModalEl);
+        modal.show();
+    });
+}
+
+if (waCustForm) {
+    waCustForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (waCustSubmitBtn) {
+            waCustSubmitBtn.disabled = true;
+            waCustSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending PDF...';
+        }
+
+        const formData = new FormData(this);
+
+        try {
+            const response = await fetch("{{ route('send.customer.report.whatsapp') }}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && (data.success || data.status === 'success')) {
+                alert('✅ ' + (data.message || 'Customer Report PDF sent successfully on WhatsApp!'));
+                const modalInstance = bootstrap.Modal.getInstance(waCustModalEl);
+                if (modalInstance) modalInstance.hide();
+            } else {
+                alert('❌ ' + (data.message || 'Failed to send WhatsApp report.'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('⚠️ Network error while sending WhatsApp report.');
+        } finally {
+            if (waCustSubmitBtn) {
+                waCustSubmitBtn.disabled = false;
+                waCustSubmitBtn.innerHTML = '<i class="bi bi-whatsapp me-1"></i> Send PDF via WhatsApp';
+            }
+        }
+    });
+}
 </script>
 
 @endsection

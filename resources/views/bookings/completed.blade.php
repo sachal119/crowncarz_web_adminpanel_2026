@@ -154,6 +154,34 @@
                         <i class="bi bi-envelope me-2"></i> Send Confirmation Email
                     </a>
                   </li>
+                  <!-- Send Confirmation WhatsApp -->
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center text-success send-confirmation-whatsapp-btn"
+                       href="#"
+                       data-booking-id="{{ $booking['ref_no'] ?? ($booking['id'] ?? '') }}"
+                       data-raw-id="{{ $booking['id'] ?? '' }}"
+                       data-phone="{{ $booking['phone_no'] ?? '' }}"
+                       data-name="{{ $booking['passenger_name'] ?? '' }}"
+                       data-date="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '' }}"
+                       data-time="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '' }}"
+                       data-vehicle="{{ $booking['vehicle_make'] ?? '' }}"
+                       data-price="{{ $booking['price'] ?? '' }}"
+                       data-payment="{{ ucfirst($booking['payment_type'] ?? '') }}"
+                       data-pickup="{{ $booking['pickup_address'] ?? '' }}"
+                       data-dropoff="{{ $booking['dropoff_address'] ?? '' }}"
+                       data-flight_no="{{ $booking['flight_no'] ?? '' }}"
+                       data-via="{{ !empty($booking['vias']) ? (is_array($booking['vias']) ? implode(' → ', $booking['vias']) : $booking['vias']) : '-' }}">
+                        <i class="bi bi-whatsapp me-2"></i> Send WhatsApp Confirmation
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center text-success send-receipt-whatsapp-btn"
+                       href="#"
+                       data-booking-id="{{ $booking['id'] ?? '' }}"
+                       data-phone="{{ $booking['phone_no'] ?? '' }}">
+                        <i class="bi bi-file-earmark-pdf me-2"></i> Send Receipt via WhatsApp
+                    </a>
+                  </li>
                   <li>
                     <a class="dropdown-item d-flex align-items-center text-success" href="{{ route('bookings.receipt', $booking['id'] ?? '') }}">
                       <i class="bi bi-receipt me-2"></i> Receipt
@@ -249,6 +277,37 @@ $(document).ready(function() {
 </script>
 @endif
 
+<!-- Send WhatsApp Modal -->
+<div class="modal fade" id="sendWhatsAppModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h6 class="modal-title"><i class="bi bi-whatsapp me-2"></i> Send Confirmation WhatsApp</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="waBookingId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Phone Number (International format e.g. 447...)</label>
+                    <input type="text" id="waRecipientPhone" class="form-control" placeholder="447123456789">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">WhatsApp Message</label>
+                    <textarea id="waMessageText" class="form-control font-monospace" rows="7" style="font-size: 13px;"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success flex-grow-1" id="btnSendWhatsAppNow">
+                        <i class="bi bi-send me-1"></i> Send Text
+                    </button>
+                    <button class="btn btn-outline-success" id="btnSendWhatsAppReceiptModal" title="Generate and send official PDF receipt">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Send PDF Receipt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 /* ----------------------
        EMAIL BUTTON CLICK
@@ -256,21 +315,10 @@ $(document).ready(function() {
     document.querySelectorAll(".send-confirmation-email-btn").forEach(btn => {
         btn.addEventListener("click", function (e) {
             e.preventDefault();
-            // Function body within an event listener
             let bookingId = this.getAttribute("data-booking-id");
             let row = this.closest("tr");
-            // 1. Get the Passenger Name from the row (assuming it's in the second column)
-            // This is used for the greeting in the message.
             let passengerName = row.querySelector("td:nth-child(2)").innerText.trim();
-            // 2. Get the Email Address using a Data Attribute (BEST PRACTICE)
-            // Assumes the email is stored in an attribute like 'data-passenger-email' on 'this' element.
-            let emailAddressValue = this.getAttribute("data-passenger-email");
-            // Fallback: If not available in a data attribute, use the booking ID to populate the email field (less ideal)
-            if (!emailAddressValue) {
-                // If you need the email address, ensure it is rendered in a hidden cell or a data attribute.
-                // For now, setting it to a placeholder or empty string if not found.
-                emailAddressValue = ''; // Or prompt the user for it later
-            }
+            let emailAddressValue = this.getAttribute("data-passenger-email") || '';
             document.getElementById("emailBookingId").value = bookingId;
             document.getElementById("emailAddress").value = emailAddressValue;
             document.getElementById("emailMessage").value = "Hello " + passengerName + ", your booking has been confirmed. Ref# " + bookingId;
@@ -306,5 +354,138 @@ $(document).ready(function() {
             alert("Error sending email.");
         });
     });
+
+/* ----------------------
+       WHATSAPP HANDLERS
+    ---------------------- */
+    document.querySelectorAll(".send-confirmation-whatsapp-btn").forEach(btn => {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            const refNo   = this.getAttribute("data-booking-id") || "";
+            const rawId   = this.getAttribute("data-raw-id") || "";
+            const phone   = this.getAttribute("data-phone") || "";
+            const name    = this.getAttribute("data-name") || "";
+            const date    = this.getAttribute("data-date") || "";
+            const time    = this.getAttribute("data-time") || "";
+            const vehicle = this.getAttribute("data-vehicle") || "";
+            const price   = this.getAttribute("data-price") || "";
+            const payment = this.getAttribute("data-payment") || "";
+            const pickup  = this.getAttribute("data-pickup") || "";
+            const dropoff = this.getAttribute("data-dropoff") || "";
+            const flight  = this.getAttribute("data-flight_no") || "";
+            const via     = this.getAttribute("data-via") || "";
+
+            let message = `*Crown Carz - Booking Confirmation*\n` +
+                          `━━━━━━━━━━━━━━━━━━\n` +
+                          `*Ref #:* ${refNo}\n` +
+                          `*Passenger:* ${name}\n` +
+                          `*Pickup Date/Time:* ${date} ${time}\n` +
+                          `*From:* ${pickup}\n` +
+                          `*To:* ${dropoff}\n`;
+
+            if (via && via !== '-' && via !== 'undefined') {
+                message += `*Via:* ${via}\n`;
+            }
+            if (flight && flight !== '-' && flight !== 'undefined') {
+                message += `*Flight #:* ${flight}\n`;
+            }
+            if (vehicle) {
+                message += `*Vehicle:* ${vehicle}\n`;
+            }
+            if (price) {
+                message += `*Price:* £${price} (${payment})\n`;
+            }
+            message += `━━━━━━━━━━━━━━━━━━\nThank you for choosing Crown Carz!`;
+
+            document.getElementById("waBookingId").value = rawId;
+            document.getElementById("waRecipientPhone").value = phone;
+            document.getElementById("waMessageText").value = message;
+
+            const modal = new bootstrap.Modal(document.getElementById("sendWhatsAppModal"));
+            modal.show();
+        });
+    });
+
+    document.getElementById("btnSendWhatsAppNow")?.addEventListener("click", async function() {
+        const rawId   = document.getElementById("waBookingId").value;
+        const phone   = document.getElementById("waRecipientPhone").value.trim();
+        const message = document.getElementById("waMessageText").value.trim();
+
+        if (!phone) { alert("Please enter a valid phone number."); return; }
+        if (!message) { alert("Please enter a message to send."); return; }
+
+        const origText = this.innerHTML;
+        this.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Sending...`;
+        this.disabled = true;
+
+        try {
+            const res = await fetch("{{ route('bookings.sendWhatsAppDashboard') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ booking_id: rawId, phone: phone, message: message })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("✅ " + (data.message || "WhatsApp message sent successfully!"));
+                bootstrap.Modal.getInstance(document.getElementById("sendWhatsAppModal")).hide();
+            } else {
+                alert("❌ " + (data.message || "Failed to send WhatsApp message."));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("❌ An error occurred while sending WhatsApp message.");
+        } finally {
+            this.innerHTML = origText;
+            this.disabled = false;
+        }
+    });
+
+    document.getElementById("btnSendWhatsAppReceiptModal")?.addEventListener("click", async function() {
+        const rawId = document.getElementById("waBookingId").value;
+        const phone = document.getElementById("waRecipientPhone").value.trim();
+        if (!rawId) { alert("Invalid booking ID for receipt."); return; }
+        sendReceiptViaWhatsApp(rawId, phone);
+    });
+
+    document.querySelectorAll(".send-receipt-whatsapp-btn").forEach(btn => {
+        btn.addEventListener("click", function(e) {
+            e.preventDefault();
+            const rawId = this.getAttribute("data-booking-id");
+            const phone = this.getAttribute("data-phone");
+            sendReceiptViaWhatsApp(rawId, phone);
+        });
+    });
+
+    async function sendReceiptViaWhatsApp(bookingId, defaultPhone = '') {
+        const targetPhone = prompt("Enter recipient WhatsApp phone number for PDF Receipt:", defaultPhone || "");
+        if (!targetPhone) return;
+
+        try {
+            const url = `{{ url('/booking') }}/${bookingId}/send-receipt-whatsapp`;
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ phone: targetPhone })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("✅ " + (data.message || "PDF Receipt sent successfully via WhatsApp!"));
+                const modalEl = document.getElementById("sendWhatsAppModal");
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            } else {
+                alert("❌ " + (data.message || "Failed to send PDF receipt."));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("❌ Error sending PDF receipt on WhatsApp.");
+        }
+    }
 </script>
 @endsection

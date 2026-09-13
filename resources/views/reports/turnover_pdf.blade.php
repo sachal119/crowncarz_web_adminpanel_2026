@@ -211,6 +211,9 @@
         <button class="btn btn-warning shadow-sm px-3 text-dark fw-semibold" id="emailTurnoverReport">
             <i class="bi bi-envelope me-1"></i> Email Report
         </button>
+        <button class="btn btn-success shadow-sm px-3 fw-semibold text-white" id="whatsappTurnoverReport" style="background-color: #128C7E; border-color: #128C7E;">
+            <i class="bi bi-whatsapp me-1"></i> WhatsApp Report
+        </button>
     </div>
 
     <!-- Official Report Card -->
@@ -320,6 +323,40 @@
     </div>
 </div>
 
+<!-- WhatsApp Modal -->
+<div class="modal fade" id="turnoverWhatsAppModal" tabindex="-1" aria-labelledby="turnoverWhatsAppModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-success bg-opacity-25" style="background-color: #e8f5e9;">
+                <h5 class="modal-title fw-semibold text-dark" id="turnoverWhatsAppModalLabel">
+                    <i class="bi bi-whatsapp text-success me-1"></i> Send Turnover Report via WhatsApp
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="sendTurnoverWhatsAppForm">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="turnoverWhatsAppPhone" class="form-label fw-semibold">Recipient WhatsApp Number:</label>
+                        <input type="text" class="form-control" id="turnoverWhatsAppPhone" name="phone" placeholder="e.g. 07123456789 or 447123456789" required>
+                        <div class="form-text text-muted">The complete Turnover Report PDF will be generated and delivered via WhatsApp.</div>
+                    </div>
+
+                    <input type="hidden" name="from" value="{{ $from }}">
+                    <input type="hidden" name="to" value="{{ $to }}">
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success fw-semibold" id="btnSendTurnoverWhatsApp" style="background-color: #128C7E; border-color: #128C7E;">
+                            <i class="bi bi-whatsapp me-1"></i> Send PDF via WhatsApp
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -372,6 +409,61 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="bi bi-send me-1"></i> Send Email';
+                }
+            }
+        });
+    }
+
+    // WhatsApp Turnover Report
+    const waBtn = document.getElementById('whatsappTurnoverReport');
+    const waModalEl = document.getElementById('turnoverWhatsAppModal');
+    const waForm = document.getElementById('sendTurnoverWhatsAppForm');
+    const waSubmitBtn = document.getElementById('btnSendTurnoverWhatsApp');
+
+    if (waBtn && waModalEl) {
+        waBtn.addEventListener('click', function () {
+            const modal = new bootstrap.Modal(waModalEl);
+            modal.show();
+        });
+    }
+
+    if (waForm) {
+        waForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            if (waSubmitBtn) {
+                waSubmitBtn.disabled = true;
+                waSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending PDF...';
+            }
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch("{{ route('reports.turnover.send-whatsapp') }}", {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && (data.success || data.status === 'success')) {
+                    alert('✅ ' + (data.message || 'Turnover Report PDF sent successfully on WhatsApp!'));
+                    const modalInstance = bootstrap.Modal.getInstance(waModalEl);
+                    if (modalInstance) modalInstance.hide();
+                    waForm.reset();
+                } else {
+                    alert('❌ ' + (data.message || 'Failed to send WhatsApp report.'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('⚠️ Network error while sending WhatsApp report.');
+            } finally {
+                if (waSubmitBtn) {
+                    waSubmitBtn.disabled = false;
+                    waSubmitBtn.innerHTML = '<i class="bi bi-whatsapp me-1"></i> Send PDF via WhatsApp';
                 }
             }
         });

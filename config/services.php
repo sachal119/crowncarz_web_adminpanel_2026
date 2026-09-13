@@ -53,4 +53,9 @@ return [
         ],
     ],
 
+    'whatsapp' => [
+        'base_url' => env('WHATSAPP_GATEWAY_URL', 'https://sachalabdullah.shop'),
+        'api_key'  => env('WHATSAPP_API_KEY', ''),
+    ],
+
 ];

@@ -309,6 +309,9 @@
           <button type="button" id="modal-btn-sms" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-chat-dots me-1"></i> SMS
           </button>
+          <button type="button" id="modal-btn-whatsapp" class="btn btn-sm btn-outline-success" style="color: #128C7E; border-color: #128C7E;">
+            <i class="bi bi-whatsapp me-1"></i> WhatsApp
+          </button>
           <button type="button" id="modal-btn-email" class="btn btn-sm btn-outline-info">
             <i class="bi bi-envelope me-1"></i> Email
           </button>

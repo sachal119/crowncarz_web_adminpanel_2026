@@ -285,6 +285,25 @@
                             <i class="bi bi-chat-left-text me-2"></i> Send Confirmation SMS
                         </a>
                     </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center text-success send-confirmation-whatsapp-btn"
+                           href="#"
+                           data-booking-id="{{ $booking['ref_no'] ?? ($booking['id'] ?? '') }}"
+                           data-raw-id="{{ $booking['id'] ?? '' }}"
+                           data-phone="{{ $booking['phone_no'] ?? '' }}"
+                           data-name="{{ $booking['passenger_name'] ?? '' }}"
+                           data-date="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '' }}"
+                           data-time="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '' }}"
+                           data-vehicle="{{ $booking['vehicle_make'] ?? '' }}"
+                           data-price="{{ $booking['price'] ?? '' }}"
+                           data-payment="{{ ucfirst($booking['payment_type'] ?? '') }}"
+                           data-pickup="{{ $booking['pickup_address'] ?? '' }}"
+                           data-dropoff="{{ $booking['dropoff_address'] ?? '' }}"
+                           data-flight_no="{{ $booking['flight_no'] ?? '' }}"
+                           data-via="{{ !empty($booking['vias']) ? (is_array($booking['vias']) ? implode(' → ', $booking['vias']) : $booking['vias']) : '-' }}">
+                            <i class="bi bi-whatsapp me-2"></i> Send Confirmation WhatsApp
+                        </a>
+                    </li>
                     <li class="action-recall-item" style="{{ !$hasDriver ? 'display:none;' : '' }}">
                         <a class="dropdown-item d-flex align-items-center text-danger recall-job-btn" href="#"
                            data-booking-id="{{ $booking['id'] ?? '' }}">

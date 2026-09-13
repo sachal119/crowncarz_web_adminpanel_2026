@@ -363,7 +363,7 @@
         </a>
     </li>
 @endif
-          <!--<li class="nav-item me-3"><a class="nav-link" href="{{ route('system.settings') }}"><i class="bi bi-gear-wide-connected me-1"></i>Settings</a></li>-->
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('system.settings') ? 'active' : '' }}" href="{{ route('system.settings') }}"><i class="bi bi-gear-wide-connected me-1"></i>Settings</a></li>
         </ul>
       </div>
       
