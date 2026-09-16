@@ -62,6 +62,12 @@
   background-color: #64748b;
   box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.35);
 }
+#modal-map-wrapper {
+  transition: all 0.3s ease-in-out;
+}
+#modal-map-wrapper.map-collapsed {
+  display: none !important;
+}
 </style>
 
 <div class="modal fade" id="viewBookingModal" tabindex="-1" aria-labelledby="viewBookingModalLabel" aria-hidden="true">
@@ -93,25 +99,31 @@
         
         <!-- Top Stats Banner -->
         <div class="row g-2 g-md-3 mb-3">
-          <div class="col-6 col-md-3">
+          <div class="col-6 col-md">
             <div class="p-2 p-md-3 rounded-3 bg-white border shadow-sm h-100 d-flex flex-column justify-content-center">
               <span class="text-muted small text-uppercase fw-semibold" style="font-size: 0.7rem;"><i class="bi bi-calendar3 me-1 text-primary"></i> Pickup Date & Time</span>
               <span id="modal-top-pickup-time" class="fw-bold text-dark mt-1 text-truncate" style="font-size: 0.92rem;">-</span>
             </div>
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col-6 col-md">
+            <div class="p-2 p-md-3 rounded-3 bg-white border shadow-sm h-100 d-flex flex-column justify-content-center">
+              <span class="text-muted small text-uppercase fw-semibold" style="font-size: 0.7rem;"><i class="bi bi-speedometer2 me-1 text-primary"></i> Total Mileage</span>
+              <span id="modal-top-mileage" class="fw-bold text-dark mt-1 text-truncate" style="font-size: 0.92rem;">-</span>
+            </div>
+          </div>
+          <div class="col-6 col-md">
             <div class="p-2 p-md-3 rounded-3 bg-white border shadow-sm h-100 d-flex flex-column justify-content-center">
               <span class="text-muted small text-uppercase fw-semibold" style="font-size: 0.7rem;"><i class="bi bi-car-front-fill me-1 text-info"></i> Vehicle & Driver</span>
               <span id="modal-top-driver" class="fw-bold text-dark mt-1 text-truncate" style="font-size: 0.92rem;">-</span>
             </div>
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col-6 col-md">
             <div class="p-2 p-md-3 rounded-3 bg-white border shadow-sm h-100 d-flex flex-column justify-content-center">
               <span class="text-muted small text-uppercase fw-semibold" style="font-size: 0.7rem;"><i class="bi bi-cash-stack me-1 text-success"></i> Total Fare</span>
               <span id="modal-top-price" class="fw-bold text-success mt-1 text-truncate" style="font-size: 1.05rem;">-</span>
             </div>
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col-6 col-md">
             <div class="p-2 p-md-3 rounded-3 bg-white border shadow-sm h-100 d-flex flex-column justify-content-center">
               <span class="text-muted small text-uppercase fw-semibold" style="font-size: 0.7rem;"><i class="bi bi-credit-card-2-front me-1 text-warning"></i> Payment Method</span>
               <span id="modal-top-payment" class="fw-bold text-dark mt-1 text-truncate text-capitalize" style="font-size: 0.92rem;">-</span>
@@ -157,14 +169,30 @@
 
             <!-- Route & Stops Card -->
             <div class="card border-0 shadow-sm rounded-3 mb-3 bg-white">
-              <div class="card-header bg-white border-bottom py-2 px-3 d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                  <i class="bi bi-geo-alt-fill text-danger me-2 fs-6"></i>
-                  <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.88rem;">Journey Route & Stops</h6>
+              <div class="card-header bg-white border-bottom py-2 px-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-geo-alt-fill text-danger me-2 fs-6"></i>
+                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.88rem;">Journey Route & Stops</h6>
+                  </div>
+                  <span id="modal-route-distance-badge" class="badge bg-primary-subtle text-primary border border-primary-subtle d-none" style="font-size: 0.72rem;">
+                    <i class="bi bi-speedometer2 me-1"></i><span id="modal-route-distance-val">0.00 Mi</span>
+                  </span>
+                  <span id="modal-vias-count-badge" class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-none" style="font-size: 0.72rem;">
+                    <i class="bi bi-pin-map-fill me-1"></i><span id="modal-vias-count-val">0 Vias</span>
+                  </span>
+                  <span id="modal-route-duration-badge" class="badge bg-info-subtle text-info-emphasis border border-info-subtle d-none" style="font-size: 0.72rem;">
+                    <i class="bi bi-clock-history me-1"></i><span id="modal-route-duration-val">~0 min</span>
+                  </span>
                 </div>
-                <a id="modal-route-maps-link" href="#" target="_blank" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;">
-                  <i class="bi bi-map me-1"></i> Open in Maps
-                </a>
+                <div class="d-flex align-items-center gap-1">
+                  <button type="button" id="modal-toggle-map-btn" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;" title="Toggle Interactive Route Map">
+                    <i class="bi bi-map me-1"></i><span id="modal-toggle-map-text">Hide Map</span>
+                  </button>
+                  <a id="modal-route-maps-link" href="#" target="_blank" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" title="Open full route in Google Maps">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> Open in Maps
+                  </a>
+                </div>
               </div>
               <div class="card-body p-3">
                 <div class="booking-route-timeline position-relative ps-4 py-1">
@@ -186,6 +214,25 @@
                     <div id="modal-dropoff_address" class="text-dark fw-medium" style="font-size: 0.88rem;">-</div>
                   </div>
                 </div>
+
+                <!-- 🗺️ Interactive Route Map Container -->
+                <div id="modal-map-wrapper" class="mt-3 rounded-3 overflow-hidden border shadow-sm position-relative" style="height: 240px; background: #eef2f6;">
+                  <div id="modal-route-map-canvas" style="width: 100%; height: 100%;"></div>
+                  
+                  <!-- Map Loading Spinner -->
+                  <div id="modal-map-loading" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white bg-opacity-75" style="z-index: 5;">
+                    <div class="spinner-border spinner-border-sm text-primary mb-1" role="status"></div>
+                    <span class="small text-muted fw-medium" style="font-size: 0.75rem;">Loading route map...</span>
+                  </div>
+                  
+                  <!-- Map Empty / Error State -->
+                  <div id="modal-map-empty" class="position-absolute top-0 start-0 w-100 h-100 d-none flex-column align-items-center justify-content-center bg-light text-muted p-3 text-center" style="z-index: 4;">
+                    <i class="bi bi-geo-alt fs-3 text-secondary opacity-50 mb-1"></i>
+                    <div class="small fw-medium text-dark" id="modal-map-empty-text">No route coordinates available</div>
+                    <div class="text-muted" style="font-size: 0.7rem;">Enter valid pickup and dropoff addresses to plot the route.</div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -326,8 +373,13 @@
 <script>
 (function() {
     window.SHARED_DETAILS_JSON_BASE_URL = window.SHARED_DETAILS_JSON_BASE_URL || "{{ url('bookings/details-json') }}";
+    window.GOOGLE_MAPS_API_KEY = "{{ config('services.google_maps.key') ?? '' }}";
     window.activeViewBookingId = window.activeViewBookingId || null;
     window.activeViewBookingData = window.activeViewBookingData || null;
+    window._viewBookingGoogleMap = null;
+    window._viewBookingDirectionsService = null;
+    window._viewBookingDirectionsRenderer = null;
+    window._googleMapsLoadingPromise = null;
 
     window.formatBookingDateTime = window.formatBookingDateTime || function(dtStr) {
         if (!dtStr) return '-';
@@ -404,6 +456,247 @@
         };
     };
 
+    /**
+     * 📍 Robust Via Stops Extractor (handles arrays, objects, JSON strings, line breaks)
+     */
+    window.extractBookingVias = function(booking) {
+        if (!booking) return [];
+        let raw = booking.vias || booking.via_addresses || booking.via_points || booking.via || [];
+
+        if (typeof raw === 'string') {
+            const trimmed = raw.trim();
+            if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                try {
+                    raw = JSON.parse(trimmed);
+                } catch(e) {
+                    raw = [trimmed];
+                }
+            } else if (trimmed.includes('||')) {
+                raw = trimmed.split('||');
+            } else if (trimmed.includes('\n')) {
+                raw = trimmed.split('\n');
+            } else if (trimmed.length > 0) {
+                raw = [trimmed];
+            } else {
+                raw = [];
+            }
+        } else if (typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
+            raw = Object.values(raw);
+        }
+
+        if (!Array.isArray(raw)) raw = [];
+
+        const vias = [];
+        raw.forEach(item => {
+            if (!item) return;
+            let addr = '';
+            if (typeof item === 'string') {
+                addr = item.trim();
+            } else if (typeof item === 'object') {
+                addr = (item.address || item.location || item.name || item.text || '').trim();
+            }
+            if (addr && addr.length > 0 && addr.toLowerCase() !== 'null' && addr.toLowerCase() !== 'undefined') {
+                vias.push(addr);
+            }
+        });
+        return vias;
+    };
+
+    /**
+     * 🏎️ Extract Stored Mileage/Distance from Booking Object
+     */
+    window.extractBookingMileage = function(booking) {
+        if (!booking) return '';
+        let val = booking.distance || booking.total_distance || booking.journey_distance || booking.mileage || booking.total_mileage || '';
+        if (typeof val === 'number') {
+            return val > 0 ? `${val.toFixed(2)} Mi` : '';
+        }
+        if (typeof val === 'string') {
+            val = val.trim();
+            if (val && !val.toLowerCase().includes('mi') && !val.toLowerCase().includes('km')) {
+                const num = parseFloat(val);
+                if (!isNaN(num) && num > 0) return `${num.toFixed(2)} Mi`;
+            }
+            return val;
+        }
+        return '';
+    };
+
+    /**
+     * 🌐 Google Maps Loader
+     */
+    window.loadGoogleMapsScript = function(callback) {
+        if (window.google && window.google.maps && window.google.maps.DirectionsService) {
+            if (typeof callback === 'function') callback();
+            return;
+        }
+
+        if (!window._googleMapsLoadingPromise) {
+            window._googleMapsLoadingPromise = new Promise((resolve, reject) => {
+                const apiKey = window.GOOGLE_MAPS_API_KEY || '';
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places`;
+                script.async = true;
+                script.defer = true;
+                script.onload = () => resolve();
+                script.onerror = (e) => reject(e);
+                document.head.appendChild(script);
+            });
+        }
+
+        window._googleMapsLoadingPromise
+            .then(() => {
+                if (typeof callback === 'function') callback();
+            })
+            .catch(err => {
+                console.error('Failed to load Google Maps script:', err);
+                const mapLoading = document.getElementById('modal-map-loading');
+                const mapEmpty = document.getElementById('modal-map-empty');
+                const emptyText = document.getElementById('modal-map-empty-text');
+                if (mapLoading) mapLoading.classList.add('d-none');
+                if (mapEmpty) {
+                    mapEmpty.classList.remove('d-none');
+                    if (emptyText) emptyText.textContent = 'Google Maps service unavailable';
+                }
+            });
+    };
+
+    /**
+     * 🗺️ Route Map Drawer with Waypoints & Total Mileage Calculation
+     */
+    window.initOrUpdateBookingRouteMap = function(origin, destination, vias) {
+        const mapCanvas = document.getElementById('modal-route-map-canvas');
+        const mapLoading = document.getElementById('modal-map-loading');
+        const mapEmpty = document.getElementById('modal-map-empty');
+        const emptyText = document.getElementById('modal-map-empty-text');
+
+        if (!origin || !destination) {
+            if (mapLoading) mapLoading.classList.add('d-none');
+            if (mapEmpty) {
+                mapEmpty.classList.remove('d-none');
+                if (emptyText) emptyText.textContent = 'Missing pickup or dropoff address';
+            }
+            return;
+        }
+
+        if (mapEmpty) mapEmpty.classList.add('d-none');
+        if (mapLoading) mapLoading.classList.remove('d-none');
+
+        const renderDirections = function() {
+            try {
+                if (!window._viewBookingGoogleMap && mapCanvas) {
+                    window._viewBookingGoogleMap = new google.maps.Map(mapCanvas, {
+                        zoom: 11,
+                        center: { lat: 51.5074, lng: -0.1278 }, // London/UK fallback
+                        mapTypeControl: false,
+                        streetViewControl: false,
+                        fullscreenControl: true,
+                        zoomControl: true,
+                    });
+                    window._viewBookingDirectionsService = new google.maps.DirectionsService();
+                    window._viewBookingDirectionsRenderer = new google.maps.DirectionsRenderer({
+                        map: window._viewBookingGoogleMap,
+                        suppressMarkers: false,
+                        polylineOptions: {
+                            strokeColor: '#0284c7',
+                            strokeWeight: 5,
+                            strokeOpacity: 0.85
+                        }
+                    });
+                }
+
+                const waypoints = (vias || []).map(v => ({
+                    location: v,
+                    stopover: true
+                }));
+
+                window._viewBookingDirectionsService.route({
+                    origin: origin,
+                    destination: destination,
+                    waypoints: waypoints,
+                    travelMode: google.maps.TravelMode.DRIVING,
+                    optimizeWaypoints: false
+                }, function(response, status) {
+                    if (mapLoading) mapLoading.classList.add('d-none');
+
+                    if (status === google.maps.DirectionsStatus.OK && response) {
+                        window._viewBookingDirectionsRenderer.setDirections(response);
+
+                        // Compute total distance & duration from legs
+                        let totalMeters = 0;
+                        let totalSeconds = 0;
+                        const legs = response.routes[0]?.legs || [];
+                        legs.forEach(leg => {
+                            if (leg.distance && typeof leg.distance.value === 'number') {
+                                totalMeters += leg.distance.value;
+                            }
+                            if (leg.duration && typeof leg.duration.value === 'number') {
+                                totalSeconds += leg.duration.value;
+                            }
+                        });
+
+                        if (totalMeters > 0) {
+                            const calculatedMiles = (totalMeters * 0.000621371).toFixed(2) + ' Mi';
+                            
+                            // Update Top Mileage if empty or placeholder
+                            const topMileage = document.getElementById('modal-top-mileage');
+                            if (topMileage && (!topMileage.textContent || topMileage.textContent === '-' || topMileage.textContent.trim() === '')) {
+                                topMileage.textContent = calculatedMiles;
+                            }
+
+                            // Update Route distance badge
+                            const distBadge = document.getElementById('modal-route-distance-badge');
+                            const distVal = document.getElementById('modal-route-distance-val');
+                            if (distBadge && distVal) {
+                                distVal.textContent = calculatedMiles;
+                                distBadge.classList.remove('d-none');
+                            }
+                        }
+
+                        if (totalSeconds > 0) {
+                            const mins = Math.round(totalSeconds / 60);
+                            const durText = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins} mins`;
+                            const durBadge = document.getElementById('modal-route-duration-badge');
+                            const durVal = document.getElementById('modal-route-duration-val');
+                            if (durBadge && durVal) {
+                                durVal.textContent = '~' + durText;
+                                durBadge.classList.remove('d-none');
+                            }
+                        }
+
+                        setTimeout(() => {
+                            if (window._viewBookingGoogleMap) {
+                                google.maps.event.trigger(window._viewBookingGoogleMap, 'resize');
+                            }
+                        }, 200);
+                    } else {
+                        console.warn('Google Maps directions error:', status);
+                        if (mapEmpty) {
+                            mapEmpty.classList.remove('d-none');
+                            if (emptyText) emptyText.textContent = `Unable to plot route (${status})`;
+                        }
+                    }
+                });
+            } catch(e) {
+                console.error('Error in directions rendering:', e);
+                if (mapLoading) mapLoading.classList.add('d-none');
+                if (mapEmpty) {
+                    mapEmpty.classList.remove('d-none');
+                    if (emptyText) emptyText.textContent = 'Map display error';
+                }
+            }
+        };
+
+        if (window.google && window.google.maps && window.google.maps.DirectionsService) {
+            renderDirections();
+        } else {
+            window.loadGoogleMapsScript(renderDirections);
+        }
+    };
+
+    /**
+     * 📋 Populate Modal Data & Setup Map
+     */
     window.populateViewBookingModal = function(booking) {
         if (!booking) return;
         window.activeViewBookingData = booking;
@@ -433,6 +726,26 @@
         const formattedPickupTime = window.formatBookingDateTime(booking.pickup_time || ((booking.pickup_date || '') + ' ' + (booking.pickup_time || '')));
         const topPickupTime = document.getElementById('modal-top-pickup-time');
         if (topPickupTime) topPickupTime.textContent = formattedPickupTime;
+
+        // Total Mileage
+        const storedMileage = window.extractBookingMileage(booking);
+        const topMileage = document.getElementById('modal-top-mileage');
+        if (topMileage) topMileage.textContent = storedMileage || '-';
+
+        // Route Distance Badge
+        const distBadge = document.getElementById('modal-route-distance-badge');
+        const distVal = document.getElementById('modal-route-distance-val');
+        if (distBadge && distVal) {
+            if (storedMileage) {
+                distVal.textContent = storedMileage;
+                distBadge.classList.remove('d-none');
+            } else {
+                distBadge.classList.add('d-none');
+            }
+        }
+
+        const durBadge = document.getElementById('modal-route-duration-badge');
+        if (durBadge) durBadge.classList.add('d-none');
 
         // Driver details
         let driverName = booking.driver_name || booking.driver || '';
@@ -477,26 +790,26 @@
         if (flightEl) flightEl.textContent = booking.flight_no || '-';
 
         // Route & Stops
-        const pickupAddr = document.getElementById('modal-pickup_address');
-        if (pickupAddr) pickupAddr.textContent = booking.pickup_address || '-';
+        const pickupAddr = (booking.pickup_address || '').trim();
+        const dropoffAddr = (booking.dropoff_address || '').trim();
+
+        const pickupEl = document.getElementById('modal-pickup_address');
+        if (pickupEl) pickupEl.textContent = pickupAddr || '-';
 
         const pickupTimeSub = document.getElementById('modal-pickup_time_sub');
         if (pickupTimeSub) pickupTimeSub.textContent = 'Pickup: ' + formattedPickupTime;
 
-        const dropoffAddr = document.getElementById('modal-dropoff_address');
-        if (dropoffAddr) dropoffAddr.textContent = booking.dropoff_address || '-';
+        const dropoffEl = document.getElementById('modal-dropoff_address');
+        if (dropoffEl) dropoffEl.textContent = dropoffAddr || '-';
 
         // Render Via Stops
+        const vias = window.extractBookingVias(booking);
         const viasContainer = document.getElementById('modal-vias-container');
+        const viasBadge = document.getElementById('modal-vias-count-badge');
+        const viasCountVal = document.getElementById('modal-vias-count-val');
+
         if (viasContainer) {
             viasContainer.innerHTML = '';
-            let vias = [];
-            if (Array.isArray(booking.vias)) vias = booking.vias;
-            else if (Array.isArray(booking.via_addresses)) vias = booking.via_addresses;
-            else if (typeof booking.vias === 'object' && booking.vias !== null) vias = Object.values(booking.vias);
-
-            vias = vias.filter(v => v && String(v).trim().length > 0);
-
             if (vias.length > 0) {
                 vias.forEach((via, idx) => {
                     const viaNode = document.createElement('div');
@@ -511,16 +824,32 @@
             }
         }
 
-        // Google Maps Route Link
+        if (viasBadge && viasCountVal) {
+            if (vias.length > 0) {
+                viasCountVal.textContent = `${vias.length} Via${vias.length > 1 ? 's' : ''}`;
+                viasBadge.classList.remove('d-none');
+            } else {
+                viasBadge.classList.add('d-none');
+            }
+        }
+
+        // Google Maps Route Link (with waypoints)
         const mapsLink = document.getElementById('modal-route-maps-link');
         if (mapsLink) {
-            if (booking.pickup_address && booking.dropoff_address) {
-                mapsLink.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(booking.pickup_address)}&destination=${encodeURIComponent(booking.dropoff_address)}`;
+            if (pickupAddr && dropoffAddr) {
+                let url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickupAddr)}&destination=${encodeURIComponent(dropoffAddr)}`;
+                if (vias.length > 0) {
+                    url += `&waypoints=${encodeURIComponent(vias.join('|'))}`;
+                }
+                mapsLink.href = url;
                 mapsLink.style.display = '';
             } else {
                 mapsLink.style.display = 'none';
             }
         }
+
+        // Render / Update Route Map
+        window.initOrUpdateBookingRouteMap(pickupAddr, dropoffAddr, vias);
 
         // Vehicle, Driver & Pricing Breakdown
         const vehicleEl = document.getElementById('modal-vehicle_id');
@@ -692,9 +1021,39 @@
             });
         }
 
-        // Handle stacked modal scrolling restoration
+        // Toggle map view button
+        const toggleMapBtn = document.getElementById('modal-toggle-map-btn');
+        const mapWrapper = document.getElementById('modal-map-wrapper');
+        const toggleMapText = document.getElementById('modal-toggle-map-text');
+
+        if (toggleMapBtn && mapWrapper) {
+            toggleMapBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const isCollapsed = mapWrapper.classList.toggle('map-collapsed');
+                if (toggleMapText) {
+                    toggleMapText.textContent = isCollapsed ? 'Show Map' : 'Hide Map';
+                }
+                if (!isCollapsed && window._viewBookingGoogleMap) {
+                    setTimeout(() => {
+                        google.maps.event.trigger(window._viewBookingGoogleMap, 'resize');
+                    }, 150);
+                }
+            });
+        }
+
+        // Handle modal resize / map trigger on open
         const viewModalEl = document.getElementById('viewBookingModal');
         if (viewModalEl) {
+            viewModalEl.addEventListener('shown.bs.modal', function() {
+                if (window._viewBookingGoogleMap) {
+                    google.maps.event.trigger(window._viewBookingGoogleMap, 'resize');
+                    if (window._viewBookingDirectionsRenderer && window._viewBookingDirectionsRenderer.getDirections()) {
+                        const bounds = window._viewBookingDirectionsRenderer.getDirections().routes[0]?.bounds;
+                        if (bounds) window._viewBookingGoogleMap.fitBounds(bounds);
+                    }
+                }
+            });
+
             viewModalEl.addEventListener('hidden.bs.modal', function() {
                 if (document.querySelector('.modal.show')) {
                     document.body.classList.add('modal-open');
