@@ -400,7 +400,7 @@
             <i class="bi bi-gear-wide-connected me-1"></i> Settings
         </a>
 
-        @if(session('staff_role') === 'super_admin')
+        @if(in_array(session('staff_role'), ['super_admin', 'admin'], true))
             <button type="button" class="btn btn-outline-dark fw-semibold shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#superAdminPasswordModal">
                 <i class="bi bi-shield-lock me-1"></i> Change Password
             </button>
@@ -417,14 +417,14 @@
     </div>
 </div>
 
-@if(session('staff_role') === 'super_admin')
+@if(in_array(session('staff_role'), ['super_admin', 'admin'], true))
 <div class="modal fade" id="superAdminPasswordModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-4">
             <form method="POST" action="{{ route('setup.super-admin.password') }}">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Change Super Admin Password</h5>
+                    <h5 class="modal-title">Change Password</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">

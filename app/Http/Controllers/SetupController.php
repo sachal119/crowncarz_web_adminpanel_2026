@@ -7,10 +7,12 @@ use App\Models\Driver;
 use App\Models\Vehicle;
 use App\Models\Account;
 use App\Models\Staff;
+use App\Models\AdminCredential;
 use App\Mail\StaffCredentialsMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use App\Services\FirebaseService;
 
@@ -176,7 +178,7 @@ public function index()
 public function updateSuperAdminPassword(Request $request)
 {
     abort_unless(session('admin_logged_in'), 403);
-    abort_unless(session('staff_role') === 'super_admin', 403);
+    abort_unless(in_array(session('staff_role'), ['super_admin', 'admin'], true), 403);
 
     // Accept both the standard Laravel field names and the names used by the
     // existing Setup modal on older live deployments.
@@ -229,12 +231,28 @@ public function updateSuperAdminPassword(Request $request)
                     'updated_at' => now()->toDateTimeString(),
                 ]);
 
-            return back()->with('success', 'Super admin password updated successfully.');
+            if ($sessionId) {
+                Staff::whereKey($sessionId)->update([
+                    'password' => Hash::make($validated['password']),
+                ]);
+            }
+            if ($sessionEmail) {
+                Staff::whereRaw('LOWER(email) = ?', [$sessionEmail])->update([
+                    'password' => Hash::make($validated['password']),
+                ]);
+                if (Schema::hasTable('admin_credentials')) {
+                    AdminCredential::whereRaw('LOWER(email) = ?', [$sessionEmail])->update([
+                        'password' => Hash::make($validated['password']),
+                    ]);
+                }
+            }
+
+            return back()->with('success', 'Password updated successfully.');
         }
     }
 
     return back()->withErrors([
-        'current_password' => 'The logged-in super admin record could not be found.',
+        'current_password' => 'The logged-in account record could not be found.',
     ]);
 }
 
@@ -255,9 +273,6 @@ public function updateSuperAdminPassword(Request $request)
             'phone' => 'required',
             'role' => 'nullable|in:admin,collaborator,staff',
         ]);
-        
-        
-        
 
         if ($validator->fails()) {
             return redirect()->back()
@@ -275,6 +290,7 @@ public function updateSuperAdminPassword(Request $request)
             'email' => $validated['email'],
             'password' => Hash::make($plainPassword),
             'phone' => $validated['phone'],
+            'role' => $role,
         ]);
 
         $this->firebase->pushData('staff', array_merge($staff->toArray(), [
@@ -308,7 +324,7 @@ public function updateSuperAdminPassword(Request $request)
     public function updateStaffAccess(Request $request, $id)
     {
         abort_unless(session('admin_logged_in'), 403);
-        abort_unless(session('staff_role') === 'super_admin', 403);
+        abort_unless(in_array(session('staff_role'), ['super_admin', 'admin'], true), 403);
 
         $validated = $request->validate([
             'role' => ['required', 'in:admin,collaborator,staff'],
@@ -327,10 +343,22 @@ public function updateSuperAdminPassword(Request $request)
                 ->with('active_tab', 'staff');
         }
 
+        $staffRecord = $this->firebase->getData('staff/'.$firebaseKey) ?? [];
+
         $this->firebase->updateData('staff/'.$firebaseKey, [
             'role' => $validated['role'],
             'updated_at' => now()->toDateTimeString(),
         ]);
+
+        Staff::query()->whereKey($id)->update([
+            'role' => $validated['role'],
+        ]);
+
+        if (!empty($staffRecord['email'])) {
+            Staff::whereRaw('LOWER(email) = ?', [strtolower(trim($staffRecord['email']))])->update([
+                'role' => $validated['role'],
+            ]);
+        }
 
         return back()
             ->with('success', 'Staff access updated successfully.')
@@ -340,7 +368,7 @@ public function updateSuperAdminPassword(Request $request)
     public function destroyStaff($id)
     {
         abort_unless(session('admin_logged_in'), 403);
-        abort_unless(session('staff_role') === 'super_admin', 403);
+        abort_unless(in_array(session('staff_role'), ['super_admin', 'admin'], true), 403);
 
         if ((string) session('staff_id') === (string) $id) {
             return back()
@@ -355,8 +383,14 @@ public function updateSuperAdminPassword(Request $request)
                 ->with('active_tab', 'staff');
         }
 
+        $staffRecord = $this->firebase->getData('staff/'.$firebaseKey) ?? [];
+
         $this->firebase->deleteData('staff/'.$firebaseKey);
         Staff::query()->whereKey($id)->delete();
+
+        if (!empty($staffRecord['email'])) {
+            Staff::whereRaw('LOWER(email) = ?', [strtolower(trim($staffRecord['email']))])->delete();
+        }
 
         return back()
             ->with('success', 'Staff account deleted successfully.')

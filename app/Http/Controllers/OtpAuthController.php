@@ -126,6 +126,7 @@ public function login(Request $request)
             'staff_role' => $staff->role ?: 'collaborator',
             'staff_name' => $staff->name,
             'staff_id' => $staff->id,
+            'staff_email' => $staff->email,
         ]);
 
         return redirect()->route('dashboard')

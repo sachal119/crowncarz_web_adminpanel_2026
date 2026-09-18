@@ -56,13 +56,14 @@ class AdminAuth
             session([
                 'staff_role' => $loggedInStaff->role ?: 'collaborator',
                 'staff_name' => $loggedInStaff->name,
+                'staff_email' => $loggedInStaff->email,
             ]);
         }
 
         $role = session('staff_role', 'super_admin');
 
-        if ($routeName === 'setup.super-admin.password' && $role !== 'super_admin') {
-            abort(403, 'Only the Super Admin can change this password.');
+        if ($routeName === 'setup.super-admin.password' && !in_array($role, ['super_admin', 'admin'], true)) {
+            abort(403, 'Only administrators can change this password.');
         }
 
         if ($role === 'collaborator') {
