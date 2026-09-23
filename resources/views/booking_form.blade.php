@@ -1198,24 +1198,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const accountSelectContainer = document.getElementById('account-select-container');
     const accountSelect = document.getElementById('account_id');
     const accountNameInput = document.getElementById('account_name');
-    const passengerNameInput = document.querySelector('input[name="passenger_name"]');
-    const phoneNoInput = document.querySelector('input[name="phone_no"]');
-    const emailInput = document.querySelector('input[name="email"]');
     const accountInfoNote = document.getElementById('account-info-note');
 
-    function syncAccountFields(populateContact = false) {
+    function syncAccountFields() {
         if (!accountSelect) return;
         const selectedOption = accountSelect.options[accountSelect.selectedIndex];
         if (selectedOption && selectedOption.value) {
             if (accountNameInput) accountNameInput.value = selectedOption.dataset.name || '';
-            if (populateContact) {
-                if (phoneNoInput && (!phoneNoInput.value.trim() || populateContact === true)) {
-                    phoneNoInput.value = selectedOption.dataset.phone || phoneNoInput.value;
-                }
-                if (emailInput && (!emailInput.value.trim() || populateContact === true)) {
-                    emailInput.value = selectedOption.dataset.email || emailInput.value;
-                }
-            }
         } else {
             if (accountNameInput) accountNameInput.value = '';
         }
@@ -1236,10 +1225,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Populate fields on account selection
+    // Populate account_name on account selection (Never overwrite passenger name, phone, or email)
     if (accountSelect) {
         accountSelect.addEventListener('change', function() {
-            syncAccountFields(true);
+            syncAccountFields();
         });
     }
 
@@ -1257,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const opt = Array.from(accountSelect.options).find(o => o.dataset.name === savedAccountName);
                 if (opt) accountSelect.value = opt.value;
             }
-            syncAccountFields(false);
+            syncAccountFields();
         }
     }
 });
