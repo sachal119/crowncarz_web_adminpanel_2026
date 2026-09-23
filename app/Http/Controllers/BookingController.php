@@ -1814,16 +1814,16 @@ public function index()
     if (!session('admin_logged_in')) {
         return redirect()->route('login')->with('error', 'Please login first.');
     }
-    // 1️⃣ Fetch bookings from Firebase
+    // 1️⃣ Fetch customers / accounts
+    $accounts = $this->firebase->getData('customers') ?? [];
+
+    // 2️⃣ Fetch bookings from Firebase
     $bookingsSnapshot = $this->firebase->getData('bookings');
     $bookings = [];
     $today = \Carbon\Carbon::today();
 
     if ($bookingsSnapshot) {
         foreach ($bookingsSnapshot as $id => $booking) {
-
-            // Ensure hidden field exists
-            //$booking['hidden'] = $booking['hidden'] ?? false;
 
             // Skip if pickup_time is missing or in the past
             if (empty($booking['pickup_time'])) continue;
@@ -1833,31 +1833,29 @@ public function index()
             } catch (\Throwable $e) {
                 continue;
             }
-            
-            
-            
-            
-
-            // Only include future pickups
-            // ❌ Skip past dates (before today)
-        // if ($pickupTime->lt($today)) {
-        //     continue;
-        // }
 
             // Skip completed bookings
-        if (in_array($booking['status'] ?? null, ['completed', 'job_cancelled','no_show'])) {
-    continue;
-}
-
+            if (in_array($booking['status'] ?? null, ['completed', 'job_cancelled','no_show'])) {
+                continue;
+            }
 
             $booking['id'] = $id;
             $booking['pickup_time_parsed'] = $pickupTime;
             
             $booking['vias'] = [];
 
-if (!empty($booking['via_addresses']) && is_array($booking['via_addresses'])) {
-    $booking['vias'] = $booking['via_addresses'];
-}
+            if (!empty($booking['via_addresses']) && is_array($booking['via_addresses'])) {
+                $booking['vias'] = $booking['via_addresses'];
+            }
+
+            // Enrich account name if payment type is account
+            if (strtolower($booking['payment_type'] ?? '') === 'account') {
+                if (empty($booking['account_name']) && !empty($booking['account_id']) && isset($accounts[$booking['account_id']])) {
+                    $booking['account_name'] = $accounts[$booking['account_id']]['business_name'] ?? ($accounts[$booking['account_id']]['name'] ?? '');
+                } elseif (empty($booking['account_name']) && !empty($booking['account'])) {
+                    $booking['account_name'] = is_string($booking['account']) ? $booking['account'] : ($booking['account']['business_name'] ?? ($booking['account']['name'] ?? ''));
+                }
+            }
 
             $bookings[] = $booking;
         }
@@ -2183,6 +2181,7 @@ $bookings = new LengthAwarePaginator(
         $tableHtml = view('partials.dashboard_table_rows', [
             'bookings' => $bookings,
             'drivers'  => $drivers,
+            'accounts' => $accounts,
         ])->render();
 
         $paginationHtml = $bookings->links('pagination::bootstrap-5')->render();

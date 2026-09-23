@@ -93,9 +93,25 @@
             <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">{{ $booking['ref_no'] ?? 'N/A' }}</span>
         </td>
         <td class="col-payment" style="{{ $rowStyle }}">
-            <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs" style="background-color: {{ $bgColor }}; font-size: 10.5px; font-weight: 600;">
-                {{ ucfirst($paymentType) }}
-            </span>
+            @php
+                $accName = $booking['account_name'] ?? '';
+                if (empty($accName) && !empty($booking['account_id']) && isset($accounts[$booking['account_id']])) {
+                    $accName = $accounts[$booking['account_id']]['business_name'] ?? ($accounts[$booking['account_id']]['name'] ?? '');
+                }
+                if (empty($accName) && !empty($booking['account'])) {
+                    $accName = is_string($booking['account']) ? $booking['account'] : ($booking['account']['business_name'] ?? ($booking['account']['name'] ?? ''));
+                }
+            @endphp
+            <div class="d-flex flex-column align-items-start">
+                <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs" style="background-color: {{ $bgColor }}; font-size: 10.5px; font-weight: 600;">
+                    {{ ucfirst($paymentType) }}
+                </span>
+                @if($paymentType === 'account' && !empty($accName))
+                    <span class="text-truncate fw-bold text-dark mt-1" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="{{ $accName }}">
+                        {{ $accName }}
+                    </span>
+                @endif
+            </div>
         </td>
         <td class="col-passenger fw-semibold" style="{{ $rowStyle }}" title="{{ $booking['passenger_name'] ?? 'N/A' }}">
             <span class="truncate-cell" style="max-width: 125px;">{{ $booking['passenger_name'] ?? 'N/A' }}</span>

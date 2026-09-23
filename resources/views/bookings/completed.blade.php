@@ -120,13 +120,24 @@
     ];
 
     $bgColor = $paymentColors[$paymentType] ?? '#6c757d'; // grey fallback
+    $accName = $booking['account_name'] ?? '';
+    if (empty($accName) && !empty($booking['account'])) {
+        $accName = is_string($booking['account']) ? $booking['account'] : ($booking['account']['business_name'] ?? ($booking['account']['name'] ?? ''));
+    }
 @endphp
 
 <td>
-    <span class="badge rounded-pill px-3 py-2"
-          style="background-color: {{ $bgColor }}; color: #fff;">
-        {{ ucfirst($paymentType) }}
-    </span>
+    <div class="d-flex flex-column align-items-start">
+        <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs"
+              style="background-color: {{ $bgColor }}; font-size: 10.5px; font-weight: 600;">
+            {{ ucfirst($paymentType) }}
+        </span>
+        @if($paymentType === 'account' && !empty($accName))
+            <span class="text-truncate fw-bold text-dark mt-1" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="{{ $accName }}">
+                {{ $accName }}
+            </span>
+        @endif
+    </div>
 </td>
             <!--<td>-->
             <!--  <span class="badge rounded-pill px-3 py-2" style="background-color: #D39F61;">-->

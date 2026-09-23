@@ -1484,6 +1484,18 @@ const STATUS_BADGES = {
     'no_show': 'secondary',
 };
 
+const DASHBOARD_ACCOUNTS = @json($accounts ?? []);
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 const PAYMENT_COLORS = {
     'cash': '#28a745',
     'card': '#0d6efd',
@@ -1620,11 +1632,19 @@ function updateBookingsCountBadge(delta = 0, exact = null) {
 }
 
 // 🎨 Helper to format payment badge
-function getPaymentBadgeHtml(paymentType) {
+function getPaymentBadgeHtml(paymentType, accountName = '') {
     const type = (paymentType || 'unknown').toLowerCase();
     const bg = PAYMENT_COLORS[type] || '#6c757d';
     const label = type.charAt(0).toUpperCase() + type.slice(1);
-    return `<span class="badge rounded-pill px-3 py-2" style="background-color: ${bg}; color: #fff;">${label}</span>`;
+    
+    let html = `<div class="d-flex flex-column align-items-start">
+        <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs" style="background-color: ${bg}; font-size: 10.5px; font-weight: 600;">${label}</span>`;
+    
+    if (type === 'account' && accountName) {
+        html += `<span class="text-truncate fw-bold text-dark mt-1" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="${escapeHtml(accountName)}">${escapeHtml(accountName)}</span>`;
+    }
+    html += `</div>`;
+    return html;
 }
 
 // 🎨 Helper to format platform badge
@@ -1788,6 +1808,14 @@ function buildBookingRowHtml(booking, isNew = false) {
     const flightNo = (booking.flight_no && booking.flight_no !== '-' && booking.flight_no !== 'undefined') ? booking.flight_no : '-';
     const formattedPrice = (booking.price && !isNaN(Number(booking.price))) ? `£${Number(booking.price).toFixed(2)}` : (booking.price || '-');
 
+    let accName = booking.account_name || '';
+    if (!accName && booking.account_id && typeof DASHBOARD_ACCOUNTS !== 'undefined' && DASHBOARD_ACCOUNTS[booking.account_id]) {
+        accName = DASHBOARD_ACCOUNTS[booking.account_id].business_name || DASHBOARD_ACCOUNTS[booking.account_id].name || '';
+    }
+    if (!accName && booking.account) {
+        accName = typeof booking.account === 'string' ? booking.account : (booking.account.business_name || booking.account.name || '');
+    }
+
     const highlightClass = isNew ? 'new-booking-highlight' : '';
 
     return `
@@ -1795,7 +1823,7 @@ function buildBookingRowHtml(booking, isNew = false) {
         <td class="col-ref fw-bold" style="${rowStyle}">
             <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">${booking.ref_no || 'N/A'}</span>
         </td>
-        <td class="col-payment" style="${rowStyle}">${getPaymentBadgeHtml(booking.payment_type)}</td>
+        <td class="col-payment" style="${rowStyle}">${getPaymentBadgeHtml(booking.payment_type, accName)}</td>
         <td class="col-passenger fw-semibold" style="${rowStyle}" title="${passengerName}">
             <span class="truncate-cell" style="max-width: 125px;">${passengerName}</span>
         </td>

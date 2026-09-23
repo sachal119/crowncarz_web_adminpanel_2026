@@ -2685,19 +2685,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 var map, directionsService, directionsRenderer;
-function initRouteMap() {
-  map = new google.maps.Map(document.getElementById("routeMap"), {
-    zoom: 7,
-    center: { lat: 51.5074, lng: -0.1278 }, // London
-  });
-  directionsService = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer({
-    map: map,
-    suppressMarkers: false,
-  });
-  // draw initial route if addresses exist
-  updateRoute();
+
+function extractPostcodeFromAddress(address) {
+  if (!address) return '';
+  const postcodeRegex = /\b[A-Z]{1,2}\d{1,2}[A-Z]?\s*\d?[A-Z]{0,2}\b/i;
+  const match = address.match(postcodeRegex);
+  return match ? match[0].toUpperCase().trim() : '';
 }
+window.extractPostcodeFromAddress = extractPostcodeFromAddress;
 
 function getMapWaypoints() {
   const vias = [];
@@ -2710,17 +2705,62 @@ function getMapWaypoints() {
   return vias;
 }
 
+window.initRouteMap = function() {
+  const mapElement = document.getElementById("routeMap");
+  if (!mapElement) return;
+  if (!window.google || !window.google.maps) return;
+
+  if (!map) {
+    map = new google.maps.Map(mapElement, {
+      zoom: 8,
+      center: { lat: 51.5074, lng: -0.1278 }, // London
+      mapTypeControl: true,
+      streetViewControl: false,
+    });
+  }
+
+  if (!directionsService) {
+    directionsService = new google.maps.DirectionsService();
+  }
+
+  if (!directionsRenderer) {
+    directionsRenderer = new google.maps.DirectionsRenderer({
+      map: map,
+      suppressMarkers: false,
+    });
+  } else {
+    directionsRenderer.setMap(map);
+  }
+
+  // Draw initial route if addresses exist
+  setTimeout(updateRoute, 200);
+};
+
 function updateRoute() {
-  const origin = document.getElementById('pickup_address')?.value?.trim();
-  const destination = document.getElementById('dropoff_address')?.value?.trim();
+  const pickupEl = document.getElementById('pickup_address');
+  const dropoffEl = document.getElementById('dropoff_address');
+  if (!pickupEl || !dropoffEl) return;
+
+  const origin = pickupEl.value.trim();
+  const destination = dropoffEl.value.trim();
   const waypoints = getMapWaypoints();
 
   if (!origin || !destination) {
+    if (directionsRenderer) {
+      directionsRenderer.set('directions', null);
+    }
     return;
   }
+
   if (!directionsService || !directionsRenderer) {
-    return;
+    if (window.google && window.google.maps && typeof window.initRouteMap === 'function') {
+      window.initRouteMap();
+    }
+    if (!directionsService || !directionsRenderer) {
+      return;
+    }
   }
+
   directionsService.route(
     {
       origin: origin,
@@ -2732,8 +2772,32 @@ function updateRoute() {
     function (response, status) {
       if (status === google.maps.DirectionsStatus.OK) {
         directionsRenderer.setDirections(response);
+        if (map) google.maps.event.trigger(map, 'resize');
       } else {
-        console.warn("Directions request failed due to " + status);
+        // Fallback: try routing with extracted postcodes if full text fails
+        const originPC = extractPostcodeFromAddress(origin);
+        const destPC = extractPostcodeFromAddress(destination);
+        if (originPC && destPC && (originPC !== origin || destPC !== destination)) {
+          directionsService.route(
+            {
+              origin: originPC,
+              destination: destPC,
+              waypoints: waypoints,
+              travelMode: google.maps.TravelMode.DRIVING,
+              optimizeWaypoints: false,
+            },
+            function (fallbackResponse, fallbackStatus) {
+              if (fallbackStatus === google.maps.DirectionsStatus.OK) {
+                directionsRenderer.setDirections(fallbackResponse);
+                if (map) google.maps.event.trigger(map, 'resize');
+              } else {
+                console.warn("Directions fallback failed due to " + fallbackStatus);
+              }
+            }
+          );
+        } else {
+          console.warn("Directions request failed due to " + status);
+        }
       }
     }
   );
@@ -2742,6 +2806,12 @@ function updateRoute() {
 // ✅ Update route whenever address is selected (from TaxiBase)
 document.addEventListener("taxibase:select", function () {
   updateRoute();
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.google && window.google.maps) {
+    window.initRouteMap();
+  }
 });
 </script>
 <!-- ✅ Load Google Maps JS API -->

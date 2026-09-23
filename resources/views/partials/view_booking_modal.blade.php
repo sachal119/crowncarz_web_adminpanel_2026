@@ -764,7 +764,12 @@
         if (topPrice) topPrice.textContent = '£' + (parseFloat(booking.price || 0).toFixed(2));
 
         const topPayment = document.getElementById('modal-top-payment');
-        if (topPayment) topPayment.textContent = booking.payment_type || 'Cash';
+        let modalPaymentText = booking.payment_type ? (booking.payment_type.charAt(0).toUpperCase() + booking.payment_type.slice(1)) : 'Cash';
+        const modalAccName = booking.account_name || (booking.account ? (typeof booking.account === 'string' ? booking.account : (booking.account.business_name || booking.account.name)) : '');
+        if (booking.payment_type && booking.payment_type.toLowerCase() === 'account' && modalAccName) {
+            modalPaymentText += ` (${modalAccName})`;
+        }
+        if (topPayment) topPayment.textContent = modalPaymentText;
 
         // Passenger Info
         const passName = document.getElementById('modal-passenger_name');
@@ -887,7 +892,7 @@
         }
 
         const payTypeEl = document.getElementById('modal-payment_type');
-        if (payTypeEl) payTypeEl.textContent = booking.payment_type || 'Cash';
+        if (payTypeEl) payTypeEl.textContent = modalPaymentText;
 
         const commentEl = document.getElementById('modal-comment');
         if (commentEl) commentEl.textContent = booking.job_comment || 'No special comments or instructions provided.';

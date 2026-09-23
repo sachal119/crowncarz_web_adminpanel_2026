@@ -154,6 +154,15 @@
                 </span>
                 <span class="fw-bold text-dark mt-1 d-block text-capitalize">
                     {{ $booking['payment_type'] ?? 'Cash' }}
+                    @php
+                        $viewAccName = $booking['account_name'] ?? '';
+                        if (empty($viewAccName) && !empty($booking['account'])) {
+                            $viewAccName = is_string($booking['account']) ? $booking['account'] : ($booking['account']['business_name'] ?? ($booking['account']['name'] ?? ''));
+                        }
+                    @endphp
+                    @if(strtolower($booking['payment_type'] ?? '') === 'account' && !empty($viewAccName))
+                        <span class="badge text-white ms-1" style="background-color: #6f42c1; font-size: 0.75rem; font-weight: 500;">{{ $viewAccName }}</span>
+                    @endif
                 </span>
             </div>
         </div>
@@ -311,7 +320,12 @@
                         </div>
                         <div class="col-sm-6">
                             <div class="small text-muted" style="font-size: 0.78rem;">Payment Type</div>
-                            <div class="fw-semibold text-dark text-capitalize">{{ $booking['payment_type'] ?? 'Cash' }}</div>
+                            <div class="fw-semibold text-dark text-capitalize">
+                                {{ $booking['payment_type'] ?? 'Cash' }}
+                                @if(strtolower($booking['payment_type'] ?? '') === 'account' && !empty($viewAccName))
+                                    <span class="text-muted small">({{ $viewAccName }})</span>
+                                @endif
+                            </div>
                         </div>
                         <div class="col-12">
                             <div class="small text-muted" style="font-size: 0.78rem;">Job Comments & Special Instructions</div>
