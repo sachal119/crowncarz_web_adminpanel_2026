@@ -3457,8 +3457,14 @@ public function store(Request $request)
     
     $refNo = $this->generateRefNo();
 
-    
-    
+    $accountId = $validated['account_id'] ?? null;
+    $accountName = $validated['account_name'] ?? null;
+    if (!empty($accountId) && empty($accountName)) {
+        $accData = $this->firebase->getData("customers/{$accountId}");
+        if ($accData) {
+            $accountName = $accData['business_name'] ?? null;
+        }
+    }
 
     /**
      * ==========================
@@ -3471,6 +3477,7 @@ public function store(Request $request)
         'passenger_name'  => $validated['passenger_name'],
         'pickup_address'  => $validated['pickup_address'],
         'via_addresses'   => $viaAddresses,
+        'vias'            => $viaAddresses,
         'dropoff_address' => $validated['dropoff_address'],
         'flight_no'       => $validated['flight_no'] ?? null,
         'phone_no'        => $validated['phone_no'] ?? null,
@@ -3481,8 +3488,8 @@ public function store(Request $request)
         'job_comment'     => $validated['job_comment'] ?? null,
         'payment_type'    => $validated['payment_type'] ?? 'cash',
         'driver_id'       => !empty($validated['driver_id']) ? $validated['driver_id'] : ($driverId ?? ""),
-        'account_id'      => $validated['account_id'] ?? null,
-        'account_name'    => $validated['account_name'] ?? null,
+        'account_id'      => $accountId,
+        'account_name'    => $accountName,
         'vehicle_id'      => $validated['vehicle_id'] ?? null,
         // 'price'           => $validated['price'] ?? null,
 
@@ -7864,48 +7871,53 @@ public function sendEmaildashboard(Request $request)
     }
 
     // Edit Booking
-  // Show edit form
+    // Show edit form
     public function edit($bookingId) {
         
         if (!session('admin_logged_in')) {
-        return redirect()->route('login')->with('error', 'Please login first.');
-    }
-        
-    $booking = $this->firebase->getData("bookings/{$bookingId}");
-    if (!$booking) return redirect()->back()->with('error','Booking not found');
-    
-    
-    // print_r($booking);
-    // die;
-
-    $booking['id'] = $bookingId; // ✅ add this line
-
-    $driversData = $this->firebase->getData('drivers') ?? [];
-    $drivers = collect($driversData)->map(fn($d, $id) => ['id' => $id, 'name' => $d['name']]);
-
-    $vehiclesData = $this->firebase->getData('vehicles') ?? [];
-    $vehicles = collect($vehiclesData)->map(fn($v, $id) => ['id' => $id, 'make' => $v['make'], 'model' => $v['model']]);
-    
-    // Fetch accounts from Firebase
-    $firebaseAccounts = $this->firebase->getData('customers'); // 'customers' node in Firebase
-    $accounts = [];
-    if($firebaseAccounts) {
-        foreach($firebaseAccounts as $key => $account) {
-            $accounts[] = [
-                'id' => $account['id'] ?? $key,
-                'business_name' => $account['business_name'] ?? '',
-                'address' => $account['address'] ?? '',
-                'email' => $account['email'] ?? '',
-                'phone' => $account['phone'] ?? '',
-            ];
+            return redirect()->route('login')->with('error', 'Please login first.');
         }
+        
+        $booking = $this->firebase->getData("bookings/{$bookingId}");
+        if (!$booking) return redirect()->back()->with('error','Booking not found');
+
+        $booking['id'] = $bookingId;
+
+        // Normalize vias from via_addresses or vias
+        $vias = $booking['via_addresses'] ?? ($booking['vias'] ?? []);
+        if (!is_array($vias)) {
+            $vias = !empty($vias) ? [$vias] : [];
+        }
+        $vias = array_values(array_filter($vias));
+        $booking['via_addresses'] = $vias;
+        $booking['vias'] = $vias;
+
+        $driversData = $this->firebase->getData('drivers') ?? [];
+        $drivers = collect($driversData)->map(fn($d, $id) => ['id' => $id, 'name' => $d['name']]);
+
+        $vehiclesData = $this->firebase->getData('vehicles') ?? [];
+        $vehicles = collect($vehiclesData)->map(fn($v, $id) => ['id' => $id, 'make' => $v['make'], 'model' => $v['model']]);
+        
+        // Fetch accounts from Firebase
+        $firebaseAccounts = $this->firebase->getData('customers'); // 'customers' node in Firebase
+        $accounts = [];
+        if($firebaseAccounts) {
+            foreach($firebaseAccounts as $key => $account) {
+                $accounts[] = [
+                    'id' => $account['id'] ?? $key,
+                    'business_name' => $account['business_name'] ?? '',
+                    'address' => $account['address'] ?? '',
+                    'email' => $account['email'] ?? '',
+                    'phone' => $account['phone'] ?? '',
+                ];
+            }
+        }
+
+        return view('booking_form', compact('booking','drivers','vehicles','accounts'));
     }
 
-    return view('booking_form', compact('booking','drivers','vehicles','accounts'));
-}
 
-
-// Update booking
+    // Update booking
     public function update(Request $request, $bookingId) {
         $booking = $this->firebase->getData("bookings/{$bookingId}");
         if (!$booking) return redirect()->back()->with('error','Booking not found');
@@ -7917,11 +7929,11 @@ public function sendEmaildashboard(Request $request)
             'pickup_address' => 'required|string',
             'dropoff_address'=> 'required|string',
             'pickup_date'    => 'required|date',
-            'pickup_time'    => 'required|date_format:H:i',
+            'pickup_time'    => 'required',
             'vehicle_id'     => 'nullable|string',
-            'vehicle_make'  => 'nullable|string',
-            
-            // 'price'          => 'nullable|numeric',
+            'vehicle_make'   => 'nullable|string',
+            'account_id'     => 'nullable|string',
+            'account_name'   => 'nullable|string',
             
             'price'          => 'nullable|numeric',
             'fare'           => 'nullable|numeric',
@@ -7931,48 +7943,72 @@ public function sendEmaildashboard(Request $request)
             
             'payment_type'   => 'required|in:cash,card,account',
             'flight_no'      => 'nullable|string',
-            'via_addresses'  => 'array',
+            'via_addresses'  => 'nullable|array',
             'via_addresses.*'=> 'nullable|string',
-            'child_seat' => 'nullable|boolean' ,
-            'job_comment'       =>'nullable|string',
+            'child_seat'     => 'nullable',
+            'job_comment'    => 'nullable|string',
         ]);
 
-        $pickup_datetime = Carbon::parse($validated['pickup_date'].' '.$validated['pickup_time']);
+        try {
+            $pickup_datetime = Carbon::parse($validated['pickup_date'].' '.$validated['pickup_time']);
+        } catch (\Throwable $e) {
+            $pickup_datetime = Carbon::parse($validated['pickup_date']);
+        }
+
         $driverId = null;
         if (!empty($validated['vehicle_id'])) {
             $vehicle = $this->firebase->getData('vehicles/'.$validated['vehicle_id']);
             $driverId = $vehicle['driver_id'] ?? null;
         }
 
+        $viaAddresses = [];
+        if (!empty($validated['via_addresses'])) {
+            foreach ($validated['via_addresses'] as $via) {
+                if (!empty(trim($via))) {
+                    $viaAddresses[] = trim($via);
+                }
+            }
+        }
+
+        $accountId = $validated['account_id'] ?? null;
+        $accountName = $validated['account_name'] ?? null;
+        if (!empty($accountId) && empty($accountName)) {
+            $accData = $this->firebase->getData("customers/{$accountId}");
+            if ($accData) {
+                $accountName = $accData['business_name'] ?? null;
+            }
+        }
+
         $updatedBooking = [
             'passenger_name' => $validated['passenger_name'],
-            'phone_no' => $validated['phone_no'],
-            'email' => $validated['email'] ?? null,
+            'phone_no'       => $validated['phone_no'],
+            'email'          => $validated['email'] ?? null,
             'pickup_address' => $validated['pickup_address'],
-            'dropoff_address' => $validated['dropoff_address'],
-            'vias' => array_filter($validated['via_addresses'] ?? []),
-            'pickup_time' => $pickup_datetime->toDateTimeString(),
-            'vehicle_id' => $validated['vehicle_id'] ?? null,
-            'vehicle_make' => $validated['vehicle_make'],
-            //'driver_id' => $driverId ?? "",
-            // 'price' => $validated['price'] ?? null,
+            'dropoff_address'=> $validated['dropoff_address'],
+            'via_addresses'  => $viaAddresses,
+            'vias'           => $viaAddresses,
+            'pickup_time'    => $pickup_datetime->toDateTimeString(),
+            'vehicle_id'     => $validated['vehicle_id'] ?? null,
+            'vehicle_make'   => $validated['vehicle_make'] ?? null,
             
-            'fare'         => $validated['fare'] ?? 0,
-            'parking'      => $validated['parking'] ?? 0,
-            'extra'        => $validated['extra'] ?? 0,
-            'waiting_fee'  => $validated['waiting_fee'] ?? 0,
-            'price'        => $validated['price'] ?? 0,
+            'fare'           => $validated['fare'] ?? 0,
+            'parking'        => $validated['parking'] ?? 0,
+            'extra'          => $validated['extra'] ?? 0,
+            'waiting_fee'    => $validated['waiting_fee'] ?? 0,
+            'price'          => $validated['price'] ?? 0,
             
-            'payment_type' => $validated['payment_type'],
-            'flight_no' => $validated['flight_no'] ?? null,
-            'child_seat' => $validated['child_seat'],
-            'job_comment' => $validated['job_comment'] ?? null,
+            'payment_type'   => $validated['payment_type'],
+            'account_id'     => $accountId,
+            'account_name'   => $accountName,
+            'flight_no'      => $validated['flight_no'] ?? null,
+            'child_seat'     => $validated['child_seat'] ?? null,
+            'job_comment'    => $validated['job_comment'] ?? null,
         ];
 
         $this->firebase->updateData("bookings/{$bookingId}", $updatedBooking);
         $this->recordBookingActivity($bookingId, 'Booking Edited', 'Booking details updated by staff.');
 
-       return redirect('/dashboard')->with('success', 'Booking updated successfully!');
+        return redirect('/dashboard')->with('success', 'Booking updated successfully!');
     }
 
 

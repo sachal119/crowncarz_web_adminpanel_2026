@@ -283,48 +283,49 @@
            
            
             {{-- ✅ Dynamic Via Addresses --}}
+            @php
+                $existingVias = old('via_addresses', $booking['via_addresses'] ?? ($booking['vias'] ?? []));
+                if (!is_array($existingVias)) {
+                    $existingVias = !empty($existingVias) ? [$existingVias] : [];
+                }
+                $existingVias = array_values(array_filter($existingVias));
+            @endphp
             <div class="mb-2 mb-md-3">
               <div class="d-flex justify-content-between align-items-center mb-1 mb-md-2">
                 <label class=" fs-6 fs-md-6">Via Address (Optional)</label>
                 <div>
-                    
-                         <button type="button" id="swap-btn" class="btn btn-outline-primary rounded-pill px-4 py-1">
-    <i class="bi bi-arrow-left-right me-1"></i> Swap Pickup & Dropoff
-  </button>
+                  <button type="button" id="swap-btn" class="btn btn-outline-primary rounded-pill px-4 py-1">
+                    <i class="bi bi-arrow-left-right me-1"></i> Swap Pickup & Dropoff
+                  </button>
            
-                 <button type="button" id="add-via" class="btn btn-outline-success btn-sm rounded-pill px-2">
-                  <i class="bi bi-plus-circle"></i> Add Via
-                </button>
-                    
+                  <button type="button" id="add-via" class="btn btn-outline-success btn-sm rounded-pill px-2">
+                    <i class="bi bi-plus-circle"></i> Add Via
+                  </button>
                 </div>
-           
               </div>
-<div id="via-container" class="via-container">
-@if(isset($booking) && !empty($booking['via_addresses']))
-    @foreach($booking['via_addresses'] as $index => $via)
-        <div class="via-field">
-            <div class="position-relative">
-                <input type="text"
-                       name="via_addresses[]"
-                       id="via_{{ $index }}"
-                       class="form-control"
-                       placeholder="Type your address or postcode"
-                       value="{{ $via ?? '' }}"
-                       autocomplete="off">
+              <div id="via-container" class="via-container">
+                @foreach($existingVias as $index => $via)
+                    <div class="via-field">
+                        <div class="position-relative">
+                            <input type="text"
+                                   name="via_addresses[]"
+                                   id="via_{{ $index }}"
+                                   class="form-control"
+                                   placeholder="Type your address or postcode"
+                                   value="{{ $via ?? '' }}"
+                                   autocomplete="off">
 
-                <button type="button" class="remove-via" title="Remove">
-                    <i class="bi bi-x"></i>
-                </button>
-            </div>
+                            <button type="button" class="remove-via" title="Remove">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
 
-            <input type="hidden" name="via_{{ $index }}_postcode">
-            <input type="hidden" name="via_{{ $index }}_lat">
-            <input type="hidden" name="via_{{ $index }}_long">
-        </div>
-    @endforeach
-@endif
-</div>
-
+                        <input type="hidden" id="via_{{ $index }}_postcode" name="via_{{ $index }}_postcode">
+                        <input type="hidden" id="via_{{ $index }}_lat" name="via_{{ $index }}_lat">
+                        <input type="hidden" id="via_{{ $index }}_long" name="via_{{ $index }}_long">
+                    </div>
+                @endforeach
+              </div>
             </div>
            
        
@@ -629,16 +630,28 @@
     </label>
 </div>
             {{-- Account Selection (Hidden by default) --}}
-        <div class="col-12 col-md-9 mb-2 mb-md-3" id="account-select-container" style="display: none;">
+        <div class="col-12 col-md-9 mb-2 mb-md-3" id="account-select-container" style="{{ (old('payment_type', $booking['payment_type'] ?? '') == 'account') ? '' : 'display: none;' }}">
             <label class="form-label fs-6 fs-md-6">Select Account</label>
+            <input type="hidden" name="account_name" id="account_name" value="{{ old('account_name', $booking['account_name'] ?? '') }}">
             <select name="account_id" id="account_id" class="form-select rounded-3 shadow-sm">
                 <option value="">-- Select Account --</option>
                 @if(isset($accounts) && count($accounts) > 0)
+                    @php
+                        $selectedAccId = (string) old('account_id', $booking['account_id'] ?? '');
+                        $selectedAccName = (string) old('account_name', $booking['account_name'] ?? '');
+                    @endphp
                     @foreach($accounts as $account)
+                        @php
+                            $accIdStr = (string) ($account['id'] ?? '');
+                            $accNameStr = (string) ($account['business_name'] ?? '');
+                            $isAccSelected = ($selectedAccId !== '' && $selectedAccId === $accIdStr) ||
+                                             ($selectedAccId === '' && $selectedAccName !== '' && strcasecmp(trim($selectedAccName), trim($accNameStr)) === 0);
+                        @endphp
                         <option value="{{ $account['id'] }}" 
                                 data-name="{{ $account['business_name'] }}" 
                                 data-phone="{{ $account['phone'] }}" 
-                                data-email="{{ $account['email'] }}">
+                                data-email="{{ $account['email'] }}"
+                                {{ $isAccSelected ? 'selected' : '' }}>
                             {{ $account['business_name'] }} - {{ $account['phone'] }}
                         </option>
                     @endforeach
@@ -1184,54 +1197,67 @@ document.addEventListener('DOMContentLoaded', function() {
     const paymentTypeSelect = document.getElementById('payment_type');
     const accountSelectContainer = document.getElementById('account-select-container');
     const accountSelect = document.getElementById('account_id');
+    const accountNameInput = document.getElementById('account_name');
     const passengerNameInput = document.querySelector('input[name="passenger_name"]');
     const phoneNoInput = document.querySelector('input[name="phone_no"]');
     const emailInput = document.querySelector('input[name="email"]');
     const accountInfoNote = document.getElementById('account-info-note');
 
-    // Toggle account select visibility
-    paymentTypeSelect.addEventListener('change', function() {
-        if (this.value === 'account') {
-            accountSelectContainer.style.display = 'block';
-            accountInfoNote.style.display = 'block';
-            // Clear fields if switching to account
-            if (passengerNameInput && phoneNoInput && emailInput) {
-                passengerNameInput.value = '';
-                phoneNoInput.value = '';
-                emailInput.value = '';
+    function syncAccountFields(populateContact = false) {
+        if (!accountSelect) return;
+        const selectedOption = accountSelect.options[accountSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            if (accountNameInput) accountNameInput.value = selectedOption.dataset.name || '';
+            if (populateContact) {
+                if (phoneNoInput && (!phoneNoInput.value.trim() || populateContact === true)) {
+                    phoneNoInput.value = selectedOption.dataset.phone || phoneNoInput.value;
+                }
+                if (emailInput && (!emailInput.value.trim() || populateContact === true)) {
+                    emailInput.value = selectedOption.dataset.email || emailInput.value;
+                }
             }
         } else {
-            accountSelectContainer.style.display = 'none';
-            accountInfoNote.style.display = 'none';
-            // Clear account select
-            if (accountSelect) {
-                accountSelect.value = 'hello';
-            }
+            if (accountNameInput) accountNameInput.value = '';
         }
-    });
+    }
 
-    // Populate fields on account selection
-    if (accountSelect) {
-        accountSelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            if (selectedOption.value) {
-                // if (passengerNameInput) passengerNameInput.value = selectedOption.dataset.name || '';
-                if (phoneNoInput) phoneNoInput.value = selectedOption.dataset.phone || '';
-                if (emailInput) emailInput.value = selectedOption.dataset.email || '';
+    // Toggle account select visibility
+    if (paymentTypeSelect) {
+        paymentTypeSelect.addEventListener('change', function() {
+            if (this.value === 'account') {
+                if (accountSelectContainer) accountSelectContainer.style.display = 'block';
+                if (accountInfoNote) accountInfoNote.style.display = 'block';
+            } else {
+                if (accountSelectContainer) accountSelectContainer.style.display = 'none';
+                if (accountInfoNote) accountInfoNote.style.display = 'none';
+                if (accountSelect) accountSelect.value = '';
+                if (accountNameInput) accountNameInput.value = '';
             }
         });
     }
 
+    // Populate fields on account selection
+    if (accountSelect) {
+        accountSelect.addEventListener('change', function() {
+            syncAccountFields(true);
+        });
+    }
+
     // Initial state check
-    if (paymentTypeSelect.value === 'account') {
-        accountSelectContainer.style.display = 'block';
-        accountInfoNote.style.display = 'block';
-        // If editing and account was selected, populate
+    if (paymentTypeSelect && paymentTypeSelect.value === 'account') {
+        if (accountSelectContainer) accountSelectContainer.style.display = 'block';
+        if (accountInfoNote) accountInfoNote.style.display = 'block';
+        
         const savedAccountId = '{{ old("account_id", $booking["account_id"] ?? "") }}';
-        if (savedAccountId && accountSelect) {
-            accountSelect.value = savedAccountId;
-            // Trigger change to populate
-            accountSelect.dispatchEvent(new Event('change'));
+        const savedAccountName = '{{ old("account_name", $booking["account_name"] ?? "") }}';
+        if (accountSelect) {
+            if (savedAccountId && accountSelect.querySelector(`option[value="${savedAccountId}"]`)) {
+                accountSelect.value = savedAccountId;
+            } else if (savedAccountName) {
+                const opt = Array.from(accountSelect.options).find(o => o.dataset.name === savedAccountName);
+                if (opt) accountSelect.value = opt.value;
+            }
+            syncAccountFields(false);
         }
     }
 });
@@ -2763,19 +2789,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof window.calculateTotal === 'function') window.calculateTotal();
           }, 200);
         }, 400); // slight delay to match animation timing
-      } else {
-        console.warn("⚠️ fetchPrice() not found");
-      }
-    }, 250); // Match animation duration
-  });
-});
-</script>
-
-
-<script>
+      <script>
 var map, directionsService, directionsRenderer;
 function initRouteMap() {
-  console.log('Map initializing...'); // Debug log
   map = new google.maps.Map(document.getElementById("routeMap"), {
     zoom: 7,
     center: { lat: 51.5074, lng: -0.1278 }, // London
@@ -2788,21 +2804,28 @@ function initRouteMap() {
   // draw initial route if addresses exist
   updateRoute();
 }
-function getViaAddresses() {
+
+function getMapWaypoints() {
   const vias = [];
   document.querySelectorAll('input[name="via_addresses[]"]').forEach(input => {
-    if (input.value.trim()) vias.push({ location: input.value.trim(), stopover: true });
+    const val = input.value.trim();
+    if (val) {
+      vias.push({ location: val, stopover: true });
+    }
   });
   return vias;
 }
+
 function updateRoute() {
   const origin = document.getElementById('pickup_address')?.value?.trim();
   const destination = document.getElementById('dropoff_address')?.value?.trim();
-  const waypoints = getViaAddresses();
-  console.log('Updating route:', { origin, destination, waypoints: waypoints.length }); // Debug log
+  const waypoints = getMapWaypoints();
+
   if (!origin || !destination) {
-    console.log('Skipping route: Missing origin or destination'); // Debug log
-    return; // wait until both entered
+    return;
+  }
+  if (!directionsService || !directionsRenderer) {
+    return;
   }
   directionsService.route(
     {
@@ -2815,13 +2838,13 @@ function updateRoute() {
     function (response, status) {
       if (status === google.maps.DirectionsStatus.OK) {
         directionsRenderer.setDirections(response);
-        console.log('Route drawn successfully'); // Debug log
       } else {
-        console.error("Directions request failed due to " + status); // Enhanced error
+        console.warn("Directions request failed due to " + status);
       }
     }
   );
 }
+
 // ✅ Update route whenever address is selected (from TaxiBase)
 document.addEventListener("taxibase:select", function () {
   updateRoute();
@@ -2831,10 +2854,41 @@ document.addEventListener("taxibase:select", function () {
 <script async defer
   src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&callback=initRouteMap&libraries=places">
 </script>
-{{-- ✅ Enhanced Event Listeners for Manual Input --}}
+
+@push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Debounce helper
+    const IS_EDIT_MODE = @json(isset($booking));
+    window.globalAutocompleteApiKey = '';
+    window.viaFieldCounter = {{ isset($existingVias) ? count($existingVias) : 0 }};
+
+function extractPostcodeFromAddress(address) {
+  if (!address) return '';
+  const postcodeRegex = /\b[A-Z]{1,2}\d{1,2}[A-Z]?\s*\d?[A-Z]{0,2}\b/i;
+  const match = address.match(postcodeRegex);
+  return match ? match[0].toUpperCase().trim() : '';
+}
+
+function getPricingViaPostcodes() {
+    const viaInputs = document.querySelectorAll('input[name="via_addresses[]"]');
+    const viaList = [];
+    viaInputs.forEach((input) => {
+        const val = input.value.trim();
+        if (val) {
+            const pc = extractPostcodeFromAddress(val);
+            viaList.push(pc ? pc : val);
+        }
+    });
+    return viaList;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    var vehicleSelect = document.querySelector('select[name="vehicle_id"]');
+    var pickupInput = document.querySelector('input[name="pickup_address"]');
+    var dropoffInput = document.querySelector('input[name="dropoff_address"]');
+    var priceInput = document.querySelector('#fare');
+    var mileageInput = document.querySelector('#mileage');
+    const priceLoader = document.getElementById('price-loader-container');
+
     function debounce(fn, delay) {
         let timeout;
         return function() {
@@ -2842,305 +2896,231 @@ document.addEventListener('DOMContentLoaded', function() {
             timeout = setTimeout(fn, delay);
         };
     }
-    const debouncedUpdate = debounce(updateRoute, 500);
-    const pickupInput = document.getElementById('pickup_address');
-    const dropoffInput = document.getElementById('dropoff_address');
-    if (pickupInput) {
-        pickupInput.addEventListener('input', debouncedUpdate);
-        pickupInput.addEventListener('blur', updateRoute);
-    }
-    if (dropoffInput) {
-        dropoffInput.addEventListener('input', debouncedUpdate);
-        dropoffInput.addEventListener('blur', updateRoute);
-    }
-    // For dynamic vias: Re-attach on add/remove
-    const addViaBtn = document.getElementById('add-via');
-    if (addViaBtn) {
-        addViaBtn.addEventListener('click', function() {
-            setTimeout(() => {
-                document.querySelectorAll('input[name="via_addresses[]"]').forEach(input => {
-                    input.addEventListener('input', debouncedUpdate);
-                    input.addEventListener('blur', updateRoute);
-                });
-            }, 100);
-        });
-    }
-    // Force initial update after DOM loads (for edit forms)
-    setTimeout(updateRoute, 1000);
-});
-</script>
-{{-- ✅ Via Remove Trigger --}}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const viaContainer = document.getElementById("via-container");
-    if (viaContainer) {
-        // Handle existing remove buttons (for edit forms)
-        viaContainer.addEventListener('click', function(e) {
-            if (e.target.closest('.remove-via')) {
-                e.target.closest('.via-field').remove();
-                updateRoute(); // Refresh map after remove
-            }
-        });
-        // For newly added vias (in add-via click handler, but this catches all)
-        document.getElementById('add-via')?.addEventListener('click', function() {
-            setTimeout(() => {
-                const newRemoveBtn = viaContainer.querySelector('.remove-via:last-of-type');
-                if (newRemoveBtn) {
-                    newRemoveBtn.addEventListener('click', function(e) {
-                        e.target.closest('.via-field').remove();
-                        updateRoute(); // Refresh map after remove
-                    });
-                }
-            }, 100);
-        });
-    }
-});
-</script>
-{{-- ✅ Price + Mileage Calculation Script (FIXED: Call calculateTotal after API success) --}}
-@push('scripts')
-<script>
-    const IS_EDIT_MODE = @json(isset($booking));
-</script>
+    const debouncedUpdateRoute = debounce(updateRoute, 400);
+    window.debouncedUpdateRoute = debouncedUpdateRoute;
 
-<script>
-// function extractPostcodeFromAddress(address) {
-// if (!address) return '';
-// const postcodeRegex = /[A-Za-z]{1,2}[0-9]{1,2}[A-Za-z]?\s*[0-9][A-Za-z]{2}/i;
-// const match = address.match(postcodeRegex);
-// return match ? match[0].toUpperCase().trim() : address.toUpperCase().trim();
-// }
-function extractPostcodeFromAddress(address) {
-  if (!address) return '';
-  // Updated regex — now also matches shorter postcodes like "TW6"
-  const postcodeRegex = /\b[A-Z]{1,2}\d{1,2}[A-Z]?\s*\d?[A-Z]{0,2}\b/i;
-  const match = address.match(postcodeRegex);
-  return match ? match[0].toUpperCase().trim() : '';
-}
-document.addEventListener("DOMContentLoaded", function () {
-    var vehicleSelect = document.querySelector('select[name="vehicle_id"]');
-    var pickupInput = document.querySelector('input[name="pickup_address"]');
-    var dropoffInput = document.querySelector('input[name="dropoff_address"]');
-    var priceInput = document.querySelector('#fare');
-    var mileageInput = document.querySelector('#mileage');
-    const priceLoader = document.getElementById('price-loader-container'); // ✅ Get loader
-    function getViaAddresses() {
-        const viaInputs = document.querySelectorAll('input[name="via_addresses[]"]');
-        const viaList = [];
-        viaInputs.forEach((input) => {
-            const val = input.value.trim();
-            if (val) viaList.push(extractPostcodeFromAddress(val));
-        });
-        return viaList;
-    }
-    // if (IS_EDIT_MODE) {
-    //     console.log('Edit mode detected — skipping price fetch');
-    //     // window.calculateTotal();
-    //     return;
-    // }
-    window.calculateTotal = function() { // Expose globally for easy call
+    window.calculateTotal = function() {
         const fareInput = document.getElementById("fare");
         const totalInput = document.getElementById("price");
         const parkingInput = document.getElementById("parking");
         const waitingInput = document.getElementById("waiting_fee");
         const extraInput = document.getElementById("extra");
         const childSeat = document.getElementById("child_seat");
+        if (!fareInput || !totalInput) return;
+
         const fare = parseFloat(fareInput.value) || 0;
-        const parking = parseFloat(parkingInput.value) || 0;
-        const waiting = parseFloat(waitingInput.value) || 0;
-        const extra = parseFloat(extraInput.value) || 0;
-        const seat = childSeat.checked ? 5 : 0;
+        const parking = parseFloat(parkingInput ? parkingInput.value : 0) || 0;
+        const waiting = parseFloat(waitingInput ? waitingInput.value : 0) || 0;
+        const extra = parseFloat(extraInput ? extraInput.value : 0) || 0;
+        const seat = (childSeat && childSeat.checked) ? 5 : 0;
         const total = fare + parking + waiting + extra + seat;
         totalInput.value = Math.ceil(total);
-
-        // totalInput.value = total.toFixed(2);
     };
-//     async function fetchPrice() {
-//     // window.fetchPrice = async function () {
-//         var vehicleId = vehicleSelect.value;
-//         var pickupAddress = pickupInput.value.trim();
-//         var dropoffAddress = dropoffInput.value.trim();
-//         var pickupPostcode = extractPostcodeFromAddress(pickupAddress);
-//         var dropoffPostcode = extractPostcodeFromAddress(dropoffAddress);
-//         var vias = getViaAddresses();
-//         var selected = vehicleSelect.options[vehicleSelect.selectedIndex];
-//         var vehicleMake = selected ? selected.getAttribute("data-make") : null;
-//         // ✅ Reset fields before check
-//         priceInput.value = '';
-//         mileageInput.value = '';
-       
-       
-//         const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'), { backdrop: 'static', keyboard: false });
-       
-       
-//         console.log(vehicleMake);
-//         console.log(pickupPostcode);
-//         console.log(dropoffPostcode);
-       
-// if (vehicleId && pickupPostcode && dropoffPostcode) {
-//     loadingModal.show(); // ✅ Show modal before fetching
-//     try {
-//         let url = `/admin/booking/get-price?vehicle_id=${encodeURIComponent(vehicleMake)}&pickup=${encodeURIComponent(pickupPostcode)}&dropoff=${encodeURIComponent(dropoffPostcode)}`;
-//         vias.forEach(v => url += `&vias[]=${encodeURIComponent(v)}`);
-//         const response = await fetch(url);
-//         const data = await response.json();
-//         if (data.success) {
-//             priceInput.value =  data.price;
-//             //mileageInput.value = data.total_distance;
-//              mileageInput.value = data.journey_distance;
-//              console.log(data.price);
-//              console.log(data.type);
-//              console.log(data.applied_percentages);
-//              console.log(data.vehicle_type);
-             
-//             // ✅ Auto-update total after setting fare
-//             window.calculateTotal();
-//         } else {
-//             console.error("Price calculation failed:", data.message);
-//         }
-//     } catch (error) {
-//         console.error("Error fetching price:", error);
-//     } finally {
-//         loadingModal.hide(); // ✅ Hide modal after done
-        
-        
-//     }
-// } else {
-//     loadingModal.hide(); // ✅ Hide if data incomplete
-//     // If incomplete, still try to calculate with current values (e.g., manual fare)
-//     window.calculateTotal();
-// }
-//     }
-
-async function fetchPrice() {
-    const requestId = ++window.latestPriceRequestId;
-    var vehicleId = vehicleSelect.value;
-    var pickupAddress = pickupInput.value.trim();
-    var dropoffAddress = dropoffInput.value.trim();
-    var pickupPostcode = extractPostcodeFromAddress(pickupAddress);
-    var dropoffPostcode = extractPostcodeFromAddress(dropoffAddress);
-    var vias = getViaAddresses();
-    var selected = vehicleSelect.options[vehicleSelect.selectedIndex];
-    var vehicleMake = selected ? selected.getAttribute("data-make") : null;
-
-    // ✅ New: pickup date and time
-    var pickupDate = document.getElementById('pickup_date')?.value || '';
-    var pickupTime = document.getElementById('pickup_time')?.value || '';
-    
-    
-    console.log("pickupTime",pickupTime);
-    console.log("pickupDate",pickupDate);
-
-    // Reset fields
-    priceInput.value = '';
-    mileageInput.value = '';
-    
-    // 🚫 Do NOT fetch price again if editing booking
-    // if (IS_EDIT_MODE) {
-    //     console.log('Edit mode detected — skipping price fetch');
-    //     // window.calculateTotal();
-    //     return;
-    // }
-
-    if (vehicleId && pickupPostcode && dropoffPostcode) {
-        // Block form interaction until the current fare/mileage response is ready.
-        priceLoader.style.display = 'inline-flex';
-        window.showLoadingModal('Calculating fare and mileage, please wait...');
-        try {
-            let url = `/admin/booking/get-price?vehicle_id=${encodeURIComponent(vehicleMake)}&pickup=${encodeURIComponent(pickupPostcode)}&dropoff=${encodeURIComponent(dropoffPostcode)}&pickup_date=${encodeURIComponent(pickupDate)}&pickup_time=${encodeURIComponent(pickupTime)}`;
-            vias.forEach(v => url += `&vias[]=${encodeURIComponent(v)}`);
-
-            const response = await fetch(url);
-            const data = await response.json();
-
-            // A newer route/vehicle request has already started, so this older
-            // response must not overwrite its price.
-            if (requestId !== window.latestPriceRequestId) return;
-
-            if (data.success) {
-                priceInput.value = data.price;
-                mileageInput.value = data.journey_distance;
-                
-                
-                console.log("Base Fare:", data.base_price);
-                console.log("Surcharge %:", data.surcharge_percent);
-                console.log("Applied Surcharge:", data.surcharge_amount);
-                console.log("Final Fare:", data.price);
-
-                // Auto-update total
-                window.calculateTotal();
-            } else {
-                console.error("Price calculation failed:", data.message);
-            }
-        } catch (error) {
-            if (requestId === window.latestPriceRequestId) {
-                console.error("Error fetching price:", error);
-            }
-        } finally {
-            if (requestId === window.latestPriceRequestId) {
-                priceLoader.style.display = 'none';
-                window.hideLoadingModal();
-            }
-        }
-    } else {
-        priceLoader.style.display = 'none';
-        window.hideLoadingModal();
-        window.calculateTotal();
-    }
-}
 
     window.latestPriceRequestId = 0;
-    // ✅ Trigger on load if vehicle/addresses are present (for edit forms)
-    // if (vehicleSelect.value && pickupInput.value.trim() && dropoffInput.value.trim()) {
-    //     fetchPrice();
-    // }
-    // // ✅ Initial calculation on load
-    // window.calculateTotal();
-    // ─── Edit-mode guard ─────────────────────────────────────────────────────────
-// In edit mode we must NOT auto-fetch a new price on load; the saved price is
-// already in the form. We only fetch once the user actively changes vehicle,
-// pickup, or dropoff.
-let userHasInteracted = false;   // becomes true on the first real user gesture
+    let userHasInteracted = false;
 
-const _originalFetchPrice = fetchPrice;
-window.fetchPrice = async function () {
-    if (IS_EDIT_MODE && !userHasInteracted) {
-        // Just recompute the total from the already-correct saved values.
-        window.calculateTotal();
-        return;
+    window.markPricingInteraction = function() {
+        userHasInteracted = true;
+    };
+
+    async function doFetchPrice() {
+        const requestId = ++window.latestPriceRequestId;
+        if (!vehicleSelect || !pickupInput || !dropoffInput) return;
+
+        var vehicleId = vehicleSelect.value;
+        var pickupAddress = pickupInput.value.trim();
+        var dropoffAddress = dropoffInput.value.trim();
+        var pickupPostcode = extractPostcodeFromAddress(pickupAddress) || pickupAddress;
+        var dropoffPostcode = extractPostcodeFromAddress(dropoffAddress) || dropoffAddress;
+        var vias = getPricingViaPostcodes();
+        var selected = vehicleSelect.options[vehicleSelect.selectedIndex];
+        var vehicleMake = selected ? selected.getAttribute("data-make") : null;
+
+        var pickupDate = document.getElementById('pickup_date')?.value || '';
+        var pickupTime = document.getElementById('pickup_time')?.value || '';
+
+        if (priceInput) priceInput.value = '';
+        if (mileageInput) mileageInput.value = '';
+
+        if (vehicleId && pickupPostcode && dropoffPostcode) {
+            if (priceLoader) priceLoader.style.display = 'inline-flex';
+            if (typeof window.showLoadingModal === 'function') window.showLoadingModal('Calculating fare and mileage, please wait...');
+            try {
+                let url = `/admin/booking/get-price?vehicle_id=${encodeURIComponent(vehicleMake)}&pickup=${encodeURIComponent(pickupPostcode)}&dropoff=${encodeURIComponent(dropoffPostcode)}&pickup_date=${encodeURIComponent(pickupDate)}&pickup_time=${encodeURIComponent(pickupTime)}`;
+                vias.forEach(v => url += `&vias[]=${encodeURIComponent(v)}`);
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (requestId !== window.latestPriceRequestId) return;
+
+                if (data.success) {
+                    if (priceInput) priceInput.value = data.price;
+                    if (mileageInput) mileageInput.value = data.journey_distance;
+                    window.calculateTotal();
+                } else {
+                    console.error("Price calculation failed:", data.message);
+                }
+            } catch (error) {
+                if (requestId === window.latestPriceRequestId) {
+                    console.error("Error fetching price:", error);
+                }
+            } finally {
+                if (requestId === window.latestPriceRequestId) {
+                    if (priceLoader) priceLoader.style.display = 'none';
+                    if (typeof window.hideLoadingModal === 'function') window.hideLoadingModal();
+                }
+            }
+        } else {
+            if (priceLoader) priceLoader.style.display = 'none';
+            if (typeof window.hideLoadingModal === 'function') window.hideLoadingModal();
+            window.calculateTotal();
+        }
     }
-    return _originalFetchPrice();
-};
 
-// Mark as interacted on any change the user makes to the key fields
-function markInteracted() { userHasInteracted = true; }
-window.markPricingInteraction = markInteracted;
-vehicleSelect.addEventListener('change', markInteracted);
-pickupInput.addEventListener('blur',    markInteracted);
-dropoffInput.addEventListener('blur',   markInteracted);
+    window.fetchPrice = async function() {
+        if (IS_EDIT_MODE && !userHasInteracted) {
+            window.calculateTotal();
+            return;
+        }
+        return doFetchPrice();
+    };
 
-// Re-wire the event listeners to use the guarded version
-vehicleSelect.addEventListener('change', window.fetchPrice);
-pickupInput.addEventListener('blur',    window.fetchPrice);
-dropoffInput.addEventListener('blur',   window.fetchPrice);
+    // Attach listeners for pickup, dropoff, vehicle, date, time
+    if (pickupInput) {
+        pickupInput.addEventListener('input', debouncedUpdateRoute);
+        pickupInput.addEventListener('blur', function() {
+            window.markPricingInteraction();
+            window.fetchPrice();
+            updateRoute();
+        });
+    }
+    if (dropoffInput) {
+        dropoffInput.addEventListener('input', debouncedUpdateRoute);
+        dropoffInput.addEventListener('blur', function() {
+            window.markPricingInteraction();
+            window.fetchPrice();
+            updateRoute();
+        });
+    }
+    if (vehicleSelect) {
+        vehicleSelect.addEventListener('change', function() {
+            window.markPricingInteraction();
+            window.fetchPrice();
+        });
+    }
 
-// Existing via fields also use one guarded price request.
-document.querySelectorAll('input[name="via_addresses[]"]').forEach(input => {
-    input.addEventListener('blur', function () {
-        markInteracted();
+    document.getElementById('pickup_date')?.addEventListener('change', function() {
+        window.markPricingInteraction();
         window.fetchPrice();
     });
-});
+    document.getElementById('pickup_time')?.addEventListener('change', function() {
+        window.markPricingInteraction();
+        window.fetchPrice();
+    });
 
-// ✅ On load: only recalc total from saved values — no API call in edit mode
-window.calculateTotal();
+    // Helper to attach input & blur listeners to any via input
+    window.attachViaEventListeners = function(inputEl) {
+        if (!inputEl) return;
+        inputEl.addEventListener('input', function() {
+            debouncedUpdateRoute();
+        });
+        inputEl.addEventListener('blur', function() {
+            window.markPricingInteraction();
+            window.fetchPrice();
+            updateRoute();
+        });
+    };
+
+    // Attach listeners to all pre-existing via inputs
+    document.querySelectorAll('#via-container .via-field input[name="via_addresses[]"]').forEach(input => {
+        window.attachViaEventListeners(input);
+    });
+
+    // Event delegation on viaContainer for remove buttons
+    const viaContainer = document.getElementById("via-container");
+    if (viaContainer) {
+        viaContainer.addEventListener('click', function(e) {
+            const removeBtn = e.target.closest('.remove-via');
+            if (removeBtn) {
+                const field = removeBtn.closest('.via-field');
+                if (field) {
+                    field.remove();
+                    window.markPricingInteraction();
+                    updateRoute();
+                    setTimeout(() => window.fetchPrice(), 100);
+                }
+            }
+        });
+    }
+
+    // Function to add a new via field
+    window.addNewViaField = function() {
+        const container = document.getElementById("via-container");
+        if (!container) return;
+
+        window.viaFieldCounter = (window.viaFieldCounter || 0) + 1;
+        const viaId = `via_${window.viaFieldCounter}_${Date.now()}`;
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("via-field");
+        wrapper.innerHTML = `
+            <div class="position-relative">
+              <input type="text" name="via_addresses[]" id="${viaId}"
+                     class="form-control" placeholder="Type your address or postcode" autocomplete="off">
+              <button type="button" class="remove-via" title="Remove">
+                  <i class="bi bi-x"></i>
+              </button>
+            </div>
+            <input type="hidden" id="${viaId}_postcode" name="${viaId}_postcode">
+            <input type="hidden" id="${viaId}_lat" name="${viaId}_lat">
+            <input type="hidden" id="${viaId}_long" name="${viaId}_long">
+        `;
+        container.appendChild(wrapper);
+
+        const newViaInput = wrapper.querySelector('input[name="via_addresses[]"]');
+        window.attachViaEventListeners(newViaInput);
+        if (newViaInput) newViaInput.focus();
+
+        if (window.globalAutocompleteApiKey) {
+            new AddressAutocomplete({
+                fieldId: viaId,
+                apiKey: window.globalAutocompleteApiKey,
+                postcodeFieldId: `${viaId}_postcode`,
+                latFieldId: `${viaId}_lat`,
+                longFieldId: `${viaId}_long`,
+                onSelect: function () {
+                    document.dispatchEvent(new CustomEvent('taxibase:select', { detail: { fieldId: viaId } }));
+                    window.markPricingInteraction();
+                    setTimeout(() => {
+                        window.fetchPrice();
+                        updateRoute();
+                    }, 50);
+                }
+            });
+        }
+    };
+
+    // Attach Add Via Button immediately
+    const addViaBtn = document.getElementById("add-via");
+    if (addViaBtn) {
+        addViaBtn.addEventListener("click", function(e) {
+            e.preventDefault();
+            window.addNewViaField();
+        });
+    }
+
+    // Initial calculation on load
+    window.calculateTotal();
+    setTimeout(updateRoute, 1000);
 });
 </script>
 @endpush
-{{-- ✅ TaxiBase Address Autocomplete Integration (ENHANCED: Attach price listener on new via) --}}
-@push('scripts')
 
+{{-- ✅ TaxiBase Address Autocomplete Integration --}}
+@push('scripts')
 <script>
-// 1. Define the drop-in replacement class for AddressAutocomplete
+// Define the drop-in replacement class for AddressAutocomplete
 class AddressAutocomplete {
     constructor(options) {
         this.field = document.getElementById(options.fieldId);
@@ -3156,53 +3136,35 @@ class AddressAutocomplete {
     }
 
     init() {
-        // Create a wrapper for the input and dropdown
         this.wrapper = document.createElement('div');
         this.wrapper.style.position = 'relative';
         this.field.parentNode.insertBefore(this.wrapper, this.field);
         this.wrapper.appendChild(this.field);
 
-        // Create the dropdown list container
         this.listContainer = document.createElement('ul');
         this.listContainer.style.cssText = 'position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #ced4da; border-radius:4px; z-index:1000; list-style:none; padding:0; margin:4px 0 0 0; display:none; max-height:250px; overflow-y:auto; box-shadow:0 4px 6px rgba(0,0,0,0.1);';
         this.wrapper.appendChild(this.listContainer);
 
         let debounceTimer;
 
-        // Listen to input changes
-        // this.field.addEventListener('input', () => {
-        //     clearTimeout(debounceTimer);
-        //     const query = this.field.value.trim();
-            
-        //     if (query.length < 3) {
-        //         this.listContainer.style.display = 'none';
-        //         return;
-        //     }
-
-        //     debounceTimer = setTimeout(() => this.fetchOSPlaces(query), 400);
-        // });
         this.field.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
+            clearTimeout(debounceTimer);
 
-    // ✅ If Firebase already matched this value, skip OS Places entirely
-    if (this.field._firebaseSelected) {
-        this.listContainer.style.display = 'none';
-        // Reset flag so typing a new value re-enables OS Places
-        this.field._firebaseSelected = false;
-        return;
-    }
+            if (this.field._firebaseSelected) {
+                this.listContainer.style.display = 'none';
+                this.field._firebaseSelected = false;
+                return;
+            }
 
-    const query = this.field.value.trim();
+            const query = this.field.value.trim();
+            if (query.length < 3) {
+                this.listContainer.style.display = 'none';
+                return;
+            }
 
-    if (query.length < 3) {
-        this.listContainer.style.display = 'none';
-        return;
-    }
+            debounceTimer = setTimeout(() => this.fetchOSPlaces(query), 400);
+        });
 
-    debounceTimer = setTimeout(() => this.fetchOSPlaces(query), 400);
-});
-
-        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!this.wrapper.contains(e.target)) {
                 this.listContainer.style.display = 'none';
@@ -3211,7 +3173,6 @@ class AddressAutocomplete {
     }
 
     async fetchOSPlaces(query) {
-        // output_srs=EPSG:4326 ensures we get standard LAT and LNG instead of X/Y coordinates
         const url = `https://api.os.uk/search/places/v1/find?query=${encodeURIComponent(query)}&key=${this.apiKey}&output_srs=EPSG:4326&maxresults=10`;
 
         try {
@@ -3232,46 +3193,41 @@ class AddressAutocomplete {
         }
 
         results.forEach(item => {
-            // Data is usually inside DPA (Postal Address) or LPI (Local Property Identifier)
             const place = item.DPA || item.LPI;
-if (!place) return;
+            if (!place) return;
 
-// Build a better formatted address
-const addressParts = [
-    place.ORGANISATION_NAME,
-    place.BUILDING_NAME,
-    place.BUILDING_NUMBER,
-    place.THOROUGHFARE_NAME,
-    place.POST_TOWN,
-    place.POSTCODE
-].filter(Boolean);
+            const addressParts = [
+                place.ORGANISATION_NAME,
+                place.BUILDING_NAME,
+                place.BUILDING_NUMBER,
+                place.THOROUGHFARE_NAME,
+                place.POST_TOWN,
+                place.POSTCODE
+            ].filter(Boolean);
 
-const fullAddress = addressParts.join(', ');
+            const fullAddress = addressParts.join(', ');
 
-const li = document.createElement('li');
-li.style.cssText = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #f8f9fa; font-size: 14px;';
-li.textContent = fullAddress;
+            const li = document.createElement('li');
+            li.style.cssText = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #f8f9fa; font-size: 14px;';
+            li.textContent = fullAddress;
 
-            // Hover effect
             li.addEventListener('mouseenter', () => li.style.backgroundColor = '#f1f3f5');
             li.addEventListener('mouseleave', () => li.style.backgroundColor = 'transparent');
 
-            // Select action
-            // Select action — mousedown fires BEFORE blur, preventing address loss
-li.addEventListener('mousedown', (e) => {
-    e.preventDefault(); // prevents input from losing focus before value is set
-    
-    this.field.value = fullAddress;
-    if (this.postcodeField) this.postcodeField.value = place.POSTCODE || '';
-    if (this.latField) this.latField.value = place.LAT || '';
-    if (this.longField) this.longField.value = place.LNG || '';
+            li.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                
+                this.field.value = fullAddress;
+                if (this.postcodeField) this.postcodeField.value = place.POSTCODE || '';
+                if (this.latField) this.latField.value = place.LAT || '';
+                if (this.longField) this.longField.value = place.LNG || '';
 
-    this.listContainer.style.display = 'none';
+                this.listContainer.style.display = 'none';
 
-    if (typeof this.onSelectCallback === 'function') {
-        setTimeout(() => this.onSelectCallback(), 50); // slight delay ensures field value is committed
-    }
-});
+                if (typeof this.onSelectCallback === 'function') {
+                    setTimeout(() => this.onSelectCallback(), 50);
+                }
+            });
 
             this.listContainer.appendChild(li);
         });
@@ -3280,19 +3236,13 @@ li.addEventListener('mousedown', (e) => {
     }
 }
 
-// 2. Your original logic remains exactly the same below this line
-document.addEventListener('DOMContentLoaded', async  function() {
-    // Replaced with your OS Places API Key
-    // const API_KEY = 'bY7g2DcT8gGRxdfR1K46FWKFYMbdprRy';
-    // ✅ Fetch API key from Firebase system_settings
-
+document.addEventListener('DOMContentLoaded', async function() {
     let API_KEY = '';
     try {
         const res = await fetch(
             'https://crown-carz-default-rtdb.firebaseio.com/system_settings/autocomplete_key.json'
         );
         API_KEY = await res.json();
-        console.log('API_KEY is fetch successfully')
     } catch (e) {
         console.error('Failed to load autocomplete_key from Firebase:', e);
     }
@@ -3302,12 +3252,13 @@ document.addEventListener('DOMContentLoaded', async  function() {
         return;
     }
     
-    // helper to dispatch a single custom event the map will listen to
+    window.globalAutocompleteApiKey = API_KEY;
+
     function notifyAddressSelected(fieldId) {
         document.dispatchEvent(new CustomEvent('taxibase:select', { detail: { fieldId } }));
     }
 
-    // Pickup autocomplete (stores postcode / lat / long in hidden fields)
+    // Pickup autocomplete
     new AddressAutocomplete({
         fieldId: 'pickup_address',
         apiKey: API_KEY,
@@ -3315,14 +3266,15 @@ document.addEventListener('DOMContentLoaded', async  function() {
         latFieldId: 'pickup_lat',
         longFieldId: 'pickup_long',
         onSelect: function () {
-    notifyAddressSelected('pickup_address');
-    setTimeout(() => {
-        document.getElementById('pickup_address').dispatchEvent(new Event('blur'));
-    }, 100);
-}
+            notifyAddressSelected('pickup_address');
+            window.markPricingInteraction?.();
+            setTimeout(() => {
+                document.getElementById('pickup_address').dispatchEvent(new Event('blur'));
+            }, 100);
+        }
     });
 
-    // Dropoff autocomplete (stores postcode / lat / long in hidden fields)
+    // Dropoff autocomplete
     new AddressAutocomplete({
         fieldId: 'dropoff_address',
         apiKey: API_KEY,
@@ -3330,71 +3282,15 @@ document.addEventListener('DOMContentLoaded', async  function() {
         latFieldId: 'drop_lat',
         longFieldId: 'drop_long',
         onSelect: function () {
-    notifyAddressSelected('dropoff_address');
-    setTimeout(() => {
-        document.getElementById('dropoff_address').dispatchEvent(new Event('blur'));
-    }, 100);
-}
+            notifyAddressSelected('dropoff_address');
+            window.markPricingInteraction?.();
+            setTimeout(() => {
+                document.getElementById('dropoff_address').dispatchEvent(new Event('blur'));
+            }, 100);
+        }
     });
 
-    // Via fields: when creating a new via input, also append hidden lat/long fields
-    const viaContainer = document.getElementById("via-container");
-    const addViaBtn = document.getElementById("add-via");
-   
-    let viaCount = {{ isset($booking) && !empty($booking['vias']) ? count($booking['vias']) : 0 }};
-
-    addViaBtn.addEventListener("click", function() {
-        viaCount++;
-        const viaId = `via_${viaCount}`;
-        const wrapper = document.createElement("div");
-        wrapper.classList.add("via-field");
-        // create visible input + hidden lat/long with overlay remove button
-        wrapper.innerHTML = `
-            <div class="position-relative">
-              <input type="text" name="via_addresses[]" id="${viaId}"
-                       class="form-control" placeholder="Type your address or postcode" autocomplete="off">
-              <button type="button" class="remove-via" title="Remove">
-                  <i class="bi bi-x"></i>
-              </button>
-            </div>
-            <input type="hidden" id="${viaId}_postcode" name="${viaId}_postcode">
-            <input type="hidden" id="${viaId}_lat" name="${viaId}_lat">
-            <input type="hidden" id="${viaId}_long" name="${viaId}_long">
-        `;
-        viaContainer.appendChild(wrapper);
-
-        // Initialize Autocomplete for this via input and populate hidden lat/long
-        new AddressAutocomplete({
-            fieldId: viaId,
-            apiKey: API_KEY,
-            postcodeFieldId: `${viaId}_postcode`,
-            latFieldId: `${viaId}_lat`,
-            longFieldId: `${viaId}_long`,
-            onSelect: function () {
-                // notify map that a via was selected (map will read the hidden lat/long)
-                notifyAddressSelected(viaId);
-                setTimeout(() => document.getElementById(viaId).dispatchEvent(new Event('blur')), 50);
-            }
-        });
-
-        // ✅ Attach price fetch on blur for the new via input
-        document.getElementById(viaId).addEventListener('blur', function () {
-            window.markPricingInteraction?.();
-            window.fetchPrice?.();
-        });
-
-        // Remove via field
-        wrapper.querySelector(".remove-via").addEventListener("click", () => {
-            wrapper.remove();
-            // notify map to update
-            updateRoute();
-            // Optionally refetch price after remove
-            window.markPricingInteraction?.();
-            setTimeout(() => window.fetchPrice?.(), 100);
-        });
-    });
-
-    // Initialize autocompletes for pre-existing via fields (edit mode)
+    // Initialize autocompletes for pre-existing via fields
     document.querySelectorAll('#via-container .via-field input[name="via_addresses[]"]').forEach((input, index) => {
         const viaId = input.id || `via_${index}`;
         new AddressAutocomplete({
@@ -3405,7 +3301,10 @@ document.addEventListener('DOMContentLoaded', async  function() {
             longFieldId: `${viaId}_long`,
             onSelect: function () {
                 notifyAddressSelected(viaId);
-                setTimeout(() => input.dispatchEvent(new Event('blur')), 50);
+                window.markPricingInteraction?.();
+                setTimeout(() => {
+                    input.dispatchEvent(new Event('blur'));
+                }, 100);
             }
         });
     });
