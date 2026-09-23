@@ -2436,129 +2436,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 <script type="module">
-   
-    // Add this to the Firebase script (in the <script type="module"> block)
-document.addEventListener('DOMContentLoaded', function() {
-  // Extract postcodes from pre-filled addresses on edit and set hidden fields
-  const extractPostcodeFromAddress = (address) => {
-    if (!address) return '';
-    const postcodeRegex = /\b[A-Z]{1,2}\d{1,2}[A-Z]?\s*\d?[A-Z]{0,2}\b/i;
-    const match = address.match(postcodeRegex);
-    return match ? match[0].toUpperCase().trim() : '';
-  };
-  const pickupAddr = document.getElementById('pickup_address').value.trim();
-  if (pickupAddr) {
-    const pickupPC = extractPostcodeFromAddress(pickupAddr);
-    document.getElementById('pickup_postcode').value = pickupPC;
-  }
-  const dropoffAddr = document.getElementById('dropoff_address').value.trim();
-  if (dropoffAddr) {
-    const dropoffPC = extractPostcodeFromAddress(dropoffAddr);
-    document.getElementById('dropoff_postcode').value = dropoffPC;
-  }
-  // After preload, recalc for edit mode
-  preloadAllLocations().then(() => {
-    setTimeout(recalcFeesAndTotal, 300);
-  });
-});
-   
-// import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-// import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-// const app = initializeApp({ databaseURL: "https://crown-carz-default-rtdb.firebaseio.com/" });
-// const db = getDatabase(app);
-// const firebaseLocations = { airports: {}, stations: {}, ports: {} };
-// const $ = (sel) => document.querySelector(sel);
-// const normPC = (pc) => (pc || "").toString().replace(/\s+/g, "").toUpperCase();
-// async function preloadAllLocations() {
-//   const cats = ["airports", "stations", "ports"];
-//   for (const type of cats) {
-//     try {
-//       const snap = await get(child(ref(db), type));
-//       firebaseLocations[type] = snap.exists() ? snap.val() : {};
-//     } catch (e) {
-//       console.error("Firebase load error", type, e);
-//     }
-//   }
-// }
-// function populateDatalist(type, listId) {
-//   const datalist = document.getElementById(listId);
-//   datalist.innerHTML = ""; // clear old options
-// //   const items = Object.values(firebaseLocations[type] || {});
-// //   items.forEach(item => {
-// //     const opt = document.createElement("option");
-// //     opt.value = `${item.address || ""} ${item.post_code || ""}`;
-// //     opt.dataset.postcode = item.post_code || "";
-// //     datalist.appendChild(opt);
-// //   });
-// const items = Object.entries(firebaseLocations[type] || {});
-//   items.forEach(([firebaseKey, item]) => {
-//     const opt = document.createElement("option");
-//     opt.value = `${item.address || ""} ${item.post_code || ""}`;
-//     opt.dataset.id = firebaseKey;                  // CORRECT ID
-//     opt.dataset.postcode = item.post_code || "";
-    
-//     datalist.appendChild(opt);
-//   });
-// }
-// // function recalcFeesAndTotal() {
-// //   const pickupType = $('input[name="pickup_type"]:checked')?.value;
-// //   const dropoffType = $('input[name="dropoff_type"]:checked')?.value;
-// //   const pickupPC = $('#pickup_postcode')?.value?.trim();
-// //   const dropoffPC = $('#dropoff_postcode')?.value?.trim();
-// //   let pickupFee = 0, dropoffFee = 0;
-// //   const findByPostcode = (type, pc) => {
-// //     const list = Object.values(firebaseLocations[type] || {});
-// //     return list.find(item => normPC(item.post_code) === normPC(pc)) || null;
-// //   };
-// //   if (pickupPC) {
-// //     const hit = findByPostcode(pickupType, pickupPC);
-// //     if (hit) pickupFee = parseFloat(hit.pickup_charge || 0);
-// //   }
-// //   if (dropoffPC) {
-// //     const hit = findByPostcode(dropoffType, dropoffPC);
-// //     if (hit) dropoffFee = parseFloat(hit.dropoff_charge || 0);
-// //   }
-// //   $('#parking').value = (pickupFee + dropoffFee).toFixed(2);
-// //   const fare = parseFloat($('#fare').value) || 0;
-// //   const waiting = parseFloat($('#waiting_fee').value) || 0;
-// //   const extra = parseFloat($('#extra').value) || 0;
-// //   const seat = $('#child_seat')?.checked ? 5 : 0;
-// //   const parking = parseFloat($('#parking').value) || 0;
-// //   $('#price').value = (fare + parking + waiting + extra + seat).toFixed(2);
-// // }
-// function recalcFeesAndTotal() {
-//   const pickupType = $('input[name="pickup_type"]:checked')?.value;
-//   const dropoffType = $('input[name="dropoff_type"]:checked')?.value;
-//   const pickupPC = $('#pickup_postcode')?.value?.trim();
-//   const dropoffPC = $('#dropoff_postcode')?.value?.trim();
-//   let pickupFee = 0, dropoffFee = 0, locationExtra = 0;
-//   const findByPostcode = (type, pc) => {
-//     const list = Object.entries(firebaseLocations[type] || {});
-//     return list.find(item => normPC(item.dataset.id) === normPC(pc)) || null;
-//   };
-//   if (pickupPC) {
-//     const hit = findByPostcode(pickupType, pickupPC);
-//     if (hit) {
-//       pickupFee = parseFloat(hit.pickup_charge || 0);
-//       locationExtra = parseFloat(hit.extras || 0); // Include location-based extra
-//     }
-//   }
-//   if (dropoffPC) {
-//     const hit = findByPostcode(dropoffType, dropoffPC);
-//     if (hit) {
-//       dropoffFee = parseFloat(hit.dropoff_charge || 0);
-//       locationExtra = parseFloat(hit.extras || 0); // Include location-based extra
-//     }
-//   }
-//   $('#parking').value = (pickupFee + dropoffFee).toFixed(2);
-//   $('#extra').value = locationExtra.toFixed(2);
-//   const fare = parseFloat($('#fare').value) || 0;
-//   const waiting = parseFloat($('#waiting_fee').value) || 0;
-//   const extra = parseFloat($('#extra').value) || 0;
-//   const seat = $('#child_seat')?.checked ? 5 : 0;
-//   const parking = parseFloat($('#parking').value) || 0;
-//   $('#price').value = (fare + parking + waiting + extra + seat).toFixed(2);
-// }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
@@ -2584,6 +2461,7 @@ async function preloadAllLocations() {
 // Populate datalist with Firebase IDs
 function populateDatalist(type, listId) {
   const datalist = document.getElementById(listId);
+  if (!datalist) return;
   datalist.innerHTML = "";
   Object.entries(firebaseLocations[type] || {}).forEach(([id, item]) => {
     const opt = document.createElement("option");
@@ -2596,8 +2474,10 @@ function populateDatalist(type, listId) {
 
 // Get Firebase ID of selected option
 function getSelectedId(inputId, listId) {
-  const val = $(`#${inputId}`).value;
+  const el = $(`#${inputId}`);
   const datalist = $(`#${listId}`);
+  if (!el || !datalist) return null;
+  const val = el.value;
   const option = Array.from(datalist.options).find(opt => opt.value === val);
   return option ? option.dataset.id : null;
 }
@@ -2610,108 +2490,116 @@ function recalcFeesAndTotal() {
   const pickupId = getSelectedId('pickup_address', 'pickup_list');
   const dropoffId = getSelectedId('dropoff_address', 'dropoff_list');
 
-  $('#pickup_address_id').value = pickupId || '';
-  $('#dropoff_address_id').value = dropoffId || '';
+  const pickupAddrId = $('#pickup_address_id');
+  const dropoffAddrId = $('#dropoff_address_id');
+  if (pickupAddrId) pickupAddrId.value = pickupId || '';
+  if (dropoffAddrId) dropoffAddrId.value = dropoffId || '';
 
   let pickupFee = 0, dropoffFee = 0, locationExtra = 0;
 
-  if (pickupId) {
+  if (pickupId && pickupType && firebaseLocations[pickupType]) {
     const hit = firebaseLocations[pickupType][pickupId];
     if (hit) {
       pickupFee = parseFloat(hit.pickup_charge || 0);
       locationExtra = parseFloat(hit.extras || 0);
-      $('#pickup_postcode').value = hit.post_code || '';
+      const pPC = $('#pickup_postcode');
+      if (pPC) pPC.value = hit.post_code || '';
     }
   }
-  console.log("pickupFee",locationExtra);
 
-  if (dropoffId) {
+  if (dropoffId && dropoffType && firebaseLocations[dropoffType]) {
     const hit = firebaseLocations[dropoffType][dropoffId];
     if (hit) {
       dropoffFee = parseFloat(hit.dropoff_charge || 0);
       locationExtra += parseFloat(hit.extras || 0);
-      $('#dropoff_postcode').value = hit.post_code || '';
+      const dPC = $('#dropoff_postcode');
+      if (dPC) dPC.value = hit.post_code || '';
     }
   }
-  console.log("dropoffFee",locationExtra);
 
-  $('#parking').value = (pickupFee + dropoffFee).toFixed(2);
-  $('#extra').value = locationExtra.toFixed(2);
+  const parkingEl = $('#parking');
+  const extraEl = $('#extra');
+  if (parkingEl) parkingEl.value = (pickupFee + dropoffFee).toFixed(2);
+  if (extraEl) extraEl.value = locationExtra.toFixed(2);
 
-  const fare = parseFloat($('#fare').value) || 0;
-  const waiting = parseFloat($('#waiting_fee').value) || 0;
-  const extra = parseFloat($('#extra').value) || 0;
-  const seat = $('#child_seat')?.checked ? 5 : 0;
-  const parking = parseFloat($('#parking').value) || 0;
-
-  $('#price').value = (fare + parking + waiting + extra + seat).toFixed(2);
+  if (typeof window.calculateTotal === 'function') {
+    window.calculateTotal();
+  }
 }
-// Expose recalcFeesAndTotal globally for use in swap
 window.recalcFeesAndTotal = recalcFeesAndTotal;
-preloadAllLocations().then(() => {
-  const pickupType = $('input[name="pickup_type"]:checked').value;
-  const dropoffType = $('input[name="dropoff_type"]:checked').value;
-  populateDatalist(pickupType, 'pickup_list');
-  populateDatalist(dropoffType, 'dropoff_list');
-});
-document.querySelectorAll('input[name="pickup_type"]').forEach(r =>
-  r.addEventListener('change', e => populateDatalist(e.target.value, 'pickup_list'))
-);
-document.querySelectorAll('input[name="dropoff_type"]').forEach(r =>
-  r.addEventListener('change', e => populateDatalist(e.target.value, 'dropoff_list'))
-);
-// Auto-fill postcode when selecting a datalist option
-// $('#pickup_address').addEventListener('input', (e) => {
-//   const val = e.target.value;
-//   const type = $('input[name="pickup_type"]:checked')?.value;
-//   const match = Object.values(firebaseLocations[type] || {}).find(item =>
-//     val.includes(item.post_code) || val.includes(item.address)
-//   );
-//   if (match) {
-//     $('#pickup_postcode').value = match.post_code || '';
-//     recalcFeesAndTotal();
-//   }
-// });
-// $('#dropoff_address').addEventListener('input', (e) => {
-//   const val = e.target.value;
-//   const type = $('input[name="dropoff_type"]:checked')?.value;
-//   const match = Object.values(firebaseLocations[type] || {}).find(item =>
-//     val.includes(item.post_code) || val.includes(item.address)
-//   );
-//   if (match) {
-//     $('#dropoff_postcode').value = match.post_code || '';
-//     recalcFeesAndTotal();
-//   }
-// });
-$('#pickup_address').addEventListener('input', (e) => {
-  const val = e.target.value;
-  const type = $('input[name="pickup_type"]:checked')?.value;
-  const match = Object.values(firebaseLocations[type] || {}).find(item =>
-    val.includes(item.post_code) || val.includes(item.address)
-  );
-  if (match) {
-    $('#pickup_postcode').value = match.post_code || '';
-    // ✅ Signal to AddressAutocomplete that Firebase already handled this
-    $('#pickup_address')._firebaseSelected = true;
-    recalcFeesAndTotal();
-  } else {
-    $('#pickup_address')._firebaseSelected = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+  const extractPostcodeFromAddress = (address) => {
+    if (!address) return '';
+    const postcodeRegex = /\b[A-Z]{1,2}\d{1,2}[A-Z]?\s*\d?[A-Z]{0,2}\b/i;
+    const match = address.match(postcodeRegex);
+    return match ? match[0].toUpperCase().trim() : '';
+  };
+  const pickupAddr = document.getElementById('pickup_address')?.value?.trim();
+  if (pickupAddr) {
+    const pickupPC = extractPostcodeFromAddress(pickupAddr);
+    const pEl = document.getElementById('pickup_postcode');
+    if (pEl) pEl.value = pickupPC;
   }
-});
-$('#dropoff_address').addEventListener('input', (e) => {
-  const val = e.target.value;
-  const type = $('input[name="dropoff_type"]:checked')?.value;
-  const match = Object.values(firebaseLocations[type] || {}).find(item =>
-    val.includes(item.post_code) || val.includes(item.address)
-  );
-  if (match) {
-    $('#dropoff_postcode').value = match.post_code || '';
-    // ✅ Signal to AddressAutocomplete that Firebase already handled this
-    $('#dropoff_address')._firebaseSelected = true;
-    recalcFeesAndTotal();
-  } else {
-    $('#dropoff_address')._firebaseSelected = false;
+  const dropoffAddr = document.getElementById('dropoff_address')?.value?.trim();
+  if (dropoffAddr) {
+    const dropoffPC = extractPostcodeFromAddress(dropoffAddr);
+    const dEl = document.getElementById('dropoff_postcode');
+    if (dEl) dEl.value = dropoffPC;
   }
+
+  preloadAllLocations().then(() => {
+    const pickupTypeEl = $('input[name="pickup_type"]:checked');
+    const dropoffTypeEl = $('input[name="dropoff_type"]:checked');
+    if (pickupTypeEl) populateDatalist(pickupTypeEl.value, 'pickup_list');
+    if (dropoffTypeEl) populateDatalist(dropoffTypeEl.value, 'dropoff_list');
+    setTimeout(recalcFeesAndTotal, 300);
+  });
+
+  document.querySelectorAll('input[name="pickup_type"]').forEach(r =>
+    r.addEventListener('change', e => populateDatalist(e.target.value, 'pickup_list'))
+  );
+  document.querySelectorAll('input[name="dropoff_type"]').forEach(r =>
+    r.addEventListener('change', e => populateDatalist(e.target.value, 'dropoff_list'))
+  );
+
+  $('#pickup_address')?.addEventListener('input', (e) => {
+    const val = e.target.value;
+    const type = $('input[name="pickup_type"]:checked')?.value;
+    const match = Object.values(firebaseLocations[type] || {}).find(item =>
+      val.includes(item.post_code) || val.includes(item.address)
+    );
+    if (match) {
+      const pPC = $('#pickup_postcode');
+      if (pPC) pPC.value = match.post_code || '';
+      e.target._firebaseSelected = true;
+      recalcFeesAndTotal();
+      window.markPricingInteraction?.();
+      if (typeof window.fetchPrice === 'function') window.fetchPrice();
+      if (typeof updateRoute === 'function') updateRoute();
+    } else {
+      e.target._firebaseSelected = false;
+    }
+  });
+
+  $('#dropoff_address')?.addEventListener('input', (e) => {
+    const val = e.target.value;
+    const type = $('input[name="dropoff_type"]:checked')?.value;
+    const match = Object.values(firebaseLocations[type] || {}).find(item =>
+      val.includes(item.post_code) || val.includes(item.address)
+    );
+    if (match) {
+      const dPC = $('#dropoff_postcode');
+      if (dPC) dPC.value = match.post_code || '';
+      e.target._firebaseSelected = true;
+      recalcFeesAndTotal();
+      window.markPricingInteraction?.();
+      if (typeof window.fetchPrice === 'function') window.fetchPrice();
+      if (typeof updateRoute === 'function') updateRoute();
+    } else {
+      e.target._firebaseSelected = false;
+    }
+  });
 });
 // Add radio change listeners to recalc fees
 document.querySelectorAll('input[name="pickup_type"], input[name="dropoff_type"]').forEach(r => {
@@ -2789,7 +2677,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof window.calculateTotal === 'function') window.calculateTotal();
           }, 200);
         }, 400); // slight delay to match animation timing
-      <script>
+      }
+    }, 250); // Match animation duration
+  });
+});
+</script>
+
+<script>
 var map, directionsService, directionsRenderer;
 function initRouteMap() {
   map = new google.maps.Map(document.getElementById("routeMap"), {
