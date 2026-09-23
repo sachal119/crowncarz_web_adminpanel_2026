@@ -2968,10 +2968,6 @@ document.addEventListener("DOMContentLoaded", function () {
         window.markPricingInteraction();
         window.fetchPrice();
     });
-    document.getElementById('pickup_time')?.addEventListener('change', function() {
-        window.markPricingInteraction();
-        window.fetchPrice();
-    });
 
     // Helper to attach input & blur listeners to any via input
     window.attachViaEventListeners = function(inputEl) {
