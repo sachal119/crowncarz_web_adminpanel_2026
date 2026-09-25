@@ -901,10 +901,11 @@ public function sendTurnoverEmail(Request $request)
         $selectedCustomerPhone = null;
 
         if ($customerId) {
-            foreach ($customersData as $customer) {
-                if (isset($customer['id']) && (string) $customer['id'] === (string) $customerId) {
+            foreach ($customersData as $key => $customer) {
+                $cId = isset($customer['id']) ? (string) $customer['id'] : (string) $key;
+                if ($cId === (string) $customerId || (string) $key === (string) $customerId) {
                     $selectedCustomerEmail = strtolower(trim($customer['email'] ?? ''));
-                    $selectedCustomerName  = trim($customer['business_name'] ?? '');
+                    $selectedCustomerName  = trim($customer['business_name'] ?? ($customer['name'] ?? ''));
                     $selectedCustomerPhone = trim($customer['phone'] ?? '');
                     break;
                 }
@@ -940,35 +941,30 @@ public function sendTurnoverEmail(Request $request)
                 continue;
             }
 
-            // 🔹 Account / Customer Matching Filter
-            // Account is separate from passenger details (passenger can be an employee with their own name/phone/email)
+            // 🔹 Account / Customer Matching Filter (Strictly match only selected account or customer)
             if ($customerId) {
-                $bookingAccountId = (string) ($booking['account_id'] ?? '');
-                $bookingAccName   = trim((string) ($booking['account_name'] ?? ''));
-                $bookingEmail     = strtolower(trim((string) ($booking['email'] ?? '')));
-                $bookingPhone     = preg_replace('/\D/', '', (string) ($booking['phone_no'] ?? ''));
+                $bookingPaymentType = strtolower(trim((string) ($booking['payment_type'] ?? '')));
+                $bookingAccountId   = (string) ($booking['account_id'] ?? '');
+                $bookingAccName     = trim((string) ($booking['account_name'] ?? ''));
+                $bookingEmail       = strtolower(trim((string) ($booking['email'] ?? '')));
+                $bookingPhone       = preg_replace('/\D/', '', (string) ($booking['phone_no'] ?? ''));
 
                 $matched = false;
 
-                // 1. Direct Account ID match
-                if ($bookingAccountId !== '' && (string) $bookingAccountId === (string) $customerId) {
-                    $matched = true;
-                }
-                // 2. Account Business Name match
-                elseif ($selectedCustomerName !== '' && $bookingAccName !== '' && (
-                    strcasecmp($bookingAccName, $selectedCustomerName) === 0 ||
-                    stripos($bookingAccName, $selectedCustomerName) !== false ||
-                    stripos($selectedCustomerName, $bookingAccName) !== false
-                )) {
-                    $matched = true;
-                }
-                // 3. Fallback: Email match (for direct passenger accounts)
-                elseif ($selectedCustomerEmail !== '' && $bookingEmail !== '' && $bookingEmail === $selectedCustomerEmail) {
-                    $matched = true;
-                }
-                // 4. Fallback: Phone match
-                elseif ($selectedCustomerPhone !== '' && $bookingPhone !== '' && $bookingPhone === preg_replace('/\D/', '', $selectedCustomerPhone)) {
-                    $matched = true;
+                // 1. Account Bookings: Strictly match by Account ID or exact Business Name
+                if ($bookingPaymentType === 'account') {
+                    if ($bookingAccountId !== '' && $bookingAccountId === (string) $customerId) {
+                        $matched = true;
+                    } elseif ($selectedCustomerName !== '' && $bookingAccName !== '' && strcasecmp($bookingAccName, $selectedCustomerName) === 0) {
+                        $matched = true;
+                    }
+                } else {
+                    // 2. Individual Cash/Card customer bookings: Match by Customer Email or Phone
+                    if ($selectedCustomerEmail !== '' && $bookingEmail !== '' && $bookingEmail === $selectedCustomerEmail) {
+                        $matched = true;
+                    } elseif ($selectedCustomerPhone !== '' && $bookingPhone !== '' && $bookingPhone === preg_replace('/\D/', '', $selectedCustomerPhone)) {
+                        $matched = true;
+                    }
                 }
 
                 if (!$matched) {
@@ -1013,6 +1009,7 @@ public function sendTurnoverEmail(Request $request)
         $customers = $reportData['bookings'];
         $selectedCustomerName  = $reportData['selectedCustomerName'];
         $selectedCustomerPhone = $reportData['selectedCustomerPhone'];
+        $selectedCustomerEmail = $reportData['selectedCustomerEmail'];
 
         // 🔹 Get Drivers
         $driversData = $this->firebase->getData('drivers') ?? [];
@@ -1031,7 +1028,8 @@ public function sendTurnoverEmail(Request $request)
             'customerId',
             'drivers',
             'selectedCustomerPhone',
-            'selectedCustomerName'
+            'selectedCustomerName',
+            'selectedCustomerEmail'
         ));
     }
 

@@ -335,12 +335,31 @@ public function searchCancelledBookings(Request $request)
 
     $filtered = $cancelledBookings->filter(function ($booking) use ($request) {
         if ($request->filled('search')) {
-            $search = strtolower($request->search);
-            if (
-                !Str::contains(strtolower($booking['passenger_name'] ?? ''), $search) &&
-                !Str::contains(strtolower($booking['ref_no'] ?? ''), $search) &&
-                !Str::contains(strtolower($booking['phone_no'] ?? ''), $search)
-            ) {
+            $search = strtolower(trim($request->search));
+            $viaStr = is_array($booking['via_addresses'] ?? null) ? implode(' ', $booking['via_addresses']) : (string) ($booking['via_addresses'] ?? '');
+            $searchableText = implode(' ', [
+                $booking['ref_no'] ?? '',
+                $booking['id'] ?? '',
+                $booking['passenger_name'] ?? '',
+                $booking['phone_no'] ?? '',
+                $booking['email'] ?? '',
+                $booking['pickup_address'] ?? '',
+                $booking['pickup_postcode'] ?? '',
+                $booking['dropoff_address'] ?? '',
+                $booking['dropoff_postcode'] ?? '',
+                $viaStr,
+                $booking['driver_name'] ?? '',
+                $booking['account_name'] ?? '',
+                $booking['flight_number'] ?? '',
+                $booking['flight_no'] ?? '',
+                $booking['job_comment'] ?? '',
+                $booking['driver_notes'] ?? '',
+                $booking['vehicle_make'] ?? '',
+                $booking['vehicle_type'] ?? '',
+                $booking['payment_type'] ?? '',
+            ]);
+
+            if (!Str::contains(strtolower($searchableText), $search)) {
                 return false;
             }
         }
@@ -374,9 +393,31 @@ public function searchCancelledBookings(Request $request)
             return false;
         }
 
-        if ($request->filled('account_id') &&
-            ($booking['account_id'] ?? '') != $request->account_id) {
-            return false;
+        if ($request->filled('account_id')) {
+            $selectedAccId = (string) $request->account_id;
+            $bookingAccId  = (string) ($booking['account_id'] ?? '');
+
+            $selectedAccName = '';
+            if (isset($accounts[$selectedAccId]['business_name'])) {
+                $selectedAccName = $accounts[$selectedAccId]['business_name'];
+            } elseif (isset($accounts[$selectedAccId]['name'])) {
+                $selectedAccName = $accounts[$selectedAccId]['name'];
+            }
+
+            $accMatched = false;
+            if ($bookingAccId !== '' && $bookingAccId === $selectedAccId) {
+                $accMatched = true;
+            } elseif ($selectedAccName !== '' && !empty($booking['account_name']) && (
+                strcasecmp($booking['account_name'], $selectedAccName) === 0 ||
+                stripos($booking['account_name'], $selectedAccName) !== false ||
+                stripos($selectedAccName, $booking['account_name']) !== false
+            )) {
+                $accMatched = true;
+            }
+
+            if (!$accMatched) {
+                return false;
+            }
         }
 
         if ($request->filled('payment_type') &&
@@ -397,7 +438,7 @@ public function searchCancelledBookings(Request $request)
     return view('bookings.cancelled', [
         'cancelledBookings' => $cancelledBookings,
         'drivers' => collect($drivers)->map(fn($v, $k) => ['id' => $k] + $v),
-        'accounts' => collect($accounts)->map(fn($v, $k) => (object)(['id' => $k] + $v)),
+        'accounts' => collect($accounts)->map(fn($v, $k) => (object)(['id' => $k] + (is_array($v) ? $v : []))),
     ]);
 }
 
@@ -408,6 +449,7 @@ public function searchPreviousBookings(Request $request)
         ->getValue() ?? [];
 
     $drivers = $this->database->getReference('drivers')->getValue() ?? [];
+    $accounts = $this->database->getReference('customers')->getValue() ?? [];
 
     $driversMap = collect($drivers)->mapWithKeys(function ($driver, $id) {
         return [$id => $driver['name'] ?? 'Unknown'];
@@ -448,19 +490,35 @@ public function searchPreviousBookings(Request $request)
     }
 
     // 🔎 FILTER SECTION (FIXED)
-    $filtered = $previousBookings->filter(function ($booking) use ($request) {
+    $filtered = $previousBookings->filter(function ($booking) use ($request, $accounts) {
 
-        // General Search
+        // General Search (Overall across all fields)
         if ($request->filled('search')) {
-
             $search = strtolower(trim($request->search));
+            $viaStr = is_array($booking['via_addresses'] ?? null) ? implode(' ', $booking['via_addresses']) : (string) ($booking['via_addresses'] ?? '');
+            $searchableText = implode(' ', [
+                $booking['ref_no'] ?? '',
+                $booking['id'] ?? '',
+                $booking['passenger_name'] ?? '',
+                $booking['phone_no'] ?? '',
+                $booking['email'] ?? '',
+                $booking['pickup_address'] ?? '',
+                $booking['pickup_postcode'] ?? '',
+                $booking['dropoff_address'] ?? '',
+                $booking['dropoff_postcode'] ?? '',
+                $viaStr,
+                $booking['driver_name'] ?? '',
+                $booking['account_name'] ?? '',
+                $booking['flight_number'] ?? '',
+                $booking['flight_no'] ?? '',
+                $booking['job_comment'] ?? '',
+                $booking['driver_notes'] ?? '',
+                $booking['vehicle_make'] ?? '',
+                $booking['vehicle_type'] ?? '',
+                $booking['payment_type'] ?? '',
+            ]);
 
-            $match =
-                Str::contains(strtolower($booking['passenger_name'] ?? ''), $search) ||
-                Str::contains(strtolower($booking['ref_no'] ?? ''), $search) ||
-                Str::contains(strtolower($booking['phone_no'] ?? ''), $search);
-
-            if (!$match) {
+            if (!Str::contains(strtolower($searchableText), $search)) {
                 return false;
             }
         }
@@ -513,15 +571,36 @@ public function searchPreviousBookings(Request $request)
             }
         }
         
-        
         if ($request->filled('driver_id') &&
             ($booking['driver_id'] ?? '') != $request->driver_id) {
             return false;
         }
 
-        if ($request->filled('account_id') &&
-            ($booking['account_id'] ?? '') != $request->account_id) {
-            return false;
+        if ($request->filled('account_id')) {
+            $selectedAccId = (string) $request->account_id;
+            $bookingAccId  = (string) ($booking['account_id'] ?? '');
+
+            $selectedAccName = '';
+            if (isset($accounts[$selectedAccId]['business_name'])) {
+                $selectedAccName = $accounts[$selectedAccId]['business_name'];
+            } elseif (isset($accounts[$selectedAccId]['name'])) {
+                $selectedAccName = $accounts[$selectedAccId]['name'];
+            }
+
+            $accMatched = false;
+            if ($bookingAccId !== '' && $bookingAccId === $selectedAccId) {
+                $accMatched = true;
+            } elseif ($selectedAccName !== '' && !empty($booking['account_name']) && (
+                strcasecmp($booking['account_name'], $selectedAccName) === 0 ||
+                stripos($booking['account_name'], $selectedAccName) !== false ||
+                stripos($selectedAccName, $booking['account_name']) !== false
+            )) {
+                $accMatched = true;
+            }
+
+            if (!$accMatched) {
+                return false;
+            }
         }
 
         if ($request->filled('payment_type') &&
@@ -542,12 +621,10 @@ public function searchPreviousBookings(Request $request)
         })
         ->values();
 
-    $accounts = $this->database->getReference('accounts')->getValue() ?? [];
-
     return view('bookings.previous', [
         'previousBookings' => $previousBookings,
         'drivers' => collect($drivers)->map(fn($v, $k) => ['id' => $k] + $v),
-        'accounts' => collect($accounts)->map(fn($v, $k) => (object)(['id' => $k] + $v)),
+        'accounts' => collect($accounts)->map(fn($v, $k) => (object)(['id' => $k] + (is_array($v) ? $v : []))),
     ]);
 }
 
@@ -7527,7 +7604,7 @@ public function searchBookings(Request $request)
         ->getValue() ?? [];
 
     $drivers = $this->database->getReference('drivers')->getValue() ?? [];
-    $accounts = $this->database->getReference('accounts')->getValue() ?? [];
+    $accounts = $this->database->getReference('customers')->getValue() ?? [];
 
     // 🔹 Driver ID → Name Map
     $driversMap = collect($drivers)->mapWithKeys(function ($driver, $id) {
@@ -7555,16 +7632,34 @@ public function searchBookings(Request $request)
     }
 
     // 🔎 Apply Filters
-    $filtered = $completedBookings->filter(function ($booking) use ($request) {
+    $filtered = $completedBookings->filter(function ($booking) use ($request, $accounts) {
 
         if ($request->filled('search')) {
-            $search = strtolower($request->search);
+            $search = strtolower(trim($request->search));
+            $viaStr = is_array($booking['via_addresses'] ?? null) ? implode(' ', $booking['via_addresses']) : (string) ($booking['via_addresses'] ?? '');
+            $searchableText = implode(' ', [
+                $booking['ref_no'] ?? '',
+                $booking['id'] ?? '',
+                $booking['passenger_name'] ?? '',
+                $booking['phone_no'] ?? '',
+                $booking['email'] ?? '',
+                $booking['pickup_address'] ?? '',
+                $booking['pickup_postcode'] ?? '',
+                $booking['dropoff_address'] ?? '',
+                $booking['dropoff_postcode'] ?? '',
+                $viaStr,
+                $booking['driver_name'] ?? '',
+                $booking['account_name'] ?? '',
+                $booking['flight_number'] ?? '',
+                $booking['flight_no'] ?? '',
+                $booking['job_comment'] ?? '',
+                $booking['driver_notes'] ?? '',
+                $booking['vehicle_make'] ?? '',
+                $booking['vehicle_type'] ?? '',
+                $booking['payment_type'] ?? '',
+            ]);
 
-            if (
-                !Str::contains(strtolower($booking['passenger_name'] ?? ''), $search) &&
-                !Str::contains(strtolower($booking['ref_no'] ?? ''), $search) &&
-                !Str::contains(strtolower($booking['phone_no'] ?? ''), $search)
-            ) {
+            if (!Str::contains(strtolower($searchableText), $search)) {
                 return false;
             }
         }
@@ -7604,9 +7699,31 @@ public function searchBookings(Request $request)
             return false;
         }
 
-        if ($request->filled('account_id') &&
-            ($booking['account_id'] ?? '') != $request->account_id) {
-            return false;
+        if ($request->filled('account_id')) {
+            $selectedAccId = (string) $request->account_id;
+            $bookingAccId  = (string) ($booking['account_id'] ?? '');
+
+            $selectedAccName = '';
+            if (isset($accounts[$selectedAccId]['business_name'])) {
+                $selectedAccName = $accounts[$selectedAccId]['business_name'];
+            } elseif (isset($accounts[$selectedAccId]['name'])) {
+                $selectedAccName = $accounts[$selectedAccId]['name'];
+            }
+
+            $accMatched = false;
+            if ($bookingAccId !== '' && $bookingAccId === $selectedAccId) {
+                $accMatched = true;
+            } elseif ($selectedAccName !== '' && !empty($booking['account_name']) && (
+                strcasecmp($booking['account_name'], $selectedAccName) === 0 ||
+                stripos($booking['account_name'], $selectedAccName) !== false ||
+                stripos($selectedAccName, $booking['account_name']) !== false
+            )) {
+                $accMatched = true;
+            }
+
+            if (!$accMatched) {
+                return false;
+            }
         }
 
         if ($request->filled('payment_type') &&
@@ -7629,7 +7746,7 @@ public function searchBookings(Request $request)
     return view('bookings.completed', [
         'completedBookings' => $completedBookings,
         'drivers' => collect($drivers)->map(fn($v, $k) => ['id' => $k] + $v),
-        'accounts' => collect($accounts)->map(fn($v, $k) => (object)(['id' => $k] + $v)),
+        'accounts' => collect($accounts)->map(fn($v, $k) => (object)(['id' => $k] + (is_array($v) ? $v : []))),
     ]);
 }
     

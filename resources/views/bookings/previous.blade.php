@@ -10,27 +10,25 @@
 <div class="card shadow-sm border-0 mb-4">
   <div class="card-body bg-light rounded">
       <form action="{{ route('previous.bookings.search') }}" method="GET" class="row g-3 align-items-end">
-      <div class="col-md-4">
-        <input type="text" name="search" class="form-control" placeholder="Search by Name, Ref#, Mobile" value="{{ request('search') }}">
+      <div class="col-md-12">
+        <label class="form-label fw-semibold text-dark">Overall Search</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="search" class="form-control" placeholder="Search overall by Ref#, Name, Mobile, Pickup, Dropoff, Account, Driver, Flight#, Postcode, Comments..." value="{{ request('search') }}">
+        </div>
       </div>
-      <div class="col-md-4">
-        <input type="text" name="pickup" class="form-control" placeholder="Pickup Address" value="{{ request('pickup') }}">
-      </div>
-      <div class="col-md-4">
-        <input type="text" name="dropoff" class="form-control" placeholder="Dropoff Address" value="{{ request('dropoff') }}">
-      </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label class="form-label">From</label>
         <input type="date" name="from_date" class="form-control" value="{{ request('from_date') }}">
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label class="form-label">To</label>
         <input type="date" name="to_date" class="form-control" value="{{ request('to_date') }}">
       </div>
       <div class="col-md-3">
         <label class="form-label">Driver</label>
         <select name="driver_id" class="form-select">
-          <option value="">All</option>
+          <option value="">All Drivers</option>
           @foreach($drivers as $driver)
             <option value="{{ $driver['id'] }}" {{ request('driver_id') == $driver['id'] ? 'selected' : '' }}>
               {{ $driver['name'] ?? 'Unknown Driver' }}
@@ -38,21 +36,27 @@
           @endforeach
         </select>
       </div>
-      <!--<div class="col-md-2">-->
-      <!--  <label class="form-label">Account</label>-->
-      <!--  <select name="account_id" class="form-select">-->
-      <!--    <option value="">All</option>-->
-      <!--    @foreach($accounts as $account)-->
-      <!--      <option value="{{ $account->id }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>-->
-      <!--        {{ $account->business_name }}-->
-      <!--      </option>-->
-      <!--    @endforeach-->
-      <!--  </select>-->
-      <!--</div>-->
       <div class="col-md-3">
+        <label class="form-label">Account</label>
+        <select name="account_id" class="form-select">
+          <option value="">All Accounts</option>
+          @foreach($accounts as $account)
+            @php
+              $accId = is_object($account) ? ($account->id ?? '') : ($account['id'] ?? '');
+              $accName = is_object($account) ? ($account->business_name ?? $account->name ?? '') : ($account['business_name'] ?? $account['name'] ?? '');
+            @endphp
+            @if(!empty($accName))
+              <option value="{{ $accId }}" {{ (string) request('account_id') === (string) $accId ? 'selected' : '' }}>
+                {{ $accName }}
+              </option>
+            @endif
+          @endforeach
+        </select>
+      </div>
+      <div class="col-md-2">
         <label class="form-label">Payment</label>
         <select name="payment_type" class="form-select">
-          <option value="">All</option>
+          <option value="">All Payments</option>
           <option value="Cash" {{ request('payment_type') == 'Cash' ? 'selected' : '' }}>Cash</option>
           <option value="Card" {{ request('payment_type') == 'Card' ? 'selected' : '' }}>Card</option>
           <option value="Account" {{ request('payment_type') == 'Account' ? 'selected' : '' }}>Account</option>

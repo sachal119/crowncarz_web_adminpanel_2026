@@ -269,10 +269,26 @@
     </div>
 
     <!-- Report Header -->
-    <div class="text-center mb-5">
-        <h2 class="fw-semibold text-secondary">Customer Report</h2>
+    <div class="text-center mb-4">
+        <h2 class="fw-bold" style="color: #6B3E26;">
+            @if(!empty($selectedCustomerName))
+                {{ $selectedCustomerName }} - Statement
+            @else
+                Customer / Account Report
+            @endif
+        </h2>
+        @if(!empty($selectedCustomerName))
+            <div class="d-inline-block px-3 py-2 rounded-pill shadow-sm mb-2" style="background-color: #FDF3E7; border: 1px solid #E6B04A; color: #6B3E26; font-size: 0.95rem; font-weight: 600;">
+                <i class="bi bi-building me-1"></i> Account: {{ $selectedCustomerName }}
+                @if(!empty($selectedCustomerPhone)) &nbsp;|&nbsp; <i class="bi bi-telephone me-1"></i> {{ $selectedCustomerPhone }} @endif
+                @if(!empty($selectedCustomerEmail)) &nbsp;|&nbsp; <i class="bi bi-envelope me-1"></i> {{ $selectedCustomerEmail }} @endif
+            </div>
+        @endif
         <p class="mb-1"><strong>INVOICE DATE:</strong> {{ \Carbon\Carbon::now()->format('d M Y') }}</p>
         <p class="mb-0"><strong>TRAVEL PERIOD:</strong> {{ $from }} - {{ $to }}</p>
+        @if(!empty($type))
+            <p class="mb-0 text-muted" style="font-size: 0.9rem;"><strong>TYPE:</strong> {{ strtoupper($type) }}</p>
+        @endif
         <hr class="mt-3" style="border-color: #E6B04A; opacity: 1; width: 60%; margin: 0 auto;">
     </div>
 
@@ -290,7 +306,9 @@
     <!-- Bookings Table -->
     <div class="card shadow-sm border-0 rounded-4 mb-4">
         <div class="card-header bg-warning bg-opacity-25 rounded-top-4">
-            <h5 class="mb-0 text-dark fw-semibold text-center">Bookings</h5>
+            <h5 class="mb-0 text-dark fw-semibold text-center">
+                Bookings for {{ !empty($selectedCustomerName) ? $selectedCustomerName : 'All Customers' }} ({{ count($customers) }})
+            </h5>
         </div>
         <div class="card-body p-3">
             <div class="table-responsive">
