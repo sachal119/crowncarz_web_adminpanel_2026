@@ -883,146 +883,178 @@ public function sendTurnoverEmail(Request $request)
 
 
 // --- Existing function that renders the web view (reports.customer) ---
-public function customer(Request $request)
-{
-    $from = $request->from_date;
-    $to   = $request->to_date;
-    $type = $request->customer_type;
-    $customerId = $request->customer_id;
-
-    // 🔹 Get Bookings
-    $firebaseBookings = $this->firebase->getData('bookings') ?? [];
-
-    // 🔹 Get Customers
-    $customersData = $this->firebase->getData('customers') ?? [];
-
-    // 🔹 Selected Customer Details
-    $selectedCustomerPhone = null;
-    $selectedCustomerEmail = null;
-    $selectedCustomerName = null;
-
-    if ($customerId) {
-        foreach ($customersData as $customer) {
-
-            if (isset($customer['id']) && $customer['id'] == $customerId) {
-
-                //$selectedCustomerPhone = preg_replace('/\D/', '', $customer['phone'] ?? '');
-                $selectedCustomerEmail = strtolower(trim($customer['email'] ?? ''));
-                $selectedCustomerName = $customer['business_name'] ?? '';
-                $selectedCustomerPhone = $customer['phone'] ?? '';
-
-                break;
-            }
-        }
+    /**
+     * Helper to get unified filtered customer report bookings based on account/customer and date range
+     */
+    public function getCustomerReportData($from, $to, $type = null, $customerId = null)
+    {
+        return $this->getCustomerReportDataInternal($from, $to, $type, $customerId)['bookings'];
     }
 
-    $customers = [];
+    private function getCustomerReportDataInternal($from, $to, $type = null, $customerId = null)
+    {
+        $firebaseBookings = $this->firebase->getData('bookings') ?? [];
+        $customersData    = $this->firebase->getData('customers') ?? [];
 
-    foreach ($firebaseBookings as $booking) {
+        $selectedCustomerEmail = null;
+        $selectedCustomerName  = null;
+        $selectedCustomerPhone = null;
 
-        if (!isset($booking['pickup_time'])) {
-            continue;
-        }
-
-        $pickupTime = \Carbon\Carbon::parse($booking['pickup_time']);
-
-        // 🔹 Date Filter
-        if ($from && $to) {
-            $fromDate = \Carbon\Carbon::parse($from)->startOfDay();
-            $toDate   = \Carbon\Carbon::parse($to)->endOfDay();
-
-            if (!$pickupTime->between($fromDate, $toDate)) {
-                continue;
-            }
-        }
-
-        // 🔹 Payment Type Filter
-        if ($type && strtolower($booking['payment_type'] ?? '') !== strtolower($type)) {
-            continue;
-        }
-
-        // 🔹 Booking Status MUST be completed
-        if (strtolower($booking['status'] ?? '') !== 'completed') {
-            continue;
-        }
-
-        // 🔹 Email AND Phone must match
         if ($customerId) {
-
-            $bookingPhone = preg_replace('/\D/', '', $booking['phone_no'] ?? '');
-            $bookingEmail = strtolower(trim($booking['email'] ?? ''));
-            $bookingType = $booking['payment_type'];
-
-            //$phoneMatch = $bookingPhone === $selectedCustomerPhone;
-            $emailMatch = $bookingEmail === $selectedCustomerEmail;
-            $typeMatch = $bookingType === $type;
-
-            // BOTH must match
-            // if (!($phoneMatch && $emailMatch)) {
-            //     continue;
-            // }
-            if (!($typeMatch && $emailMatch)) {
-                continue;
+            foreach ($customersData as $customer) {
+                if (isset($customer['id']) && (string) $customer['id'] === (string) $customerId) {
+                    $selectedCustomerEmail = strtolower(trim($customer['email'] ?? ''));
+                    $selectedCustomerName  = trim($customer['business_name'] ?? '');
+                    $selectedCustomerPhone = trim($customer['phone'] ?? '');
+                    break;
+                }
             }
         }
 
-        // 🔹 Add Default Values (Base Fare = Price - Parking)
-        $totalPrice          = (float) ($booking['price'] ?? 0.00);
-        $parking             = (float) ($booking['parking'] ?? 0.00);
-        $booking['parking']  = $parking;
-        $booking['fare']     = max(0.00, $totalPrice - $parking);
-        $booking['comments'] = $booking['job_comment'] ?? 'N/A';
+        $filteredBookings = [];
 
-        $customers[] = (object) $booking;
+        foreach ($firebaseBookings as $key => $booking) {
+            if (!isset($booking['pickup_time'])) {
+                continue;
+            }
+
+            $pickupTime = \Carbon\Carbon::parse($booking['pickup_time']);
+
+            // 🔹 Date Filter
+            if ($from && $to) {
+                $fromDate = \Carbon\Carbon::parse($from)->startOfDay();
+                $toDate   = \Carbon\Carbon::parse($to)->endOfDay();
+
+                if (!$pickupTime->between($fromDate, $toDate)) {
+                    continue;
+                }
+            }
+
+            // 🔹 Payment Type Filter
+            if (!empty($type) && strtolower(trim($booking['payment_type'] ?? '')) !== strtolower(trim($type))) {
+                continue;
+            }
+
+            // 🔹 Booking Status MUST be completed
+            if (strtolower(trim($booking['status'] ?? '')) !== 'completed') {
+                continue;
+            }
+
+            // 🔹 Account / Customer Matching Filter
+            // Account is separate from passenger details (passenger can be an employee with their own name/phone/email)
+            if ($customerId) {
+                $bookingAccountId = (string) ($booking['account_id'] ?? '');
+                $bookingAccName   = trim((string) ($booking['account_name'] ?? ''));
+                $bookingEmail     = strtolower(trim((string) ($booking['email'] ?? '')));
+                $bookingPhone     = preg_replace('/\D/', '', (string) ($booking['phone_no'] ?? ''));
+
+                $matched = false;
+
+                // 1. Direct Account ID match
+                if ($bookingAccountId !== '' && (string) $bookingAccountId === (string) $customerId) {
+                    $matched = true;
+                }
+                // 2. Account Business Name match
+                elseif ($selectedCustomerName !== '' && $bookingAccName !== '' && (
+                    strcasecmp($bookingAccName, $selectedCustomerName) === 0 ||
+                    stripos($bookingAccName, $selectedCustomerName) !== false ||
+                    stripos($selectedCustomerName, $bookingAccName) !== false
+                )) {
+                    $matched = true;
+                }
+                // 3. Fallback: Email match (for direct passenger accounts)
+                elseif ($selectedCustomerEmail !== '' && $bookingEmail !== '' && $bookingEmail === $selectedCustomerEmail) {
+                    $matched = true;
+                }
+                // 4. Fallback: Phone match
+                elseif ($selectedCustomerPhone !== '' && $bookingPhone !== '' && $bookingPhone === preg_replace('/\D/', '', $selectedCustomerPhone)) {
+                    $matched = true;
+                }
+
+                if (!$matched) {
+                    continue;
+                }
+            }
+
+            // 🔹 Add Default Values (Base Fare = Price - Parking)
+            $totalPrice          = (float) ($booking['price'] ?? 0.00);
+            $parking             = (float) ($booking['parking'] ?? 0.00);
+            $booking['id']       = $key;
+            $booking['parking']  = $parking;
+            $booking['fare']     = max(0.00, $totalPrice - $parking);
+            $booking['comments'] = $booking['job_comment'] ?? 'N/A';
+
+            $filteredBookings[] = (object) $booking;
+        }
+
+        // 🔹 Sort Customers by pickup_time ASC
+        usort($filteredBookings, function ($a, $b) {
+            $timeA = \Carbon\Carbon::parse($a->pickup_time);
+            $timeB = \Carbon\Carbon::parse($b->pickup_time);
+            return $timeA->lt($timeB) ? -1 : ($timeA->gt($timeB) ? 1 : 0);
+        });
+
+        return [
+            'bookings'              => $filteredBookings,
+            'selectedCustomerEmail' => $selectedCustomerEmail,
+            'selectedCustomerName'  => $selectedCustomerName,
+            'selectedCustomerPhone' => $selectedCustomerPhone,
+        ];
     }
 
-    // 🔹 Get Drivers
-    $driversData = $this->firebase->getData('drivers') ?? [];
-    $drivers = collect();
+    public function customer(Request $request)
+    {
+        $from = $request->from_date;
+        $to   = $request->to_date;
+        $type = $request->customer_type;
+        $customerId = $request->customer_id;
 
-    foreach ($driversData as $id => $driver) {
-        $driver['id'] = $id;
-        $drivers->push($driver);
+        $reportData = $this->getCustomerReportDataInternal($from, $to, $type, $customerId);
+        $customers = $reportData['bookings'];
+        $selectedCustomerName  = $reportData['selectedCustomerName'];
+        $selectedCustomerPhone = $reportData['selectedCustomerPhone'];
+
+        // 🔹 Get Drivers
+        $driversData = $this->firebase->getData('drivers') ?? [];
+        $drivers = collect();
+
+        foreach ($driversData as $id => $driver) {
+            $driver['id'] = $id;
+            $drivers->push($driver);
+        }
+
+        return view('reports.customer', compact(
+            'customers',
+            'from',
+            'to',
+            'type',
+            'customerId',
+            'drivers',
+            'selectedCustomerPhone',
+            'selectedCustomerName'
+        ));
     }
-    
-    // 🔹 Sort Customers by pickup_time ASC
-usort($customers, function ($a, $b) {
-    $timeA = \Carbon\Carbon::parse($a->pickup_time);
-    $timeB = \Carbon\Carbon::parse($b->pickup_time);
-    return $timeA->lt($timeB) ? -1 : ($timeA->gt($timeB) ? 1 : 0);
-});
 
-    return view('reports.customer', compact(
-        'customers',
-        'from',
-        'to',
-        'type',
-        'customerId',
-        'drivers',
-        'selectedCustomerPhone',
-        'selectedCustomerName'
-    ));
-}
+    // --- Function to generate and download the PDF ---
+    public function downloadCustomerReport(Request $request)
+    {
+        $from = $request->from_date ?? $request->from;
+        $to   = $request->to_date ?? $request->to;
+        $type = $request->customer_type;
+        $customerId = $request->customer_id;
 
-// --- New/Modified function to generate and download the PDF ---
-public function downloadCustomerReport(Request $request)
-{
-    $from = $request->from_date; // Use from_date and to_date as per your 'customer' method
-    $to   = $request->to_date;
+        // Use unified function to get filtered data
+        $customers = $this->getCustomerReportData($from, $to, $type, $customerId);
 
-    // Use a unified function to get filtered data
-    $customers = $this->getCustomerReportData($from, $to, $request->customer_type, $request->customer_id);
+        // Load the PDF-specific view
+        $pdf = Pdf::loadView('reports.customer_report_pdf', [
+            'customers' => $customers,
+            'from' => $from,
+            'to'   => $to,
+        ]);
 
-    // Load the new PDF-specific view
-    $pdf = Pdf::loadView('reports.customer_report_pdf', [
-        'customers' => $customers,
-        'from' => $from,
-        'to'   => $to,
-    ]);
-
-    // Download the generated file
-    return $pdf->download("customer_report_{$from}_to_{$to}.pdf");
-}
+        return $pdf->download("customer_report_{$from}_to_{$to}.pdf");
+    }
 
 
 
@@ -1276,97 +1308,9 @@ public function sendCustomerReport(Request $request)
     $type = $request->customer_type;
     $customerId = $request->customer_id;
 
-    $firebaseBookings = $this->firebase->getData('bookings') ?? [];
-    $customersData    = $this->firebase->getData('customers') ?? [];
-
-    // 🔹 Selected Customer Details
-    $selectedCustomerPhone = null;
-    $selectedCustomerEmail = null;
-
-    if ($customerId) {
-        foreach ($customersData as $customer) {
-
-            if (isset($customer['id']) && $customer['id'] == $customerId) {
-
-                $selectedCustomerPhone = preg_replace('/\D/', '', $customer['phone'] ?? '');
-                $selectedCustomerEmail = strtolower(trim($customer['email'] ?? ''));
-
-                break;
-            }
-        }
-    }
-
-    $filteredBookings = [];
-
-    foreach ($firebaseBookings as $key => $booking) {
-
-        if (!isset($booking['pickup_time'])) {
-            continue;
-        }
-
-        $pickupTime = \Carbon\Carbon::parse($booking['pickup_time']);
-
-        // 🔹 Date Filter (optional)
-        if ($from && $to) {
-
-            $fromDate = \Carbon\Carbon::parse($from)->startOfDay();
-            $toDate   = \Carbon\Carbon::parse($to)->endOfDay();
-
-            if (!$pickupTime->between($fromDate, $toDate)) {
-                continue;
-            }
-        }
-
-        // 🔹 Payment Type Filter
-        if ($type && strtolower($booking['payment_type'] ?? '') !== strtolower($type)) {
-            continue;
-        }
-
-        // 🔹 Status must be completed
-        if (strtolower($booking['status'] ?? '') !== 'completed') {
-            continue;
-        }
-
-        // 🔹 Email AND Phone must match
-        if ($customerId) {
-
-            $bookingPhone = preg_replace('/\D/', '', $booking['phone_no'] ?? '');
-            $bookingEmail = strtolower(trim($booking['email'] ?? ''));
-             $bookingType = $booking['payment_type'];
-
-            //$phoneMatch = $bookingPhone === $selectedCustomerPhone;
-            $emailMatch = $bookingEmail === $selectedCustomerEmail;
-            $typeMatch = $bookingType === $type;
-
-            // BOTH must match
-            // if (!($phoneMatch && $emailMatch)) {
-            //     continue;
-            // }
-            if (!($typeMatch && $emailMatch)) {
-                continue;
-            }
-        }
-
-        // 🔹 Add Extra Data (Base Fare = Price - Parking)
-        $booking['id']       = $key;
-        $totalPrice          = (float) ($booking['price'] ?? 0.00);
-        $parking             = (float) ($booking['parking'] ?? 0.00);
-        $booking['parking']  = $parking;
-        $booking['fare']     = max(0.00, $totalPrice - $parking);
-        $booking['comments'] = $booking['job_comment'] ?? 'N/A';
-
-        $filteredBookings[] = (object) $booking;
-    }
-    
-        // 🔹 Sort Customers by pickup_time ASC
-usort($filteredBookings, function ($a, $b) {
-    $timeA = \Carbon\Carbon::parse($a->pickup_time);
-    $timeB = \Carbon\Carbon::parse($b->pickup_time);
-    return $timeA->lt($timeB) ? -1 : ($timeA->gt($timeB) ? 1 : 0);
-});
+    $filteredBookings = $this->getCustomerReportData($from, $to, $type, $customerId);
 
     try {
-
         \Mail::to($request->email)
             ->send(new \App\Mail\CustomerReportMail($filteredBookings, $from, $to));
 
@@ -1374,9 +1318,7 @@ usort($filteredBookings, function ($a, $b) {
             'success' => true,
             'message' => 'Report sent successfully!'
         ]);
-
     } catch (\Exception $e) {
-
         return response()->json([
             'success' => false,
             'message' => 'Email sending failed.',
@@ -1685,71 +1627,9 @@ public function getDriverEmail($id)
         $customerId = $request->customer_id;
         $phone = $request->phone;
 
-        $firebaseBookings = $this->firebase->getData('bookings') ?? [];
-        $customersData    = $this->firebase->getData('customers') ?? [];
-
-        // Selected Customer Details
-        $selectedCustomerEmail = null;
-        $selectedCustomerName  = null;
-
-        if ($customerId) {
-            foreach ($customersData as $customer) {
-                if (isset($customer['id']) && $customer['id'] == $customerId) {
-                    $selectedCustomerEmail = strtolower(trim($customer['email'] ?? ''));
-                    $selectedCustomerName  = $customer['business_name'] ?? 'Customer';
-                    break;
-                }
-            }
-        }
-
-        $filteredBookings = [];
-
-        foreach ($firebaseBookings as $key => $booking) {
-            if (!isset($booking['pickup_time'])) {
-                continue;
-            }
-
-            $pickupTime = \Carbon\Carbon::parse($booking['pickup_time']);
-
-            if ($from && $to) {
-                $fromDate = \Carbon\Carbon::parse($from)->startOfDay();
-                $toDate   = \Carbon\Carbon::parse($to)->endOfDay();
-                if (!$pickupTime->between($fromDate, $toDate)) {
-                    continue;
-                }
-            }
-
-            if ($type && strtolower($booking['payment_type'] ?? '') !== strtolower($type)) {
-                continue;
-            }
-
-            if (strtolower($booking['status'] ?? '') !== 'completed') {
-                continue;
-            }
-
-            if ($customerId) {
-                $bookingEmail = strtolower(trim($booking['email'] ?? ''));
-                $bookingType = $booking['payment_type'] ?? '';
-                if ($bookingType !== $type || $bookingEmail !== $selectedCustomerEmail) {
-                    continue;
-                }
-            }
-
-            $totalPrice          = (float) ($booking['price'] ?? 0.00);
-            $parking             = (float) ($booking['parking'] ?? 0.00);
-            $booking['id']       = $key;
-            $booking['parking']  = $parking;
-            $booking['fare']     = max(0.00, $totalPrice - $parking);
-            $booking['comments'] = $booking['job_comment'] ?? 'N/A';
-
-            $filteredBookings[] = (object) $booking;
-        }
-
-        usort($filteredBookings, function ($a, $b) {
-            $timeA = \Carbon\Carbon::parse($a->pickup_time);
-            $timeB = \Carbon\Carbon::parse($b->pickup_time);
-            return $timeA->lt($timeB) ? -1 : ($timeA->gt($timeB) ? 1 : 0);
-        });
+        $result = $this->getCustomerReportDataInternal($from, $to, $type, $customerId);
+        $filteredBookings     = $result['bookings'];
+        $selectedCustomerName = $result['selectedCustomerName'];
 
         try {
             $pdf = Pdf::loadView('reports.customer_report_pdf', [
