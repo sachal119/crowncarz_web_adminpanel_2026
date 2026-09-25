@@ -44,7 +44,15 @@
                 <td colspan="7" style="text-align:center;">No records found for selected filters.</td>
             </tr>
             @endforelse
-        </tbody>
     </table>
+    @php
+        $sysSettings = app('App\Services\FirebaseService')->getData('system_settings') ?? [];
+        $customReceiptNote = $sysSettings['receipt_note'] ?? null;
+    @endphp
+    @if(!empty($customReceiptNote))
+        <div style="margin-top: 15px; padding: 8px; border: 1px dashed #777; font-size: 10px; color: #333; text-align: center;">
+            {!! nl2br(e($customReceiptNote)) !!}
+        </div>
+    @endif
 </body>
 </html>

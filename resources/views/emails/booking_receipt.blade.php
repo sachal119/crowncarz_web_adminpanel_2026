@@ -136,6 +136,16 @@ if ($paymentType === 'cash') {
     </tr>
     </table>
 
+    @php
+        $sysSettings = app('App\Services\FirebaseService')->getData('system_settings') ?? [];
+        $customReceiptNote = $sysSettings['receipt_note'] ?? null;
+    @endphp
+    @if(!empty($customReceiptNote))
+        <div style="margin-top: 15px; padding: 10px; background: #fdfdfd; border: 1px dashed #e2e8f0; border-radius: 6px; font-size: 12px; color: #4a5568; text-align: center; line-height: 1.4;">
+            {!! nl2br(e($customReceiptNote)) !!}
+        </div>
+    @endif
+
     <div class="footer">
         Thank you for choosing CrownCarz — We appreciate your business!
     </div>

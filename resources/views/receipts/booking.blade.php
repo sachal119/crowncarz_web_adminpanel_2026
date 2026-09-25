@@ -553,6 +553,15 @@ if (!empty($booking['pickup_time'])) {
     <!-- Footer Note -->
     <div class="footer-note">
         <div class="footer-thanks">Thank you for choosing Crown Carz!</div>
+        @php
+            $sysSettings = app('App\Services\FirebaseService')->getData('system_settings') ?? [];
+            $customReceiptNote = $sysSettings['receipt_note'] ?? null;
+        @endphp
+        @if(!empty($customReceiptNote))
+            <div style="margin: 8px 0; padding: 7px 10px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 4px; font-size: 10px; color: #334155; line-height: 1.4; text-align: center;">
+                {!! nl2br(e($customReceiptNote)) !!}
+            </div>
+        @endif
         Crown Carz Ltd is a licensed private hire operator registered in the UK.<br>
         For inquiries or future reservations, please visit <strong>www.crowncarz.com</strong> or call <strong>+44 (0)1189 47 47 47</strong>.
     </div>

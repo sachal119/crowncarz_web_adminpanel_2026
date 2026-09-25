@@ -268,6 +268,13 @@
                         <label class="form-label fw-semibold"><i class="bi bi-geo-alt-fill text-primary me-1"></i> Address Autocomplete Key</label>
                         <input type="text" name="autocomplete_key" value="{{ $settings['autocomplete_key'] ?? '' }}" class="form-control rounded-pill shadow-sm">
                     </div>
+
+                    <!-- Receipt Custom Note -->
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold"><i class="bi bi-card-text text-warning me-1"></i> Receipt Note</label>
+                        <textarea name="receipt_note" class="form-control shadow-sm" rows="3" style="border-radius: 16px;" placeholder="Enter custom note to display at the footer of all customer booking receipts, PDFs, and statements...">{{ $settings['receipt_note'] ?? '' }}</textarea>
+                        <div class="form-text text-muted">Yeh note customer ko jane wali receipt, WhatsApp/PDF aur statements ke aakhir mein display hoga.</div>
+                    </div>
                 </div>
 
                 <!-- Save Button -->

@@ -47,7 +47,8 @@ class SystemSettingsController extends Controller
             'facebook', 'twitter', 'instagram', 'linkedin',
             'tiktok', 'snapchat', 'playstore', 'appstore',
             'currency', 'autocomplete_key',
-            'whatsapp_gateway_url', 'whatsapp_api_key'
+            'whatsapp_gateway_url', 'whatsapp_api_key',
+            'receipt_note'
         ]);
 
         $ref = $this->firebase->getDatabase()->getReference('system_settings');

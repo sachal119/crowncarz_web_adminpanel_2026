@@ -270,6 +270,15 @@ if (!empty($booking['pickup_time'])) {
             <!-- Receipt Footer Note -->
             <div class="text-center pt-3 border-top small text-muted">
                 <div class="fw-bold text-dark mb-1">Thank you for choosing Crown Carz!</div>
+                @php
+                    $sysSettings = app('App\Services\FirebaseService')->getData('system_settings') ?? [];
+                    $customReceiptNote = $sysSettings['receipt_note'] ?? null;
+                @endphp
+                @if(!empty($customReceiptNote))
+                    <div class="my-2 p-2 rounded bg-light border border-dashed text-dark text-center" style="font-size: 11.5px; line-height: 1.5;">
+                        {!! nl2br(e($customReceiptNote)) !!}
+                    </div>
+                @endif
                 <div>Crown Carz Ltd is a licensed private hire vehicle operator.</div>
                 <div style="font-size: 11px;" class="mt-1">
                     For inquiries or reservations, please visit <a href="https://crowncarz.com" target="_blank" class="text-decoration-none fw-semibold">crowncarz.com</a> or call <strong>+44 (0)1189 47 47 47</strong>.

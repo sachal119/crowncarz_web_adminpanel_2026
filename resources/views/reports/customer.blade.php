@@ -384,6 +384,15 @@
     </div>
 
     <div class="print-receipt-footer">
+        @php
+            $sysSettings = app('App\Services\FirebaseService')->getData('system_settings') ?? [];
+            $customReceiptNote = $sysSettings['receipt_note'] ?? null;
+        @endphp
+        @if(!empty($customReceiptNote))
+            <div style="margin-bottom: 8px; font-weight: 600; color: #495057;">
+                {!! nl2br(e($customReceiptNote)) !!}
+            </div>
+        @endif
         Thank you for choosing Crown Carz. This is a computer generated receipt.
     </div>
 </div>
