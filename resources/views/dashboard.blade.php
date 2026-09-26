@@ -1730,21 +1730,21 @@ function getDriverBadgeHtml(booking) {
         const name = driver.name || 'Driver';
         const number = driver.call_sign || driver.phone || driver.phone_no || '';
         return `
-        <div class="d-flex flex-column align-items-start">
+        <div class="d-flex flex-column align-items-start gap-1">
             <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(name)}">
                 ${escapeHtml(name)}
             </span>
-            ${number ? `<span class="text-truncate fw-bold text-dark mt-1 font-monospace" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="${escapeHtml(number)}">${escapeHtml(number)}</span>` : ''}
+            ${number ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 120px;" title="${escapeHtml(number)}">${escapeHtml(number)}</span>` : ''}
         </div>`;
     } else if (dName || dCall || (booking.driver && typeof booking.driver === 'string' && booking.driver.trim() !== '')) {
         const name = dName || booking.driver || 'Driver';
         const number = dCall || booking.driver_phone || '';
         return `
-        <div class="d-flex flex-column align-items-start">
+        <div class="d-flex flex-column align-items-start gap-1">
             <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(name)}">
                 ${escapeHtml(name)}
             </span>
-            ${number ? `<span class="text-truncate fw-bold text-dark mt-1 font-monospace" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="${escapeHtml(number)}">${escapeHtml(number)}</span>` : ''}
+            ${number ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 120px;" title="${escapeHtml(number)}">${escapeHtml(number)}</span>` : ''}
         </div>`;
     }
 
@@ -1767,9 +1767,8 @@ function getViasBadgeHtml(booking) {
         return '<span class="text-muted">-</span>';
     }
 
-    const viasFull = viasArr.join(' → ').replace(/"/g, '&quot;');
-    const truncated = viasFull.length > 16 ? viasFull.substring(0, 16) + '...' : viasFull;
-    return `<span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px; font-weight: 500; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle;" title="${viasFull}"><i class="bi bi-signpost-split text-warning me-1"></i>${truncated}</span>`;
+    const fullVias = escapeHtml(viasArr.join(' → '));
+    return `<span class="badge bg-light text-dark border px-2 py-1 two-line-clamp text-start" style="font-size: 10.5px; font-weight: 500; max-width: 130px;" title="${fullVias}"><i class="bi bi-signpost-split text-warning me-1"></i>${fullVias}</span>`;
 }
 
 // 🛠️ Render a complete table row for a booking
@@ -1888,10 +1887,10 @@ function buildBookingRowHtml(booking, isNew = false) {
             </a>
         </td>
         <td class="col-pickup" style="${rowStyle}" title="${pickupAddress}">
-            <span class="truncate-cell text-dark" style="max-width: 140px;">${pickupAddress}</span>
+            <span class="two-line-clamp text-dark" style="max-width: 145px; font-size: 11.5px;">${pickupAddress}</span>
         </td>
         <td class="col-dropoff" style="${rowStyle}" title="${dropoffAddress}">
-            <span class="truncate-cell text-dark" style="max-width: 140px;">${dropoffAddress}</span>
+            <span class="two-line-clamp text-dark" style="max-width: 145px; font-size: 11.5px;">${dropoffAddress}</span>
         </td>
         <td class="col-vias text-center" style="${rowStyle}">${viasText}</td>
         <td class="col-date fw-semibold text-nowrap" style="${rowStyle}">${pickupDate}</td>
@@ -2928,11 +2927,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         const driverCell = row.querySelector('.driver-cell');
                         if (driverCell) {
                             driverCell.innerHTML = `
-                            <div class="d-flex flex-column align-items-start">
+                            <div class="d-flex flex-column align-items-start gap-1">
                                 <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(dName)}">
                                     ${escapeHtml(dName)}
                                 </span>
-                                ${dNumber ? `<span class="text-truncate fw-bold text-dark mt-1 font-monospace" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="${escapeHtml(dNumber)}">${escapeHtml(dNumber)}</span>` : ''}
+                                ${dNumber ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 120px;" title="${escapeHtml(dNumber)}">${escapeHtml(dNumber)}</span>` : ''}
                             </div>`;
                         }
 

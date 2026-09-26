@@ -162,12 +162,12 @@
                     $dName = $driver['name'] ?? 'Driver';
                     $dNumber = $driver['call_sign'] ?? ($driver['callsign'] ?? ($driver['phone'] ?? ($driver['phone_no'] ?? '')));
                 @endphp
-                <div class="d-flex flex-column align-items-start">
+                <div class="d-flex flex-column align-items-start gap-1">
                     <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="{{ $dName }}">
                         {{ $dName }}
                     </span>
                     @if(!empty($dNumber))
-                        <span class="text-truncate fw-bold text-dark mt-1 font-monospace" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="{{ $dNumber }}">
+                        <span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 120px;" title="{{ $dNumber }}">
                             {{ $dNumber }}
                         </span>
                     @endif
@@ -177,12 +177,12 @@
                     $dName = $bDriverName ?: ($booking['driver'] ?? 'Driver');
                     $dNumber = $bDriverCallSign ?: ($booking['driver_phone'] ?? '');
                 @endphp
-                <div class="d-flex flex-column align-items-start">
+                <div class="d-flex flex-column align-items-start gap-1">
                     <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="{{ $dName }}">
                         {{ $dName }}
                     </span>
                     @if(!empty($dNumber))
-                        <span class="text-truncate fw-bold text-dark mt-1 font-monospace" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="{{ $dNumber }}">
+                        <span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 120px;" title="{{ $dNumber }}">
                             {{ $dNumber }}
                         </span>
                     @endif
@@ -197,10 +197,10 @@
             </a>
         </td>
         <td class="col-pickup" style="{{ $rowStyle }}" title="{{ $booking['pickup_address'] ?? '-' }}">
-            <span class="truncate-cell text-dark" style="max-width: 140px;">{{ $booking['pickup_address'] ?? '-' }}</span>
+            <span class="two-line-clamp text-dark" style="max-width: 145px; font-size: 11.5px;">{{ $booking['pickup_address'] ?? '-' }}</span>
         </td>
         <td class="col-dropoff" style="{{ $rowStyle }}" title="{{ $booking['dropoff_address'] ?? '-' }}">
-            <span class="truncate-cell text-dark" style="max-width: 140px;">{{ $booking['dropoff_address'] ?? '-' }}</span>
+            <span class="two-line-clamp text-dark" style="max-width: 145px; font-size: 11.5px;">{{ $booking['dropoff_address'] ?? '-' }}</span>
         </td>
         <td class="col-vias text-center" style="{{ $rowStyle }}">
             @php
@@ -215,7 +215,7 @@
                 $viasFull = implode(' → ', $viasList);
             @endphp
             @if($viasCount > 0)
-                <span class="badge bg-light text-dark border px-2 py-1 truncate-cell" style="font-size: 11px; font-weight: 500; max-width: 115px;" title="{{ $viasFull }}">
+                <span class="badge bg-light text-dark border px-2 py-1 two-line-clamp text-start" style="font-size: 10.5px; font-weight: 500; max-width: 130px;" title="{{ $viasFull }}">
                     <i class="bi bi-signpost-split text-warning me-1"></i>{{ $viasFull }}
                 </span>
             @else
