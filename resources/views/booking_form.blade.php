@@ -157,8 +157,56 @@
   </div>
 </div>
   <div class="card shadow-sm border-0 rounded-4 mx-auto">
-    <div class="card-header rounded-top-4 bg-warning bg-opacity-25 px-3 py-2">
-      <h6 class="mb-0 text-dark">{{ isset($booking) ? 'Edit Booking' : 'Create Booking' }}</h6>
+    <div class="card-header rounded-top-4 bg-warning bg-opacity-25 px-3 py-2.5 d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div class="d-flex align-items-center flex-wrap gap-2">
+        <h6 class="mb-0 text-dark fw-bold" style="font-size: 1.05rem;">
+          <i class="bi bi-pencil-square me-1 text-primary"></i>{{ isset($booking) ? 'Edit Booking' : 'Create Booking' }}
+        </h6>
+        @if(isset($booking) && !empty($booking['ref_no']))
+          <span class="badge bg-dark text-white font-monospace px-2.5 py-1.5 shadow-sm" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+            <i class="bi bi-hash me-0.5"></i>REF: {{ $booking['ref_no'] }}
+          </span>
+        @endif
+        @if(isset($booking) && !empty($booking['status']))
+          @php
+            $statusBadges = [
+              'pending'       => 'bg-warning text-dark',
+              'accepted'      => 'bg-info text-dark',
+              'declined'      => 'bg-danger text-white',
+              'onroute'       => 'bg-primary text-white',
+              'arrived'       => 'bg-success text-white',
+              'pickedup'      => 'bg-success text-white',
+              'completed'     => 'bg-primary text-white',
+              'job_cancelled' => 'bg-danger text-white',
+              'no_show'       => 'bg-secondary text-white',
+            ];
+            $curStatus = strtolower($booking['status'] ?? 'pending');
+            $statusBadgeClass = $statusBadges[$curStatus] ?? 'bg-secondary text-white';
+          @endphp
+          <span class="badge {{ $statusBadgeClass }} px-2 py-1 text-capitalize" style="font-size: 0.78rem;">
+            {{ str_replace('_', ' ', $curStatus) }}
+          </span>
+        @endif
+      </div>
+      @if(isset($booking))
+        @php
+          $bCreatedAt = $booking['created_at'] ?? ($booking['createdAt'] ?? ($booking['created_date'] ?? null));
+          $bCreatedFormatted = null;
+          if (!empty($bCreatedAt)) {
+            try {
+              $bCreatedFormatted = \Carbon\Carbon::parse($bCreatedAt)->format('d M Y, H:i');
+            } catch (\Throwable $e) {
+              $bCreatedFormatted = $bCreatedAt;
+            }
+          }
+        @endphp
+        @if($bCreatedFormatted)
+          <div class="text-muted d-flex align-items-center" style="font-size: 0.85rem;">
+            <i class="bi bi-clock-history me-1 text-secondary"></i>
+            <span>Created: <strong class="text-dark">{{ $bCreatedFormatted }}</strong></span>
+          </div>
+        @endif
+      @endif
     </div>
     <div class="card-body p-2 p-md-4">
       <div class="row g-3 g-md-4" style="zoom:70%">

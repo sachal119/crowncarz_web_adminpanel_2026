@@ -819,7 +819,7 @@ td{
     </tr>
 </thead>
 <tbody class="small" id="bookingsTableBody">
-@include('partials.dashboard_table_rows', ['bookings' => $bookings, 'drivers' => $drivers])
+@include('partials.dashboard_table_rows', ['bookings' => $bookings, 'drivers' => $drivers, 'accounts' => $accounts])
 </tbody>
                 </table>
             </div>
@@ -1809,11 +1809,37 @@ function buildBookingRowHtml(booking, isNew = false) {
     const formattedPrice = (booking.price && !isNaN(Number(booking.price))) ? `£${Number(booking.price).toFixed(2)}` : (booking.price || '-');
 
     let accName = booking.account_name || '';
-    if (!accName && booking.account_id && typeof DASHBOARD_ACCOUNTS !== 'undefined' && DASHBOARD_ACCOUNTS[booking.account_id]) {
-        accName = DASHBOARD_ACCOUNTS[booking.account_id].business_name || DASHBOARD_ACCOUNTS[booking.account_id].name || '';
+    if (!accName && booking.account_id && typeof DASHBOARD_ACCOUNTS !== 'undefined') {
+        const targetId = String(booking.account_id);
+        if (DASHBOARD_ACCOUNTS[targetId]) {
+            accName = DASHBOARD_ACCOUNTS[targetId].business_name || DASHBOARD_ACCOUNTS[targetId].name || '';
+        } else if (Array.isArray(DASHBOARD_ACCOUNTS)) {
+            const foundAcc = DASHBOARD_ACCOUNTS.find(a => a && (String(a.id) === targetId || String(a.key) === targetId || String(a.account_id) === targetId));
+            if (foundAcc) accName = foundAcc.business_name || foundAcc.name || '';
+        } else if (typeof DASHBOARD_ACCOUNTS === 'object') {
+            const foundAcc = Object.entries(DASHBOARD_ACCOUNTS).find(([k, a]) => (k === targetId) || (a && (String(a.id) === targetId || String(a.key) === targetId || String(a.account_id) === targetId)));
+            if (foundAcc && foundAcc[1]) accName = foundAcc[1].business_name || foundAcc[1].name || '';
+        }
     }
     if (!accName && booking.account) {
         accName = typeof booking.account === 'string' ? booking.account : (booking.account.business_name || booking.account.name || '');
+    }
+
+    let createdAtFormatted = '';
+    const rawCreated = booking.created_at || booking.createdAt || booking.created_date;
+    if (rawCreated) {
+        try {
+            const cdt = new Date(rawCreated);
+            if (!isNaN(cdt.getTime())) {
+                const cDate = cdt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                const cTime = cdt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                createdAtFormatted = `${cDate}, ${cTime}`;
+            } else {
+                createdAtFormatted = rawCreated;
+            }
+        } catch (e) {
+            createdAtFormatted = rawCreated;
+        }
     }
 
     const highlightClass = isNew ? 'new-booking-highlight' : '';
@@ -1821,7 +1847,10 @@ function buildBookingRowHtml(booking, isNew = false) {
     return `
     <tr id="booking-row-${id}" data-booking-id="${id}" class="booking-table-row align-middle ${highlightClass}" style="${rowStyle}">
         <td class="col-ref fw-bold" style="${rowStyle}">
-            <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">${booking.ref_no || 'N/A'}</span>
+            <div class="d-flex flex-column">
+                <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">${booking.ref_no || 'N/A'}</span>
+                ${createdAtFormatted ? `<span class="text-muted fw-normal" style="font-size: 10px; line-height: 1.2; margin-top: 2px;" title="Created: ${escapeHtml(createdAtFormatted)}"><i class="bi bi-clock me-1" style="font-size: 9px;"></i>${escapeHtml(createdAtFormatted)}</span>` : ''}
+            </div>
         </td>
         <td class="col-payment" style="${rowStyle}">${getPaymentBadgeHtml(booking.payment_type, accName)}</td>
         <td class="col-passenger fw-semibold" style="${rowStyle}" title="${passengerName}">

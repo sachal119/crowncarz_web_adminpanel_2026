@@ -90,13 +90,53 @@
     @endphp
     <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row align-middle" style="{{ $rowStyle }}">
         <td class="col-ref fw-bold" style="{{ $rowStyle }}">
-            <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">{{ $booking['ref_no'] ?? 'N/A' }}</span>
+            <div class="d-flex flex-column">
+                <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">{{ $booking['ref_no'] ?? 'N/A' }}</span>
+                @php
+                    $createdAtRaw = $booking['created_at'] ?? ($booking['createdAt'] ?? ($booking['created_date'] ?? null));
+                    $createdAtFormatted = null;
+                    if (!empty($createdAtRaw)) {
+                        try {
+                            $createdAtFormatted = \Carbon\Carbon::parse($createdAtRaw)->format('d M Y, H:i');
+                        } catch (\Throwable $e) {
+                            $createdAtFormatted = $createdAtRaw;
+                        }
+                    }
+                @endphp
+                @if($createdAtFormatted)
+                    <span class="text-muted fw-normal" style="font-size: 10px; line-height: 1.2; margin-top: 2px;" title="Created: {{ $createdAtFormatted }}">
+                        <i class="bi bi-clock me-0.5" style="font-size: 9px;"></i>{{ $createdAtFormatted }}
+                    </span>
+                @endif
+            </div>
         </td>
         <td class="col-payment" style="{{ $rowStyle }}">
             @php
                 $accName = $booking['account_name'] ?? '';
-                if (empty($accName) && !empty($booking['account_id']) && isset($accounts[$booking['account_id']])) {
-                    $accName = $accounts[$booking['account_id']]['business_name'] ?? ($accounts[$booking['account_id']]['name'] ?? '');
+                if (empty($accName) && !empty($booking['account_id']) && isset($accounts)) {
+                    if (isset($accounts[$booking['account_id']])) {
+                        $accObj = $accounts[$booking['account_id']];
+                        $accName = is_array($accObj) ? ($accObj['business_name'] ?? ($accObj['name'] ?? '')) : ($accObj->business_name ?? ($accObj->name ?? ''));
+                    }
+                    if (empty($accName)) {
+                        $targetId = (string)$booking['account_id'];
+                        $accObj = collect($accounts)->first(function($a, $k) use ($targetId) {
+                            if (is_array($a)) {
+                                return (string)($a['id'] ?? '') === $targetId 
+                                    || (string)($a['key'] ?? '') === $targetId 
+                                    || (string)$k === $targetId
+                                    || (string)($a['account_id'] ?? '') === $targetId;
+                            } elseif (is_object($a)) {
+                                return (string)($a->id ?? '') === $targetId 
+                                    || (string)($a->key ?? '') === $targetId 
+                                    || (string)$k === $targetId;
+                            }
+                            return false;
+                        });
+                        if ($accObj) {
+                            $accName = is_array($accObj) ? ($accObj['business_name'] ?? ($accObj['name'] ?? '')) : ($accObj->business_name ?? ($accObj->name ?? ''));
+                        }
+                    }
                 }
                 if (empty($accName) && !empty($booking['account'])) {
                     $accName = is_string($booking['account']) ? $booking['account'] : ($booking['account']['business_name'] ?? ($booking['account']['name'] ?? ''));

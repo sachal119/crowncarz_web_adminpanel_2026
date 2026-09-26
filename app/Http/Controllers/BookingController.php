@@ -1996,10 +1996,45 @@ if ($driversSnapshot) {
 
 
 
-    // 3️⃣ Fetch accounts (if needed from MySQL)
-    //$accounts = Account::all();
-    
-        $accounts = $this->firebase->getData('customers') ?? [];
+    // 3️⃣ Fetch accounts (Firebase customers + MySQL fallback)
+    $firebaseAccounts = $this->firebase->getData('customers') ?? [];
+    $mysqlAccounts = collect();
+    try { $mysqlAccounts = \App\Models\Account::all(); } catch (\Exception $e) {}
+
+    $accounts = [];
+    if (is_array($firebaseAccounts)) {
+        foreach ($firebaseAccounts as $key => $acc) {
+            if (!is_array($acc)) continue;
+            $accId = (string)($acc['id'] ?? $key);
+            $accountData = [
+                'id'            => $accId,
+                'key'           => (string)$key,
+                'business_name' => $acc['business_name'] ?? ($acc['name'] ?? ''),
+                'phone'         => $acc['phone'] ?? '',
+                'email'         => $acc['email'] ?? '',
+                'address'       => $acc['address'] ?? '',
+            ];
+            $accounts[$accId] = $accountData;
+            if ((string)$key !== $accId) {
+                $accounts[(string)$key] = $accountData;
+            }
+        }
+    }
+    if ($mysqlAccounts->isNotEmpty()) {
+        foreach ($mysqlAccounts as $mAcc) {
+            $mId = (string)$mAcc->id;
+            if (!isset($accounts[$mId])) {
+                $accounts[$mId] = [
+                    'id'            => $mId,
+                    'key'           => $mId,
+                    'business_name' => $mAcc->business_name ?? ($mAcc->name ?? ''),
+                    'phone'         => $mAcc->phone ?? '',
+                    'email'         => $mAcc->email ?? '',
+                    'address'       => $mAcc->address ?? '',
+                ];
+            }
+        }
+    }
 
         // ✅ Pass all data to the Blade
         // return view('bookings.completed', [
@@ -7223,8 +7258,45 @@ public function search(Request $request)
         return $ad->timestamp <=> $bd->timestamp;
     });
 
-    // Accounts from Firebase
-    $accounts = $this->firebase->getData('customers') ?? [];
+    // Accounts from Firebase + MySQL
+    $firebaseAccounts = $this->firebase->getData('customers') ?? [];
+    $mysqlAccounts = collect();
+    try { $mysqlAccounts = \App\Models\Account::all(); } catch (\Exception $e) {}
+
+    $accounts = [];
+    if (is_array($firebaseAccounts)) {
+        foreach ($firebaseAccounts as $key => $acc) {
+            if (!is_array($acc)) continue;
+            $accId = (string)($acc['id'] ?? $key);
+            $accountData = [
+                'id'            => $accId,
+                'key'           => (string)$key,
+                'business_name' => $acc['business_name'] ?? ($acc['name'] ?? ''),
+                'phone'         => $acc['phone'] ?? '',
+                'email'         => $acc['email'] ?? '',
+                'address'       => $acc['address'] ?? '',
+            ];
+            $accounts[$accId] = $accountData;
+            if ((string)$key !== $accId) {
+                $accounts[(string)$key] = $accountData;
+            }
+        }
+    }
+    if ($mysqlAccounts->isNotEmpty()) {
+        foreach ($mysqlAccounts as $mAcc) {
+            $mId = (string)$mAcc->id;
+            if (!isset($accounts[$mId])) {
+                $accounts[$mId] = [
+                    'id'            => $mId,
+                    'key'           => $mId,
+                    'business_name' => $mAcc->business_name ?? ($mAcc->name ?? ''),
+                    'phone'         => $mAcc->phone ?? '',
+                    'email'         => $mAcc->email ?? '',
+                    'address'       => $mAcc->address ?? '',
+                ];
+            }
+        }
+    }
     
     // ================= PAGINATION =================
     $perPage = 20;
@@ -7287,6 +7359,7 @@ public function search(Request $request)
         $tableHtml = view('partials.dashboard_table_rows', [
             'bookings' => $bookings,
             'drivers'  => $drivers,
+            'accounts' => $accounts,
         ])->render();
 
         $paginationHtml = $bookings->links('pagination::bootstrap-5')->render();
