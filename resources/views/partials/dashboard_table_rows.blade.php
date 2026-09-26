@@ -197,10 +197,10 @@
             </a>
         </td>
         <td class="col-pickup" style="{{ $rowStyle }}" title="{{ $booking['pickup_address'] ?? '-' }}">
-            <span class="two-line-clamp text-dark" style="max-width: 145px; font-size: 11.5px;">{{ $booking['pickup_address'] ?? '-' }}</span>
+            <span class="two-line-clamp text-dark" style="max-width: 210px; font-size: 11.5px; line-height: 1.25;">{{ $booking['pickup_address'] ?? '-' }}</span>
         </td>
         <td class="col-dropoff" style="{{ $rowStyle }}" title="{{ $booking['dropoff_address'] ?? '-' }}">
-            <span class="two-line-clamp text-dark" style="max-width: 145px; font-size: 11.5px;">{{ $booking['dropoff_address'] ?? '-' }}</span>
+            <span class="two-line-clamp text-dark" style="max-width: 210px; font-size: 11.5px; line-height: 1.25;">{{ $booking['dropoff_address'] ?? '-' }}</span>
         </td>
         <td class="col-vias text-center" style="{{ $rowStyle }}">
             @php
@@ -215,8 +215,8 @@
                 $viasFull = implode(' → ', $viasList);
             @endphp
             @if($viasCount > 0)
-                <span class="badge bg-light text-dark border px-2 py-1 two-line-clamp text-start" style="font-size: 10.5px; font-weight: 500; max-width: 130px;" title="{{ $viasFull }}">
-                    <i class="bi bi-signpost-split text-warning me-1"></i>{{ $viasFull }}
+                <span class="badge bg-light text-dark border px-1.5 py-1 two-line-clamp text-start" style="font-size: 10px; font-weight: 500; max-width: 85px; white-space: normal; line-height: 1.15;" title="{{ $viasFull }}">
+                    <i class="bi bi-signpost-split text-warning me-0.5"></i>{{ $viasFull }}
                 </span>
             @else
                 <span class="text-muted small">-</span>

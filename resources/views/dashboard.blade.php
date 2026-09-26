@@ -506,6 +506,22 @@ td{
 .statusSelect:focus {
     box-shadow: 0 0 0 2px rgba(184, 115, 51, 0.3);
 }
+.custom-dashboard-table .col-pickup,
+.custom-dashboard-table th.th-pickup {
+    min-width: 175px;
+    max-width: 220px;
+}
+.custom-dashboard-table .col-dropoff,
+.custom-dashboard-table th.th-dropoff {
+    min-width: 175px;
+    max-width: 220px;
+}
+.custom-dashboard-table .col-vias,
+.custom-dashboard-table th.th-vias {
+    width: 85px;
+    min-width: 75px;
+    max-width: 95px;
+}
 </style>
 
 <!-- 🌟 Fullscreen Screen-Level Search & Filter Loader -->
@@ -811,23 +827,23 @@ td{
                 <table class="table table-hover align-middle mb-0 custom-dashboard-table" id="futureBookingsTable">
                    <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
     <tr class="text-uppercase text-muted" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 700;">
-        <th class="py-2.5 px-3">Ref#</th>
-        <th class="py-2.5 px-2">Account Type</th>
-        <th class="py-2.5 px-2">Passenger</th>
-        <th class="py-2.5 px-2">Driver</th>
-        <th class="py-2.5 px-2">Phone</th>
-        <th class="py-2.5 px-2">Pickup</th>
-        <th class="py-2.5 px-2">Dropoff</th>
-        <th class="py-2.5 px-2 text-center">Vias</th>
-        <th class="py-2.5 px-2">Job Date</th>
-        <th class="py-2.5 px-2">Job Time</th>
-        <th class="py-2.5 px-2 text-center">Vehicle</th>
-        <th class="py-2.5 px-2">Flight</th>
-        <th class="py-2.5 px-2">Price</th>
-        <th class="py-2.5 px-2">Comments</th>
-        <th class="py-2.5 px-2">Status</th>
-        <th class="py-2.5 px-2 text-center">Platform</th>
-        <th class="py-2.5 px-3 text-center">Actions</th>
+        <th class="py-2.5 px-3 th-ref">Ref#</th>
+        <th class="py-2.5 px-2 th-payment">Account Type</th>
+        <th class="py-2.5 px-2 th-passenger">Passenger</th>
+        <th class="py-2.5 px-2 th-driver">Driver</th>
+        <th class="py-2.5 px-2 th-phone">Phone</th>
+        <th class="py-2.5 px-2 th-pickup">Pickup</th>
+        <th class="py-2.5 px-2 th-dropoff">Dropoff</th>
+        <th class="py-2.5 px-2 text-center th-vias">Vias</th>
+        <th class="py-2.5 px-2 th-date">Job Date</th>
+        <th class="py-2.5 px-2 th-time">Job Time</th>
+        <th class="py-2.5 px-2 text-center th-vehicle">Vehicle</th>
+        <th class="py-2.5 px-2 th-flight">Flight</th>
+        <th class="py-2.5 px-2 th-price">Price</th>
+        <th class="py-2.5 px-2 th-comments">Comments</th>
+        <th class="py-2.5 px-2 th-status">Status</th>
+        <th class="py-2.5 px-2 text-center th-platform">Platform</th>
+        <th class="py-2.5 px-3 text-center th-actions">Actions</th>
     </tr>
 </thead>
 <tbody class="small" id="bookingsTableBody">
