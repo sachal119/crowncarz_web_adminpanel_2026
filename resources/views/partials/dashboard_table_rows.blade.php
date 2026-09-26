@@ -89,26 +89,8 @@
         }
     @endphp
     <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row align-middle" style="{{ $rowStyle }}">
-        <td class="col-ref fw-bold" style="{{ $rowStyle }}">
-            <div class="d-flex flex-column">
-                <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">{{ $booking['ref_no'] ?? 'N/A' }}</span>
-                @php
-                    $createdAtRaw = $booking['created_at'] ?? ($booking['createdAt'] ?? ($booking['created_date'] ?? null));
-                    $createdAtFormatted = null;
-                    if (!empty($createdAtRaw)) {
-                        try {
-                            $createdAtFormatted = \Carbon\Carbon::parse($createdAtRaw)->format('d M Y, H:i');
-                        } catch (\Throwable $e) {
-                            $createdAtFormatted = $createdAtRaw;
-                        }
-                    }
-                @endphp
-                @if($createdAtFormatted)
-                    <span class="text-muted fw-normal" style="font-size: 10px; line-height: 1.2; margin-top: 2px;" title="Created: {{ $createdAtFormatted }}">
-                        {{ $createdAtFormatted }}
-                    </span>
-                @endif
-            </div>
+        <td class="col-ref fw-bold text-nowrap" style="{{ $rowStyle }}">
+            <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">{{ $booking['ref_no'] ?? 'N/A' }}</span>
         </td>
         <td class="col-payment" style="{{ $rowStyle }}">
             @php

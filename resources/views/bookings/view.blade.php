@@ -88,11 +88,23 @@
                         elseif (in_array($status, ['cancelled', 'rejected'])) $badgeClass = 'bg-danger';
                         elseif ($status === 'pending') $badgeClass = 'bg-warning text-dark';
                     @endphp
+                    @php
+                        $bCreatedAt = $booking['created_at'] ?? ($booking['createdAt'] ?? ($booking['created_date'] ?? null));
+                        $bCreatedFmt = null;
+                        if (!empty($bCreatedAt)) {
+                            try { $bCreatedFmt = \Carbon\Carbon::parse($bCreatedAt)->format('d M Y, H:i'); } catch (\Throwable $e) { $bCreatedFmt = $bCreatedAt; }
+                        }
+                    @endphp
                     <span class="badge {{ $badgeClass }} text-uppercase fw-semibold" style="font-size: 0.78rem;">
                         {{ $booking['status'] ?? 'Pending' }}
                     </span>
                 </h1>
-                <div class="text-muted small">Complete trip itinerary, pricing details and staff audit trail</div>
+                <div class="text-muted small">
+                    @if($bCreatedFmt)
+                        <span class="me-2"><i class="bi bi-clock-history text-primary"></i> <strong>Booked:</strong> {{ $bCreatedFmt }}</span> &bull;
+                    @endif
+                    Complete trip itinerary, pricing details and staff audit trail
+                </div>
             </div>
         </div>
 
@@ -202,6 +214,10 @@
                         <div class="col-sm-6">
                             <div class="small text-muted" style="font-size: 0.78rem;">Flight Number</div>
                             <div class="fw-semibold text-dark">{{ $booking['flight_no'] ?? '-' }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="small text-muted" style="font-size: 0.78rem;">Booking Date & Time (Created)</div>
+                            <div class="fw-semibold text-dark">{{ $bCreatedFmt ?? '-' }}</div>
                         </div>
                     </div>
                 </div>

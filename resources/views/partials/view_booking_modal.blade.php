@@ -83,7 +83,13 @@
             </span>
             <div>
               <h5 class="modal-title fw-bold mb-0 text-white" id="viewBookingModalLabel" style="font-size: 1.1rem;">Booking Details & Activity History</h5>
-              <div class="text-white-50" style="font-size: 0.75rem;">Complete itinerary, pricing breakdown & staff audit trail</div>
+              <div class="text-white-50 d-flex align-items-center flex-wrap gap-1" style="font-size: 0.75rem;">
+                <span id="modal-created-at-container" class="d-none">
+                  <i class="bi bi-clock-history text-warning me-1"></i><span class="text-white-50">Booked:</span> <span id="modal-created-at-val" class="text-white fw-semibold">-</span>
+                  <span class="mx-1 text-white-50">&bull;</span>
+                </span>
+                <span>Complete itinerary, pricing breakdown & staff audit trail</span>
+              </div>
             </div>
           </div>
           <div class="ms-auto d-flex align-items-center gap-2">
@@ -162,6 +168,10 @@
                   <div class="col-sm-6">
                     <div class="small text-muted" style="font-size: 0.78rem;">Flight Number</div>
                     <div id="modal-flight_no" class="fw-semibold text-dark">-</div>
+                  </div>
+                  <div class="col-sm-6">
+                    <div class="small text-muted" style="font-size: 0.78rem;">Booking Date & Time (Created)</div>
+                    <div id="modal-created_at" class="fw-semibold text-dark">-</div>
                   </div>
                 </div>
               </div>
@@ -793,6 +803,40 @@
 
         const flightEl = document.getElementById('modal-flight_no');
         if (flightEl) flightEl.textContent = booking.flight_no || '-';
+
+        // Booking Created At (Date & Time)
+        const rawCreated = booking.created_at || booking.createdAt || booking.created_date || '';
+        let formattedCreated = '';
+        if (rawCreated) {
+            try {
+                const cdt = new Date(rawCreated);
+                if (!isNaN(cdt.getTime())) {
+                    const cDate = cdt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const cTime = cdt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    formattedCreated = `${cDate}, ${cTime}`;
+                } else {
+                    formattedCreated = rawCreated;
+                }
+            } catch (e) {
+                formattedCreated = rawCreated;
+            }
+        }
+
+        const modalCreatedAtVal = document.getElementById('modal-created-at-val');
+        const modalCreatedAtContainer = document.getElementById('modal-created-at-container');
+        if (modalCreatedAtVal && modalCreatedAtContainer) {
+            if (formattedCreated) {
+                modalCreatedAtVal.textContent = formattedCreated;
+                modalCreatedAtContainer.classList.remove('d-none');
+            } else {
+                modalCreatedAtContainer.classList.add('d-none');
+            }
+        }
+
+        const modalCreatedAtField = document.getElementById('modal-created_at');
+        if (modalCreatedAtField) {
+            modalCreatedAtField.textContent = formattedCreated || '-';
+        }
 
         // Route & Stops
         const pickupAddr = (booking.pickup_address || '').trim();
