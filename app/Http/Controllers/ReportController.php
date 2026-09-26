@@ -132,13 +132,17 @@ foreach ($driversData as $id => $driver) {
             $statusFilter = 'completed';
         }
         
-        $statusFilter = strtolower(trim((string)$statusFilter));
-        
-        if ($statusFilter === 'all') {
-            return true;
+        if (is_array($statusFilter)) {
+            $allowedStatuses = array_map(function($s) {
+                return strtolower(trim((string)$s));
+            }, $statusFilter);
+        } else {
+            $statusFilter = strtolower(trim((string)$statusFilter));
+            if ($statusFilter === 'all') {
+                return true;
+            }
+            $allowedStatuses = array_map('trim', explode(',', $statusFilter));
         }
-        
-        $allowedStatuses = array_map('trim', explode(',', $statusFilter));
         
         foreach ($allowedStatuses as $allowed) {
             if ($allowed === 'all') {
@@ -156,12 +160,25 @@ foreach ($driversData as $id => $driver) {
         return false;
     }
 
+    /**
+     * Helper to normalize raw status (array or string) into a comma-separated string
+     */
+    protected function normalizeStatus($rawStatus)
+    {
+        if (is_array($rawStatus)) {
+            $status = implode(',', array_filter($rawStatus));
+        } else {
+            $status = (string)$rawStatus;
+        }
+        return empty($status) ? 'completed' : $status;
+    }
+
     public function driverCommission(Request $request)
 {
     $driverId = $request->driver_id; // ✅ Get driver ID
     $from = $request->from_date ?? $request->from;
     $to   = $request->to_date ?? $request->to;
-    $status = $request->get('booking_status', $request->get('status', 'completed'));
+    $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
     // Get all drivers from Firebase
     $firebaseDrivers = $this->firebase->getData('drivers') ?? [];
@@ -209,7 +226,7 @@ public function downloadDriverCommission(Request $request)
     $driverId = $request->driver_id;
     $from = $request->from ?? $request->from_date;
     $to   = $request->to ?? $request->to_date;
-    $status = $request->get('booking_status', $request->get('status', 'completed'));
+    $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
     
     $firebaseDrivers = $this->firebase->getData('drivers') ?? [];
     $firebaseDriverKey = null;
@@ -725,7 +742,7 @@ public function turnover(Request $request)
 {
     $from = $request->from_date ?? $request->from;
     $to   = $request->to_date ?? $request->to;
-    $status = $request->get('booking_status', $request->get('status', 'completed'));
+    $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
     $totals = $this->getTurnoverData($from, $to, $status);
     
@@ -752,7 +769,7 @@ public function downloadTurnover(Request $request)
 {
     $from = $request->from ?? $request->from_date;
     $to   = $request->to ?? $request->to_date;
-    $status = $request->get('booking_status', $request->get('status', 'completed'));
+    $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
     $totals = $this->getTurnoverData($from, $to, $status);
     $invoiceDate = date('d M Y');
@@ -779,7 +796,7 @@ public function sendTurnoverEmail(Request $request)
 
     $from = $request->from;
     $to   = $request->to;
-    $status = $request->get('booking_status', $request->get('status', 'completed'));
+    $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
     $totals = $this->getTurnoverData($from, $to, $status);
     $invoiceDate = date('d M Y');
 
@@ -918,7 +935,7 @@ public function sendTurnoverEmail(Request $request)
         $to   = $request->to_date ?? $request->to;
         $type = $request->customer_type;
         $customerId = $request->customer_id;
-        $status = $request->get('booking_status', $request->get('status', 'completed'));
+        $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
         $reportData = $this->getCustomerReportDataInternal($from, $to, $type, $customerId, $status);
         $customers = $reportData['bookings'];
@@ -956,7 +973,7 @@ public function sendTurnoverEmail(Request $request)
         $to   = $request->to_date ?? $request->to;
         $type = $request->customer_type;
         $customerId = $request->customer_id;
-        $status = $request->get('booking_status', $request->get('status', 'completed'));
+        $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
         // Use unified function to get filtered data
         $customers = $this->getCustomerReportData($from, $to, $type, $customerId, $status);
@@ -979,7 +996,7 @@ public function sendTurnoverEmail(Request $request)
         $email = $request->email;
         $from = $request->from;
         $to = $request->to;
-        $status = $request->get('booking_status', $request->get('status', 'completed'));
+        $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
         
         $firebaseDriverKey = null;
         $firebaseDrivers = $this->firebase->getData("drivers") ?? [];
@@ -1028,7 +1045,7 @@ public function sendTurnoverEmail(Request $request)
         $to   = $request->to;
         $type = $request->customer_type;
         $customerId = $request->customer_id;
-        $status = $request->get('booking_status', $request->get('status', 'completed'));
+        $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
         $filteredBookings = $this->getCustomerReportData($from, $to, $type, $customerId, $status);
 
@@ -1089,7 +1106,7 @@ public function sendTurnoverEmail(Request $request)
         $driverId = $request->driver_id;
         $from     = $request->from;
         $to       = $request->to;
-        $status   = $request->get('booking_status', $request->get('status', 'completed'));
+        $status   = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
         // Fetch driver from Firebase
         $firebaseDrivers = $this->firebase->getData("drivers") ?? [];
@@ -1164,7 +1181,7 @@ public function sendTurnoverEmail(Request $request)
         $from = $request->from;
         $to   = $request->to;
         $phone = $request->phone;
-        $status = $request->get('booking_status', $request->get('status', 'completed'));
+        $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
         try {
             $totals = $this->getTurnoverData($from, $to, $status);
@@ -1218,7 +1235,7 @@ public function sendTurnoverEmail(Request $request)
         $type = $request->customer_type;
         $customerId = $request->customer_id;
         $phone = $request->phone;
-        $status = $request->get('booking_status', $request->get('status', 'completed'));
+        $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
         $result = $this->getCustomerReportDataInternal($from, $to, $type, $customerId, $status);
         $filteredBookings     = $result['bookings'];
