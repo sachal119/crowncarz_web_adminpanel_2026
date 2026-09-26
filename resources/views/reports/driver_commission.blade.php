@@ -330,6 +330,10 @@
                         <i class="bi bi-calendar3 text-warning me-2"></i>
                         <span><strong>Period:</strong> {{ \Carbon\Carbon::parse($from)->format('d-M-Y') }} &nbsp;&rarr;&nbsp; {{ \Carbon\Carbon::parse($to)->format('d-M-Y') }}</span>
                     </div>
+                    <div class="meta-pill">
+                        <i class="bi bi-flag-fill text-success me-2"></i>
+                        <span><strong>Status:</strong> {{ ucfirst(str_replace('_', ' ', $status ?? 'completed')) }}</span>
+                    </div>
                 </div>
             </div>
 
@@ -756,7 +760,7 @@ document.addEventListener("DOMContentLoaded", function() {
             } catch (error) {
                 console.error("PDF Export Error:", error);
                 // Fallback to direct download endpoint if needed
-                window.location.href = `/reports/driver-commission/download?driver_id={{ $driverId ?? '' }}&from={{ $from }}&to={{ $to }}`;
+                window.location.href = `/reports/driver-commission/download?driver_id={{ $driverId ?? '' }}&from={{ $from }}&to={{ $to }}&booking_status={{ $status ?? 'completed' }}`;
             } finally {
                 exportPdfBtn.disabled = false;
                 exportPdfBtn.innerHTML = originalBtnHtml;
@@ -815,7 +819,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     email: email,
                     from: "{{ $from }}",
                     to: "{{ $to }}",
-                    driver_id: "{{ $driverId ?? '' }}"
+                    driver_id: "{{ $driverId ?? '' }}",
+                    booking_status: "{{ $status ?? 'completed' }}"
                 })
             });
 
@@ -882,6 +887,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         from: "{{ $from }}",
                         to: "{{ $to }}",
                         driver_id: "{{ $driverId ?? '' }}",
+                        booking_status: "{{ $status ?? 'completed' }}",
                         _token: "{{ csrf_token() }}"
                     })
                 });

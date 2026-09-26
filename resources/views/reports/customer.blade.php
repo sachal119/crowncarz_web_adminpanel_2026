@@ -250,6 +250,10 @@
     {{ \Carbon\Carbon::parse($to)->format('d M Y') }}
 </span>
             </div>
+            <div class="print-meta-box">
+                <span class="print-meta-label">Status</span>
+                <span class="print-meta-value">{{ ucfirst(str_replace('_', ' ', $status ?? 'completed')) }}</span>
+            </div>
         </div>
     </div>
 
@@ -286,6 +290,7 @@
         @endif
         <p class="mb-1"><strong>INVOICE DATE:</strong> {{ \Carbon\Carbon::now()->format('d M Y') }}</p>
         <p class="mb-0"><strong>TRAVEL PERIOD:</strong> {{ $from }} - {{ $to }}</p>
+        <p class="mb-0 text-muted" style="font-size: 0.9rem;"><strong>STATUS:</strong> {{ strtoupper(str_replace('_', ' ', $status ?? 'completed')) }}</p>
         @if(!empty($type))
             <p class="mb-0 text-muted" style="font-size: 0.9rem;"><strong>TYPE:</strong> {{ strtoupper($type) }}</p>
         @endif
@@ -417,6 +422,7 @@
     <!-- Existing -->
     <input type="hidden" name="from" value="{{ $from }}">
     <input type="hidden" name="to" value="{{ $to }}">
+    <input type="hidden" name="booking_status" value="{{ $status ?? 'completed' }}">
 
     <!-- 🔥 ADD THESE -->
     <input type="hidden" name="customer_id" value="{{ $customerId }}">
@@ -456,6 +462,7 @@
             <input type="hidden" name="to" value="{{ $to }}">
             <input type="hidden" name="customer_id" value="{{ $customerId }}">
             <input type="hidden" name="customer_type" value="{{ $type }}">
+            <input type="hidden" name="booking_status" value="{{ $status ?? 'completed' }}">
 
             <div class="d-flex justify-content-end gap-2 mt-4">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

@@ -174,6 +174,7 @@
                 <div class="report-title">Turnover Report</div>
                 <div class="meta-text"><strong>INVOICE DATE:</strong> {{ $invoiceDate ?? date('d M Y') }}</div>
                 <div class="meta-text"><strong>TRAVEL PERIOD:</strong> {{ $from }} - {{ $to }}</div>
+                <div class="meta-text"><strong>STATUS:</strong> {{ strtoupper(str_replace('_', ' ', $status ?? 'completed')) }}</div>
             </td>
         </tr>
     </table>

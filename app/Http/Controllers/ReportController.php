@@ -121,92 +121,95 @@ foreach ($driversData as $id => $driver) {
     //     return $pdf->download("driver_commission_{$from}_to_{$to}.pdf");
     // }
     
+    /**
+     * Helper to check if a booking matches the given status filter
+     */
+    protected function matchesBookingStatus($bookingStatus, $statusFilter = 'completed')
+    {
+        $bookingStatus = strtolower(trim((string)$bookingStatus));
+        
+        if (empty($statusFilter)) {
+            $statusFilter = 'completed';
+        }
+        
+        $statusFilter = strtolower(trim((string)$statusFilter));
+        
+        if ($statusFilter === 'all') {
+            return true;
+        }
+        
+        $allowedStatuses = array_map('trim', explode(',', $statusFilter));
+        
+        foreach ($allowedStatuses as $allowed) {
+            if ($allowed === 'all') {
+                return true;
+            }
+            if ($allowed === 'cancelled' || $allowed === 'job_cancelled') {
+                if ($bookingStatus === 'cancelled' || $bookingStatus === 'job_cancelled') {
+                    return true;
+                }
+            } elseif ($bookingStatus === $allowed) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     public function driverCommission(Request $request)
 {
     $driverId = $request->driver_id; // ✅ Get driver ID
-    $from = $request->from_date;
-    $to   = $request->to_date;
+    $from = $request->from_date ?? $request->from;
+    $to   = $request->to_date ?? $request->to;
+    $status = $request->get('booking_status', $request->get('status', 'completed'));
 
     // Get all drivers from Firebase
-$firebaseDrivers = $this->firebase->getData('drivers') ?? [];
+    $firebaseDrivers = $this->firebase->getData('drivers') ?? [];
 
+    $firebaseDriverKey = null;
 
-
-$firebaseDriverKey = null;
-
-foreach ($firebaseDrivers as $key => $driver) {
-    if ((int) ($driver['id'] ?? 0) === (int) $driverId) {
-        $firebaseDriverKey = $key; // ✅ -OkYXg9gLrYYL59Ce37J
-        break;
+    foreach ($firebaseDrivers as $key => $driver) {
+        if ((int) ($driver['id'] ?? 0) === (int) $driverId) {
+            $firebaseDriverKey = $key;
+            break;
+        }
     }
-}
 
+    if (!$firebaseDriverKey) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Driver not found in Firebase'
+        ], 404);
+    }
 
-if (!$firebaseDriverKey) {
-    return response()->json([
-        'status' => false,
-        'message' => 'Driver not found in Firebase'
-    ], 404);
-}
+    // ✅ Pass Firebase key and status
+    $data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to, $status);
 
-// ✅ Pass Firebase key
-$data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to);
+    $driversData = $this->firebase->getData('drivers') ?? [];
+    $drivers = collect();
 
-// print_r($data);
-// die;
-
-    
-          $driversData = $this->firebase->getData('drivers') ?? [];
-$drivers = collect();
-
-foreach ($driversData as $id => $driver) {
-    $driver['id'] = $id;
-    $drivers->push($driver);
-}
+    foreach ($driversData as $id => $driver) {
+        $driver['id'] = $id;
+        $drivers->push($driver);
+    }
 
     // ✅ Pass everything properly to the Blade view
     return view('reports.driver_commission', array_merge($data, [
         'driverId' => $driverId,
         'from' => $from,
         'to' => $to,
+        'status' => $status,
+        'booking_status' => $status,
         'drivers' => $drivers
     ]));
 }
-    
-// public function driverCommission(Request $request)
-// {
-//     $driverId = $request->driver_id; // ✅ Get driver ID
-//     $from = $request->from_date;
-//     $to   = $request->to_date;
-
-//     // Get all report data
-//     $data = $this->getDriverCommissionData($driverId, $from, $to);
-    
-//           $driversData = $this->firebase->getData('drivers') ?? [];
-// $drivers = collect();
-
-// foreach ($driversData as $id => $driver) {
-//     $driver['id'] = $id;
-//     $drivers->push($driver);
-// }
-
-//     // ✅ Pass everything properly to the Blade view
-//     return view('reports.driver_commission', array_merge($data, [
-//         'driverId' => $driverId,
-//         'from' => $from,
-//         'to' => $to,
-//         'drivers' => $drivers
-//     ]));
-// }
-
-
-
 
 public function downloadDriverCommission(Request $request)
 {
     $driverId = $request->driver_id;
-    $from = $request->from;
-    $to   = $request->to;
+    $from = $request->from ?? $request->from_date;
+    $to   = $request->to ?? $request->to_date;
+    $status = $request->get('booking_status', $request->get('status', 'completed'));
     
     $firebaseDrivers = $this->firebase->getData('drivers') ?? [];
     $firebaseDriverKey = null;
@@ -225,7 +228,7 @@ public function downloadDriverCommission(Request $request)
         ], 404);
     }
 
-    $data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to);
+    $data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to, $status);
     $driverName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $data['driver']['name'] ?? 'Driver');
     $callsignRaw = $data['driver']['call_sign'] ?? $data['driver']['callsign'] ?? '';
     $callsign = preg_replace('/[^a-zA-Z0-9_-]/', '_', (string)$callsignRaw);
@@ -238,7 +241,9 @@ public function downloadDriverCommission(Request $request)
     }
 
     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.driver_commission_pdf', array_merge($data, [
-        'driverId' => $driverId
+        'driverId' => $driverId,
+        'status' => $status,
+        'booking_status' => $status,
     ]))->setPaper('a4', 'landscape');
 
     return $pdf->download($fileName);
@@ -382,7 +387,7 @@ public function downloadDriverCommission(Request $request)
 //     ];
 // }
 
-private function getDriverCommissionData($driverId, $from, $to)
+private function getDriverCommissionData($driverId, $from, $to, $status = 'completed')
 {
     $firebaseBookings = $this->firebase->getData('bookings') ?? [];
     $driverData = $this->firebase->getData("drivers/$driverId") ?? [];
@@ -403,6 +408,11 @@ private function getDriverCommissionData($driverId, $from, $to)
             (string)$booking['driver_id'] !== (string)$driverId ||
             empty($booking['created_at'])
         ) {
+            continue;
+        }
+
+        $bStatus = $booking['status'] ?? $booking['booking_status'] ?? '';
+        if (!$this->matchesBookingStatus($bStatus, $status)) {
             continue;
         }
 
@@ -650,7 +660,7 @@ $totalJobs = count($accountBookings) + count($cashBookings);
 //     ]);
 // }
 
-public function getTurnoverData($from, $to)
+public function getTurnoverData($from, $to, $status = 'completed')
 {
     $firebaseBookings = $this->firebase->getData('bookings') ?? [];
     $totals = [
@@ -675,9 +685,9 @@ public function getTurnoverData($from, $to)
         foreach ($firebaseBookings as $booking) {
             if (!isset($booking['price'], $booking['pickup_time'])) continue;
             
-            // 🔹 EXCLUDE job_cancelled / cancelled bookings
-            $status = strtolower($booking['status'] ?? $booking['booking_status'] ?? '');
-            if ($status === 'job_cancelled' || $status === 'cancelled') {
+            // 🔹 Booking Status Filter
+            $bStatus = $booking['status'] ?? $booking['booking_status'] ?? '';
+            if (!$this->matchesBookingStatus($bStatus, $status)) {
                 continue;
             }
 
@@ -715,8 +725,9 @@ public function turnover(Request $request)
 {
     $from = $request->from_date ?? $request->from;
     $to   = $request->to_date ?? $request->to;
+    $status = $request->get('booking_status', $request->get('status', 'completed'));
 
-    $totals = $this->getTurnoverData($from, $to);
+    $totals = $this->getTurnoverData($from, $to, $status);
     
     $driversData = $this->firebase->getData('drivers') ?? [];
     $drivers = collect();
@@ -729,6 +740,8 @@ public function turnover(Request $request)
     return view('reports.turnover_pdf', [
         'from' => $from,
         'to' => $to,
+        'status' => $status,
+        'booking_status' => $status,
         'totals' => $totals,
         'invoiceDate' => date('d M Y'),
         'drivers' => $drivers
@@ -739,14 +752,17 @@ public function downloadTurnover(Request $request)
 {
     $from = $request->from ?? $request->from_date;
     $to   = $request->to ?? $request->to_date;
+    $status = $request->get('booking_status', $request->get('status', 'completed'));
 
-    $totals = $this->getTurnoverData($from, $to);
+    $totals = $this->getTurnoverData($from, $to, $status);
     $invoiceDate = date('d M Y');
 
     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.turnover_export_pdf', [
         'totals' => $totals,
         'from' => $from,
         'to'   => $to,
+        'status' => $status,
+        'booking_status' => $status,
         'invoiceDate' => $invoiceDate,
     ]);
 
@@ -763,7 +779,8 @@ public function sendTurnoverEmail(Request $request)
 
     $from = $request->from;
     $to   = $request->to;
-    $totals = $this->getTurnoverData($from, $to);
+    $status = $request->get('booking_status', $request->get('status', 'completed'));
+    $totals = $this->getTurnoverData($from, $to, $status);
     $invoiceDate = date('d M Y');
 
     try {
@@ -779,119 +796,15 @@ public function sendTurnoverEmail(Request $request)
     /**
      * Customer Report
      */
-     
-     //Perfected Version
-//     public function customer(Request $request)
-// {
-//     $from = $request->from_date;
-//     $to   = $request->to_date;
-//     $type = $request->customer_type;
-//     $id   = $request->customer_id;
-
-//     // 🔥 Fetch all bookings from Firebase
-//     $firebaseBookings = $this->firebase->getData('bookings');
-//     $customers = [];
-
-//     if ($firebaseBookings) {
-//         foreach ($firebaseBookings as $key => $booking) {
-//             // Convert timestamps into Carbon (assuming stored as string or timestamp)
-//             $pickupTime = \Carbon\Carbon::parse($booking['created_at']);
-
-//             // Filter by date
-//             if ($pickupTime->between($from, $to)) {
-
-//                 // Filter by payment type
-//                 if ($type && ($booking['payment_type'] ?? null) !== $type) {
-//                     continue;
-//                 }
-
-//                 // Filter by passenger id
-//                 if ($id && ($booking['passenger']['id'] ?? null) != $id) {
-//                     continue;
-//                 }
-
-//                 $customers[] = (object) $booking; // cast to object for Blade
-//             }
-//         }
-//     }
-    
-//     // echo $customers;
-//     // die;
-
-//     return view('reports.customer', compact('customers', 'from', 'to', 'type', 'id'));
-// }
-
-
-
-// public function downloadCustomerReport(Request $request)
-// {
-//     $from = $request->from;
-//     $to   = $request->to;
-
-//     $customers = $this->getCustomerReportData($from, $to);
-
-//     $pdf = Pdf::loadView('reports.customer_report_pdf', [
-//         'customers' => $customers,
-//         'from' => $from,
-//         'to'   => $to,
-//     ]);
-
-//     return $pdf->download("customer_report_{$from}_to_{$to}.pdf");
-// }
-
-
-// public function getCustomerReportData($from, $to)
-// {
-//     // ✅ Ensure $from and $to are Carbon instances
-//     try {
-//         $fromDate = \Carbon\Carbon::parse($from)->startOfDay();
-//         $toDate   = \Carbon\Carbon::parse($to)->endOfDay();
-//     } catch (\Exception $e) {
-//         // If invalid date input, return empty result
-//         return [];
-//     }
-
-//     // Fetch bookings from Firebase
-//     $firebaseBookings = $this->firebase->getData('bookings');
-//     $customers = [];
-
-//     if ($firebaseBookings) {
-//         foreach ($firebaseBookings as $key => $booking) {
-//             if (!empty($booking['created_at'])) {
-//                 try {
-//                     // Handle Unix timestamp or string datetime
-//                     if (is_numeric($booking['created_at'])) {
-//                         $pickupTime = \Carbon\Carbon::createFromTimestamp($booking['created_at']);
-//                     } else {
-//                         $pickupTime = \Carbon\Carbon::parse($booking['created_at']);
-//                     }
-
-//                     // ✅ Compare against Carbon dates
-//                     if ($pickupTime->between($fromDate, $toDate)) {
-//                         $customers[] = (object) $booking;
-//                     }
-//                 } catch (\Exception $e) {
-//                     // Skip invalid/unclean records
-//                     continue;
-//                 }
-//             }
-//         }
-//     }
-
-//     return $customers;
-// }
-
-
-// --- Existing function that renders the web view (reports.customer) ---
     /**
      * Helper to get unified filtered customer report bookings based on account/customer and date range
      */
-    public function getCustomerReportData($from, $to, $type = null, $customerId = null)
+    public function getCustomerReportData($from, $to, $type = null, $customerId = null, $status = 'completed')
     {
-        return $this->getCustomerReportDataInternal($from, $to, $type, $customerId)['bookings'];
+        return $this->getCustomerReportDataInternal($from, $to, $type, $customerId, $status)['bookings'];
     }
 
-    private function getCustomerReportDataInternal($from, $to, $type = null, $customerId = null)
+    private function getCustomerReportDataInternal($from, $to, $type = null, $customerId = null, $status = 'completed')
     {
         $firebaseBookings = $this->firebase->getData('bookings') ?? [];
         $customersData    = $this->firebase->getData('customers') ?? [];
@@ -936,8 +849,9 @@ public function sendTurnoverEmail(Request $request)
                 continue;
             }
 
-            // 🔹 Booking Status MUST be completed
-            if (strtolower(trim($booking['status'] ?? '')) !== 'completed') {
+            // 🔹 Booking Status Filter
+            $bStatus = $booking['status'] ?? $booking['booking_status'] ?? '';
+            if (!$this->matchesBookingStatus($bStatus, $status)) {
                 continue;
             }
 
@@ -1000,12 +914,13 @@ public function sendTurnoverEmail(Request $request)
 
     public function customer(Request $request)
     {
-        $from = $request->from_date;
-        $to   = $request->to_date;
+        $from = $request->from_date ?? $request->from;
+        $to   = $request->to_date ?? $request->to;
         $type = $request->customer_type;
         $customerId = $request->customer_id;
+        $status = $request->get('booking_status', $request->get('status', 'completed'));
 
-        $reportData = $this->getCustomerReportDataInternal($from, $to, $type, $customerId);
+        $reportData = $this->getCustomerReportDataInternal($from, $to, $type, $customerId, $status);
         $customers = $reportData['bookings'];
         $selectedCustomerName  = $reportData['selectedCustomerName'];
         $selectedCustomerPhone = $reportData['selectedCustomerPhone'];
@@ -1029,7 +944,8 @@ public function sendTurnoverEmail(Request $request)
             'drivers',
             'selectedCustomerPhone',
             'selectedCustomerName',
-            'selectedCustomerEmail'
+            'selectedCustomerEmail',
+            'status'
         ));
     }
 
@@ -1040,63 +956,55 @@ public function sendTurnoverEmail(Request $request)
         $to   = $request->to_date ?? $request->to;
         $type = $request->customer_type;
         $customerId = $request->customer_id;
+        $status = $request->get('booking_status', $request->get('status', 'completed'));
 
         // Use unified function to get filtered data
-        $customers = $this->getCustomerReportData($from, $to, $type, $customerId);
+        $customers = $this->getCustomerReportData($from, $to, $type, $customerId, $status);
 
         // Load the PDF-specific view
         $pdf = Pdf::loadView('reports.customer_report_pdf', [
             'customers' => $customers,
             'from' => $from,
             'to'   => $to,
+            'status' => $status,
         ]);
 
         return $pdf->download("customer_report_{$from}_to_{$to}.pdf");
     }
 
-
-
-
-// 🔹 Send Driver Commission Report Email
+    // 🔹 Send Driver Commission Report Email
     public function sendDriverCommissionEmail(Request $request)
     {
-        
-        // return response()->json(['success' => true, 'message' => 'Email sent successfully']);
-
-         $driverId = $request->driver_id;
+        $driverId = $request->driver_id;
         $email = $request->email;
         $from = $request->from;
         $to = $request->to;
+        $status = $request->get('booking_status', $request->get('status', 'completed'));
         
-            $firebaseDriverKey = null;
-            // ✅ FETCH DRIVERS FIRST
-    $firebaseDrivers = $this->firebase->getData("drivers") ?? [];
+        $firebaseDriverKey = null;
+        $firebaseDrivers = $this->firebase->getData("drivers") ?? [];
 
-foreach ($firebaseDrivers as $key => $driver) {
-    if ((int) ($driver['id'] ?? 0) === (int) $driverId) {
-        $firebaseDriverKey = $key; // ✅ -OkYXg9gLrYYL59Ce37J
-        break;
-    }
-}
+        foreach ($firebaseDrivers as $key => $driver) {
+            if ((int) ($driver['id'] ?? 0) === (int) $driverId) {
+                $firebaseDriverKey = $key;
+                break;
+            }
+        }
 
-
-if (!$firebaseDriverKey) {
-    return response()->json([
-        'status' => false,
-        'message' => 'Driver not found in Firebase'
-    ], 404);
-}
-        
-        // return response()->json(['success' => true, 'message' => 'Email sent successfully']);
+        if (!$firebaseDriverKey) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Driver not found in Firebase'
+            ], 404);
+        }
 
         if (!$email || !$driverId) {
             return response()->json(['success' => false, 'message' => 'Missing email or driver ID']);
         }
 
         // Generate commission data
-        $data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to);
+        $data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to, $status);
 
-//return response()->json(['success' => true, 'message' => 'Email sent successfully']);
         // Send email
         try {
             Mail::to($email)->send(new DriverCommissionMail($data));
@@ -1105,385 +1013,66 @@ if (!$firebaseDriverKey) {
             return response()->json(['success' => false, 'message' => 'Email sending failed', 'error' => $e->getMessage()]);
         }
     }
-    
 
-
-
-// public function sendCustomerReport(Request $request)
-// {
-//     $request->validate([
-//         'email'       => 'required|email',
-//         'from'        => 'required|date',
-//         'to'          => 'required|date',
-//         'customer_id' => 'nullable',
-//         'customer_type' => 'nullable'
-//     ]);
-
-//     $from = \Carbon\Carbon::parse($request->from)->startOfDay();
-//     $to   = \Carbon\Carbon::parse($request->to)->endOfDay();
-//     $type = $request->customer_type;
-//     $customerId = $request->customer_id;
-
-//     $firebaseBookings = $this->firebase->getData('bookings') ?? [];
-//     $customersData    = $this->firebase->getData('customers') ?? [];
-
-//     // 🔹 Find selected customer name
-//     $selectedCustomerName = null;
-
-//     if ($customerId) {
-//         foreach ($customersData as $firebaseKey => $customer) {
-//             if (isset($customer['id']) && $customer['id'] == $customerId) {
-//                 $selectedCustomerName = strtolower(trim($customer['business_name']));
-//                 break;
-//             }
-//         }
-//     }
-
-//     $filteredBookings = [];
-
-//     foreach ($firebaseBookings as $key => $booking) {
-
-//         if (!isset($booking['created_at'])) {
-//             continue;
-//         }
-
-//         $createdAt = \Carbon\Carbon::parse($booking['created_at']);
-
-//         // Date filter
-//         if (!$createdAt->between($from, $to)) {
-//             continue;
-//         }
-
-//         // Payment type filter
-//         if ($type && strtolower($booking['payment_type'] ?? '') !== strtolower($type)) {
-//             continue;
-//         }
-
-//         // Customer name match
-//         if ($selectedCustomerName) {
-//             $bookingPassengerName = strtolower(trim($booking['passenger_name'] ?? ''));
-
-//             if ($bookingPassengerName !== $selectedCustomerName) {
-//                 continue;
-//             }
-//         }
-
-//         $booking['id'] = $key;
-//         $booking['fare'] = $booking['price'] ?? 0.00;
-//         $booking['parking'] = $booking['parking'] ?? 0.00;
-
-//         $filteredBookings[] = (object) $booking;
-//     }
-
-//     try {
-//         \Mail::to($request->email)
-//             ->send(new \App\Mail\CustomerReportMail($filteredBookings, $from, $to));
-
-//         return response()->json([
-//             'success' => true,
-//             'message' => 'Report sent successfully!'
-//         ]);
-
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'success' => false,
-//             'message' => 'Email sending failed.',
-//             'error'   => $e->getMessage()
-//         ]);
-//     }
-// }
-
-// public function sendCustomerReport(Request $request)
-// {
-//     $request->validate([
-//         'email'         => 'required|email',
-//         'from'          => 'required|date',
-//         'to'            => 'required|date',
-//         'customer_id'   => 'nullable',
-//         'customer_type' => 'nullable'
-//     ]);
-
-//     $from = \Carbon\Carbon::parse($request->from)->startOfDay();
-//     $to   = \Carbon\Carbon::parse($request->to)->endOfDay();
-//     $type = $request->customer_type;
-//     $customerId = $request->customer_id;
-
-//     $firebaseBookings = $this->firebase->getData('bookings') ?? [];
-//     $customersData    = $this->firebase->getData('customers') ?? [];
-
-//     // 🔹 Selected Customer Details
-//     $selectedCustomerName  = null;
-//     $selectedCustomerPhone = null;
-
-//     if ($customerId) {
-//         foreach ($customersData as $firebaseKey => $customer) {
-
-//             if (isset($customer['id']) && $customer['id'] == $customerId) {
-
-//                 $selectedCustomerName  = strtolower(trim($customer['business_name'] ?? ''));
-//                 $selectedCustomerPhone = preg_replace('/\D/', '', $customer['phone'] ?? '');
-
-//                 break;
-//             }
-//         }
-//     }
-
-//     $filteredBookings = [];
-
-//     foreach ($firebaseBookings as $key => $booking) {
-
-//         if (!isset($booking['created_at'])) {
-//             continue;
-//         }
-
-//         $createdAt = \Carbon\Carbon::parse($booking['created_at']);
-
-//         // 🔹 Date Filter
-//         if (!$createdAt->between($from, $to)) {
-//             continue;
-//         }
-
-//         // 🔹 Payment Type Filter
-//         if ($type && strtolower($booking['payment_type'] ?? '') !== strtolower($type)) {
-//             continue;
-//         }
-
-//         // 🔹 Match ONLY Name + Phone
-//         if ($selectedCustomerName || $selectedCustomerPhone) {
-
-//             $bookingPassengerName = strtolower(trim($booking['passenger_name'] ?? ''));
-//             $bookingPhone         = preg_replace('/\D/', '', $booking['phone_no'] ?? '');
-
-//             $nameMatch  = $selectedCustomerName && $bookingPassengerName === $selectedCustomerName;
-//             $phoneMatch = $selectedCustomerPhone && $bookingPhone === $selectedCustomerPhone;
-
-//             if (!$nameMatch && !$phoneMatch) {
-//                 continue;
-//             }
-//         }
-
-//         // 🔹 Add Extra Data
-//         $booking['id']      = $key;
-//         $booking['fare']    = $booking['price'] ?? 0.00;
-//         $booking['parking'] = $booking['parking'] ?? 0.00;
-//         $booking['comments'] = $booking['job_comment'] ?? 'N/A';
-
-//         $filteredBookings[] = (object) $booking;
-//     }
-
-//     try {
-
-//         \Mail::to($request->email)
-//             ->send(new \App\Mail\CustomerReportMail($filteredBookings, $from, $to));
-
-//         return response()->json([
-//             'success' => true,
-//             'message' => 'Report sent successfully!'
-//         ]);
-
-//     } catch (\Exception $e) {
-
-//         return response()->json([
-//             'success' => false,
-//             'message' => 'Email sending failed.',
-//             'error'   => $e->getMessage()
-//         ]);
-//     }
-// }
-    
-public function sendCustomerReport(Request $request)
-{
-    $request->validate([
-        'email'         => 'required|email',
-        'from'          => 'nullable|date',
-        'to'            => 'nullable|date',
-        'customer_id'   => 'nullable',
-        'customer_type' => 'nullable'
-    ]);
-
-    $from = $request->from;
-    $to   = $request->to;
-    $type = $request->customer_type;
-    $customerId = $request->customer_id;
-
-    $filteredBookings = $this->getCustomerReportData($from, $to, $type, $customerId);
-
-    try {
-        \Mail::to($request->email)
-            ->send(new \App\Mail\CustomerReportMail($filteredBookings, $from, $to));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Report sent successfully!'
+    public function sendCustomerReport(Request $request)
+    {
+        $request->validate([
+            'email'         => 'required|email',
+            'from'          => 'nullable|date',
+            'to'            => 'nullable|date',
+            'customer_id'   => 'nullable',
+            'customer_type' => 'nullable'
         ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Email sending failed.',
-            'error'   => $e->getMessage()
-        ]);
-    }
-}
 
-/**
- * Helper function to retrieve filtered report data, ensuring all necessary fields exist.
- * This combines your existing filtering logic into a reusable function for both web and PDF.
- */
-// public function getCustomerReportData($from, $to, $type = null, $id = null)
-// {
-//     try {
-//         $fromDate = \Carbon\Carbon::parse($from)->startOfDay();
-//         $toDate   = \Carbon\Carbon::parse($to)->endOfDay();
-//     } catch (\Exception $e) {
-//         return [];
-//     }
+        $from = $request->from;
+        $to   = $request->to;
+        $type = $request->customer_type;
+        $customerId = $request->customer_id;
+        $status = $request->get('booking_status', $request->get('status', 'completed'));
 
-//     $firebaseBookings = $this->firebase->getData('bookings');
-//     $customers = [];
+        $filteredBookings = $this->getCustomerReportData($from, $to, $type, $customerId, $status);
 
-//     if ($firebaseBookings) {
-//         foreach ($firebaseBookings as $booking) {
-//             if (empty($booking['created_at'])) {
-//                 continue;
-//             }
+        try {
+            \Mail::to($request->email)
+                ->send(new \App\Mail\CustomerReportMail($filteredBookings, $from, $to));
 
-//             try {
-//                 $pickupTime = is_numeric($booking['created_at'])
-//                     ? \Carbon\Carbon::createFromTimestamp($booking['created_at'])
-//                     : \Carbon\Carbon::parse($booking['created_at']);
-
-//                 if ($pickupTime->between($fromDate, $toDate)) {
-
-//                     if ($type && ($booking['payment_type'] ?? null) !== $type) {
-//                         continue;
-//                     }
-
-//                     if ($id && ($booking['passenger']['id'] ?? null) != $id) {
-//                         continue;
-//                     }
-
-//                     // Map fields for PDF consistency (FARE, PARKING, COMMENTS)
-//                     $booking['fare'] = $booking['price'] ?? 0.00;
-//                     $booking['parking'] = $booking['parking'] ?? 0.00; // Placeholder
-//                     $booking['comments'] = $booking['comments'] ?? ($booking['ref_no'] ?? 'N/A');
-
-//                     $customers[] = (object) $booking;
-//                 }
-//             } catch (\Exception $e) {
-//                 // Skip invalid records
-//                 continue;
-//             }
-//         }
-//     }
-
-//     return $customers;
-// }
-
-
-
-// public function sendCustomerReport(Request $request)
-// {
-//     $request->validate(['email' => 'required|email']);
-
-//     $from = $request->from;
-//     $to = $request->to;
-    
-    
-
-//     $customers = Booking::whereBetween('created_at', [$from, $to])->get();
-
-//     // Generate PDF
-//     $pdf = PDF::loadView('reports.customer_report_pdf', compact('customers', 'from', 'to'));
-
-//     // Send email with PDF
-//     Mail::to($request->email)->send(new CustomerReportMail($pdf->output(), $from, $to));
-
-//     return response()->json(['success' => true]);
-// }
-
-
-
-
-
-
-public function getDriverEmail($id)
-{
-    try {
-        // Fetch all drivers
-        $drivers = $this->firebase->getData("drivers");
-
-        if (!$drivers) {
-            return response()->json(['error' => 'No drivers found'], 404);
+            return response()->json([
+                'success' => true,
+                'message' => 'Report sent successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email sending failed.',
+                'error'   => $e->getMessage()
+            ]);
         }
+    }
 
-        // Search for the driver with matching id
-        foreach ($drivers as $key => $driver) {
-            if (isset($driver['id']) && (string)$driver['id'] === (string)$id) {
-                return response()->json([
-                    'email' => $driver['email'] ?? null,
-                    'name' => $driver['name'] ?? 'Unknown',
-                    'phone' => $driver['phone'] ?? 'N/A'
-                ]);
+    public function getDriverEmail($id)
+    {
+        try {
+            $drivers = $this->firebase->getData("drivers");
+
+            if (!$drivers) {
+                return response()->json(['error' => 'No drivers found'], 404);
             }
+
+            foreach ($drivers as $key => $driver) {
+                if (isset($driver['id']) && (string)$driver['id'] === (string)$id) {
+                    return response()->json([
+                        'email' => $driver['email'] ?? null,
+                        'name' => $driver['name'] ?? 'Unknown',
+                        'phone' => $driver['phone'] ?? 'N/A'
+                    ]);
+                }
+            }
+
+            return response()->json(['error' => 'Driver not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        return response()->json(['error' => 'Driver not found'], 404);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
     }
-}
-
-
-// public function sendCommissionEmail(Request $request)
-// {
-//     try {
-//         $email = $request->email;
-//         $from = $request->from;
-//         $to = $request->to;
-//         $driverId = $request->driver_id;
-
-//         \Log::info("📩 Sending commission email to: $email for driver $driverId from $from to $to");
-
-//         // 🔹 (Optional) fetch data if needed
-//         // $data = $this->getDriverCommissionData($driverId, $from, $to);
-
-//         // 🧾 Generate PDF (simple test)
-//         ini_set('memory_limit', '512M');
-//         set_time_limit(300);
-
-//         $pdf = Pdf::loadView('reports.driver_commission_pdf', [
-//             'driver' => ['name' => 'Test Driver'],
-//             'from' => '2025-09-01',
-//             'to' => '2025-10-31',
-//             'account_bookings' => [],
-//             'cash_bookings' => [],
-//             'totals' => [],
-//             'commission' => 0,
-//         ]);
-
-//         // ✅ Debug: Check if PDF actually renders
-//         $pdfOutput = $pdf->output();
-//         if (!$pdfOutput) {
-//             throw new \Exception("PDF generation failed — no output returned.");
-//         }
-
-//         // 📧 Send Email (temporarily commented for debugging)
-//         // \Mail::to($email)->send(new \App\Mail\DriverCommissionMail($pdfOutput, $from, $to));
-
-//         \Log::info("✅ PDF generated successfully for $email");
-
-//         return response()->json(['success' => true]);
-//     } catch (\Exception $e) {
-//         \Log::error('❌ Driver Commission Email failed: ' . $e->getMessage());
-//         return response()->json([
-//             'success' => false,
-//             'message' => $e->getMessage()
-//         ], 500);
-//     }
-// }
-
-
-
 
     /**
      * 🟢 Send Driver Commission Statement PDF via WhatsApp Gateway
@@ -1500,6 +1089,7 @@ public function getDriverEmail($id)
         $driverId = $request->driver_id;
         $from     = $request->from;
         $to       = $request->to;
+        $status   = $request->get('booking_status', $request->get('status', 'completed'));
 
         // Fetch driver from Firebase
         $firebaseDrivers = $this->firebase->getData("drivers") ?? [];
@@ -1524,7 +1114,7 @@ public function getDriverEmail($id)
         }
 
         try {
-            $data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to);
+            $data = $this->getDriverCommissionData($firebaseDriverKey, $from, $to, $status);
             $driverName = $data['driver']['name'] ?? 'Driver';
             $callsignRaw = $data['driver']['call_sign'] ?? $data['driver']['callsign'] ?? '';
             $dateStr = date('d-m-Y');
@@ -1534,7 +1124,9 @@ public function getDriverEmail($id)
                 : "{$driverName}_{$dateStr}_{$minutesStr}.pdf";
 
             $pdf = Pdf::loadView('reports.driver_commission_pdf', array_merge($data, [
-                'driverId' => $driverId
+                'driverId' => $driverId,
+                'status' => $status,
+                'booking_status' => $status,
             ]))->setPaper('a4', 'landscape');
 
             $rawPdf = $pdf->output();
@@ -1572,15 +1164,17 @@ public function getDriverEmail($id)
         $from = $request->from;
         $to   = $request->to;
         $phone = $request->phone;
+        $status = $request->get('booking_status', $request->get('status', 'completed'));
 
         try {
-            $totals = $this->getTurnoverData($from, $to);
+            $totals = $this->getTurnoverData($from, $to, $status);
             $invoiceDate = date('d M Y');
 
             $pdf = Pdf::loadView('reports.turnover_export_pdf', [
                 'totals'      => $totals,
                 'from'        => $from,
                 'to'          => $to,
+                'status'      => $status,
                 'invoiceDate' => $invoiceDate,
             ]);
 
@@ -1624,8 +1218,9 @@ public function getDriverEmail($id)
         $type = $request->customer_type;
         $customerId = $request->customer_id;
         $phone = $request->phone;
+        $status = $request->get('booking_status', $request->get('status', 'completed'));
 
-        $result = $this->getCustomerReportDataInternal($from, $to, $type, $customerId);
+        $result = $this->getCustomerReportDataInternal($from, $to, $type, $customerId, $status);
         $filteredBookings     = $result['bookings'];
         $selectedCustomerName = $result['selectedCustomerName'];
 
@@ -1634,6 +1229,7 @@ public function getDriverEmail($id)
                 'customers' => $filteredBookings,
                 'from'      => $from,
                 'to'        => $to,
+                'status'    => $status,
             ]);
 
             $rawPdf = $pdf->output();

@@ -144,21 +144,25 @@
     <!-- Meta Boxes -->
     <table class="meta-table">
         <tr>
-            <td class="meta-box">
+            <td class="meta-box" style="width: 20%;">
                 <div class="meta-label">Statement</div>
                 <div class="meta-value">Driver Commission</div>
             </td>
-            <td class="meta-box">
+            <td class="meta-box" style="width: 25%;">
                 <div class="meta-label">Driver</div>
                 <div class="meta-value">{{ $driver['name'] ?? 'Unknown Driver' }}@if(!empty($driver['call_sign'] ?? $driver['callsign'] ?? null)) ({{ $driver['call_sign'] ?? $driver['callsign'] }})@endif</div>
             </td>
-            <td class="meta-box">
+            <td class="meta-box" style="width: 18%;">
                 <div class="meta-label">From</div>
                 <div class="meta-value">{{ \Carbon\Carbon::parse($from)->format('d-M-Y') }}</div>
             </td>
-            <td class="meta-box">
+            <td class="meta-box" style="width: 18%;">
                 <div class="meta-label">To</div>
                 <div class="meta-value">{{ \Carbon\Carbon::parse($to)->format('d-M-Y') }}</div>
+            </td>
+            <td class="meta-box" style="width: 19%;">
+                <div class="meta-label">Status</div>
+                <div class="meta-value">{{ ucfirst(str_replace('_', ' ', $status ?? 'completed')) }}</div>
             </td>
         </tr>
     </table>

@@ -205,7 +205,7 @@
         <button class="btn btn-dark shadow-sm px-3" onclick="window.print()">
             <i class="bi bi-printer me-1"></i> Print
         </button>
-        <a href="{{ route('reports.turnover.download', ['from' => $from, 'to' => $to]) }}" class="btn btn-danger shadow-sm px-3 text-white">
+        <a href="{{ route('reports.turnover.download', ['from' => $from, 'to' => $to, 'booking_status' => $status ?? 'completed']) }}" class="btn btn-danger shadow-sm px-3 text-white">
             <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
         </a>
         <button class="btn btn-warning shadow-sm px-3 text-dark fw-semibold" id="emailTurnoverReport">
@@ -236,6 +236,7 @@
                 <div class="report-title-badge mb-2">Turnover Report</div>
                 <div class="text-muted small"><strong>INVOICE DATE:</strong> {{ $invoiceDate }}</div>
                 <div class="text-muted small"><strong>TRAVEL PERIOD:</strong> {{ $from }} - {{ $to }}</div>
+                <div class="text-muted small"><strong>STATUS:</strong> {{ strtoupper(str_replace('_', ' ', $status ?? 'completed')) }}</div>
             </div>
         </div>
 
@@ -243,16 +244,22 @@
 
         <!-- Meta summary cards -->
         <div class="row g-2 mb-4">
-            <div class="col-md-6 col-12">
+            <div class="col-md-4 col-12">
                 <div class="meta-box d-flex justify-content-between align-items-center">
                     <span class="meta-label">Invoice Date</span>
                     <span class="meta-value">{{ $invoiceDate }}</span>
                 </div>
             </div>
-            <div class="col-md-6 col-12">
+            <div class="col-md-4 col-12">
                 <div class="meta-box d-flex justify-content-between align-items-center">
                     <span class="meta-label">Travel Period</span>
                     <span class="meta-value">{{ $from }} &nbsp;to&nbsp; {{ $to }}</span>
+                </div>
+            </div>
+            <div class="col-md-4 col-12">
+                <div class="meta-box d-flex justify-content-between align-items-center">
+                    <span class="meta-label">Booking Status</span>
+                    <span class="meta-value">{{ ucfirst(str_replace('_', ' ', $status ?? 'completed')) }}</span>
                 </div>
             </div>
         </div>
@@ -310,6 +317,7 @@
 
                     <input type="hidden" name="from" value="{{ $from }}">
                     <input type="hidden" name="to" value="{{ $to }}">
+                    <input type="hidden" name="booking_status" value="{{ $status ?? 'completed' }}">
 
                     <div class="d-flex justify-content-end gap-2 mt-4">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -344,6 +352,7 @@
 
                     <input type="hidden" name="from" value="{{ $from }}">
                     <input type="hidden" name="to" value="{{ $to }}">
+                    <input type="hidden" name="booking_status" value="{{ $status ?? 'completed' }}">
 
                     <div class="d-flex justify-content-end gap-2 mt-4">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

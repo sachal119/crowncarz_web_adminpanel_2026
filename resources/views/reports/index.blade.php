@@ -72,26 +72,41 @@
                 <div class="card-body">
                     <form method="GET" action="{{ route('reports.driver_commission') }}">
                         <div class="mb-3">
-    <label class="form-label">Select Driver No</label>
-    <select name="driver_id" id="driverSelect" class="form-select" required>
-        <option value="">-- Select Driver --</option>
-        @foreach($driversList as $driver)
-            <option value="{{ $driver['id'] }}">{{ !empty($driver['call_sign']) ? '[' . $driver['call_sign'] . '] ' : '' }}{{ $driver['name'] }}</option>
-        @endforeach
-    </select>
-</div>
-
+                            <label class="form-label fw-semibold">Select Driver No</label>
+                            <select name="driver_id" id="driverSelect" class="form-select" required>
+                                <option value="">-- Select Driver --</option>
+                                @foreach($driversList as $driver)
+                                    <option value="{{ $driver['id'] }}">{{ !empty($driver['call_sign']) ? '[' . $driver['call_sign'] . '] ' : '' }}{{ $driver['name'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
                         <div class="row">
-                        <div class="mb-3 col-md-6">
-                            <label class="form-label">From Date</label>
-                            <input type="date" name="from_date" class="form-control" required>
+                            <div class="mb-3 col-md-6">
+                                <label class="form-label fw-semibold">From Date</label>
+                                <input type="date" name="from_date" class="form-control" required>
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label class="form-label fw-semibold">To Date</label>
+                                <input type="date" name="to_date" class="form-control" required>
+                            </div>
                         </div>
-                        <div class="mb-3 col-md-6">
-                            <label class="form-label">To Date</label>
-                            <input type="date" name="to_date" class="form-control" required>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Booking Status</label>
+                            <select name="booking_status" class="form-select">
+                                <option value="completed" selected>Completed (Default)</option>
+                                <option value="all">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="accepted">Accepted</option>
+                                <option value="onroute">On Route</option>
+                                <option value="arrived">Arrived</option>
+                                <option value="pickedup">Picked Up</option>
+                                <option value="job_cancelled">Cancelled</option>
+                                <option value="no_show">No Show</option>
+                            </select>
                         </div>
-                        </div>
+
                         <button type="submit" class="btn btn-indigo w-100">
                             <i class="bi bi-bar-chart-line me-1"></i> Generate Report
                         </button>
@@ -108,14 +123,32 @@
                 </div>
                 <div class="card-body">
                     <form method="GET" action="{{ route('reports.turnover') }}">
-                        <div class="mb-3">
-                            <label class="form-label">From Date</label>
-                            <input type="date" name="from_date" class="form-control" required>
+                        <div class="row">
+                            <div class="mb-3 col-md-6">
+                                <label class="form-label fw-semibold">From Date</label>
+                                <input type="date" name="from_date" class="form-control" required>
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label class="form-label fw-semibold">To Date</label>
+                                <input type="date" name="to_date" class="form-control" required>
+                            </div>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">To Date</label>
-                            <input type="date" name="to_date" class="form-control" required>
+                            <label class="form-label fw-semibold">Booking Status</label>
+                            <select name="booking_status" class="form-select">
+                                <option value="completed" selected>Completed (Default)</option>
+                                <option value="all">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="accepted">Accepted</option>
+                                <option value="onroute">On Route</option>
+                                <option value="arrived">Arrived</option>
+                                <option value="pickedup">Picked Up</option>
+                                <option value="job_cancelled">Cancelled</option>
+                                <option value="no_show">No Show</option>
+                            </select>
                         </div>
+
                         <button type="submit" class="btn btn-mint w-100">
                             <i class="bi bi-cash-coin me-1"></i> Generate Report
                         </button>
@@ -133,16 +166,16 @@
                 <div class="card-body">
                     <form method="GET" action="{{ route('reports.customer') }}">
                         <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">From Date</label>
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label fw-semibold">From Date</label>
                                 <input type="date" name="from_date" class="form-control" required>
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">To Date</label>
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label fw-semibold">To Date</label>
                                 <input type="date" name="to_date" class="form-control" required>
                             </div>
                             <div class="col-md-2 mb-3">
-                                <label class="form-label">Customer Type</label>
+                                <label class="form-label fw-semibold">Customer Type</label>
                                 <select name="customer_type" class="form-select">
                                     <option value="">All</option>
                                     <option value="account">Account</option>
@@ -150,15 +183,29 @@
                                     <option value="card">Card</option>
                                 </select>
                             </div>
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label fw-semibold">Booking Status</label>
+                                <select name="booking_status" class="form-select">
+                                    <option value="completed" selected>Completed (Default)</option>
+                                    <option value="all">All Statuses</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="accepted">Accepted</option>
+                                    <option value="onroute">On Route</option>
+                                    <option value="arrived">Arrived</option>
+                                    <option value="pickedup">Picked Up</option>
+                                    <option value="job_cancelled">Cancelled</option>
+                                    <option value="no_show">No Show</option>
+                                </select>
+                            </div>
                             <div class="col-md-3 mb-3">
-    <label class="form-label">Select Customer No</label>
-    <select name="customer_id" id="customerSelect" class="form-select">
-        <option value="">-- Select Customer --</option>
-        @foreach($customersList as $customer)
-            <option value="{{ $customer['id'] }}">{{ $customer['name'] }} - {{ $customer['id'] }}</option>
-        @endforeach
-    </select>
-</div>
+                                <label class="form-label fw-semibold">Select Customer No</label>
+                                <select name="customer_id" id="customerSelect" class="form-select">
+                                    <option value="">-- Select Customer --</option>
+                                    @foreach($customersList as $customer)
+                                        <option value="{{ $customer['id'] }}">{{ $customer['name'] }} - {{ $customer['id'] }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
                             <div class="col-md-1 mb-3 d-flex align-items-end">
                                 <button type="submit" class="btn btn-orange w-100">

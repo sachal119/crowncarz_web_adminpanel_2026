@@ -14,7 +14,7 @@
 </head>
 <body>
     <h2>Customer Report</h2>
-    <p>From {{ $from }} to {{ $to }}</p>
+    <p>From {{ $from }} to {{ $to }} @if(!empty($status)) | Status: {{ ucfirst(str_replace('_', ' ', $status)) }} @endif</p>
 
     <table>
         <thead>
