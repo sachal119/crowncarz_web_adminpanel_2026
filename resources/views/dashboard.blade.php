@@ -487,6 +487,18 @@ td{
 .truncate-cell:hover {
     text-decoration: underline dotted #94a3b8;
 }
+.two-line-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.25;
+    word-break: break-word;
+    cursor: help;
+}
+.two-line-clamp:hover {
+    text-decoration: underline dotted #94a3b8;
+}
 .statusSelect {
     cursor: pointer;
     transition: all 0.2s ease;
@@ -1715,12 +1727,25 @@ function getDriverBadgeHtml(booking) {
     }
 
     if (driver) {
-        const callSign = driver.call_sign ? `${driver.call_sign}/` : '';
-        return `<span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">${callSign}${driver.name || 'Driver'}</span>`;
+        const name = driver.name || 'Driver';
+        const number = driver.call_sign || driver.phone || driver.phone_no || '';
+        return `
+        <div class="d-flex flex-column align-items-start">
+            <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(name)}">
+                ${escapeHtml(name)}
+            </span>
+            ${number ? `<span class="text-truncate fw-bold text-dark mt-1 font-monospace" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="${escapeHtml(number)}">${escapeHtml(number)}</span>` : ''}
+        </div>`;
     } else if (dName || dCall || (booking.driver && typeof booking.driver === 'string' && booking.driver.trim() !== '')) {
-        const fallbackCall = dCall ? `${dCall}/` : '';
-        const fallbackName = dName || booking.driver;
-        return `<span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">${fallbackCall}${fallbackName}</span>`;
+        const name = dName || booking.driver || 'Driver';
+        const number = dCall || booking.driver_phone || '';
+        return `
+        <div class="d-flex flex-column align-items-start">
+            <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(name)}">
+                ${escapeHtml(name)}
+            </span>
+            ${number ? `<span class="text-truncate fw-bold text-dark mt-1 font-monospace" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="${escapeHtml(number)}">${escapeHtml(number)}</span>` : ''}
+        </div>`;
     }
 
     return `<span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>`;
@@ -1849,12 +1874,12 @@ function buildBookingRowHtml(booking, isNew = false) {
         <td class="col-ref fw-bold" style="${rowStyle}">
             <div class="d-flex flex-column">
                 <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">${booking.ref_no || 'N/A'}</span>
-                ${createdAtFormatted ? `<span class="text-muted fw-normal" style="font-size: 10px; line-height: 1.2; margin-top: 2px;" title="Created: ${escapeHtml(createdAtFormatted)}"><i class="bi bi-clock me-1" style="font-size: 9px;"></i>${escapeHtml(createdAtFormatted)}</span>` : ''}
+                ${createdAtFormatted ? `<span class="text-muted fw-normal" style="font-size: 10px; line-height: 1.2; margin-top: 2px;" title="Created: ${escapeHtml(createdAtFormatted)}">${escapeHtml(createdAtFormatted)}</span>` : ''}
             </div>
         </td>
         <td class="col-payment" style="${rowStyle}">${getPaymentBadgeHtml(booking.payment_type, accName)}</td>
         <td class="col-passenger fw-semibold" style="${rowStyle}" title="${passengerName}">
-            <span class="truncate-cell" style="max-width: 125px;">${passengerName}</span>
+            <span class="two-line-clamp text-dark" style="max-width: 140px; font-size: 11.5px;">${passengerName}</span>
         </td>
         <td class="col-driver driver-cell" style="${rowStyle}">${driverHtml}</td>
         <td class="col-phone font-monospace" style="${rowStyle}">
@@ -2898,11 +2923,17 @@ document.addEventListener('DOMContentLoaded', function () {
                             String(d.firebase_key || '') === selectedDriverId || 
                             String(d.raw_id || '') === selectedDriverId
                         );
-                        const callSign = (driver && driver.call_sign) ? `${driver.call_sign}/` : '';
+                        const dNumber = driver ? (driver.call_sign || driver.phone || driver.phone_no || '') : '';
                         const dName = driver ? (driver.name || 'Driver') : 'Assigned';
                         const driverCell = row.querySelector('.driver-cell');
                         if (driverCell) {
-                            driverCell.innerHTML = `<span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge" style="font-size: 11.5px;">${callSign}${dName}</span>`;
+                            driverCell.innerHTML = `
+                            <div class="d-flex flex-column align-items-start">
+                                <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(dName)}">
+                                    ${escapeHtml(dName)}
+                                </span>
+                                ${dNumber ? `<span class="text-truncate fw-bold text-dark mt-1 font-monospace" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="${escapeHtml(dNumber)}">${escapeHtml(dNumber)}</span>` : ''}
+                            </div>`;
                         }
 
                         const dispatchItem = row.querySelector('.action-dispatch-item');

@@ -105,7 +105,7 @@
                 @endphp
                 @if($createdAtFormatted)
                     <span class="text-muted fw-normal" style="font-size: 10px; line-height: 1.2; margin-top: 2px;" title="Created: {{ $createdAtFormatted }}">
-                        <i class="bi bi-clock me-0.5" style="font-size: 9px;"></i>{{ $createdAtFormatted }}
+                        {{ $createdAtFormatted }}
                     </span>
                 @endif
             </div>
@@ -154,27 +154,39 @@
             </div>
         </td>
         <td class="col-passenger fw-semibold" style="{{ $rowStyle }}" title="{{ $booking['passenger_name'] ?? 'N/A' }}">
-            <span class="truncate-cell" style="max-width: 125px;">{{ $booking['passenger_name'] ?? 'N/A' }}</span>
+            <span class="two-line-clamp text-dark" style="max-width: 140px; font-size: 11.5px;">{{ $booking['passenger_name'] ?? 'N/A' }}</span>
         </td>
         <td class="col-driver driver-cell" style="{{ $rowStyle }}">
             @if($driver)
                 @php
-                    $dCall = !empty($driver['call_sign']) ? $driver['call_sign'] . '/' : '';
                     $dName = $driver['name'] ?? 'Driver';
-                    $fullDriver = $dCall . $dName;
+                    $dNumber = $driver['call_sign'] ?? ($driver['callsign'] ?? ($driver['phone'] ?? ($driver['phone_no'] ?? '')));
                 @endphp
-                <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge truncate-cell" style="font-size: 11.5px; max-width: 130px;" title="{{ $fullDriver }}">
-                    {{ $fullDriver }}
-                </span>
+                <div class="d-flex flex-column align-items-start">
+                    <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="{{ $dName }}">
+                        {{ $dName }}
+                    </span>
+                    @if(!empty($dNumber))
+                        <span class="text-truncate fw-bold text-dark mt-1 font-monospace" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="{{ $dNumber }}">
+                            {{ $dNumber }}
+                        </span>
+                    @endif
+                </div>
             @elseif(!empty($bDriverName) || !empty($bDriverCallSign) || !empty($booking['driver']))
                 @php
-                    $dCall = !empty($bDriverCallSign) ? $bDriverCallSign . '/' : '';
                     $dName = $bDriverName ?: ($booking['driver'] ?? 'Driver');
-                    $fullDriver = $dCall . $dName;
+                    $dNumber = $bDriverCallSign ?: ($booking['driver_phone'] ?? '');
                 @endphp
-                <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1.5 me-1 driver-badge truncate-cell" style="font-size: 11.5px; max-width: 130px;" title="{{ $fullDriver }}">
-                    {{ $fullDriver }}
-                </span>
+                <div class="d-flex flex-column align-items-start">
+                    <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="{{ $dName }}">
+                        {{ $dName }}
+                    </span>
+                    @if(!empty($dNumber))
+                        <span class="text-truncate fw-bold text-dark mt-1 font-monospace" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="{{ $dNumber }}">
+                            {{ $dNumber }}
+                        </span>
+                    @endif
+                </div>
             @else
                 <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;" title="No driver assigned yet">Not Assigned</span>
             @endif
