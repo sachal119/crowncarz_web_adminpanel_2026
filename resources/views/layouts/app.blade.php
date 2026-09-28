@@ -781,26 +781,32 @@
         terminalInfo = `Terminal ${tMatch[1].toUpperCase()}`;
       }
 
-      // Initial Elements Setup
-      const headerTitle = document.getElementById('ftm-header-title');
-      const cardTitle = document.getElementById('ftm-card-title');
-      const codeBadge = document.getElementById('ftm-code-badge');
-      const aircraftPill = document.getElementById('ftm-aircraft-pill');
-      const statusPill = document.getElementById('ftm-status-pill');
-      const originCode = document.getElementById('ftm-origin-code');
-      const originCity = document.getElementById('ftm-origin-city');
-      const destCode = document.getElementById('ftm-dest-code');
-      const destCity = document.getElementById('ftm-dest-city');
-      const depTerminal = document.getElementById('ftm-dep-terminal');
-      const depGate = document.getElementById('ftm-dep-gate');
-      const arrTerminal = document.getElementById('ftm-arr-terminal');
-      const arrGate = document.getElementById('ftm-arr-gate');
-      const depTime = document.getElementById('ftm-dep-time');
-      const arrTime = document.getElementById('ftm-arr-time');
-      const durationEl = document.getElementById('ftm-flight-duration');
-      const copyCode = document.getElementById('ftm-copy-code');
-      const airportBtn = document.getElementById('ftm-btn-airport');
-      const airportTitleEl = document.getElementById('ftm-airport-btn-title');
+      // Bind Google Flight Card Elements
+      const googleTitle = document.getElementById('ftm-google-title');
+      const googleSubtitle = document.getElementById('ftm-google-subtitle');
+      const tabPrev = document.getElementById('ftm-tab-prev');
+      const tabCurrent = document.getElementById('ftm-tab-current');
+      const tabNext = document.getElementById('ftm-tab-next');
+      const summaryTime = document.getElementById('ftm-summary-time');
+      const summaryCode = document.getElementById('ftm-summary-code');
+      const summaryDest = document.getElementById('ftm-summary-dest');
+      const googleStatusPill = document.getElementById('ftm-google-status-pill');
+
+      const gOriginCode = document.getElementById('ftm-g-origin-code');
+      const originLink = document.getElementById('ftm-origin-link');
+      const gDuration = document.getElementById('ftm-g-duration');
+      const gDestCode = document.getElementById('ftm-g-dest-code');
+      const destLink = document.getElementById('ftm-dest-link');
+
+      const gDepHeader = document.getElementById('ftm-g-dep-header');
+      const gDepTime = document.getElementById('ftm-g-dep-time');
+      const gDepTerminal = document.getElementById('ftm-g-dep-terminal');
+      const gDepGate = document.getElementById('ftm-g-dep-gate');
+
+      const gArrHeader = document.getElementById('ftm-g-arr-header');
+      const gArrTime = document.getElementById('ftm-g-arr-time');
+      const gArrTerminal = document.getElementById('ftm-g-arr-terminal');
+      const gArrGate = document.getElementById('ftm-g-arr-gate');
 
       const bookingContext = document.getElementById('ftm-booking-context');
       const passNameEl = document.getElementById('ftm-passenger-name');
@@ -808,19 +814,33 @@
       const routeTextEl = document.getElementById('ftm-route-text');
 
       const fullFlightTitle = `${fallbackAirlineName} ${cleanFlight}`;
-      if (headerTitle) headerTitle.textContent = fullFlightTitle;
-      if (cardTitle) cardTitle.textContent = fullFlightTitle;
-      if (codeBadge) codeBadge.textContent = cleanFlight;
-      if (copyCode) copyCode.textContent = cleanFlight;
-      if (destCode) destCode.textContent = airportCode;
-      if (destCity) destCity.textContent = airportName;
-      if (arrTerminal) arrTerminal.textContent = terminalInfo;
-      if (arrTime) arrTime.textContent = pickupTime ? `${pickupTime} (${pickupDate || 'Today'})` : 'Live Status';
-      if (depTime) depTime.textContent = pickupDate ? `${pickupDate}` : 'Scheduled';
-      if (aircraftPill) aircraftPill.textContent = 'Loading Live Info...';
+      if (googleTitle) googleTitle.textContent = fullFlightTitle;
+      if (googleSubtitle) googleSubtitle.textContent = `${fallbackAirlineName} Flight to London`;
+      if (summaryCode) summaryCode.textContent = cleanFlight;
+      if (summaryTime) summaryTime.textContent = pickupTime || 'Scheduled';
+      if (summaryDest) summaryDest.textContent = `${airportName}`;
+      if (gDestCode) gDestCode.textContent = airportCode;
+      if (gArrTerminal) gArrTerminal.textContent = terminalInfo.replace('Terminal ', '') || '5';
+      if (gArrTime) gArrTime.textContent = pickupTime || '1:10 pm';
 
-      if (airportBtn) airportBtn.href = airportArrivalsUrl;
-      if (airportTitleEl) airportTitleEl.textContent = airportBtnTitle;
+      // Setup Dates for Tabs & Headers
+      const today = new Date();
+      const dateOptions = { weekday: 'short', day: 'numeric', month: 'short' };
+      const currentDayStr = pickupDate || today.toLocaleDateString('en-GB', dateOptions);
+      if (tabCurrent) tabCurrent.textContent = currentDayStr;
+      
+      const prevDate = new Date();
+      prevDate.setDate(prevDate.getDate() - 1);
+      if (tabPrev) tabPrev.textContent = prevDate.toLocaleDateString('en-GB', dateOptions);
+
+      const nextDate = new Date();
+      nextDate.setDate(nextDate.getDate() + 1);
+      if (tabNext) tabNext.textContent = nextDate.toLocaleDateString('en-GB', dateOptions);
+
+      if (gDepHeader) gDepHeader.textContent = `Departure • ${currentDayStr}`;
+      if (gArrHeader) gArrHeader.textContent = `London • ${currentDayStr}`;
+
+      if (destLink) destLink.href = airportArrivalsUrl;
 
       if (bookingContext) {
         if (passengerName || fullRouteText) {
@@ -840,11 +860,11 @@
       const fr24Url = 'https://www.flightradar24.com/data/flights/' + encodeURIComponent(cleanFlight.toLowerCase());
       const flightawareUrl = 'https://www.flightaware.com/live/flight/' + encodeURIComponent(cleanFlight);
 
-      const googleBtn = document.getElementById('ftm-btn-google');
+      const openGoogleBtn = document.getElementById('ftm-btn-open-google');
       const fr24Btn = document.getElementById('ftm-btn-fr24');
       const flightawareBtn = document.getElementById('ftm-btn-flightaware');
 
-      if (googleBtn) googleBtn.href = googleUrl;
+      if (openGoogleBtn) openGoogleBtn.href = googleUrl;
       if (fr24Btn) fr24Btn.href = fr24Url;
       if (flightawareBtn) flightawareBtn.href = flightawareUrl;
 
@@ -869,37 +889,47 @@
         .then(data => {
           if (data && data.success) {
             const airlineDisplay = data.airline ? `${data.airline} ${cleanFlight}` : fullFlightTitle;
-            if (headerTitle) headerTitle.textContent = airlineDisplay;
-            if (cardTitle) cardTitle.textContent = airlineDisplay;
-            if (aircraftPill) aircraftPill.textContent = data.aircraft || 'Commercial Aircraft';
+            if (googleTitle) googleTitle.textContent = airlineDisplay;
             
-            if (statusPill && data.status_badge) {
-              statusPill.textContent = data.status_badge;
+            const originCityName = data.origin && data.origin.city ? data.origin.city.split(',')[0] : 'Origin';
+            const destCityName = data.destination && data.destination.city ? data.destination.city.split(',')[0] : 'London';
+            if (googleSubtitle) googleSubtitle.textContent = `${originCityName} to ${destCityName}`;
+
+            if (summaryDest && data.destination) {
+              summaryDest.textContent = `${data.destination.city || 'London'} ${data.destination.code || 'LHR'}`;
+            }
+
+            if (googleStatusPill && data.status_badge) {
+              googleStatusPill.textContent = data.status_badge;
             }
 
             if (data.origin) {
-              if (originCode && data.origin.code) originCode.textContent = data.origin.code;
-              if (originCity && data.origin.city) originCity.textContent = data.origin.city;
-              if (depTerminal && data.origin.terminal) depTerminal.textContent = data.origin.terminal;
-              if (depGate && data.origin.gate) depGate.textContent = data.origin.gate;
+              if (gOriginCode && data.origin.code) gOriginCode.textContent = data.origin.code;
+              if (originLink) originLink.href = 'https://www.google.com/search?q=' + encodeURIComponent((data.origin.name || '') + ' airport');
+              if (gDepHeader) gDepHeader.textContent = `${originCityName} • ${currentDayStr}`;
+              if (gDepTerminal && data.origin.terminal) gDepTerminal.textContent = data.origin.terminal;
+              if (gDepGate && data.origin.gate) gDepGate.textContent = data.origin.gate;
             }
 
             if (data.destination) {
-              if (destCode && data.destination.code) destCode.textContent = data.destination.code;
-              if (destCity && data.destination.city) destCity.textContent = data.destination.city;
-              if (arrTerminal && data.destination.terminal) arrTerminal.textContent = 'Terminal ' + data.destination.terminal;
-              if (arrGate && data.destination.gate) arrGate.textContent = data.destination.gate;
+              if (gDestCode && data.destination.code) gDestCode.textContent = data.destination.code;
+              if (destLink && data.destination.code === 'LHR') destLink.href = 'https://www.heathrow.com/arrivals';
+              if (gArrHeader) gArrHeader.textContent = `${destCityName} • ${currentDayStr}`;
+              if (gArrTerminal && data.destination.terminal) gArrTerminal.textContent = data.destination.terminal;
+              if (gArrGate && data.destination.gate) gArrGate.textContent = data.destination.gate;
             }
 
-            if (data.duration && durationEl) durationEl.textContent = data.duration;
-            if (data.dep_time && depTime) depTime.textContent = data.dep_time;
-            if (data.arr_time && arrTime) arrTime.textContent = data.arr_time;
+            if (data.duration && gDuration) gDuration.textContent = data.duration;
+            if (data.dep_time) {
+              if (summaryTime) summaryTime.textContent = data.dep_time;
+              if (gDepTime) gDepTime.textContent = data.dep_time;
+            }
+            if (data.arr_time && gArrTime) gArrTime.textContent = data.arr_time;
 
             if (data.links) {
-              if (googleBtn && data.links.google) googleBtn.href = data.links.google;
+              if (openGoogleBtn && data.links.google) openGoogleBtn.href = data.links.google;
               if (fr24Btn && data.links.flightradar24) fr24Btn.href = data.links.flightradar24;
               if (flightawareBtn && data.links.flightaware) flightawareBtn.href = data.links.flightaware;
-              if (airportBtn && data.links.airport) airportBtn.href = data.links.airport;
             }
           }
         })
