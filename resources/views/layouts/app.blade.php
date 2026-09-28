@@ -784,9 +784,6 @@
       // Bind Google Flight Card Elements
       const googleTitle = document.getElementById('ftm-google-title');
       const googleSubtitle = document.getElementById('ftm-google-subtitle');
-      const tabPrev = document.getElementById('ftm-tab-prev');
-      const tabCurrent = document.getElementById('ftm-tab-current');
-      const tabNext = document.getElementById('ftm-tab-next');
       const summaryTime = document.getElementById('ftm-summary-time');
       const summaryCode = document.getElementById('ftm-summary-code');
       const summaryDest = document.getElementById('ftm-summary-dest');
@@ -823,19 +820,10 @@
       if (gArrTerminal) gArrTerminal.textContent = terminalInfo.replace('Terminal ', '') || '5';
       if (gArrTime) gArrTime.textContent = pickupTime || '1:10 pm';
 
-      // Setup Dates for Tabs & Headers
+      // Setup Dates for Headers
       const today = new Date();
       const dateOptions = { weekday: 'short', day: 'numeric', month: 'short' };
       const currentDayStr = pickupDate || today.toLocaleDateString('en-GB', dateOptions);
-      if (tabCurrent) tabCurrent.textContent = currentDayStr;
-      
-      const prevDate = new Date();
-      prevDate.setDate(prevDate.getDate() - 1);
-      if (tabPrev) tabPrev.textContent = prevDate.toLocaleDateString('en-GB', dateOptions);
-
-      const nextDate = new Date();
-      nextDate.setDate(nextDate.getDate() + 1);
-      if (tabNext) tabNext.textContent = nextDate.toLocaleDateString('en-GB', dateOptions);
 
       if (gDepHeader) gDepHeader.textContent = `Departure • ${currentDayStr}`;
       if (gArrHeader) gArrHeader.textContent = `London • ${currentDayStr}`;
@@ -857,30 +845,8 @@
 
       // External Provider URLs
       const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent('flight ' + cleanFlight);
-      const fr24Url = 'https://www.flightradar24.com/data/flights/' + encodeURIComponent(cleanFlight.toLowerCase());
-      const flightawareUrl = 'https://www.flightaware.com/live/flight/' + encodeURIComponent(cleanFlight);
-
       const openGoogleBtn = document.getElementById('ftm-btn-open-google');
-      const fr24Btn = document.getElementById('ftm-btn-fr24');
-      const flightawareBtn = document.getElementById('ftm-btn-flightaware');
-
       if (openGoogleBtn) openGoogleBtn.href = googleUrl;
-      if (fr24Btn) fr24Btn.href = fr24Url;
-      if (flightawareBtn) flightawareBtn.href = flightawareUrl;
-
-      // Copy Tracking Link Button
-      const copyBtn = document.getElementById('ftm-copy-btn');
-      if (copyBtn) {
-        copyBtn.onclick = function() {
-          const textToCopy = `✈️ Flight: ${cleanFlight} (${fallbackAirlineName})\n📍 Destination: ${airportName} ${terminalInfo}\n🔍 Live Google Status: ${googleUrl}\n🛰️ Live Radar (FlightRadar24): ${fr24Url}`;
-          navigator.clipboard.writeText(textToCopy).then(() => {
-            copyBtn.innerHTML = '<i class="bi bi-check-lg text-success"></i> <span class="text-success">Copied Details!</span>';
-            setTimeout(() => {
-              copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> <span>Copy Tracking Link</span>';
-            }, 2000);
-          }).catch(() => {});
-        };
-      }
 
       // Fetch Real-time Telemetry API
       const telemetryUrl = `/api/flight-telemetry?flight=${encodeURIComponent(cleanFlight)}&pickup_date=${encodeURIComponent(pickupDate)}&pickup_time=${encodeURIComponent(pickupTime)}`;
@@ -926,10 +892,8 @@
             }
             if (data.arr_time && gArrTime) gArrTime.textContent = data.arr_time;
 
-            if (data.links) {
-              if (openGoogleBtn && data.links.google) openGoogleBtn.href = data.links.google;
-              if (fr24Btn && data.links.flightradar24) fr24Btn.href = data.links.flightradar24;
-              if (flightawareBtn && data.links.flightaware) flightawareBtn.href = data.links.flightaware;
+            if (data.links && openGoogleBtn && data.links.google) {
+              openGoogleBtn.href = data.links.google;
             }
           }
         })

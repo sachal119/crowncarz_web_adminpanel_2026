@@ -27,15 +27,6 @@
           </div>
         </div>
 
-        <!-- Date Tabs (Google Style) -->
-        <div class="d-flex align-items-center gap-4 mb-3 border-bottom pb-2" style="border-color: #3c4043 !important; font-size: 0.9rem;">
-          <span class="text-secondary cursor-pointer" id="ftm-tab-prev" style="color: #9aa0a6 !important;">Mon, 28 Sept</span>
-          <span class="text-primary fw-semibold position-relative pb-2" id="ftm-tab-current" style="color: #8ab4f8 !important; border-bottom: 3px solid #8ab4f8; margin-bottom: -9px;">
-            Tue, 29 Sept
-          </span>
-          <span class="text-secondary cursor-pointer" id="ftm-tab-next" style="color: #9aa0a6 !important;">Wed, 30 Sept</span>
-        </div>
-
         <!-- Summary Bar (Time / Destination / Status) -->
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 px-1">
           <div class="d-flex align-items-baseline gap-2">
@@ -143,30 +134,17 @@
 
         </div>
 
-        <!-- Booking Context Strip (Passenger & Pickup Details) -->
-        <div id="ftm-booking-context" class="p-2.5 rounded-3 mb-3 d-none align-items-center justify-content-between flex-wrap gap-2" style="background: #2a2b2e; border: 1px solid #3c4043;">
+        <!-- Booking Context Strip (Passenger & Pickup Details with generous internal padding) -->
+        <div id="ftm-booking-context" class="p-3 px-4 rounded-3 d-none align-items-center justify-content-between flex-wrap gap-2" style="background: #2a2b2e; border: 1px solid #3c4043;">
           <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-person-fill text-warning"></i>
+            <i class="bi bi-person-fill text-warning fs-5"></i>
             <div class="small">
               <span style="color: #9aa0a6;">Passenger:</span> <strong class="text-white" id="ftm-passenger-name">-</strong>
-              <span style="color: #5f6368;" class="mx-1.5">•</span>
+              <span style="color: #5f6368;" class="mx-2">•</span>
               <span style="color: #9aa0a6;">Pickup:</span> <strong class="text-warning" id="ftm-pickup-time">-</strong>
             </div>
           </div>
           <div class="small text-truncate" style="max-width: 320px; color: #bdc1c6;" id="ftm-route-text">-</div>
-        </div>
-
-        <!-- Quick Action Buttons: FlightRadar24, Google, Copy Link -->
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <a id="ftm-btn-fr24" href="#" target="_blank" class="btn btn-sm rounded-3 d-inline-flex align-items-center gap-1.5 px-3 py-1.5" style="background: #303134; color: #81c995; border: 1px solid #3c4043; font-size: 0.82rem;">
-            <i class="bi bi-radar"></i> <span>Live FlightRadar24 Map</span>
-          </a>
-          <a id="ftm-btn-flightaware" href="#" target="_blank" class="btn btn-sm rounded-3 d-inline-flex align-items-center gap-1.5 px-3 py-1.5" style="background: #303134; color: #8ab4f8; border: 1px solid #3c4043; font-size: 0.82rem;">
-            <i class="bi bi-compass"></i> <span>FlightAware</span>
-          </a>
-          <button id="ftm-copy-btn" type="button" class="btn btn-sm rounded-3 ms-auto d-inline-flex align-items-center gap-1.5 px-3 py-1.5 text-warning" style="background: #303134; border: 1px solid #3c4043; font-size: 0.82rem;">
-            <i class="bi bi-clipboard"></i> <span>Copy Tracking Link</span>
-          </button>
         </div>
 
       </div>
@@ -174,4 +152,5 @@
     </div>
   </div>
 </div>
+
 
