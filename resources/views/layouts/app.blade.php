@@ -799,6 +799,9 @@
       return `${h}:${m} ${p}`;
     }
 
+    // In-memory cache to save API quota and prevent redundant hits
+    const FLIGHT_SESSION_CACHE = {};
+
     window.openFlightTracker = function(event, flightNo, extra) {
       if (event) {
         event.stopPropagation();
@@ -1008,60 +1011,90 @@
       const openGoogleBtn = document.getElementById('ftm-btn-open-google');
       if (openGoogleBtn) openGoogleBtn.href = googleUrl;
 
-      // Background Fetch for Real-time Telemetry API
-      const telemetryUrl = `/api/flight-telemetry?flight=${encodeURIComponent(cleanFlight)}&pickup_date=${encodeURIComponent(pickupDate)}&pickup_time=${encodeURIComponent(pickupTime)}`;
-      fetch(telemetryUrl)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.success) {
-            const airlineDisplay = data.airline ? `${data.airline} ${cleanFlight}` : fullFlightTitle;
-            if (googleTitle) googleTitle.textContent = airlineDisplay;
-            
-            const originCityName = data.origin && data.origin.city ? data.origin.city.split(',')[0] : resolvedOriginCity;
-            const destCityName = data.destination && data.destination.city ? data.destination.city.split(',')[0] : resolvedDestCity;
-            if (googleSubtitle) googleSubtitle.textContent = `${originCityName} to ${destCityName}`;
+      // 🌟 Render Function for Live Telemetry 🌟
+      function applyLiveFlightData(flight) {
+        if (!flight) return;
+        const dep = flight.departure || {};
+        const arr = flight.arrival || {};
+        const airline = flight.airline || {};
+        const status = flight.flight_status || 'active';
 
-            if (summaryDest && data.destination) {
-              summaryDest.textContent = `${data.destination.city || 'London'} ${data.destination.code || 'LHR'}`;
-            }
+        const airlineName = (airline.name && airline.name !== 'empty') ? airline.name : fallbackAirlineName;
+        if (googleTitle) googleTitle.textContent = `${airlineName} ${cleanFlight}`;
 
-            if (googleStatusPill && data.status_badge) {
-              googleStatusPill.textContent = data.status_badge;
-            }
+        const depAirportName = dep.airport || resolvedOriginName;
+        const arrAirportName = arr.airport || airportName;
+        let depCity = depAirportName.replace(/ International| Airport/gi, '').trim();
+        let arrCity = arrAirportName.replace(/ International| Airport/gi, '').trim();
 
-            if (data.origin) {
-              if (gOriginCode && data.origin.code) gOriginCode.textContent = data.origin.code;
-              if (originLink) originLink.href = 'https://www.google.com/search?q=' + encodeURIComponent((data.origin.name || '') + ' airport');
-              if (gDepHeader) gDepHeader.textContent = `${originCityName} • ${currentDayStr}`;
-              if (gDepTerminal && data.origin.terminal) gDepTerminal.textContent = data.origin.terminal;
-              if (gDepGate && data.origin.gate) gDepGate.textContent = data.origin.gate;
-            }
+        if (googleSubtitle) googleSubtitle.textContent = `${depCity} to ${arrCity}`;
 
-            if (data.destination) {
-              if (gDestCode && data.destination.code) gDestCode.textContent = data.destination.code;
-              if (destLink && data.destination.code === 'LHR') destLink.href = 'https://www.heathrow.com/arrivals';
-              if (gArrHeader) gArrHeader.textContent = `${destCityName} • ${currentDayStr}`;
-              if (gArrTerminal && data.destination.terminal) gArrTerminal.textContent = data.destination.terminal;
-              if (gArrGate && data.destination.gate) gArrGate.textContent = data.destination.gate;
-            }
+        if (googleStatusPill) {
+          googleStatusPill.textContent = status === 'active' ? 'ON TIME' : (status === 'landed' ? 'LANDED' : status.toUpperCase());
+        }
 
-            if (data.duration && gDuration) gDuration.textContent = data.duration;
-            if (data.dep_time) {
-              if (gDepTime) gDepTime.textContent = data.dep_time;
-            }
-            if (data.arr_time) {
-              if (summaryTime) summaryTime.textContent = data.arr_time;
-              if (gArrTime) gArrTime.textContent = data.arr_time;
-            }
+        if (gOriginCode && dep.iata) gOriginCode.textContent = dep.iata;
+        if (originLink) originLink.href = 'https://www.google.com/search?q=' + encodeURIComponent(depAirportName + ' airport');
+        if (gDepTerminal) gDepTerminal.textContent = dep.terminal || '-';
+        if (gDepGate) gDepGate.textContent = dep.gate || '-';
 
-            if (data.links && openGoogleBtn && data.links.google) {
-              openGoogleBtn.href = data.links.google;
-            }
+        if (gDestCode && arr.iata) gDestCode.textContent = arr.iata;
+        if (gArrTerminal) gArrTerminal.textContent = arr.terminal || '-';
+        if (gArrGate) gArrGate.textContent = arr.gate || '-';
+
+        if (dep.scheduled || dep.actual) {
+          const depDateObj = new Date(dep.actual || dep.scheduled);
+          if (!isNaN(depDateObj.getTime())) {
+            const depTimeFormatted = depDateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const depDateFormatted = depDateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+            if (gDepTime) gDepTime.textContent = depTimeFormatted;
+            if (gDepHeader) gDepHeader.textContent = `${depCity} • ${depDateFormatted}`;
           }
-        })
-        .catch(err => {
-          console.warn('Flight telemetry background fetch notice:', err);
-        });
+        }
+
+        if (arr.scheduled || arr.actual) {
+          const arrDateObj = new Date(arr.actual || arr.scheduled);
+          if (!isNaN(arrDateObj.getTime())) {
+            const arrTimeFormatted = arrDateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const arrDateFormatted = arrDateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+            if (summaryTime) summaryTime.textContent = arrTimeFormatted;
+            if (gArrTime) gArrTime.textContent = arrTimeFormatted;
+            if (gArrHeader) gArrHeader.textContent = `${arrCity} • ${arrDateFormatted}`;
+          }
+        }
+
+        if ((dep.actual || dep.scheduled) && (arr.actual || arr.scheduled)) {
+          const d1 = new Date(dep.actual || dep.scheduled);
+          const d2 = new Date(arr.actual || arr.scheduled);
+          const diffMs = Math.abs(d2 - d1);
+          const diffHours = Math.floor(diffMs / 3600000);
+          const diffMins = Math.floor((diffMs % 3600000) / 60000);
+          if (gDuration && (diffHours > 0 || diffMins > 0)) {
+            gDuration.textContent = `${diffHours > 0 ? diffHours + 'h ' : ''}${diffMins}m`;
+          }
+        }
+      }
+
+      // 🌟 Live Flight Telemetry - ONLY on User Click + In-Memory Session Cache (Quota Protection) 🌟
+      if (FLIGHT_SESSION_CACHE[normFlight]) {
+        // Instant render from cache - 0 API requests
+        applyLiveFlightData(FLIGHT_SESSION_CACHE[normFlight]);
+      } else {
+        // Trigger exact single API call only when user clicks
+        const aviationUrl = `http://api.aviationstack.com/v1/flights?access_key=b314b241911f491f8e76da0c4a4e3cca&flight_iata=${encodeURIComponent(normFlight)}`;
+        fetch(aviationUrl)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.data && data.data.length > 0) {
+              const flight = data.data[0];
+              FLIGHT_SESSION_CACHE[normFlight] = flight;
+              applyLiveFlightData(flight);
+            }
+          })
+          .catch(err => {
+            console.warn('Flight API notice:', err);
+          });
+      }
 
       // Open Modal on the same screen
       const modal = bootstrap.Modal.getOrCreateInstance(modalEl);

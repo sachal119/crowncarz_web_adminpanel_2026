@@ -203,10 +203,11 @@ class FlightTrackerService
      */
     protected function resolveFlightData(string $flightNumber, ?string $pickupDate = null, ?string $pickupTime = null): array
     {
-        // 1. Parse airline prefix and flight digits
-        preg_match('/^([A-Z0-9]{2,3})(\d+)$/', $flightNumber, $matches);
-        $airlinePrefix = $matches[1] ?? substr($flightNumber, 0, 2);
-        $flightDigits  = $matches[2] ?? substr($flightNumber, 2);
+        // 1. Normalize flight number (e.g. DL020 -> DL20)
+        $normalizedFlight = preg_replace('/^([A-Z0-9]{2,3})0*(\d+)$/', '$1$2', strtoupper(trim($flightNumber)));
+        preg_match('/^([A-Z0-9]{2,3})(\d+)$/', $normalizedFlight, $matches);
+        $airlinePrefix = $matches[1] ?? substr($normalizedFlight, 0, 2);
+        $flightDigits  = $matches[2] ?? substr($normalizedFlight, 2);
 
         $airlineInfo = self::$airlines[$airlinePrefix] ?? [
             'name'    => 'Airline Flight ' . $airlinePrefix,
@@ -216,13 +217,13 @@ class FlightTrackerService
         ];
 
         // 2. Try live external API if API key is configured
-        $liveData = $this->fetchFromLiveApi($flightNumber, $airlinePrefix, $flightDigits);
+        $liveData = $this->fetchFromLiveApi($normalizedFlight, $airlinePrefix, $flightDigits);
         if ($liveData && !empty($liveData['origin']['code'])) {
             return $liveData;
         }
 
         // 3. Check Known Routes Database
-        $known = self::$knownRoutes[$flightNumber] ?? null;
+        $known = self::$knownRoutes[$normalizedFlight] ?? self::$knownRoutes[$flightNumber] ?? null;
         if ($known) {
             $origin = $known['origin'];
             $dest   = $known['dest'];
@@ -297,11 +298,11 @@ class FlightTrackerService
      */
     protected function fetchFromLiveApi(string $flightNumber, string $airlinePrefix, string $flightDigits): ?array
     {
-        // AviationStack API
-        $aviationStackKey = config('services.aviationstack.key') ?? env('AVIATIONSTACK_KEY');
+        // AviationStack API (Exact method as booking_form.blade.php)
+        $aviationStackKey = config('services.aviationstack.key') ?? env('AVIATIONSTACK_KEY') ?? 'b314b241911f491f8e76da0c4a4e3cca';
         if ($aviationStackKey) {
             try {
-                $response = Http::timeout(4)->get('http://api.aviationstack.com/v1/flights', [
+                $response = Http::timeout(5)->get('http://api.aviationstack.com/v1/flights', [
                     'access_key' => $aviationStackKey,
                     'flight_iata' => $flightNumber,
                     'limit' => 1
@@ -309,32 +310,68 @@ class FlightTrackerService
 
                 if ($response->successful() && !empty($response->json('data.0'))) {
                     $item = $response->json('data.0');
+                    $dep = $item['departure'] ?? [];
+                    $arr = $item['arrival'] ?? [];
+                    $airline = $item['airline'] ?? [];
+                    
+                    // Format scheduled and actual times
+                    $depTimeRaw = $dep['actual'] ?? $dep['scheduled'] ?? null;
+                    $arrTimeRaw = $arr['actual'] ?? $arr['scheduled'] ?? null;
+                    $depTime = $depTimeRaw ? date('h:i A', strtotime($depTimeRaw)) : 'Scheduled';
+                    $arrTime = $arrTimeRaw ? date('h:i A', strtotime($arrTimeRaw)) : 'Scheduled';
+
+                    // Duration calculation
+                    $duration = 'Direct Flight';
+                    if ($depTimeRaw && $arrTimeRaw) {
+                        $diff = abs(strtotime($arrTimeRaw) - strtotime($depTimeRaw));
+                        $hours = floor($diff / 3600);
+                        $mins = floor(($diff % 3600) / 60);
+                        if ($hours > 0 || $mins > 0) {
+                            $duration = ($hours > 0 ? "{$hours}h " : "") . "{$mins}m";
+                        }
+                    }
+
+                    $depAirport = $dep['airport'] ?? 'Departure Airport';
+                    $arrAirport = $arr['airport'] ?? 'London Heathrow Airport';
+
+                    // Extract city from airport name or timezone
+                    $depCity = $depAirport;
+                    if (str_contains($depCity, ' International')) $depCity = str_replace(' International', '', $depCity);
+                    if (str_contains($depCity, ' Airport')) $depCity = str_replace(' Airport', '', $depCity);
+
+                    $arrCity = $arrAirport;
+                    if (str_contains($arrCity, ' International')) $arrCity = str_replace(' International', '', $arrCity);
+                    if (str_contains($arrCity, ' Airport')) $arrCity = str_replace(' Airport', '', $arrCity);
+
+                    $airlineName = self::$airlines[$airlinePrefix]['name'] ?? ($airline['name'] ?? $flightNumber);
+                    $status = strtolower($item['flight_status'] ?? 'active');
+
                     return [
                         'success'       => true,
                         'flight_number' => $flightNumber,
-                        'airline'       => $item['airline']['name'] ?? self::$airlines[$airlinePrefix]['name'] ?? $flightNumber,
-                        'airline_code'  => $item['airline']['iata'] ?? $airlinePrefix,
-                        'airline_icao'  => $item['airline']['icao'] ?? $airlinePrefix,
+                        'airline'       => $airlineName,
+                        'airline_code'  => $airline['iata'] ?? $airlinePrefix,
+                        'airline_icao'  => $airline['icao'] ?? $airlinePrefix,
                         'aircraft'      => $item['aircraft']['registration'] ?? $item['aircraft']['iata'] ?? 'Commercial Aircraft',
-                        'status'        => ucfirst($item['flight_status'] ?? 'Scheduled'),
-                        'status_color'  => in_array($item['flight_status'] ?? '', ['active', 'landed']) ? 'success' : 'warning',
-                        'status_badge'  => strtoupper($item['flight_status'] ?? 'ACTIVE'),
-                        'duration'      => 'Direct Flight',
-                        'dep_time'      => !empty($item['departure']['scheduled']) ? date('h:i A', strtotime($item['departure']['scheduled'])) : 'Scheduled',
-                        'arr_time'      => !empty($item['arrival']['scheduled']) ? date('h:i A', strtotime($item['arrival']['scheduled'])) : 'Scheduled',
+                        'status'        => ucfirst($status),
+                        'status_color'  => in_array($status, ['active', 'landed']) ? 'success' : 'warning',
+                        'status_badge'  => strtoupper($status === 'active' ? 'ON TIME' : ($status === 'landed' ? 'LANDED' : $status)),
+                        'duration'      => $duration,
+                        'dep_time'      => $depTime,
+                        'arr_time'      => $arrTime,
                         'origin'        => [
-                            'code'     => $item['departure']['iata'] ?? 'DEP',
-                            'name'     => $item['departure']['airport'] ?? 'Departure Airport',
-                            'city'     => $item['departure']['timezone'] ?? 'International',
-                            'terminal' => $item['departure']['terminal'] ?? '1',
-                            'gate'     => $item['departure']['gate'] ?? '-'
+                            'code'     => $dep['iata'] ?? 'DEP',
+                            'name'     => $depAirport,
+                            'city'     => $depCity,
+                            'terminal' => $dep['terminal'] ?? '-',
+                            'gate'     => $dep['gate'] ?? '-'
                         ],
                         'destination'   => [
-                            'code'     => $item['arrival']['iata'] ?? 'LHR',
-                            'name'     => $item['arrival']['airport'] ?? 'London Heathrow Airport',
-                            'city'     => 'London, United Kingdom',
-                            'terminal' => $item['arrival']['terminal'] ?? '5',
-                            'gate'     => $item['arrival']['gate'] ?? '-'
+                            'code'     => $arr['iata'] ?? 'LHR',
+                            'name'     => $arrAirport,
+                            'city'     => $arrCity,
+                            'terminal' => $arr['terminal'] ?? '-',
+                            'gate'     => $arr['gate'] ?? '-'
                         ],
                         'is_live_api'   => true,
                         'links'         => [
