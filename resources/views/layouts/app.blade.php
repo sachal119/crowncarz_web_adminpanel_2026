@@ -693,7 +693,7 @@
       'ABY': 'Air Arabia'
     };
 
-    window.openFlightTracker = function(event, flightNo) {
+    window.openFlightTracker = function(event, flightNo, extra) {
       if (event) {
         event.stopPropagation();
         if (event.preventDefault) event.preventDefault();
@@ -706,7 +706,7 @@
       // Extract Airline Prefix (letters at start)
       const match = cleanFlight.match(/^([A-Z0-9]{2,3})/);
       const prefix = match ? match[1] : '';
-      const airlineName = AIRLINES_MAP[prefix] || AIRLINES_MAP[cleanFlight.slice(0, 2)] || 'Scheduled Flight';
+      const airlineName = AIRLINES_MAP[prefix] || AIRLINES_MAP[cleanFlight.slice(0, 2)] || 'Airline';
 
       const modalEl = document.getElementById('flightTrackerModal');
       if (!modalEl) {
@@ -714,55 +714,138 @@
         return;
       }
 
-      const titleEl = document.getElementById('ftm-flight-no');
-      const airlineBadge = document.getElementById('ftm-airline-badge');
+      // Try to read contextual row data if event originated from a table row
+      let passengerName = '';
+      let pickupTime = '';
+      let pickupDate = '';
+      let pickupAddr = '';
+      let dropoffAddr = '';
+      let airportCode = 'LHR';
+      let airportName = 'London Heathrow (LHR)';
+      let terminalInfo = 'Terminal -';
+
+      if (event && event.target) {
+        const row = event.target.closest('tr');
+        if (row) {
+          const passEl = row.querySelector('.col-passenger, .passenger-cell');
+          const dateEl = row.querySelector('.col-date');
+          const timeEl = row.querySelector('.col-time');
+          const pickEl = row.querySelector('.col-pickup');
+          const dropEl = row.querySelector('.col-dropoff');
+
+          passengerName = passEl ? passEl.textContent.trim() : '';
+          pickupDate = dateEl ? dateEl.textContent.trim() : '';
+          pickupTime = timeEl ? timeEl.textContent.trim() : '';
+          pickupAddr = pickEl ? pickEl.textContent.trim() : '';
+          dropoffAddr = dropEl ? dropEl.textContent.trim() : '';
+        }
+      }
+
+      const fullRouteText = (pickupAddr && dropoffAddr) ? `${pickupAddr} ➔ ${dropoffAddr}` : (pickupAddr || dropoffAddr || '');
+      const routeCheck = (pickupAddr + ' ' + dropoffAddr).toLowerCase();
+
+      // Detect Airport & Terminal from route
+      let airportArrivalsUrl = 'https://www.heathrow.com/arrivals';
+      let airportBtnTitle = 'Heathrow Arrivals';
+
+      if (routeCheck.includes('gatwick') || routeCheck.includes('lgw')) {
+        airportCode = 'LGW';
+        airportName = 'London Gatwick (LGW)';
+        airportArrivalsUrl = 'https://www.gatwickairport.com/flights/arrivals/';
+        airportBtnTitle = 'Gatwick Arrivals';
+      } else if (routeCheck.includes('stansted') || routeCheck.includes('stn')) {
+        airportCode = 'STN';
+        airportName = 'London Stansted (STN)';
+        airportArrivalsUrl = 'https://www.stanstedairport.com/flight-information/arrivals/';
+        airportBtnTitle = 'Stansted Arrivals';
+      } else if (routeCheck.includes('luton') || routeCheck.includes('ltn')) {
+        airportCode = 'LTN';
+        airportName = 'London Luton (LTN)';
+        airportArrivalsUrl = 'https://www.london-luton.co.uk/flights';
+        airportBtnTitle = 'Luton Arrivals';
+      } else if (routeCheck.includes('city') || routeCheck.includes('lcy')) {
+        airportCode = 'LCY';
+        airportName = 'London City Airport';
+        airportArrivalsUrl = 'https://www.londoncityairport.com/flight-status';
+        airportBtnTitle = 'London City Arrivals';
+      } else if (routeCheck.includes('birmingham') || routeCheck.includes('bhx')) {
+        airportCode = 'BHX';
+        airportName = 'Birmingham Airport';
+        airportArrivalsUrl = 'https://www.birminghamairport.co.uk/flight-information/live-arrivals/';
+        airportBtnTitle = 'Birmingham Arrivals';
+      }
+
+      // Check terminal
+      const tMatch = routeCheck.match(/terminal\s*([0-9]|north|south)/i);
+      if (tMatch) {
+        terminalInfo = `Terminal ${tMatch[1].toUpperCase()}`;
+      }
+
+      // Populate Elements
+      const headerTitle = document.getElementById('ftm-header-title');
+      const cardTitle = document.getElementById('ftm-card-title');
+      const codeBadge = document.getElementById('ftm-code-badge');
+      const destCode = document.getElementById('ftm-dest-code');
+      const destCity = document.getElementById('ftm-dest-city');
+      const arrTerminal = document.getElementById('ftm-arr-terminal');
+      const arrTime = document.getElementById('ftm-arr-time');
+      const depTime = document.getElementById('ftm-dep-time');
       const copyCode = document.getElementById('ftm-copy-code');
-      const googleBtn = document.getElementById('ftm-btn-google');
-      const googleDirectBtn = document.getElementById('ftm-google-direct-btn');
-      const fr24Btn = document.getElementById('ftm-btn-fr24');
-      const flightawareBtn = document.getElementById('ftm-btn-flightaware');
-      const fallbackGoogle = document.getElementById('ftm-fallback-google-btn');
-      const fallbackFr24 = document.getElementById('ftm-fallback-fr24-btn');
-      const radarIframe = document.getElementById('ftm-radar-iframe');
-      const radarFallback = document.getElementById('ftm-radar-fallback');
-      const reloadBtn = document.getElementById('ftm-reload-iframe');
+      const airportBtn = document.getElementById('ftm-btn-airport');
+      const airportTitleEl = document.getElementById('ftm-airport-btn-title');
 
-      if (titleEl) titleEl.textContent = `Flight ${cleanFlight}`;
-      if (airlineBadge) airlineBadge.textContent = airlineName;
+      const bookingContext = document.getElementById('ftm-booking-context');
+      const passNameEl = document.getElementById('ftm-passenger-name');
+      const pickupTimeEl = document.getElementById('ftm-pickup-time');
+      const routeTextEl = document.getElementById('ftm-route-text');
+
+      const fullFlightTitle = `${airlineName} ${cleanFlight}`;
+      if (headerTitle) headerTitle.textContent = fullFlightTitle;
+      if (cardTitle) cardTitle.textContent = fullFlightTitle;
+      if (codeBadge) codeBadge.textContent = cleanFlight;
       if (copyCode) copyCode.textContent = cleanFlight;
+      if (destCode) destCode.textContent = airportCode;
+      if (destCity) destCity.textContent = airportName;
+      if (arrTerminal) arrTerminal.textContent = terminalInfo;
+      if (arrTime) arrTime.textContent = pickupTime ? `${pickupTime} (${pickupDate || 'Today'})` : 'Live Status';
+      if (depTime) depTime.textContent = pickupDate ? `${pickupDate}` : 'Scheduled';
 
+      if (airportBtn) airportBtn.href = airportArrivalsUrl;
+      if (airportTitleEl) airportTitleEl.textContent = airportBtnTitle;
+
+      if (bookingContext) {
+        if (passengerName || fullRouteText) {
+          bookingContext.classList.remove('d-none');
+          bookingContext.classList.add('d-flex');
+          if (passNameEl) passNameEl.textContent = passengerName || 'Passenger';
+          if (pickupTimeEl) pickupTimeEl.textContent = (pickupDate ? `${pickupDate}, ` : '') + (pickupTime || '-');
+          if (routeTextEl) routeTextEl.textContent = fullRouteText || '';
+        } else {
+          bookingContext.classList.add('d-none');
+          bookingContext.classList.remove('d-flex');
+        }
+      }
+
+      // External Provider URLs
       const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent(cleanFlight);
       const fr24Url = 'https://www.flightradar24.com/data/flights/' + encodeURIComponent(cleanFlight.toLowerCase());
       const flightawareUrl = 'https://www.flightaware.com/live/flight/' + encodeURIComponent(cleanFlight);
 
+      const googleBtn = document.getElementById('ftm-btn-google');
+      const fr24Btn = document.getElementById('ftm-btn-fr24');
+      const flightawareBtn = document.getElementById('ftm-btn-flightaware');
+
       if (googleBtn) googleBtn.href = googleUrl;
-      if (googleDirectBtn) googleDirectBtn.href = googleUrl;
       if (fr24Btn) fr24Btn.href = fr24Url;
       if (flightawareBtn) flightawareBtn.href = flightawareUrl;
-      if (fallbackGoogle) fallbackGoogle.href = googleUrl;
-      if (fallbackFr24) fallbackFr24.href = fr24Url;
 
-      // Set Radar Map URL
-      const radarSrc = `https://www.flightradar24.com/simple_index.html?flight=${encodeURIComponent(cleanFlight.toLowerCase())}`;
-      if (radarIframe) {
-        radarIframe.src = radarSrc;
-        radarIframe.style.display = 'block';
-        if (radarFallback) radarFallback.classList.add('d-none');
-      }
-
-      if (reloadBtn) {
-        reloadBtn.onclick = function() {
-          if (radarIframe) radarIframe.src = radarSrc;
-        };
-      }
-
-      // Copy Tracking Link
+      // Copy Tracking Link Button
       const copyBtn = document.getElementById('ftm-copy-btn');
       if (copyBtn) {
         copyBtn.onclick = function() {
-          const textToCopy = `Flight: ${cleanFlight} (${airlineName})\nLive Status: ${googleUrl}`;
+          const textToCopy = `✈️ Flight: ${cleanFlight} (${airlineName})\n📍 Destination: ${airportName} ${terminalInfo}\n🔍 Live Google Status: ${googleUrl}\n🛰️ Live Radar (FlightRadar24): ${fr24Url}`;
           navigator.clipboard.writeText(textToCopy).then(() => {
-            copyBtn.innerHTML = '<i class="bi bi-check-lg text-success"></i> <span class="text-success">Copied!</span>';
+            copyBtn.innerHTML = '<i class="bi bi-check-lg text-success"></i> <span class="text-success">Copied Details!</span>';
             setTimeout(() => {
               copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> <span>Copy Tracking Link</span>';
             }, 2000);
