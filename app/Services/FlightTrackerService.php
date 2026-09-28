@@ -79,7 +79,7 @@ class FlightTrackerService
             'origin' => ['code' => 'NCE', 'name' => "Nice Côte d'Azur Airport", 'city' => 'Nice, France', 'terminal' => '1'],
             'dest'   => ['code' => 'LHR', 'name' => 'London Heathrow Airport', 'city' => 'London, UK', 'terminal' => '5'],
             'aircraft' => 'Airbus A320neo',
-            'duration' => '2h 10m',
+            'duration' => '2h 15m',
         ],
         'BA158' => [
             'origin' => ['code' => 'BDA', 'name' => 'L.F. Wade International Airport', 'city' => 'Bermuda', 'terminal' => '1'],
@@ -87,11 +87,47 @@ class FlightTrackerService
             'aircraft' => 'Boeing 777-200ER',
             'duration' => '6h 50m',
         ],
+        'BA202' => [
+            'origin' => ['code' => 'BOS', 'name' => 'Boston Logan International', 'city' => 'Boston, USA', 'terminal' => 'E'],
+            'dest'   => ['code' => 'LHR', 'name' => 'London Heathrow Airport', 'city' => 'London, UK', 'terminal' => '5'],
+            'aircraft' => 'Boeing 777-200ER',
+            'duration' => '6h 45m',
+        ],
+        'BA505' => [
+            'origin' => ['code' => 'LIS', 'name' => 'Humberto Delgado Airport', 'city' => 'Lisbon, Portugal', 'terminal' => '1'],
+            'dest'   => ['code' => 'LHR', 'name' => 'London Heathrow Airport', 'city' => 'London, UK', 'terminal' => '5'],
+            'aircraft' => 'Airbus A320',
+            'duration' => '2h 45m',
+        ],
         'AC860' => [
             'origin' => ['code' => 'YHZ', 'name' => 'Halifax Stanfield International', 'city' => 'Halifax, Canada', 'terminal' => 'Main'],
             'dest'   => ['code' => 'LHR', 'name' => 'London Heathrow Airport', 'city' => 'London, UK', 'terminal' => '2'],
             'aircraft' => 'Boeing 737 MAX 8',
             'duration' => '5h 45m',
+        ],
+        'DL20' => [
+            'origin' => ['code' => 'SEA', 'name' => 'Seattle-Tacoma International Airport', 'city' => 'Seattle, USA', 'terminal' => 'S'],
+            'dest'   => ['code' => 'LHR', 'name' => 'London Heathrow Airport', 'city' => 'London, UK', 'terminal' => '3'],
+            'aircraft' => 'Airbus A330-900neo',
+            'duration' => '9h 25m',
+        ],
+        'DL020' => [
+            'origin' => ['code' => 'SEA', 'name' => 'Seattle-Tacoma International Airport', 'city' => 'Seattle, USA', 'terminal' => 'S'],
+            'dest'   => ['code' => 'LHR', 'name' => 'London Heathrow Airport', 'city' => 'London, UK', 'terminal' => '3'],
+            'aircraft' => 'Airbus A330-900neo',
+            'duration' => '9h 25m',
+        ],
+        'AA939' => [
+            'origin' => ['code' => 'LHR', 'name' => 'London Heathrow Airport', 'city' => 'London, UK', 'terminal' => '3'],
+            'dest'   => ['code' => 'MIA', 'name' => 'Miami International Airport', 'city' => 'Miami, USA', 'terminal' => 'D'],
+            'aircraft' => 'Boeing 777-200ER',
+            'duration' => '9h 10m',
+        ],
+        'AA938' => [
+            'origin' => ['code' => 'MIA', 'name' => 'Miami International Airport', 'city' => 'Miami, USA', 'terminal' => 'D'],
+            'dest'   => ['code' => 'LHR', 'name' => 'London Heathrow Airport', 'city' => 'London, UK', 'terminal' => '3'],
+            'aircraft' => 'Boeing 777-200ER',
+            'duration' => '8h 45m',
         ],
         'EK001' => [
             'origin' => ['code' => 'DXB', 'name' => 'Dubai International Airport', 'city' => 'Dubai, UAE', 'terminal' => '3'],

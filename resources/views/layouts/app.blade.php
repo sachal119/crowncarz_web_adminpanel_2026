@@ -696,21 +696,40 @@
     const KNOWN_ROUTES = {
       'BA158': { originCode: 'BDA', originCity: 'Bermuda', originName: 'L.F. Wade International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '5', duration: '6h 50m', durationMin: 410, depTerminal: '1' },
       'BA327': { originCode: 'NCE', originCity: 'Nice', originName: "Nice Côte d'Azur Airport", destCode: 'LHR', destCity: 'London', destTerminal: '5', duration: '2h 15m', durationMin: 135, depTerminal: '1' },
+      'BA202': { originCode: 'BOS', originCity: 'Boston', originName: 'Boston Logan International', destCode: 'LHR', destCity: 'London', destTerminal: '5', duration: '6h 45m', durationMin: 405, depTerminal: 'E' },
+      'BA505': { originCode: 'LIS', originCity: 'Lisbon', originName: 'Humberto Delgado Airport', destCode: 'LHR', destCity: 'London', destTerminal: '5', duration: '2h 45m', durationMin: 165, depTerminal: '1' },
       'BA159': { originCode: 'LHR', originCity: 'London', originName: 'London Heathrow Airport', destCode: 'BDA', destCity: 'Bermuda', destTerminal: '1', duration: '7h 25m', durationMin: 445, depTerminal: '5' },
+      'BA1599': { originCode: 'LHR', originCity: 'London', originName: 'London Heathrow Airport', destCode: 'MAN', destCity: 'Manchester', destTerminal: '1', duration: '1h 00m', durationMin: 60, depTerminal: '5' },
       'AC860': { originCode: 'YHZ', originCity: 'Halifax', originName: 'Halifax Stanfield International', destCode: 'LHR', destCity: 'London', destTerminal: '2', duration: '5h 45m', durationMin: 345, depTerminal: 'Main' },
       'AC861': { originCode: 'LHR', originCity: 'London', originName: 'London Heathrow Airport', destCode: 'YHZ', destCity: 'Halifax', destTerminal: 'Main', duration: '6h 50m', durationMin: 410, depTerminal: '2' },
+      'DL20': { originCode: 'SEA', originCity: 'Seattle', originName: 'Seattle-Tacoma International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '9h 25m', durationMin: 565, depTerminal: 'S' },
+      'DL020': { originCode: 'SEA', originCity: 'Seattle', originName: 'Seattle-Tacoma International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '9h 25m', durationMin: 565, depTerminal: 'S' },
+      'DL10': { originCode: 'MSP', originCity: 'Minneapolis', originName: 'Minneapolis-Saint Paul International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '8h 15m', durationMin: 495, depTerminal: '1' },
+      'DL30': { originCode: 'ATL', originCity: 'Atlanta', originName: 'Hartsfield-Jackson Atlanta', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '8h 30m', durationMin: 510, depTerminal: 'I' },
+      'DL58': { originCode: 'BOS', originCity: 'Boston', originName: 'Boston Logan International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '6h 40m', durationMin: 400, depTerminal: 'E' },
+      'DL1': { originCode: 'JFK', originCity: 'New York', originName: 'John F. Kennedy International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 10m', durationMin: 430, depTerminal: '4' },
+      'DL2': { originCode: 'LHR', originCity: 'London', originName: 'London Heathrow Airport', destCode: 'JFK', destCity: 'New York', destTerminal: '4', duration: '8h 00m', durationMin: 480, depTerminal: '3' },
+      'DL001': { originCode: 'JFK', originCity: 'New York', originName: 'John F. Kennedy International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 10m', durationMin: 430, depTerminal: '4' },
+      'AA939': { originCode: 'LHR', originCity: 'London', originName: 'London Heathrow Airport', destCode: 'MIA', destCity: 'Miami', destTerminal: 'D', duration: '9h 10m', durationMin: 550, depTerminal: '3' },
+      'AA938': { originCode: 'MIA', originCity: 'Miami', originName: 'Miami International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '8h 45m', durationMin: 525, depTerminal: 'D' },
+      'AA100': { originCode: 'JFK', originCity: 'New York', originName: 'John F. Kennedy International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 00m', durationMin: 420, depTerminal: '8' },
       'EK001': { originCode: 'DXB', originCity: 'Dubai', originName: 'Dubai International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 45m', durationMin: 465, depTerminal: '3' },
+      'EK1': { originCode: 'DXB', originCity: 'Dubai', originName: 'Dubai International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 45m', durationMin: 465, depTerminal: '3' },
       'EK003': { originCode: 'DXB', originCity: 'Dubai', originName: 'Dubai International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 40m', durationMin: 460, depTerminal: '3' },
+      'EK3': { originCode: 'DXB', originCity: 'Dubai', originName: 'Dubai International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 40m', durationMin: 460, depTerminal: '3' },
       'EK005': { originCode: 'DXB', originCity: 'Dubai', originName: 'Dubai International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 45m', durationMin: 465, depTerminal: '3' },
+      'EK5': { originCode: 'DXB', originCity: 'Dubai', originName: 'Dubai International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 45m', durationMin: 465, depTerminal: '3' },
       'QR001': { originCode: 'DOH', originCity: 'Doha', originName: 'Hamad International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '4', duration: '7h 15m', durationMin: 435, depTerminal: 'Main' },
+      'QR1': { originCode: 'DOH', originCity: 'Doha', originName: 'Hamad International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '4', duration: '7h 15m', durationMin: 435, depTerminal: 'Main' },
       'QR003': { originCode: 'DOH', originCity: 'Doha', originName: 'Hamad International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '4', duration: '7h 10m', durationMin: 430, depTerminal: 'Main' },
+      'QR3': { originCode: 'DOH', originCity: 'Doha', originName: 'Hamad International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '4', duration: '7h 10m', durationMin: 430, depTerminal: 'Main' },
       'PK785': { originCode: 'ISB', originCity: 'Islamabad', originName: 'Islamabad International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '2', duration: '8h 30m', durationMin: 510, depTerminal: '1' },
       'PK701': { originCode: 'ISB', originCity: 'Islamabad', originName: 'Islamabad International Airport', destCode: 'MAN', destCity: 'Manchester', destTerminal: '2', duration: '8h 45m', durationMin: 525, depTerminal: '1' },
       'PK702': { originCode: 'MAN', originCity: 'Manchester', originName: 'Manchester Airport', destCode: 'ISB', destCity: 'Islamabad', destTerminal: '1', duration: '7h 55m', durationMin: 475, depTerminal: '2' },
       'VS004': { originCode: 'JFK', originCity: 'New York', originName: 'John F. Kennedy International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '6h 55m', durationMin: 415, depTerminal: '4' },
+      'VS4': { originCode: 'JFK', originCity: 'New York', originName: 'John F. Kennedy International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '6h 55m', durationMin: 415, depTerminal: '4' },
       'VS045': { originCode: 'LHR', originCity: 'London', originName: 'London Heathrow Airport', destCode: 'JFK', destCity: 'New York', destTerminal: '4', duration: '8h 05m', durationMin: 485, depTerminal: '3' },
-      'AA100': { originCode: 'JFK', originCity: 'New York', originName: 'John F. Kennedy International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 00m', durationMin: 420, depTerminal: '8' },
-      'DL001': { originCode: 'JFK', originCity: 'New York', originName: 'John F. Kennedy International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 10m', durationMin: 430, depTerminal: '4' },
+      'VS45': { originCode: 'LHR', originCity: 'London', originName: 'London Heathrow Airport', destCode: 'JFK', destCity: 'New York', destTerminal: '4', duration: '8h 05m', durationMin: 485, depTerminal: '3' },
       'UA901': { originCode: 'SFO', originCity: 'San Francisco', originName: 'San Francisco International', destCode: 'LHR', destCity: 'London', destTerminal: '2', duration: '10h 30m', durationMin: 630, depTerminal: 'I' },
       'AF1680': { originCode: 'CDG', originCity: 'Paris', originName: 'Charles de Gaulle Airport', destCode: 'LHR', destCity: 'London', destTerminal: '4', duration: '1h 20m', durationMin: 80, depTerminal: '2E' },
       'KL1001': { originCode: 'AMS', originCity: 'Amsterdam', originName: 'Amsterdam Schiphol Airport', destCode: 'LHR', destCity: 'London', destTerminal: '4', duration: '1h 15m', durationMin: 75, depTerminal: '1' },
@@ -719,16 +738,16 @@
     };
 
     const AIRLINE_DEFAULT_HUBS = {
-      'BA': { originCode: 'INT', originCity: 'International', name: 'International Airport', duration: '3h 30m', durationMin: 210, destTerminal: '5' },
-      'VS': { originCode: 'JFK', originCity: 'New York', name: 'John F. Kennedy International', duration: '7h 00m', durationMin: 420, destTerminal: '3' },
+      'BA': { originCode: 'INT', originCity: 'Origin', name: 'International Airport', duration: '3h 30m', durationMin: 210, destTerminal: '5' },
+      'VS': { originCode: 'USA', originCity: 'Origin', name: 'International Airport', duration: '7h 00m', durationMin: 420, destTerminal: '3' },
       'EK': { originCode: 'DXB', originCity: 'Dubai', name: 'Dubai International Airport', duration: '7h 45m', durationMin: 465, destTerminal: '3' },
       'QR': { originCode: 'DOH', originCity: 'Doha', name: 'Hamad International Airport', duration: '7h 15m', durationMin: 435, destTerminal: '4' },
       'EY': { originCode: 'AUH', originCity: 'Abu Dhabi', name: 'Zayed International Airport', duration: '7h 30m', durationMin: 450, destTerminal: '4' },
       'PK': { originCode: 'ISB', originCity: 'Islamabad', name: 'Islamabad International Airport', duration: '8h 30m', durationMin: 510, destTerminal: '2' },
-      'AC': { originCode: 'YYZ', originCity: 'Toronto', name: 'Toronto Pearson International', duration: '7h 35m', durationMin: 455, destTerminal: '2' },
-      'AA': { originCode: 'JFK', originCity: 'New York', name: 'John F. Kennedy International', duration: '7h 00m', durationMin: 420, destTerminal: '3' },
-      'DL': { originCode: 'ATL', originCity: 'Atlanta', name: 'Hartsfield-Jackson Atlanta', duration: '8h 30m', durationMin: 510, destTerminal: '3' },
-      'UA': { originCode: 'ORD', originCity: 'Chicago', name: "O'Hare International Airport", duration: '8h 15m', durationMin: 495, destTerminal: '2' },
+      'AC': { originCode: 'CAN', originCity: 'Canada', name: 'Canadian International Airport', duration: '7h 35m', durationMin: 455, destTerminal: '2' },
+      'AA': { originCode: 'USA', originCity: 'USA', name: 'US International Airport', duration: '7h 00m', durationMin: 420, destTerminal: '3' },
+      'DL': { originCode: 'USA', originCity: 'USA', name: 'US International Airport', duration: '8h 30m', durationMin: 510, destTerminal: '3' },
+      'UA': { originCode: 'USA', originCity: 'USA', name: 'US International Airport', duration: '8h 15m', durationMin: 495, destTerminal: '2' },
       'AF': { originCode: 'CDG', originCity: 'Paris', name: 'Charles de Gaulle Airport', duration: '1h 20m', durationMin: 80, destTerminal: '4' },
       'KL': { originCode: 'AMS', originCity: 'Amsterdam', name: 'Amsterdam Schiphol Airport', duration: '1h 15m', durationMin: 75, destTerminal: '4' },
       'LH': { originCode: 'FRA', originCity: 'Frankfurt', name: 'Frankfurt Airport', duration: '1h 35m', durationMin: 95, destTerminal: '2' },
@@ -872,7 +891,8 @@
       let detectedTerminal = tMatch ? tMatch[1].toUpperCase() : '';
 
       // 🌟 Resolve Flight Route Data (Immediate Exact Sync Lookup) 🌟
-      const known = KNOWN_ROUTES[cleanFlight] || null;
+      const normFlight = cleanFlight.replace(/^([A-Z0-9]{2,3})0*(\d+)$/, '$1$2');
+      const known = KNOWN_ROUTES[cleanFlight] || KNOWN_ROUTES[normFlight] || null;
       const hub = AIRLINE_DEFAULT_HUBS[prefix] || AIRLINE_DEFAULT_HUBS[cleanFlight.slice(0, 2)] || null;
 
       let resolvedOriginCode = 'DEP';
