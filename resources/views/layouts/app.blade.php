@@ -693,6 +693,93 @@
       'ABY': 'Air Arabia'
     };
 
+    const KNOWN_ROUTES = {
+      'BA158': { originCode: 'BDA', originCity: 'Bermuda', originName: 'L.F. Wade International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '5', duration: '6h 50m', durationMin: 410, depTerminal: '1' },
+      'BA327': { originCode: 'NCE', originCity: 'Nice', originName: "Nice Côte d'Azur Airport", destCode: 'LHR', destCity: 'London', destTerminal: '5', duration: '2h 15m', durationMin: 135, depTerminal: '1' },
+      'BA159': { originCode: 'LHR', originCity: 'London', originName: 'London Heathrow Airport', destCode: 'BDA', destCity: 'Bermuda', destTerminal: '1', duration: '7h 25m', durationMin: 445, depTerminal: '5' },
+      'AC860': { originCode: 'YHZ', originCity: 'Halifax', originName: 'Halifax Stanfield International', destCode: 'LHR', destCity: 'London', destTerminal: '2', duration: '5h 45m', durationMin: 345, depTerminal: 'Main' },
+      'AC861': { originCode: 'LHR', originCity: 'London', originName: 'London Heathrow Airport', destCode: 'YHZ', destCity: 'Halifax', destTerminal: 'Main', duration: '6h 50m', durationMin: 410, depTerminal: '2' },
+      'EK001': { originCode: 'DXB', originCity: 'Dubai', originName: 'Dubai International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 45m', durationMin: 465, depTerminal: '3' },
+      'EK003': { originCode: 'DXB', originCity: 'Dubai', originName: 'Dubai International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 40m', durationMin: 460, depTerminal: '3' },
+      'EK005': { originCode: 'DXB', originCity: 'Dubai', originName: 'Dubai International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 45m', durationMin: 465, depTerminal: '3' },
+      'QR001': { originCode: 'DOH', originCity: 'Doha', originName: 'Hamad International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '4', duration: '7h 15m', durationMin: 435, depTerminal: 'Main' },
+      'QR003': { originCode: 'DOH', originCity: 'Doha', originName: 'Hamad International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '4', duration: '7h 10m', durationMin: 430, depTerminal: 'Main' },
+      'PK785': { originCode: 'ISB', originCity: 'Islamabad', originName: 'Islamabad International Airport', destCode: 'LHR', destCity: 'London', destTerminal: '2', duration: '8h 30m', durationMin: 510, depTerminal: '1' },
+      'PK701': { originCode: 'ISB', originCity: 'Islamabad', originName: 'Islamabad International Airport', destCode: 'MAN', destCity: 'Manchester', destTerminal: '2', duration: '8h 45m', durationMin: 525, depTerminal: '1' },
+      'PK702': { originCode: 'MAN', originCity: 'Manchester', originName: 'Manchester Airport', destCode: 'ISB', destCity: 'Islamabad', destTerminal: '1', duration: '7h 55m', durationMin: 475, depTerminal: '2' },
+      'VS004': { originCode: 'JFK', originCity: 'New York', originName: 'John F. Kennedy International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '6h 55m', durationMin: 415, depTerminal: '4' },
+      'VS045': { originCode: 'LHR', originCity: 'London', originName: 'London Heathrow Airport', destCode: 'JFK', destCity: 'New York', destTerminal: '4', duration: '8h 05m', durationMin: 485, depTerminal: '3' },
+      'AA100': { originCode: 'JFK', originCity: 'New York', originName: 'John F. Kennedy International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 00m', durationMin: 420, depTerminal: '8' },
+      'DL001': { originCode: 'JFK', originCity: 'New York', originName: 'John F. Kennedy International', destCode: 'LHR', destCity: 'London', destTerminal: '3', duration: '7h 10m', durationMin: 430, depTerminal: '4' },
+      'UA901': { originCode: 'SFO', originCity: 'San Francisco', originName: 'San Francisco International', destCode: 'LHR', destCity: 'London', destTerminal: '2', duration: '10h 30m', durationMin: 630, depTerminal: 'I' },
+      'AF1680': { originCode: 'CDG', originCity: 'Paris', originName: 'Charles de Gaulle Airport', destCode: 'LHR', destCity: 'London', destTerminal: '4', duration: '1h 20m', durationMin: 80, depTerminal: '2E' },
+      'KL1001': { originCode: 'AMS', originCity: 'Amsterdam', originName: 'Amsterdam Schiphol Airport', destCode: 'LHR', destCity: 'London', destTerminal: '4', duration: '1h 15m', durationMin: 75, depTerminal: '1' },
+      'LH900': { originCode: 'FRA', originCity: 'Frankfurt', originName: 'Frankfurt Airport', destCode: 'LHR', destCity: 'London', destTerminal: '2', duration: '1h 35m', durationMin: 95, depTerminal: '1' },
+      'TK1985': { originCode: 'IST', originCity: 'Istanbul', originName: 'Istanbul Airport', destCode: 'LHR', destCity: 'London', destTerminal: '2', duration: '3h 50m', durationMin: 230, depTerminal: 'I' }
+    };
+
+    const AIRLINE_DEFAULT_HUBS = {
+      'BA': { originCode: 'INT', originCity: 'International', name: 'International Airport', duration: '3h 30m', durationMin: 210, destTerminal: '5' },
+      'VS': { originCode: 'JFK', originCity: 'New York', name: 'John F. Kennedy International', duration: '7h 00m', durationMin: 420, destTerminal: '3' },
+      'EK': { originCode: 'DXB', originCity: 'Dubai', name: 'Dubai International Airport', duration: '7h 45m', durationMin: 465, destTerminal: '3' },
+      'QR': { originCode: 'DOH', originCity: 'Doha', name: 'Hamad International Airport', duration: '7h 15m', durationMin: 435, destTerminal: '4' },
+      'EY': { originCode: 'AUH', originCity: 'Abu Dhabi', name: 'Zayed International Airport', duration: '7h 30m', durationMin: 450, destTerminal: '4' },
+      'PK': { originCode: 'ISB', originCity: 'Islamabad', name: 'Islamabad International Airport', duration: '8h 30m', durationMin: 510, destTerminal: '2' },
+      'AC': { originCode: 'YYZ', originCity: 'Toronto', name: 'Toronto Pearson International', duration: '7h 35m', durationMin: 455, destTerminal: '2' },
+      'AA': { originCode: 'JFK', originCity: 'New York', name: 'John F. Kennedy International', duration: '7h 00m', durationMin: 420, destTerminal: '3' },
+      'DL': { originCode: 'ATL', originCity: 'Atlanta', name: 'Hartsfield-Jackson Atlanta', duration: '8h 30m', durationMin: 510, destTerminal: '3' },
+      'UA': { originCode: 'ORD', originCity: 'Chicago', name: "O'Hare International Airport", duration: '8h 15m', durationMin: 495, destTerminal: '2' },
+      'AF': { originCode: 'CDG', originCity: 'Paris', name: 'Charles de Gaulle Airport', duration: '1h 20m', durationMin: 80, destTerminal: '4' },
+      'KL': { originCode: 'AMS', originCity: 'Amsterdam', name: 'Amsterdam Schiphol Airport', duration: '1h 15m', durationMin: 75, destTerminal: '4' },
+      'LH': { originCode: 'FRA', originCity: 'Frankfurt', name: 'Frankfurt Airport', duration: '1h 35m', durationMin: 95, destTerminal: '2' },
+      'TK': { originCode: 'IST', originCity: 'Istanbul', name: 'Istanbul Airport', duration: '3h 50m', durationMin: 230, destTerminal: '2' },
+      'SV': { originCode: 'JED', originCity: 'Jeddah', name: 'King Abdulaziz International', duration: '6h 30m', durationMin: 390, destTerminal: '4' },
+      'AI': { originCode: 'DEL', originCity: 'Delhi', name: 'Indira Gandhi International', duration: '9h 00m', durationMin: 540, destTerminal: '2' },
+      'FR': { originCode: 'DUB', originCity: 'Dublin', name: 'Dublin Airport', duration: '1h 15m', durationMin: 75, destTerminal: 'Main' },
+      'U2': { originCode: 'GVA', originCity: 'Geneva', name: 'Geneva Airport', duration: '1h 40m', durationMin: 100, destTerminal: 'North' },
+      'W6': { originCode: 'BUD', originCity: 'Budapest', name: 'Budapest Ferenc Liszt', duration: '2h 30m', durationMin: 150, destTerminal: 'Main' },
+      'EI': { originCode: 'DUB', originCity: 'Dublin', name: 'Dublin Airport', duration: '1h 15m', durationMin: 75, destTerminal: '2' }
+    };
+
+    function calculateDepartureTime(arrTimeStr, durationMinutes) {
+      if (!arrTimeStr || arrTimeStr === '-' || arrTimeStr === 'Scheduled') return 'Scheduled';
+      let hours = 0, mins = 0;
+      const match = arrTimeStr.match(/(\d{1,2})[:.](\d{2})\s*(am|pm)?/i);
+      if (!match) return 'Scheduled';
+      hours = parseInt(match[1], 10);
+      mins = parseInt(match[2], 10);
+      const meridiem = match[3] ? match[3].toLowerCase() : null;
+      if (meridiem === 'pm' && hours < 12) hours += 12;
+      if (meridiem === 'am' && hours === 12) hours = 0;
+
+      let totalMinutes = hours * 60 + mins - (durationMinutes || 120);
+      while (totalMinutes < 0) totalMinutes += 24 * 60;
+      totalMinutes = totalMinutes % (24 * 60);
+
+      let depH = Math.floor(totalMinutes / 60);
+      let depM = totalMinutes % 60;
+      let ampm = depH >= 12 ? 'pm' : 'am';
+      depH = depH % 12;
+      if (depH === 0) depH = 12;
+      let depMStr = depM < 10 ? '0' + depM : depM;
+      return `${depH}:${depMStr} ${ampm}`;
+    }
+
+    function formatTimeDisplay(timeStr) {
+      if (!timeStr) return 'Scheduled';
+      const match = timeStr.match(/(\d{1,2})[:.](\d{2})\s*(am|pm)?/i);
+      if (!match) return timeStr;
+      let h = parseInt(match[1], 10);
+      let m = match[2];
+      let p = match[3] ? match[3].toLowerCase() : '';
+      if (!p) {
+        p = h >= 12 ? 'pm' : 'am';
+        h = h % 12;
+        if (h === 0) h = 12;
+      }
+      return `${h}:${m} ${p}`;
+    }
+
     window.openFlightTracker = function(event, flightNo, extra) {
       if (event) {
         event.stopPropagation();
@@ -710,7 +797,7 @@
 
       const modalEl = document.getElementById('flightTrackerModal');
       if (!modalEl) {
-        window.open('https://www.google.com/search?q=' + encodeURIComponent(cleanFlight), '_blank');
+        window.open('https://www.google.com/search?q=' + encodeURIComponent('flight ' + cleanFlight), '_blank');
         return;
       }
 
@@ -744,7 +831,7 @@
       const fullRouteText = (pickupAddr && dropoffAddr) ? `${pickupAddr} ➔ ${dropoffAddr}` : (pickupAddr || dropoffAddr || '');
       const routeCheck = (pickupAddr + ' ' + dropoffAddr).toLowerCase();
 
-      // Detect Airport & Terminal from route
+      // Detect Destination Airport & Terminal from booking pickup/dropoff
       let airportArrivalsUrl = 'https://www.heathrow.com/arrivals';
       let airportBtnTitle = 'Heathrow Arrivals';
 
@@ -768,6 +855,11 @@
         airportName = 'London City Airport';
         airportArrivalsUrl = 'https://www.londoncityairport.com/flight-status';
         airportBtnTitle = 'London City Arrivals';
+      } else if (routeCheck.includes('manchester') || routeCheck.includes('man')) {
+        airportCode = 'MAN';
+        airportName = 'Manchester Airport (MAN)';
+        airportArrivalsUrl = 'https://www.manchesterairport.co.uk/flight-information/arrivals/';
+        airportBtnTitle = 'Manchester Arrivals';
       } else if (routeCheck.includes('birmingham') || routeCheck.includes('bhx')) {
         airportCode = 'BHX';
         airportName = 'Birmingham Airport';
@@ -775,11 +867,50 @@
         airportBtnTitle = 'Birmingham Arrivals';
       }
 
-      // Check terminal
+      // Check terminal from address
       const tMatch = routeCheck.match(/terminal\s*([0-9]|north|south)/i);
-      if (tMatch) {
-        terminalInfo = `Terminal ${tMatch[1].toUpperCase()}`;
+      let detectedTerminal = tMatch ? tMatch[1].toUpperCase() : '';
+
+      // 🌟 Resolve Flight Route Data (Immediate Exact Sync Lookup) 🌟
+      const known = KNOWN_ROUTES[cleanFlight] || null;
+      const hub = AIRLINE_DEFAULT_HUBS[prefix] || AIRLINE_DEFAULT_HUBS[cleanFlight.slice(0, 2)] || null;
+
+      let resolvedOriginCode = 'DEP';
+      let resolvedOriginCity = 'International';
+      let resolvedOriginName = 'Departure Airport';
+      let resolvedDepTerminal = '1';
+      let resolvedDuration = 'Direct Flight';
+      let resolvedDurationMin = 180;
+      let resolvedDestCode = airportCode;
+      let resolvedDestCity = 'London';
+      let resolvedDestTerminal = detectedTerminal || '5';
+
+      if (known) {
+        resolvedOriginCode = known.originCode;
+        resolvedOriginCity = known.originCity;
+        resolvedOriginName = known.originName;
+        resolvedDepTerminal = known.depTerminal || '1';
+        resolvedDuration = known.duration;
+        resolvedDurationMin = known.durationMin;
+        if (!detectedTerminal && known.destTerminal) {
+          resolvedDestTerminal = known.destTerminal;
+        }
+        if (known.destCity) resolvedDestCity = known.destCity;
+      } else if (hub) {
+        resolvedOriginCode = hub.originCode;
+        resolvedOriginCity = hub.originCity;
+        resolvedOriginName = hub.name;
+        resolvedDepTerminal = '1';
+        resolvedDuration = hub.duration;
+        resolvedDurationMin = hub.durationMin;
+        if (!detectedTerminal && hub.destTerminal) {
+          resolvedDestTerminal = hub.destTerminal;
+        }
       }
+
+      // Format Times
+      const formattedArrTime = pickupTime ? formatTimeDisplay(pickupTime) : 'Scheduled';
+      const calculatedDepTime = calculateDepartureTime(pickupTime, resolvedDurationMin);
 
       // Bind Google Flight Card Elements
       const googleTitle = document.getElementById('ftm-google-title');
@@ -812,23 +943,32 @@
 
       const fullFlightTitle = `${fallbackAirlineName} ${cleanFlight}`;
       if (googleTitle) googleTitle.textContent = fullFlightTitle;
-      if (googleSubtitle) googleSubtitle.textContent = `${fallbackAirlineName} Flight to London`;
+      if (googleSubtitle) googleSubtitle.textContent = `${resolvedOriginCity} to ${resolvedDestCity}`;
       if (summaryCode) summaryCode.textContent = cleanFlight;
-      if (summaryTime) summaryTime.textContent = pickupTime || 'Scheduled';
+      if (summaryTime) summaryTime.textContent = formattedArrTime;
       if (summaryDest) summaryDest.textContent = `${airportName}`;
-      if (gDestCode) gDestCode.textContent = airportCode;
-      if (gArrTerminal) gArrTerminal.textContent = terminalInfo.replace('Terminal ', '') || '5';
-      if (gArrTime) gArrTime.textContent = pickupTime || '1:10 pm';
+      if (googleStatusPill) googleStatusPill.textContent = 'ON TIME';
+
+      if (gOriginCode) gOriginCode.textContent = resolvedOriginCode;
+      if (originLink) originLink.href = 'https://www.google.com/search?q=' + encodeURIComponent(resolvedOriginName);
+      if (gDuration) gDuration.textContent = resolvedDuration;
+      if (gDestCode) gDestCode.textContent = resolvedDestCode;
+      if (destLink) destLink.href = airportArrivalsUrl;
 
       // Setup Dates for Headers
       const today = new Date();
       const dateOptions = { weekday: 'short', day: 'numeric', month: 'short' };
       const currentDayStr = pickupDate || today.toLocaleDateString('en-GB', dateOptions);
 
-      if (gDepHeader) gDepHeader.textContent = `Departure • ${currentDayStr}`;
-      if (gArrHeader) gArrHeader.textContent = `London • ${currentDayStr}`;
+      if (gDepHeader) gDepHeader.textContent = `${resolvedOriginCity} • ${currentDayStr}`;
+      if (gDepTime) gDepTime.textContent = calculatedDepTime;
+      if (gDepTerminal) gDepTerminal.textContent = resolvedDepTerminal;
+      if (gDepGate) gDepGate.textContent = '-';
 
-      if (destLink) destLink.href = airportArrivalsUrl;
+      if (gArrHeader) gArrHeader.textContent = `${resolvedDestCity} • ${currentDayStr}`;
+      if (gArrTime) gArrTime.textContent = formattedArrTime;
+      if (gArrTerminal) gArrTerminal.textContent = resolvedDestTerminal;
+      if (gArrGate) gArrGate.textContent = '-';
 
       if (bookingContext) {
         if (passengerName || fullRouteText) {
@@ -848,7 +988,7 @@
       const openGoogleBtn = document.getElementById('ftm-btn-open-google');
       if (openGoogleBtn) openGoogleBtn.href = googleUrl;
 
-      // Fetch Real-time Telemetry API
+      // Background Fetch for Real-time Telemetry API
       const telemetryUrl = `/api/flight-telemetry?flight=${encodeURIComponent(cleanFlight)}&pickup_date=${encodeURIComponent(pickupDate)}&pickup_time=${encodeURIComponent(pickupTime)}`;
       fetch(telemetryUrl)
         .then(res => res.json())
@@ -857,8 +997,8 @@
             const airlineDisplay = data.airline ? `${data.airline} ${cleanFlight}` : fullFlightTitle;
             if (googleTitle) googleTitle.textContent = airlineDisplay;
             
-            const originCityName = data.origin && data.origin.city ? data.origin.city.split(',')[0] : 'Origin';
-            const destCityName = data.destination && data.destination.city ? data.destination.city.split(',')[0] : 'London';
+            const originCityName = data.origin && data.origin.city ? data.origin.city.split(',')[0] : resolvedOriginCity;
+            const destCityName = data.destination && data.destination.city ? data.destination.city.split(',')[0] : resolvedDestCity;
             if (googleSubtitle) googleSubtitle.textContent = `${originCityName} to ${destCityName}`;
 
             if (summaryDest && data.destination) {
@@ -887,10 +1027,12 @@
 
             if (data.duration && gDuration) gDuration.textContent = data.duration;
             if (data.dep_time) {
-              if (summaryTime) summaryTime.textContent = data.dep_time;
               if (gDepTime) gDepTime.textContent = data.dep_time;
             }
-            if (data.arr_time && gArrTime) gArrTime.textContent = data.arr_time;
+            if (data.arr_time) {
+              if (summaryTime) summaryTime.textContent = data.arr_time;
+              if (gArrTime) gArrTime.textContent = data.arr_time;
+            }
 
             if (data.links && openGoogleBtn && data.links.google) {
               openGoogleBtn.href = data.links.google;

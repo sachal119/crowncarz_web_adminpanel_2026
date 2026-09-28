@@ -30,13 +30,13 @@
         <!-- Summary Bar (Time / Destination / Status) -->
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 px-1">
           <div class="d-flex align-items-baseline gap-2">
-            <span class="fw-bold text-white fs-5" id="ftm-summary-time">11:55 am</span>
-            <span class="small font-monospace" style="color: #9aa0a6;" id="ftm-summary-code">BA 327</span>
+            <span class="fw-bold text-white fs-5" id="ftm-summary-time">Scheduled</span>
+            <span class="small font-monospace" style="color: #9aa0a6;" id="ftm-summary-code">FLIGHT</span>
           </div>
           <div class="d-flex align-items-center gap-2">
-            <span class="small" style="color: #bdc1c6;">to <strong class="text-white" id="ftm-summary-dest">London LHR</strong></span>
+            <span class="small" style="color: #bdc1c6;">to <strong class="text-white" id="ftm-summary-dest">London</strong></span>
             <span id="ftm-google-status-pill" class="badge text-uppercase fw-semibold" style="border: 1px solid #81c995; color: #81c995; background: rgba(129, 201, 149, 0.12); font-size: 0.72rem; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.5px;">
-              DEPARTING ON TIME
+              ON TIME
             </span>
           </div>
         </div>
@@ -44,17 +44,17 @@
         <!-- 🌟 MAIN GOOGLE FLIGHT CARD BOX 🌟 -->
         <div class="rounded-4 p-4 mb-3" style="background: #303134; border: 1px solid #3c4043;">
           
-          <!-- Route Visualizer (NCE ─── ✈ ─── LHR) -->
+          <!-- Route Visualizer (ORIGIN ─── ✈ ─── DEST) -->
           <div class="d-flex align-items-center justify-content-between mb-4">
             <!-- Origin Airport -->
             <div class="text-start" style="min-width: 90px;">
-              <div class="fw-bold text-white font-monospace" style="font-size: 2.2rem; line-height: 1;" id="ftm-g-origin-code">NCE</div>
+              <div class="fw-bold text-white font-monospace" style="font-size: 2.2rem; line-height: 1;" id="ftm-g-origin-code">DEP</div>
               <a href="#" target="_blank" id="ftm-origin-link" class="small text-decoration-none mt-1 d-inline-block" style="color: #8ab4f8; font-size: 0.8rem;">Airport info</a>
             </div>
 
             <!-- Flight Progress Line with Plane Icon & Duration -->
             <div class="flex-grow-1 mx-3 position-relative text-center">
-              <div class="text-center small mb-1" style="color: #9aa0a6; font-size: 0.8rem;" id="ftm-g-duration">2h 15m</div>
+              <div class="text-center small mb-1" style="color: #9aa0a6; font-size: 0.8rem;" id="ftm-g-duration">Direct Flight</div>
               <div class="d-flex align-items-center position-relative" style="height: 18px;">
                 <div style="height: 1px; width: 100%; background: #5f6368;"></div>
                 <div class="position-absolute start-50 translate-middle-x bg-transparent px-2" style="color: #81c995;">
@@ -78,12 +78,12 @@
             <!-- Left: Departure Details -->
             <div class="col-12 col-md-6">
               <div class="text-white fw-medium mb-2" style="font-size: 0.92rem;" id="ftm-g-dep-header">
-                Nice • Tue, 29 Sept
+                Departure
               </div>
               <div class="row g-2 align-items-baseline">
                 <div class="col-6">
                   <div class="small" style="color: #9aa0a6; font-size: 0.76rem;">Scheduled departure</div>
-                  <div class="fw-bold text-white mt-1" style="font-size: 1.35rem; color: #81c995 !important;" id="ftm-g-dep-time">11:55 am</div>
+                  <div class="fw-bold text-white mt-1" style="font-size: 1.35rem; color: #81c995 !important;" id="ftm-g-dep-time">Scheduled</div>
                 </div>
                 <div class="col-3 text-center">
                   <div class="small" style="color: #9aa0a6; font-size: 0.76rem;">Terminal</div>
@@ -99,12 +99,12 @@
             <!-- Right: Arrival Details -->
             <div class="col-12 col-md-6 border-start-md" style="border-color: #3c4043 !important;">
               <div class="text-white fw-medium mb-2" style="font-size: 0.92rem;" id="ftm-g-arr-header">
-                London • Tue, 29 Sept
+                London
               </div>
               <div class="row g-2 align-items-baseline">
                 <div class="col-6">
                   <div class="small" style="color: #9aa0a6; font-size: 0.76rem;">Scheduled arrival</div>
-                  <div class="fw-bold text-white mt-1" style="font-size: 1.35rem; color: #81c995 !important;" id="ftm-g-arr-time">1:10 pm</div>
+                  <div class="fw-bold text-white mt-1" style="font-size: 1.35rem; color: #81c995 !important;" id="ftm-g-arr-time">Scheduled</div>
                 </div>
                 <div class="col-3 text-center">
                   <div class="small" style="color: #9aa0a6; font-size: 0.76rem;">Terminal</div>
