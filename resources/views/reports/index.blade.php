@@ -186,32 +186,6 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Booking Status</label>
-                            <div class="dropdown status-dropdown-wrapper">
-                                <button class="form-select text-start status-dropdown-btn d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                                    <span class="status-btn-text text-truncate">Completed (1)</span>
-                                </button>
-                                <div class="dropdown-menu status-dropdown-menu w-100">
-                                    <div class="form-check mb-2 pb-2 border-bottom">
-                                        <input class="form-check-input status-select-all" type="checkbox" id="to_all">
-                                        <label class="form-check-label fw-bold text-primary" for="to_all">All Statuses</label>
-                                    </div>
-                                    <div class="status-items-container">
-                                        <div class="form-check"><input class="form-check-input status-item-cb" type="checkbox" value="completed" id="to_s_completed" checked><label class="form-check-label" for="to_s_completed">Completed</label></div>
-                                        <div class="form-check"><input class="form-check-input status-item-cb" type="checkbox" value="pending" id="to_s_pending"><label class="form-check-label" for="to_s_pending">Pending</label></div>
-                                        <div class="form-check"><input class="form-check-input status-item-cb" type="checkbox" value="accepted" id="to_s_accepted"><label class="form-check-label" for="to_s_accepted">Accepted</label></div>
-                                        <div class="form-check"><input class="form-check-input status-item-cb" type="checkbox" value="onroute" id="to_s_onroute"><label class="form-check-label" for="to_s_onroute">On Route</label></div>
-                                        <div class="form-check"><input class="form-check-input status-item-cb" type="checkbox" value="arrived" id="to_s_arrived"><label class="form-check-label" for="to_s_arrived">Arrived</label></div>
-                                        <div class="form-check"><input class="form-check-input status-item-cb" type="checkbox" value="pickedup" id="to_s_pickedup"><label class="form-check-label" for="to_s_pickedup">Picked Up</label></div>
-                                        <div class="form-check"><input class="form-check-input status-item-cb" type="checkbox" value="job_cancelled" id="to_s_cancelled"><label class="form-check-label" for="to_s_cancelled">Cancelled</label></div>
-                                        <div class="form-check"><input class="form-check-input status-item-cb" type="checkbox" value="no_show" id="to_s_noshow"><label class="form-check-label" for="to_s_noshow">No Show</label></div>
-                                    </div>
-                                </div>
-                                <input type="hidden" name="booking_status" class="status-hidden-input" value="completed">
-                            </div>
-                        </div>
-
                         <button type="submit" class="btn btn-mint w-100">
                             <i class="bi bi-cash-coin me-1"></i> Generate Report
                         </button>

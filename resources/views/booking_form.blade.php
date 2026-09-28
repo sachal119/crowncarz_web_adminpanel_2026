@@ -556,26 +556,33 @@
 <!--</select>-->
 
 <!--</div>-->
+@php
+    $savedFare = old('fare', $booking['fare'] ?? '');
+    if ($savedFare === '' && isset($booking['price'])) {
+        $calcFare = (float)$booking['price'] - (float)($booking['parking'] ?? 0) - (float)($booking['extra'] ?? 0) - (float)($booking['waiting_fee'] ?? 0);
+        $savedFare = $calcFare > 0 ? $calcFare : $booking['price'];
+    }
+@endphp
 <div class="col-12 col-md-2 mb-2 mb-md-3">
-    <label class="form-label  fs-6 fs-md-6">Fare (£)</label>
+    <label class="form-label fs-6 fs-md-6">Fare (£)</label>
     <input type="number" name="fare" id="fare"
            class="form-control rounded-3 shadow-sm"
-           value="{{ old('fare', $booking['fare'] ?? '') }}" step="0.01">
+           value="{{ $savedFare }}" step="0.01">
   </div>
-  {{-- ✅ Location Charges (Pickup Fee + Dropoff Fee combined, readonly) --}}
+  {{-- ✅ Location Charges (Pickup Fee + Dropoff Fee combined) --}}
   <div class="col-12 col-md-2 mb-2 mb-md-3">
-    <label class="form-label  fs-6 fs-md-6">Parking (£)</label>
+    <label class="form-label fs-6 fs-md-6">Parking (£)</label>
     <input type="number" name="parking" id="parking"
-           class="form-control rounded-3 shadow-sm bg-light "
+           class="form-control rounded-3 shadow-sm bg-light"
            value="{{ old('parking', $booking['parking'] ?? '0') }}" step="0.01">
   </div>
   <div class="col-12 col-md-2 mb-2 mb-md-3">
-    <label class="form-label  fs-6 fs-md-6">Extra (£)</label>
+    <label class="form-label fs-6 fs-md-6">Extra (£)</label>
     <input type="number" name="extra" id="extra"
            class="form-control rounded-3 shadow-sm" value="{{ old('extra', $booking['extra'] ?? '0') }}" min="0" step="0.01">
   </div>
   <div class="col-12 col-md-2 mb-2 mb-md-3">
-    <label class="form-label  fs-6 fs-md-6">Waiting Fee (£)</label>
+    <label class="form-label fs-6 fs-md-6">Waiting Fee (£)</label>
     <input type="number" name="waiting_fee" id="waiting_fee"
            class="form-control rounded-3 shadow-sm" value="{{ old('waiting_fee', $booking['waiting_fee'] ?? '0') }}" min="0" step="0.01">
   </div>
@@ -975,6 +982,12 @@
   </div>
 </div>
 <script>
+window.IS_EDIT_MODE = @json(isset($booking));
+window.userHasInteracted = false;
+window.markPricingInteraction = function () {
+  window.userHasInteracted = true;
+};
+
 // One shared, transition-free loader instance is used by price lookup and
 // booking submission. This prevents duplicate/orphan Bootstrap backdrops.
 window.getLoadingModal = function () {
@@ -2520,7 +2533,11 @@ function getSelectedId(inputId, listId) {
 }
 
 // Recalculate fees using selected Firebase IDs
-function recalcFeesAndTotal() {
+function recalcFeesAndTotal(force = false) {
+  if (window.IS_EDIT_MODE && !window.userHasInteracted && !force) {
+    return;
+  }
+
   const pickupType = $('input[name="pickup_type"]:checked')?.value;
   const dropoffType = $('input[name="dropoff_type"]:checked')?.value;
 
@@ -2560,7 +2577,7 @@ function recalcFeesAndTotal() {
   if (extraEl) extraEl.value = locationExtra.toFixed(2);
 
   if (typeof window.calculateTotal === 'function') {
-    window.calculateTotal();
+    window.calculateTotal(true);
   }
 }
 window.recalcFeesAndTotal = recalcFeesAndTotal;
@@ -2590,14 +2607,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const dropoffTypeEl = $('input[name="dropoff_type"]:checked');
     if (pickupTypeEl) populateDatalist(pickupTypeEl.value, 'pickup_list');
     if (dropoffTypeEl) populateDatalist(dropoffTypeEl.value, 'dropoff_list');
-    setTimeout(recalcFeesAndTotal, 300);
+    if (!window.IS_EDIT_MODE) {
+      setTimeout(() => recalcFeesAndTotal(true), 300);
+    }
   });
 
   document.querySelectorAll('input[name="pickup_type"]').forEach(r =>
-    r.addEventListener('change', e => populateDatalist(e.target.value, 'pickup_list'))
+    r.addEventListener('change', e => {
+      window.markPricingInteraction?.();
+      populateDatalist(e.target.value, 'pickup_list');
+    })
   );
   document.querySelectorAll('input[name="dropoff_type"]').forEach(r =>
-    r.addEventListener('change', e => populateDatalist(e.target.value, 'dropoff_list'))
+    r.addEventListener('change', e => {
+      window.markPricingInteraction?.();
+      populateDatalist(e.target.value, 'dropoff_list');
+    })
   );
 
   $('#pickup_address')?.addEventListener('input', (e) => {
@@ -2610,8 +2635,8 @@ document.addEventListener('DOMContentLoaded', function() {
       const pPC = $('#pickup_postcode');
       if (pPC) pPC.value = match.post_code || '';
       e.target._firebaseSelected = true;
-      recalcFeesAndTotal();
       window.markPricingInteraction?.();
+      recalcFeesAndTotal(true);
       if (typeof window.fetchPrice === 'function') window.fetchPrice();
       if (typeof updateRoute === 'function') updateRoute();
     } else {
@@ -2629,8 +2654,8 @@ document.addEventListener('DOMContentLoaded', function() {
       const dPC = $('#dropoff_postcode');
       if (dPC) dPC.value = match.post_code || '';
       e.target._firebaseSelected = true;
-      recalcFeesAndTotal();
       window.markPricingInteraction?.();
+      recalcFeesAndTotal(true);
       if (typeof window.fetchPrice === 'function') window.fetchPrice();
       if (typeof updateRoute === 'function') updateRoute();
     } else {
@@ -2641,7 +2666,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // Add radio change listeners to recalc fees
 document.querySelectorAll('input[name="pickup_type"], input[name="dropoff_type"]').forEach(r => {
   r.addEventListener('change', () => {
-    setTimeout(recalcFeesAndTotal, 100); // Delay to ensure checked state is updated
+    window.markPricingInteraction?.();
+    setTimeout(() => recalcFeesAndTotal(true), 100); // Delay to ensure checked state is updated
   });
 });
 document.addEventListener('DOMContentLoaded', function() {
@@ -2900,7 +2926,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const debouncedUpdateRoute = debounce(updateRoute, 400);
     window.debouncedUpdateRoute = debouncedUpdateRoute;
 
-    window.calculateTotal = function() {
+    window.calculateTotal = function(force = false) {
+        if (window.IS_EDIT_MODE && !window.userHasInteracted && !force) {
+            return;
+        }
         const fareInput = document.getElementById("fare");
         const totalInput = document.getElementById("price");
         const parkingInput = document.getElementById("parking");
@@ -2922,6 +2951,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let userHasInteracted = false;
 
     window.markPricingInteraction = function() {
+        window.userHasInteracted = true;
         userHasInteracted = true;
     };
 
@@ -2959,7 +2989,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.success) {
                     if (priceInput) priceInput.value = data.price;
                     if (mileageInput) mileageInput.value = data.journey_distance;
-                    window.calculateTotal();
+                    window.calculateTotal(true);
                 } else {
                     console.error("Price calculation failed:", data.message);
                 }
@@ -2976,13 +3006,12 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             if (priceLoader) priceLoader.style.display = 'none';
             if (typeof window.hideLoadingModal === 'function') window.hideLoadingModal();
-            window.calculateTotal();
+            window.calculateTotal(true);
         }
     }
 
-    window.fetchPrice = async function() {
-        if (IS_EDIT_MODE && !userHasInteracted) {
-            window.calculateTotal();
+    window.fetchPrice = async function(force = false) {
+        if (window.IS_EDIT_MODE && !window.userHasInteracted && !force) {
             return;
         }
         return doFetchPrice();
@@ -3307,6 +3336,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 });
 
+window.applyFirebaseCharges = function() {
+  window.markPricingInteraction?.();
+  if (typeof window.recalcFeesAndTotal === 'function') {
+    window.recalcFeesAndTotal(true);
+  }
+};
+
 // after Taxibase setup
 ['pickup_postcode','dropoff_postcode'].forEach(id=>{
   const el = document.getElementById(id);
@@ -3334,12 +3370,20 @@ document.addEventListener("DOMContentLoaded", function () {
     const childSeat = document.getElementById("child_seat");
     [fareInput, parkingInput, waitingInput, extraInput, childSeat].forEach(el => {
         if (el) {
-            el.addEventListener("input", window.calculateTotal);
-            el.addEventListener("change", window.calculateTotal);
+            el.addEventListener("input", function() {
+                window.markPricingInteraction?.();
+                if (typeof window.calculateTotal === 'function') window.calculateTotal(true);
+            });
+            el.addEventListener("change", function() {
+                window.markPricingInteraction?.();
+                if (typeof window.calculateTotal === 'function') window.calculateTotal(true);
+            });
         }
     });
-    // ✅ Initial calculation on load (already in fetchPrice, but safe double-call)
-    setTimeout(window.calculateTotal, 500);
+    // Initial calculation on load only for new bookings (not edit mode)
+    if (!window.IS_EDIT_MODE && typeof window.calculateTotal === 'function') {
+        setTimeout(() => window.calculateTotal(true), 500);
+    }
 });
 </script>
 

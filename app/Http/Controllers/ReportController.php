@@ -713,8 +713,8 @@ public function getTurnoverData($from, $to, $status = 'completed')
 
             $price = (float) ($booking['price'] ?? 0);
             $parking = (float) ($booking['parking'] ?? 0);
-            $waiting = (float) ($booking['waiting'] ?? 0);
-            $extras  = (float) ($booking['extras'] ?? 0);
+            $waiting = (float) ($booking['waiting_fee'] ?? ($booking['waiting'] ?? 0));
+            $extras  = (float) ($booking['extra'] ?? ($booking['extras'] ?? 0));
             $driverPaid = (float) ($booking['driver_paid'] ?? 0);
 
             $totals['fare_total'] += $price;

@@ -162,6 +162,48 @@
     .dashboard-card p { font-size: 0.9rem; opacity: 0.9; }
     .card-header { border-bottom: 1px solid #e3e6f0; font-weight: 600; }
     #revenuePieChart { max-height: 240px; }
+
+    /* Flight Tracker Badge Styling */
+    .flight-track-badge {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+      background-color: #f1f5f9 !important;
+      color: #0369a1 !important;
+      border: 1px solid #bae6fd !important;
+      border-radius: 6px !important;
+      padding: 3px 8px !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      text-decoration: none !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+      cursor: pointer !important;
+    }
+    .flight-track-badge:hover {
+      background-color: #e0f2fe !important;
+      color: #0284c7 !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 3px 8px rgba(14, 165, 233, 0.25) !important;
+      transform: translateY(-1px);
+    }
+    .flight-track-badge .flight-icon {
+      color: #0284c7;
+      font-size: 10.5px;
+      transition: transform 0.2s ease;
+    }
+    .flight-track-badge:hover .flight-icon {
+      transform: rotate(-15deg);
+    }
+    .flight-track-badge .flight-ext-icon {
+      font-size: 8.5px;
+      color: #0284c7;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+    .flight-track-badge:hover .flight-ext-icon {
+      opacity: 1;
+    }
   </style>
 </head>
 
@@ -552,6 +594,47 @@
           updateNavHistoryCounts();
       }
   })();
+  </script>
+
+  <script>
+  window.openFlightTracker = function(event, flightNo) {
+      if (event) {
+          event.stopPropagation();
+      }
+      if (!flightNo || flightNo === '-' || flightNo === 'undefined') return;
+
+      const cleanFlight = String(flightNo).trim();
+      if (!cleanFlight) return;
+
+      const url = 'https://www.google.com/search?q=' + encodeURIComponent(cleanFlight);
+
+      // Popup window dimensions (sized for Google Flight status overview)
+      const width = 1020;
+      const height = 760;
+      const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;
+      const dualScreenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
+
+      const windowWidth = window.innerWidth || document.documentElement.clientWidth || screen.width;
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight || screen.height;
+
+      const left = Math.max(0, Math.floor(((windowWidth - width) / 2) + dualScreenLeft));
+      const top = Math.max(0, Math.floor(((windowHeight - height) / 2) + dualScreenTop));
+
+      const popup = window.open(
+          url,
+          'flightTracker_' + cleanFlight.replace(/[^a-zA-Z0-9]/g, '_'),
+          `scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no,width=${width},height=${height},top=${top},left=${left}`
+      );
+
+      if (popup && !popup.closed) {
+          if (event && event.preventDefault) {
+              event.preventDefault();
+          }
+          try {
+              popup.focus();
+          } catch(e) {}
+      }
+  };
   </script>
 
   @stack('scripts')

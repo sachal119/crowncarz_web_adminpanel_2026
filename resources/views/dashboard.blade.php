@@ -1910,7 +1910,18 @@ function buildBookingRowHtml(booking, isNew = false) {
         <td class="col-time font-monospace text-nowrap fw-bold" style="${rowStyle}">${pickupTime}</td>
         <td class="col-vehicle text-center" style="${rowStyle}">${getVehicleBadgeHtml(booking.vehicle_make)}</td>
         <td class="col-flight text-nowrap" style="${rowStyle}" title="${flightNo}">
-            ${flightNo !== '-' ? `<span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px;">${flightNo}</span>` : '<span class="text-muted small">-</span>'}
+            ${flightNo !== '-' ? `
+                <a href="https://www.google.com/search?q=${encodeURIComponent(flightNo)}" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   onclick="openFlightTracker(event, '${flightNo.replace(/'/g, "\\'")}')"
+                   class="flight-track-badge" 
+                   title="Click to track flight ${flightNo} on Google">
+                    <i class="bi bi-airplane-fill flight-icon"></i>
+                    <span>${flightNo}</span>
+                    <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
+                </a>
+            ` : '<span class="text-muted small">-</span>'}
         </td>
         <td class="col-price fw-bold text-dark text-nowrap" style="${rowStyle}">${formattedPrice}</td>
         <td class="col-comment" style="${rowStyle}" title="${commentText}">

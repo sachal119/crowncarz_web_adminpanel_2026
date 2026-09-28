@@ -236,7 +236,6 @@
                 <div class="report-title-badge mb-2">Turnover Report</div>
                 <div class="text-muted small"><strong>INVOICE DATE:</strong> {{ $invoiceDate }}</div>
                 <div class="text-muted small"><strong>TRAVEL PERIOD:</strong> {{ $from }} - {{ $to }}</div>
-                <div class="text-muted small"><strong>STATUS:</strong> {{ strtoupper(str_replace('_', ' ', $status ?? 'completed')) }}</div>
             </div>
         </div>
 
@@ -244,22 +243,16 @@
 
         <!-- Meta summary cards -->
         <div class="row g-2 mb-4">
-            <div class="col-md-4 col-12">
+            <div class="col-md-6 col-12">
                 <div class="meta-box d-flex justify-content-between align-items-center">
                     <span class="meta-label">Invoice Date</span>
                     <span class="meta-value">{{ $invoiceDate }}</span>
                 </div>
             </div>
-            <div class="col-md-4 col-12">
+            <div class="col-md-6 col-12">
                 <div class="meta-box d-flex justify-content-between align-items-center">
                     <span class="meta-label">Travel Period</span>
                     <span class="meta-value">{{ $from }} &nbsp;to&nbsp; {{ $to }}</span>
-                </div>
-            </div>
-            <div class="col-md-4 col-12">
-                <div class="meta-box d-flex justify-content-between align-items-center">
-                    <span class="meta-label">Booking Status</span>
-                    <span class="meta-value">{{ ucfirst(str_replace('_', ' ', $status ?? 'completed')) }}</span>
                 </div>
             </div>
         </div>

@@ -222,7 +222,17 @@
         </td>
         <td class="col-flight text-nowrap" style="{{ $rowStyle }}" title="{{ $booking['flight_no'] ?? '-' }}">
             @if(!empty($booking['flight_no']) && $booking['flight_no'] !== '-' && $booking['flight_no'] !== 'undefined')
-                <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px;">{{ $booking['flight_no'] }}</span>
+                @php $fNo = trim($booking['flight_no']); @endphp
+                <a href="https://www.google.com/search?q={{ urlencode($fNo) }}" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   onclick="openFlightTracker(event, '{{ addslashes($fNo) }}')"
+                   class="flight-track-badge" 
+                   title="Click to track flight {{ $fNo }} on Google">
+                    <i class="bi bi-airplane-fill flight-icon"></i>
+                    <span>{{ $fNo }}</span>
+                    <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
+                </a>
             @else
                 <span class="text-muted small">-</span>
             @endif

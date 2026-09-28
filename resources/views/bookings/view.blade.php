@@ -213,7 +213,23 @@
                         </div>
                         <div class="col-sm-6">
                             <div class="small text-muted" style="font-size: 0.78rem;">Flight Number</div>
-                            <div class="fw-semibold text-dark">{{ $booking['flight_no'] ?? '-' }}</div>
+                            @if(!empty($booking['flight_no']) && $booking['flight_no'] !== '-' && $booking['flight_no'] !== 'undefined')
+                                @php $fNo = trim($booking['flight_no']); @endphp
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold text-dark">{{ $fNo }}</span>
+                                    <a href="https://www.google.com/search?q={{ urlencode($fNo) }}" 
+                                       target="_blank" 
+                                       rel="noopener noreferrer" 
+                                       onclick="openFlightTracker(event, '{{ addslashes($fNo) }}')"
+                                       class="flight-track-badge" 
+                                       style="font-size: 0.72rem; padding: 2px 8px !important;"
+                                       title="Track {{ $fNo }} on Google">
+                                        <i class="bi bi-airplane-fill flight-icon"></i> Track Flight
+                                    </a>
+                                </div>
+                            @else
+                                <div class="fw-semibold text-dark">-</div>
+                            @endif
                         </div>
                         <div class="col-sm-6">
                             <div class="small text-muted" style="font-size: 0.78rem;">Booking Date & Time (Created)</div>

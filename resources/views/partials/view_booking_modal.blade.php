@@ -802,7 +802,27 @@
         if (emailEl) emailEl.textContent = booking.email || '-';
 
         const flightEl = document.getElementById('modal-flight_no');
-        if (flightEl) flightEl.textContent = booking.flight_no || '-';
+        if (flightEl) {
+            const rawFlight = (booking.flight_no && booking.flight_no !== '-' && booking.flight_no !== 'undefined') ? String(booking.flight_no).trim() : '';
+            if (rawFlight) {
+                flightEl.innerHTML = `
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-semibold text-dark">${rawFlight}</span>
+                        <a href="https://www.google.com/search?q=${encodeURIComponent(rawFlight)}" 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           onclick="openFlightTracker(event, '${rawFlight.replace(/'/g, "\\'")}')"
+                           class="flight-track-badge" 
+                           style="font-size: 0.72rem; padding: 2px 8px !important;"
+                           title="Track ${rawFlight} on Google">
+                            <i class="bi bi-airplane-fill flight-icon"></i> Track Flight
+                        </a>
+                    </div>
+                `;
+            } else {
+                flightEl.textContent = '-';
+            }
+        }
 
         // Booking Created At (Date & Time)
         const rawCreated = booking.created_at || booking.createdAt || booking.created_date || '';
