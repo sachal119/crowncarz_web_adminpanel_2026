@@ -8255,5 +8255,26 @@ public function sendEmaildashboard(Request $request)
         ]);
     }
 
+    /**
+     * Get Flight Tracking Telemetry
+     */
+    public function getFlightTelemetry(Request $request, \App\Services\FlightTrackerService $flightTracker)
+    {
+        $flightNumber = $request->query('flight', '');
+        $pickupDate   = $request->query('pickup_date');
+        $pickupTime   = $request->query('pickup_time');
+
+        if (empty($flightNumber)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No flight number provided'
+            ], 400);
+        }
+
+        $data = $flightTracker->getTelemetry($flightNumber, $pickupDate, $pickupTime);
+
+        return response()->json($data);
+    }
 
 }
+

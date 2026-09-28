@@ -48,6 +48,10 @@ Route::get('/customers/search', [BookingController::class, 'searchCustomer'])
 Route::get('/bookings/previous', [BookingController::class, 'previous'])
     ->name('bookings.previous');
 
+Route::get('/api/flight-telemetry', [BookingController::class, 'getFlightTelemetry'])
+    ->name('api.flight.telemetry');
+
+
 
 Route::get('/receipt/{id}', [BookingController::class, 'downloadReceipt'])
     ->name('receipt.download');

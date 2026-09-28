@@ -706,7 +706,7 @@
       // Extract Airline Prefix (letters at start)
       const match = cleanFlight.match(/^([A-Z0-9]{2,3})/);
       const prefix = match ? match[1] : '';
-      const airlineName = AIRLINES_MAP[prefix] || AIRLINES_MAP[cleanFlight.slice(0, 2)] || 'Airline';
+      const fallbackAirlineName = AIRLINES_MAP[prefix] || AIRLINES_MAP[cleanFlight.slice(0, 2)] || 'Airline Flight';
 
       const modalEl = document.getElementById('flightTrackerModal');
       if (!modalEl) {
@@ -781,15 +781,23 @@
         terminalInfo = `Terminal ${tMatch[1].toUpperCase()}`;
       }
 
-      // Populate Elements
+      // Initial Elements Setup
       const headerTitle = document.getElementById('ftm-header-title');
       const cardTitle = document.getElementById('ftm-card-title');
       const codeBadge = document.getElementById('ftm-code-badge');
+      const aircraftPill = document.getElementById('ftm-aircraft-pill');
+      const statusPill = document.getElementById('ftm-status-pill');
+      const originCode = document.getElementById('ftm-origin-code');
+      const originCity = document.getElementById('ftm-origin-city');
       const destCode = document.getElementById('ftm-dest-code');
       const destCity = document.getElementById('ftm-dest-city');
+      const depTerminal = document.getElementById('ftm-dep-terminal');
+      const depGate = document.getElementById('ftm-dep-gate');
       const arrTerminal = document.getElementById('ftm-arr-terminal');
-      const arrTime = document.getElementById('ftm-arr-time');
+      const arrGate = document.getElementById('ftm-arr-gate');
       const depTime = document.getElementById('ftm-dep-time');
+      const arrTime = document.getElementById('ftm-arr-time');
+      const durationEl = document.getElementById('ftm-flight-duration');
       const copyCode = document.getElementById('ftm-copy-code');
       const airportBtn = document.getElementById('ftm-btn-airport');
       const airportTitleEl = document.getElementById('ftm-airport-btn-title');
@@ -799,7 +807,7 @@
       const pickupTimeEl = document.getElementById('ftm-pickup-time');
       const routeTextEl = document.getElementById('ftm-route-text');
 
-      const fullFlightTitle = `${airlineName} ${cleanFlight}`;
+      const fullFlightTitle = `${fallbackAirlineName} ${cleanFlight}`;
       if (headerTitle) headerTitle.textContent = fullFlightTitle;
       if (cardTitle) cardTitle.textContent = fullFlightTitle;
       if (codeBadge) codeBadge.textContent = cleanFlight;
@@ -809,6 +817,7 @@
       if (arrTerminal) arrTerminal.textContent = terminalInfo;
       if (arrTime) arrTime.textContent = pickupTime ? `${pickupTime} (${pickupDate || 'Today'})` : 'Live Status';
       if (depTime) depTime.textContent = pickupDate ? `${pickupDate}` : 'Scheduled';
+      if (aircraftPill) aircraftPill.textContent = 'Loading Live Info...';
 
       if (airportBtn) airportBtn.href = airportArrivalsUrl;
       if (airportTitleEl) airportTitleEl.textContent = airportBtnTitle;
@@ -827,7 +836,7 @@
       }
 
       // External Provider URLs
-      const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent(cleanFlight);
+      const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent('flight ' + cleanFlight);
       const fr24Url = 'https://www.flightradar24.com/data/flights/' + encodeURIComponent(cleanFlight.toLowerCase());
       const flightawareUrl = 'https://www.flightaware.com/live/flight/' + encodeURIComponent(cleanFlight);
 
@@ -843,7 +852,7 @@
       const copyBtn = document.getElementById('ftm-copy-btn');
       if (copyBtn) {
         copyBtn.onclick = function() {
-          const textToCopy = `✈️ Flight: ${cleanFlight} (${airlineName})\n📍 Destination: ${airportName} ${terminalInfo}\n🔍 Live Google Status: ${googleUrl}\n🛰️ Live Radar (FlightRadar24): ${fr24Url}`;
+          const textToCopy = `✈️ Flight: ${cleanFlight} (${fallbackAirlineName})\n📍 Destination: ${airportName} ${terminalInfo}\n🔍 Live Google Status: ${googleUrl}\n🛰️ Live Radar (FlightRadar24): ${fr24Url}`;
           navigator.clipboard.writeText(textToCopy).then(() => {
             copyBtn.innerHTML = '<i class="bi bi-check-lg text-success"></i> <span class="text-success">Copied Details!</span>';
             setTimeout(() => {
@@ -852,6 +861,51 @@
           }).catch(() => {});
         };
       }
+
+      // Fetch Real-time Telemetry API
+      const telemetryUrl = `/api/flight-telemetry?flight=${encodeURIComponent(cleanFlight)}&pickup_date=${encodeURIComponent(pickupDate)}&pickup_time=${encodeURIComponent(pickupTime)}`;
+      fetch(telemetryUrl)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.success) {
+            const airlineDisplay = data.airline ? `${data.airline} ${cleanFlight}` : fullFlightTitle;
+            if (headerTitle) headerTitle.textContent = airlineDisplay;
+            if (cardTitle) cardTitle.textContent = airlineDisplay;
+            if (aircraftPill) aircraftPill.textContent = data.aircraft || 'Commercial Aircraft';
+            
+            if (statusPill && data.status_badge) {
+              statusPill.textContent = data.status_badge;
+            }
+
+            if (data.origin) {
+              if (originCode && data.origin.code) originCode.textContent = data.origin.code;
+              if (originCity && data.origin.city) originCity.textContent = data.origin.city;
+              if (depTerminal && data.origin.terminal) depTerminal.textContent = data.origin.terminal;
+              if (depGate && data.origin.gate) depGate.textContent = data.origin.gate;
+            }
+
+            if (data.destination) {
+              if (destCode && data.destination.code) destCode.textContent = data.destination.code;
+              if (destCity && data.destination.city) destCity.textContent = data.destination.city;
+              if (arrTerminal && data.destination.terminal) arrTerminal.textContent = 'Terminal ' + data.destination.terminal;
+              if (arrGate && data.destination.gate) arrGate.textContent = data.destination.gate;
+            }
+
+            if (data.duration && durationEl) durationEl.textContent = data.duration;
+            if (data.dep_time && depTime) depTime.textContent = data.dep_time;
+            if (data.arr_time && arrTime) arrTime.textContent = data.arr_time;
+
+            if (data.links) {
+              if (googleBtn && data.links.google) googleBtn.href = data.links.google;
+              if (fr24Btn && data.links.flightradar24) fr24Btn.href = data.links.flightradar24;
+              if (flightawareBtn && data.links.flightaware) flightawareBtn.href = data.links.flightaware;
+              if (airportBtn && data.links.airport) airportBtn.href = data.links.airport;
+            }
+          }
+        })
+        .catch(err => {
+          console.warn('Flight telemetry background fetch notice:', err);
+        });
 
       // Open Modal on the same screen
       const modal = bootstrap.Modal.getOrCreateInstance(modalEl);

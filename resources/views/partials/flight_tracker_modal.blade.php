@@ -31,7 +31,10 @@
           <!-- Top Row: Airline & Flight No -->
           <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
             <div>
-              <div class="text-white-50 text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.8px;" id="ftm-route-hint">FLIGHT DETAILS</div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <div class="text-white-50 text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.8px;" id="ftm-route-hint">FLIGHT DETAILS</div>
+                <span id="ftm-aircraft-pill" class="badge bg-dark text-info border border-info border-opacity-25 px-2 py-0.5" style="font-size: 0.68rem; letter-spacing: 0.3px;">Airbus A320neo</span>
+              </div>
               <h3 class="fw-bold text-white mb-0" id="ftm-card-title">British Airways BA 327</h3>
             </div>
             <div class="d-flex align-items-center gap-2">
