@@ -596,45 +596,185 @@
   })();
   </script>
 
+  @include('partials.flight_tracker_modal')
+
   <script>
-  window.openFlightTracker = function(event, flightNo) {
+  (function() {
+    const AIRLINES_MAP = {
+      'BA': 'British Airways',
+      'BAW': 'British Airways',
+      'VS': 'Virgin Atlantic',
+      'VIR': 'Virgin Atlantic',
+      'EK': 'Emirates',
+      'UAE': 'Emirates',
+      'QR': 'Qatar Airways',
+      'QTR': 'Qatar Airways',
+      'EY': 'Etihad Airways',
+      'ETD': 'Etihad Airways',
+      'AA': 'American Airlines',
+      'AAL': 'American Airlines',
+      'UA': 'United Airlines',
+      'UAL': 'United Airlines',
+      'DL': 'Delta Air Lines',
+      'DAL': 'Delta Air Lines',
+      'LH': 'Lufthansa',
+      'DLH': 'Lufthansa',
+      'AF': 'Air France',
+      'AFR': 'Air France',
+      'KL': 'KLM Royal Dutch',
+      'KLM': 'KLM Royal Dutch',
+      'TK': 'Turkish Airlines',
+      'THY': 'Turkish Airlines',
+      'PK': 'Pakistan Int. Airlines',
+      'PIA': 'Pakistan Int. Airlines',
+      'AI': 'Air India',
+      'AIC': 'Air India',
+      'SV': 'Saudia',
+      'SVA': 'Saudia',
+      'AC': 'Air Canada',
+      'ACA': 'Air Canada',
+      'QF': 'Qantas',
+      'QFA': 'Qantas',
+      'EI': 'Aer Lingus',
+      'EIN': 'Aer Lingus',
+      'IB': 'Iberia',
+      'IBE': 'Iberia',
+      'LX': 'Swiss Int. Air Lines',
+      'SWR': 'Swiss Int. Air Lines',
+      'OS': 'Austrian Airlines',
+      'AUA': 'Austrian Airlines',
+      'FR': 'Ryanair',
+      'RYR': 'Ryanair',
+      'U2': 'easyJet',
+      'EZY': 'easyJet',
+      'EZS': 'easyJet',
+      'W9': 'Wizz Air UK',
+      'W6': 'Wizz Air',
+      'WZZ': 'Wizz Air',
+      'LS': 'Jet2',
+      'EXS': 'Jet2',
+      'BY': 'TUI Airways',
+      'TOM': 'TUI Airways',
+      'SQ': 'Singapore Airlines',
+      'SIA': 'Singapore Airlines',
+      'CX': 'Cathay Pacific',
+      'CPA': 'Cathay Pacific',
+      'MH': 'Malaysia Airlines',
+      'MAS': 'Malaysia Airlines',
+      'TG': 'Thai Airways',
+      'THA': 'Thai Airways',
+      'JL': 'Japan Airlines',
+      'JAL': 'Japan Airlines',
+      'NH': 'All Nippon Airways',
+      'ANA': 'All Nippon Airways',
+      'KU': 'Kuwait Airways',
+      'KAC': 'Kuwait Airways',
+      'GF': 'Gulf Air',
+      'GFA': 'Gulf Air',
+      'WY': 'Oman Air',
+      'OMA': 'Oman Air',
+      'MS': 'EgyptAir',
+      'MSR': 'EgyptAir',
+      'ET': 'Ethiopian Airlines',
+      'ETH': 'Ethiopian Airlines',
+      'KQ': 'Kenya Airways',
+      'KQA': 'Kenya Airways',
+      'AT': 'Royal Air Maroc',
+      'RAM': 'Royal Air Maroc',
+      'RJ': 'Royal Jordanian',
+      'RJA': 'Royal Jordanian',
+      'ME': 'Middle East Airlines',
+      'MEA': 'Middle East Airlines',
+      'PC': 'Pegasus Airlines',
+      'PGT': 'Pegasus Airlines',
+      'FZ': 'flydubai',
+      'FDB': 'flydubai',
+      'G9': 'Air Arabia',
+      'ABY': 'Air Arabia'
+    };
+
+    window.openFlightTracker = function(event, flightNo) {
       if (event) {
-          event.stopPropagation();
+        event.stopPropagation();
+        if (event.preventDefault) event.preventDefault();
       }
       if (!flightNo || flightNo === '-' || flightNo === 'undefined') return;
 
-      const cleanFlight = String(flightNo).trim();
+      const cleanFlight = String(flightNo).trim().toUpperCase();
       if (!cleanFlight) return;
 
-      const url = 'https://www.google.com/search?q=' + encodeURIComponent(cleanFlight);
+      // Extract Airline Prefix (letters at start)
+      const match = cleanFlight.match(/^([A-Z0-9]{2,3})/);
+      const prefix = match ? match[1] : '';
+      const airlineName = AIRLINES_MAP[prefix] || AIRLINES_MAP[cleanFlight.slice(0, 2)] || 'Scheduled Flight';
 
-      // Popup window dimensions (sized for Google Flight status overview)
-      const width = 1020;
-      const height = 760;
-      const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;
-      const dualScreenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
-
-      const windowWidth = window.innerWidth || document.documentElement.clientWidth || screen.width;
-      const windowHeight = window.innerHeight || document.documentElement.clientHeight || screen.height;
-
-      const left = Math.max(0, Math.floor(((windowWidth - width) / 2) + dualScreenLeft));
-      const top = Math.max(0, Math.floor(((windowHeight - height) / 2) + dualScreenTop));
-
-      const popup = window.open(
-          url,
-          'flightTracker_' + cleanFlight.replace(/[^a-zA-Z0-9]/g, '_'),
-          `scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no,width=${width},height=${height},top=${top},left=${left}`
-      );
-
-      if (popup && !popup.closed) {
-          if (event && event.preventDefault) {
-              event.preventDefault();
-          }
-          try {
-              popup.focus();
-          } catch(e) {}
+      const modalEl = document.getElementById('flightTrackerModal');
+      if (!modalEl) {
+        window.open('https://www.google.com/search?q=' + encodeURIComponent(cleanFlight), '_blank');
+        return;
       }
-  };
+
+      const titleEl = document.getElementById('ftm-flight-no');
+      const airlineBadge = document.getElementById('ftm-airline-badge');
+      const copyCode = document.getElementById('ftm-copy-code');
+      const googleBtn = document.getElementById('ftm-btn-google');
+      const googleDirectBtn = document.getElementById('ftm-google-direct-btn');
+      const fr24Btn = document.getElementById('ftm-btn-fr24');
+      const flightawareBtn = document.getElementById('ftm-btn-flightaware');
+      const fallbackGoogle = document.getElementById('ftm-fallback-google-btn');
+      const fallbackFr24 = document.getElementById('ftm-fallback-fr24-btn');
+      const radarIframe = document.getElementById('ftm-radar-iframe');
+      const radarFallback = document.getElementById('ftm-radar-fallback');
+      const reloadBtn = document.getElementById('ftm-reload-iframe');
+
+      if (titleEl) titleEl.textContent = `Flight ${cleanFlight}`;
+      if (airlineBadge) airlineBadge.textContent = airlineName;
+      if (copyCode) copyCode.textContent = cleanFlight;
+
+      const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent(cleanFlight);
+      const fr24Url = 'https://www.flightradar24.com/data/flights/' + encodeURIComponent(cleanFlight.toLowerCase());
+      const flightawareUrl = 'https://www.flightaware.com/live/flight/' + encodeURIComponent(cleanFlight);
+
+      if (googleBtn) googleBtn.href = googleUrl;
+      if (googleDirectBtn) googleDirectBtn.href = googleUrl;
+      if (fr24Btn) fr24Btn.href = fr24Url;
+      if (flightawareBtn) flightawareBtn.href = flightawareUrl;
+      if (fallbackGoogle) fallbackGoogle.href = googleUrl;
+      if (fallbackFr24) fallbackFr24.href = fr24Url;
+
+      // Set Radar Map URL
+      const radarSrc = `https://www.flightradar24.com/simple_index.html?flight=${encodeURIComponent(cleanFlight.toLowerCase())}`;
+      if (radarIframe) {
+        radarIframe.src = radarSrc;
+        radarIframe.style.display = 'block';
+        if (radarFallback) radarFallback.classList.add('d-none');
+      }
+
+      if (reloadBtn) {
+        reloadBtn.onclick = function() {
+          if (radarIframe) radarIframe.src = radarSrc;
+        };
+      }
+
+      // Copy Tracking Link
+      const copyBtn = document.getElementById('ftm-copy-btn');
+      if (copyBtn) {
+        copyBtn.onclick = function() {
+          const textToCopy = `Flight: ${cleanFlight} (${airlineName})\nLive Status: ${googleUrl}`;
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            copyBtn.innerHTML = '<i class="bi bi-check-lg text-success"></i> <span class="text-success">Copied!</span>';
+            setTimeout(() => {
+              copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> <span>Copy Tracking Link</span>';
+            }, 2000);
+          }).catch(() => {});
+        };
+      }
+
+      // Open Modal on the same screen
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    };
+  })();
   </script>
 
   @stack('scripts')
