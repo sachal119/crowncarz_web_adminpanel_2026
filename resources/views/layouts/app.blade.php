@@ -812,10 +812,9 @@
       const cleanFlight = String(flightNo).trim().toUpperCase();
       if (!cleanFlight) return;
 
-      // Extract Airline Prefix (letters at start)
       const match = cleanFlight.match(/^([A-Z0-9]{2,3})/);
       const prefix = match ? match[1] : '';
-      const fallbackAirlineName = AIRLINES_MAP[prefix] || AIRLINES_MAP[cleanFlight.slice(0, 2)] || 'Airline Flight';
+      const fallbackAirlineName = AIRLINES_MAP[prefix] || AIRLINES_MAP[cleanFlight.slice(0, 2)] || 'Flight';
 
       const modalEl = document.getElementById('flightTrackerModal');
       if (!modalEl) {
@@ -823,26 +822,23 @@
         return;
       }
 
-      // Try to read contextual row data if event originated from a table row
+      // Read optional contextual booking row data
       let passengerName = '';
       let pickupTime = '';
       let pickupDate = '';
       let pickupAddr = '';
       let dropoffAddr = '';
-      let airportCode = 'LHR';
-      let airportName = 'London Heathrow (LHR)';
-      let terminalInfo = 'Terminal -';
 
       if (event && event.target) {
         const row = event.target.closest('tr');
         if (row) {
-          const passEl = row.querySelector('.col-passenger, .passenger-cell');
-          const dateEl = row.querySelector('.col-date');
-          const timeEl = row.querySelector('.col-time');
-          const pickEl = row.querySelector('.col-pickup');
-          const dropEl = row.querySelector('.col-dropoff');
+          const passEl = row.querySelector('.col-passenger, .passenger-cell, td:nth-child(4)');
+          const dateEl = row.querySelector('.col-date, td:nth-child(2)');
+          const timeEl = row.querySelector('.col-time, td:nth-child(3)');
+          const pickEl = row.querySelector('.col-pickup, td:nth-child(5)');
+          const dropEl = row.querySelector('.col-dropoff, td:nth-child(6)');
 
-          passengerName = passEl ? passEl.textContent.trim() : '';
+          passengerName = passEl ? passEl.textContent.trim().split('\n')[0] : '';
           pickupDate = dateEl ? dateEl.textContent.trim() : '';
           pickupTime = timeEl ? timeEl.textContent.trim() : '';
           pickupAddr = pickEl ? pickEl.textContent.trim() : '';
@@ -851,165 +847,32 @@
       }
 
       const fullRouteText = (pickupAddr && dropoffAddr) ? `${pickupAddr} ➔ ${dropoffAddr}` : (pickupAddr || dropoffAddr || '');
-      const routeCheck = (pickupAddr + ' ' + dropoffAddr).toLowerCase();
 
-      // Detect Destination Airport & Terminal from booking pickup/dropoff
-      let airportArrivalsUrl = 'https://www.heathrow.com/arrivals';
-      let airportBtnTitle = 'Heathrow Arrivals';
-
-      if (routeCheck.includes('gatwick') || routeCheck.includes('lgw')) {
-        airportCode = 'LGW';
-        airportName = 'London Gatwick (LGW)';
-        airportArrivalsUrl = 'https://www.gatwickairport.com/flights/arrivals/';
-        airportBtnTitle = 'Gatwick Arrivals';
-      } else if (routeCheck.includes('stansted') || routeCheck.includes('stn')) {
-        airportCode = 'STN';
-        airportName = 'London Stansted (STN)';
-        airportArrivalsUrl = 'https://www.stanstedairport.com/flight-information/arrivals/';
-        airportBtnTitle = 'Stansted Arrivals';
-      } else if (routeCheck.includes('luton') || routeCheck.includes('ltn')) {
-        airportCode = 'LTN';
-        airportName = 'London Luton (LTN)';
-        airportArrivalsUrl = 'https://www.london-luton.co.uk/flights';
-        airportBtnTitle = 'Luton Arrivals';
-      } else if (routeCheck.includes('city') || routeCheck.includes('lcy')) {
-        airportCode = 'LCY';
-        airportName = 'London City Airport';
-        airportArrivalsUrl = 'https://www.londoncityairport.com/flight-status';
-        airportBtnTitle = 'London City Arrivals';
-      } else if (routeCheck.includes('manchester') || routeCheck.includes('man')) {
-        airportCode = 'MAN';
-        airportName = 'Manchester Airport (MAN)';
-        airportArrivalsUrl = 'https://www.manchesterairport.co.uk/flight-information/arrivals/';
-        airportBtnTitle = 'Manchester Arrivals';
-      } else if (routeCheck.includes('birmingham') || routeCheck.includes('bhx')) {
-        airportCode = 'BHX';
-        airportName = 'Birmingham Airport';
-        airportArrivalsUrl = 'https://www.birminghamairport.co.uk/flight-information/live-arrivals/';
-        airportBtnTitle = 'Birmingham Arrivals';
-      }
-
-      // Check terminal from address
-      const tMatch = routeCheck.match(/terminal\s*([0-9]|north|south)/i);
-      let detectedTerminal = tMatch ? tMatch[1].toUpperCase() : '';
-
-      // 🌟 Resolve Flight Route Data (Immediate Exact Sync Lookup) 🌟
-      const normFlight = cleanFlight.replace(/^([A-Z0-9]{2,3})0*(\d+)$/, '$1$2');
-      const known = KNOWN_ROUTES[cleanFlight] || KNOWN_ROUTES[normFlight] || null;
-      const hub = AIRLINE_DEFAULT_HUBS[prefix] || AIRLINE_DEFAULT_HUBS[cleanFlight.slice(0, 2)] || null;
-
-      let resolvedOriginCode = 'DEP';
-      let resolvedOriginCity = 'International';
-      let resolvedOriginName = 'Departure Airport';
-      let resolvedDepTerminal = '1';
-      let resolvedDuration = 'Direct Flight';
-      let resolvedDurationMin = 180;
-      let resolvedDestCode = airportCode;
-      let resolvedDestCity = 'London';
-      let resolvedDestTerminal = detectedTerminal || '5';
-
-      if (known) {
-        resolvedOriginCode = known.originCode;
-        resolvedOriginCity = known.originCity;
-        resolvedOriginName = known.originName;
-        resolvedDepTerminal = known.depTerminal || '1';
-        resolvedDuration = known.duration;
-        resolvedDurationMin = known.durationMin;
-        if (!detectedTerminal && known.destTerminal) {
-          resolvedDestTerminal = known.destTerminal;
-        }
-        if (known.destCity) resolvedDestCity = known.destCity;
-      } else if (hub) {
-        resolvedOriginCode = hub.originCode;
-        resolvedOriginCity = hub.originCity;
-        resolvedOriginName = hub.name;
-        resolvedDepTerminal = '1';
-        resolvedDuration = hub.duration;
-        resolvedDurationMin = hub.durationMin;
-        if (!detectedTerminal && hub.destTerminal) {
-          resolvedDestTerminal = hub.destTerminal;
-        }
-      }
-
-      // Format Times
-      const formattedArrTime = pickupTime ? formatTimeDisplay(pickupTime) : 'Scheduled';
-      const calculatedDepTime = calculateDepartureTime(pickupTime, resolvedDurationMin);
-
-      // Bind Google Flight Card Elements
-      const googleTitle = document.getElementById('ftm-google-title');
-      const googleSubtitle = document.getElementById('ftm-google-subtitle');
-      const summaryTime = document.getElementById('ftm-summary-time');
-      const summaryCode = document.getElementById('ftm-summary-code');
-      const summaryDest = document.getElementById('ftm-summary-dest');
-      const googleStatusPill = document.getElementById('ftm-google-status-pill');
-
-      const gOriginCode = document.getElementById('ftm-g-origin-code');
-      const originLink = document.getElementById('ftm-origin-link');
-      const gDuration = document.getElementById('ftm-g-duration');
-      const gDestCode = document.getElementById('ftm-g-dest-code');
-      const destLink = document.getElementById('ftm-dest-link');
-
-      const gDepHeader = document.getElementById('ftm-g-dep-header');
-      const gDepTime = document.getElementById('ftm-g-dep-time');
-      const gDepTerminal = document.getElementById('ftm-g-dep-terminal');
-      const gDepGate = document.getElementById('ftm-g-dep-gate');
-
-      const gArrHeader = document.getElementById('ftm-g-arr-header');
-      const gArrTime = document.getElementById('ftm-g-arr-time');
-      const gArrTerminal = document.getElementById('ftm-g-arr-terminal');
-      const gArrGate = document.getElementById('ftm-g-arr-gate');
-
-      const bookingContext = document.getElementById('ftm-booking-context');
-      const passNameEl = document.getElementById('ftm-passenger-name');
-      const pickupTimeEl = document.getElementById('ftm-pickup-time');
-      const routeTextEl = document.getElementById('ftm-route-text');
-
-      const fullFlightTitle = `${fallbackAirlineName} ${cleanFlight}`;
-      if (googleTitle) googleTitle.textContent = fullFlightTitle;
-      if (googleSubtitle) googleSubtitle.textContent = `${resolvedOriginCity} to ${resolvedDestCity}`;
-      if (summaryCode) summaryCode.textContent = cleanFlight;
-      if (summaryTime) summaryTime.textContent = formattedArrTime;
-      if (summaryDest) summaryDest.textContent = `${airportName}`;
-      if (googleStatusPill) googleStatusPill.textContent = 'ON TIME';
-
-      if (gOriginCode) gOriginCode.textContent = resolvedOriginCode;
-      if (originLink) originLink.href = 'https://www.google.com/search?q=' + encodeURIComponent(resolvedOriginName);
-      if (gDuration) gDuration.textContent = resolvedDuration;
-      if (gDestCode) gDestCode.textContent = resolvedDestCode;
-      if (destLink) destLink.href = airportArrivalsUrl;
-
-      // Setup Dates for Headers
-      const today = new Date();
-      const dateOptions = { weekday: 'short', day: 'numeric', month: 'short' };
-      const currentDayStr = pickupDate || today.toLocaleDateString('en-GB', dateOptions);
-
-      if (gDepHeader) gDepHeader.textContent = `${resolvedOriginCity} • ${currentDayStr}`;
-      if (gDepTime) gDepTime.textContent = calculatedDepTime;
-      if (gDepTerminal) gDepTerminal.textContent = resolvedDepTerminal;
-      if (gDepGate) gDepGate.textContent = '-';
-
-      if (gArrHeader) gArrHeader.textContent = `${resolvedDestCity} • ${currentDayStr}`;
-      if (gArrTime) gArrTime.textContent = formattedArrTime;
-      if (gArrTerminal) gArrTerminal.textContent = resolvedDestTerminal;
-      if (gArrGate) gArrGate.textContent = '-';
-
-      if (bookingContext) {
-        if (passengerName || fullRouteText) {
-          bookingContext.classList.remove('d-none');
-          bookingContext.classList.add('d-flex');
-          if (passNameEl) passNameEl.textContent = passengerName || 'Passenger';
-          if (pickupTimeEl) pickupTimeEl.textContent = (pickupDate ? `${pickupDate}, ` : '') + (pickupTime || '-');
-          if (routeTextEl) routeTextEl.textContent = fullRouteText || '';
-        } else {
-          bookingContext.classList.add('d-none');
-          bookingContext.classList.remove('d-flex');
-        }
-      }
-
-      // External Provider URLs
-      const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent('flight ' + cleanFlight);
+      // DOM Elements
+      const loaderEl = document.getElementById('ftm-loader');
+      const loaderTextEl = document.getElementById('ftm-loader-text');
+      const contentEl = document.getElementById('ftm-content');
+      const errorEl = document.getElementById('ftm-error');
+      const errorMsgEl = document.getElementById('ftm-error-msg');
+      const errGoogleBtn = document.getElementById('ftm-err-google-btn');
       const openGoogleBtn = document.getElementById('ftm-btn-open-google');
+
+      const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent('flight ' + cleanFlight);
       if (openGoogleBtn) openGoogleBtn.href = googleUrl;
+      if (errGoogleBtn) errGoogleBtn.href = googleUrl;
+
+      // 🔄 Reset UI to Pure Loading State (NO guess or local data shown)
+      if (loaderEl) loaderEl.classList.remove('d-none');
+      if (loaderTextEl) loaderTextEl.textContent = `Fetching live flight details for ${cleanFlight}...`;
+      if (contentEl) contentEl.classList.add('d-none');
+      if (errorEl) errorEl.classList.add('d-none');
+
+      // Open Modal immediately with spinner
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+
+      // Normalize flight number (e.g. DL020 -> DL20)
+      const normFlight = cleanFlight.replace(/^([A-Z0-9]{2,3})0*(\d+)$/, '$1$2');
 
       // 🌟 Render Function for Live Telemetry 🌟
       function applyLiveFlightData(flight) {
@@ -1019,29 +882,70 @@
         const airline = flight.airline || {};
         const status = flight.flight_status || 'active';
 
+        const googleTitle = document.getElementById('ftm-google-title');
+        const googleSubtitle = document.getElementById('ftm-google-subtitle');
+        const summaryTime = document.getElementById('ftm-summary-time');
+        const summaryCode = document.getElementById('ftm-summary-code');
+        const summaryDest = document.getElementById('ftm-summary-dest');
+        const googleStatusPill = document.getElementById('ftm-google-status-pill');
+
+        const gOriginCode = document.getElementById('ftm-g-origin-code');
+        const originLink = document.getElementById('ftm-origin-link');
+        const gDuration = document.getElementById('ftm-g-duration');
+        const gDestCode = document.getElementById('ftm-g-dest-code');
+        const destLink = document.getElementById('ftm-dest-link');
+
+        const gDepHeader = document.getElementById('ftm-g-dep-header');
+        const gDepTime = document.getElementById('ftm-g-dep-time');
+        const gDepTerminal = document.getElementById('ftm-g-dep-terminal');
+        const gDepGate = document.getElementById('ftm-g-dep-gate');
+
+        const gArrHeader = document.getElementById('ftm-g-arr-header');
+        const gArrTime = document.getElementById('ftm-g-arr-time');
+        const gArrTerminal = document.getElementById('ftm-g-arr-terminal');
+        const gArrGate = document.getElementById('ftm-g-arr-gate');
+
+        const bookingContext = document.getElementById('ftm-booking-context');
+        const passNameEl = document.getElementById('ftm-passenger-name');
+        const pickupTimeEl = document.getElementById('ftm-pickup-time');
+        const routeTextEl = document.getElementById('ftm-route-text');
+
+        // Airline & Title
         const airlineName = (airline.name && airline.name !== 'empty') ? airline.name : fallbackAirlineName;
         if (googleTitle) googleTitle.textContent = `${airlineName} ${cleanFlight}`;
 
-        const depAirportName = dep.airport || resolvedOriginName;
-        const arrAirportName = arr.airport || airportName;
+        const depAirportName = dep.airport || 'Departure Airport';
+        const arrAirportName = arr.airport || 'London Heathrow';
         let depCity = depAirportName.replace(/ International| Airport/gi, '').trim();
         let arrCity = arrAirportName.replace(/ International| Airport/gi, '').trim();
 
         if (googleSubtitle) googleSubtitle.textContent = `${depCity} to ${arrCity}`;
+        if (summaryCode) summaryCode.textContent = cleanFlight;
+        if (summaryDest) summaryDest.textContent = arrCity;
 
+        // Status Pill
         if (googleStatusPill) {
-          googleStatusPill.textContent = status === 'active' ? 'ON TIME' : (status === 'landed' ? 'LANDED' : status.toUpperCase());
+          const isLanded = status === 'landed';
+          googleStatusPill.textContent = status === 'active' ? 'ON TIME' : (isLanded ? 'LANDED' : status.toUpperCase());
+          googleStatusPill.style.color = isLanded ? '#81c995' : (status === 'active' ? '#81c995' : '#f2994a');
+          googleStatusPill.style.borderColor = isLanded ? '#81c995' : (status === 'active' ? '#81c995' : '#f2994a');
         }
 
-        if (gOriginCode && dep.iata) gOriginCode.textContent = dep.iata;
+        // Origin Code & Links
+        const depCode = dep.iata || 'DEP';
+        if (gOriginCode) gOriginCode.textContent = depCode;
         if (originLink) originLink.href = 'https://www.google.com/search?q=' + encodeURIComponent(depAirportName + ' airport');
         if (gDepTerminal) gDepTerminal.textContent = dep.terminal || '-';
         if (gDepGate) gDepGate.textContent = dep.gate || '-';
 
-        if (gDestCode && arr.iata) gDestCode.textContent = arr.iata;
+        // Destination Code & Links
+        const arrCode = arr.iata || 'LHR';
+        if (gDestCode) gDestCode.textContent = arrCode;
+        if (destLink) destLink.href = arrCode === 'LHR' ? 'https://www.heathrow.com/arrivals' : ('https://www.google.com/search?q=' + encodeURIComponent(arrAirportName + ' arrivals'));
         if (gArrTerminal) gArrTerminal.textContent = arr.terminal || '-';
         if (gArrGate) gArrGate.textContent = arr.gate || '-';
 
+        // Departure Dates & Times
         if (dep.scheduled || dep.actual) {
           const depDateObj = new Date(dep.actual || dep.scheduled);
           if (!isNaN(depDateObj.getTime())) {
@@ -1050,8 +954,12 @@
             if (gDepTime) gDepTime.textContent = depTimeFormatted;
             if (gDepHeader) gDepHeader.textContent = `${depCity} • ${depDateFormatted}`;
           }
+        } else {
+          if (gDepTime) gDepTime.textContent = 'Scheduled';
+          if (gDepHeader) gDepHeader.textContent = depCity;
         }
 
+        // Arrival Dates & Times
         if (arr.scheduled || arr.actual) {
           const arrDateObj = new Date(arr.actual || arr.scheduled);
           if (!isNaN(arrDateObj.getTime())) {
@@ -1061,8 +969,13 @@
             if (gArrTime) gArrTime.textContent = arrTimeFormatted;
             if (gArrHeader) gArrHeader.textContent = `${arrCity} • ${arrDateFormatted}`;
           }
+        } else {
+          if (summaryTime) summaryTime.textContent = 'Scheduled';
+          if (gArrTime) gArrTime.textContent = 'Scheduled';
+          if (gArrHeader) gArrHeader.textContent = arrCity;
         }
 
+        // Duration calculation
         if ((dep.actual || dep.scheduled) && (arr.actual || arr.scheduled)) {
           const d1 = new Date(dep.actual || dep.scheduled);
           const d2 = new Date(arr.actual || arr.scheduled);
@@ -1072,15 +985,34 @@
           if (gDuration && (diffHours > 0 || diffMins > 0)) {
             gDuration.textContent = `${diffHours > 0 ? diffHours + 'h ' : ''}${diffMins}m`;
           }
+        } else {
+          if (gDuration) gDuration.textContent = 'Direct Flight';
         }
+
+        // Passenger context strip
+        if (bookingContext) {
+          if (passengerName || fullRouteText) {
+            bookingContext.classList.remove('d-none');
+            bookingContext.classList.add('d-flex');
+            if (passNameEl) passNameEl.textContent = passengerName || 'Passenger';
+            if (pickupTimeEl) pickupTimeEl.textContent = (pickupDate ? `${pickupDate}, ` : '') + (pickupTime || '-');
+            if (routeTextEl) routeTextEl.textContent = fullRouteText || '';
+          } else {
+            bookingContext.classList.add('d-none');
+            bookingContext.classList.remove('d-flex');
+          }
+        }
+
+        // Switch from Loader to Content
+        if (loaderEl) loaderEl.classList.add('d-none');
+        if (errorEl) errorEl.classList.add('d-none');
+        if (contentEl) contentEl.classList.remove('d-none');
       }
 
-      // 🌟 Live Flight Telemetry - ONLY on User Click + In-Memory Session Cache (Quota Protection) 🌟
+      // 🌟 Fetch Live Telemetry ONLY on Click (Check Cache First) 🌟
       if (FLIGHT_SESSION_CACHE[normFlight]) {
-        // Instant render from cache - 0 API requests
         applyLiveFlightData(FLIGHT_SESSION_CACHE[normFlight]);
       } else {
-        // Trigger exact single API call only when user clicks
         const aviationUrl = `http://api.aviationstack.com/v1/flights?access_key=b314b241911f491f8e76da0c4a4e3cca&flight_iata=${encodeURIComponent(normFlight)}`;
         fetch(aviationUrl)
           .then(res => res.json())
@@ -1089,16 +1021,26 @@
               const flight = data.data[0];
               FLIGHT_SESSION_CACHE[normFlight] = flight;
               applyLiveFlightData(flight);
+            } else {
+              // Show Error State
+              if (loaderEl) loaderEl.classList.add('d-none');
+              if (contentEl) contentEl.classList.add('d-none');
+              if (errorEl) {
+                if (errorMsgEl) errorMsgEl.textContent = `No live flight data found for ${cleanFlight}.`;
+                errorEl.classList.remove('d-none');
+              }
             }
           })
           .catch(err => {
-            console.warn('Flight API notice:', err);
+            console.warn('Flight API error:', err);
+            if (loaderEl) loaderEl.classList.add('d-none');
+            if (contentEl) contentEl.classList.add('d-none');
+            if (errorEl) {
+              if (errorMsgEl) errorMsgEl.textContent = `Error fetching flight data for ${cleanFlight}.`;
+              errorEl.classList.remove('d-none');
+            }
           });
       }
-
-      // Open Modal on the same screen
-      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-      modal.show();
     };
   })();
   </script>
