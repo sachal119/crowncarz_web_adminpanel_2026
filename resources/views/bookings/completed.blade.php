@@ -510,109 +510,6 @@ $(document).ready(function() {
         }
     }
 
-    // 🚗 Change Driver Modal Logic (Completed Jobs)
-    const changeModalEl = document.getElementById('changeDriverModal');
-    const changeBookingIdField = document.getElementById('changeBookingId');
-    const changeBookingRefDisplay = document.getElementById('changeBookingRefDisplay');
-    const changeCurrentDriverName = document.getElementById('changeCurrentDriverName');
-    const changeDriverSelect = document.getElementById('changeDriverSelect');
-    const changeDriverForm = document.getElementById('changeDriverForm');
-
-    function populateChangeDriverModal(btn) {
-        if (!btn) return;
-        const bookingId = btn.getAttribute('data-booking-id') || '';
-        const bookingRef = btn.getAttribute('data-booking-ref') || bookingId || '-';
-        const driverId = btn.getAttribute('data-driver-id') || '';
-        const driverName = btn.getAttribute('data-driver-name') || 'Not Assigned';
-
-        if (changeBookingIdField) changeBookingIdField.value = bookingId;
-        if (changeBookingRefDisplay) changeBookingRefDisplay.innerText = bookingRef;
-        if (changeCurrentDriverName) changeCurrentDriverName.innerText = driverName;
-
-        if (changeDriverSelect) {
-            changeDriverSelect.value = '';
-            if (driverId) {
-                changeDriverSelect.value = driverId;
-            }
-            // If value not matched by id and driverName is provided, attempt text match
-            if (!changeDriverSelect.value && driverName && driverName !== 'Not Assigned') {
-                const normName = driverName.toLowerCase().trim();
-                for (let i = 0; i < changeDriverSelect.options.length; i++) {
-                    const optText = changeDriverSelect.options[i].text.toLowerCase();
-                    if (optText.includes(normName)) {
-                        changeDriverSelect.selectedIndex = i;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    // Global click listener for .change-driver-btn to guarantee population even if relatedTarget fails
-    document.addEventListener('click', function (e) {
-        const btn = e.target.closest('.change-driver-btn');
-        if (btn) {
-            populateChangeDriverModal(btn);
-        }
-    });
-
-    if (changeModalEl) {
-        changeModalEl.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget || document.activeElement;
-            if (button && button.classList && button.classList.contains('change-driver-btn')) {
-                populateChangeDriverModal(button);
-            }
-        });
-    }
-
-    if (changeDriverForm) {
-        changeDriverForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('changeDriverSubmitBtn');
-            const origText = submitBtn ? submitBtn.innerHTML : 'Update Driver';
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
-            }
-
-            const bookingId = changeBookingIdField.value;
-            const selectedDriverId = changeDriverSelect.value;
-            const selectedDriverText = changeDriverSelect.options[changeDriverSelect.selectedIndex]?.text || '';
-
-            try {
-                const response = await fetch("{{ route('booking.changeDriver') }}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: new FormData(changeDriverForm)
-                });
-
-                const data = await response.json().catch(() => null);
-
-                if (response.ok && data?.success) {
-                    alert('✅ ' + (data.message || 'Driver updated successfully!'));
-                    const modal = bootstrap.Modal.getInstance(changeModalEl);
-                    if (modal) modal.hide();
-                    window.location.reload();
-                } else {
-                    alert('❌ ' + (data?.error || data?.message || 'Failed to update driver.'));
-                }
-            } catch (err) {
-                console.error('Driver update error:', err);
-                alert('❌ Network error while updating driver.');
-            } finally {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = origText;
-                }
-            }
-        });
-    }
-</script>
-
 <!-- 🚗 Change Driver Modal (Completed Jobs) -->
 <div class="modal fade" id="changeDriverModal" tabindex="-1" aria-labelledby="changeDriverLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -667,4 +564,107 @@ $(document).ready(function() {
     </div>
   </div>
 </div>
+
+<script>
+    // 🚗 Change Driver Modal Logic (Completed Jobs)
+    function populateChangeDriverModal(btn) {
+        if (!btn) return;
+        const bookingId = btn.getAttribute('data-booking-id') || '';
+        const bookingRef = btn.getAttribute('data-booking-ref') || bookingId || '-';
+        const driverId = btn.getAttribute('data-driver-id') || '';
+        const driverName = btn.getAttribute('data-driver-name') || 'Not Assigned';
+
+        const changeBookingIdField = document.getElementById('changeBookingId');
+        const changeBookingRefDisplay = document.getElementById('changeBookingRefDisplay');
+        const changeCurrentDriverName = document.getElementById('changeCurrentDriverName');
+        const changeDriverSelect = document.getElementById('changeDriverSelect');
+
+        if (changeBookingIdField) changeBookingIdField.value = bookingId;
+        if (changeBookingRefDisplay) changeBookingRefDisplay.innerText = bookingRef;
+        if (changeCurrentDriverName) changeCurrentDriverName.innerText = driverName;
+
+        if (changeDriverSelect) {
+            changeDriverSelect.value = '';
+            if (driverId) {
+                changeDriverSelect.value = driverId;
+            }
+            // If value not matched by id and driverName is provided, attempt text match
+            if (!changeDriverSelect.value && driverName && driverName !== 'Not Assigned') {
+                const normName = driverName.toLowerCase().trim();
+                for (let i = 0; i < changeDriverSelect.options.length; i++) {
+                    const optText = changeDriverSelect.options[i].text.toLowerCase();
+                    if (optText.includes(normName)) {
+                        changeDriverSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Global click listener for .change-driver-btn to guarantee population even if relatedTarget fails
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.change-driver-btn');
+        if (btn) {
+            populateChangeDriverModal(btn);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const changeModalEl = document.getElementById('changeDriverModal');
+        const changeDriverForm = document.getElementById('changeDriverForm');
+
+        if (changeModalEl) {
+            changeModalEl.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget || document.activeElement;
+                if (button && button.classList && button.classList.contains('change-driver-btn')) {
+                    populateChangeDriverModal(button);
+                }
+            });
+        }
+
+        if (changeDriverForm) {
+            changeDriverForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const submitBtn = document.getElementById('changeDriverSubmitBtn');
+                const origText = submitBtn ? submitBtn.innerHTML : 'Update Driver';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
+                }
+
+                try {
+                    const response = await fetch("{{ route('booking.changeDriver') }}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new FormData(changeDriverForm)
+                    });
+
+                    const data = await response.json().catch(() => null);
+
+                    if (response.ok && data?.success) {
+                        alert('✅ ' + (data.message || 'Driver updated successfully!'));
+                        const modal = bootstrap.Modal.getInstance(changeModalEl);
+                        if (modal) modal.hide();
+                        window.location.reload();
+                    } else {
+                        alert('❌ ' + (data?.error || data?.message || 'Failed to update driver.'));
+                    }
+                } catch (err) {
+                    console.error('Driver update error:', err);
+                    alert('❌ Network error while updating driver.');
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = origText;
+                    }
+                }
+            });
+        }
+    });
+</script>
 @endsection
