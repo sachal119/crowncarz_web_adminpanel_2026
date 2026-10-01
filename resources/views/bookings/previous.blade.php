@@ -186,6 +186,7 @@
                   <li>
                     <a class="dropdown-item d-flex align-items-center text-primary change-driver-btn"
                        href="javascript:void(0)"
+                       onclick="openChangeDriverModal(this)"
                        data-booking-id="{{ $booking['id'] ?? '' }}"
                        data-booking-ref="{{ $booking['ref_no'] ?? ($booking['id'] ?? '') }}"
                        data-driver-id="{{ $booking['driver_id'] ?? ($booking['driverId'] ?? '') }}"
@@ -415,7 +416,7 @@ $(document).ready(function() {
 
 <script>
     // 🚗 Change Driver Modal Logic (Previous Jobs)
-    function populateChangeDriverModal(btn) {
+    window.openChangeDriverModal = function (btn) {
         if (!btn) return;
         const bookingId = btn.getAttribute('data-booking-id') || '';
         const bookingRef = btn.getAttribute('data-booking-ref') || bookingId || '-';
@@ -447,34 +448,42 @@ $(document).ready(function() {
                 }
             }
         }
-    }
 
-    // Global click listener for .change-driver-btn to guarantee population & opening
+        const modalEl = document.getElementById('changeDriverModal');
+        if (modalEl) {
+            try {
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    let modal = null;
+                    if (typeof bootstrap.Modal.getInstance === 'function') {
+                        modal = bootstrap.Modal.getInstance(modalEl);
+                    }
+                    if (!modal) {
+                        modal = new bootstrap.Modal(modalEl);
+                    }
+                    modal.show();
+                } else if (window.jQuery && typeof window.jQuery(modalEl).modal === 'function') {
+                    window.jQuery(modalEl).modal('show');
+                }
+            } catch (err) {
+                console.error('Modal open error:', err);
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            }
+        }
+    };
+
+    // Global click listener for .change-driver-btn
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('.change-driver-btn');
         if (btn) {
             e.preventDefault();
-            populateChangeDriverModal(btn);
-            const modalEl = document.getElementById('changeDriverModal');
-            if (modalEl && typeof bootstrap !== 'undefined') {
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
-            }
+            window.openChangeDriverModal(btn);
         }
     });
 
     document.addEventListener('DOMContentLoaded', function () {
         const changeModalEl = document.getElementById('changeDriverModal');
         const changeDriverForm = document.getElementById('changeDriverForm');
-
-        if (changeModalEl) {
-            changeModalEl.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget || document.activeElement;
-                if (button && button.classList && button.classList.contains('change-driver-btn')) {
-                    populateChangeDriverModal(button);
-                }
-            });
-        }
 
         if (changeDriverForm) {
             changeDriverForm.addEventListener('submit', async function (e) {
@@ -501,8 +510,10 @@ $(document).ready(function() {
 
                     if (response.ok && data?.success) {
                         alert('✅ ' + (data.message || 'Driver updated successfully!'));
-                        const modal = bootstrap.Modal.getInstance(changeModalEl);
-                        if (modal) modal.hide();
+                        try {
+                            const modal = bootstrap.Modal.getInstance(changeModalEl);
+                            if (modal) modal.hide();
+                        } catch(e) {}
                         window.location.reload();
                     } else {
                         alert('❌ ' + (data?.error || data?.message || 'Failed to update driver.'));
