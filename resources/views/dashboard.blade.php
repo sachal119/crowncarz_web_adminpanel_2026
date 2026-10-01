@@ -2937,34 +2937,46 @@ document.addEventListener('DOMContentLoaded', function () {
     const dispatchForm = document.getElementById('dispatchDriverForm');
     const driverSelect = document.getElementById('driverSelect');
 
+    function populateDispatchModal(button) {
+        if (!button) return;
+        const bookingId = button.getAttribute('data-booking-id');
+        const currentDriverId = button.getAttribute('data-driver-id') || '';
+        const currentDriverName = button.getAttribute('data-driver-name') || '';
+        if (bookingIdField) bookingIdField.value = bookingId;
+
+        const modalTitle = document.getElementById('dispatchDriverLabel');
+        const submitBtn = document.getElementById('dispatchSubmitBtn');
+        const currentInfo = document.getElementById('dispatchCurrentDriverInfo');
+
+        if (currentDriverId || currentDriverName) {
+            if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-gear me-2"></i>Change / Reassign Driver';
+            if (submitBtn) submitBtn.innerText = 'Update Driver';
+            if (driverSelect && currentDriverId) driverSelect.value = currentDriverId;
+            if (currentInfo) {
+                currentInfo.classList.remove('d-none');
+                const nameSpan = currentInfo.querySelector('.current-driver-name');
+                if (nameSpan) nameSpan.innerText = currentDriverName || 'Assigned Driver';
+            }
+        } else {
+            if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-gear me-2"></i>Dispatch Driver';
+            if (submitBtn) submitBtn.innerText = 'Dispatch';
+            if (driverSelect) driverSelect.value = '';
+            if (currentInfo) currentInfo.classList.add('d-none');
+        }
+    }
+
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-bs-target="#dispatchDriverModal"]');
+        if (btn) {
+            populateDispatchModal(btn);
+        }
+    });
+
     if (dispatchModalEl) {
         dispatchModalEl.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            if (button) {
-                const bookingId = button.getAttribute('data-booking-id');
-                const currentDriverId = button.getAttribute('data-driver-id') || '';
-                const currentDriverName = button.getAttribute('data-driver-name') || '';
-                if (bookingIdField) bookingIdField.value = bookingId;
-
-                const modalTitle = document.getElementById('dispatchDriverLabel');
-                const submitBtn = document.getElementById('dispatchSubmitBtn');
-                const currentInfo = document.getElementById('dispatchCurrentDriverInfo');
-
-                if (currentDriverId || currentDriverName) {
-                    if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-gear me-2"></i>Change / Reassign Driver';
-                    if (submitBtn) submitBtn.innerText = 'Update Driver';
-                    if (driverSelect && currentDriverId) driverSelect.value = currentDriverId;
-                    if (currentInfo) {
-                        currentInfo.classList.remove('d-none');
-                        const nameSpan = currentInfo.querySelector('.current-driver-name');
-                        if (nameSpan) nameSpan.innerText = currentDriverName || 'Assigned Driver';
-                    }
-                } else {
-                    if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-gear me-2"></i>Dispatch Driver';
-                    if (submitBtn) submitBtn.innerText = 'Dispatch';
-                    if (driverSelect) driverSelect.value = '';
-                    if (currentInfo) currentInfo.classList.add('d-none');
-                }
+            const button = event.relatedTarget || document.activeElement;
+            if (button && button.matches && button.matches('[data-bs-target="#dispatchDriverModal"]')) {
+                populateDispatchModal(button);
             }
         });
     }

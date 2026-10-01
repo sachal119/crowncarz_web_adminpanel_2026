@@ -185,11 +185,11 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                   <li>
                     <a class="dropdown-item d-flex align-items-center text-primary change-driver-btn"
-                       href="#"
+                       href="javascript:void(0)"
                        data-booking-id="{{ $booking['id'] ?? '' }}"
                        data-booking-ref="{{ $booking['ref_no'] ?? ($booking['id'] ?? '') }}"
                        data-driver-id="{{ $booking['driver_id'] ?? ($booking['driverId'] ?? '') }}"
-                       data-driver-name="{{ $booking['driver_name'] ?? ($booking['driver'] ?? '') }}"
+                       data-driver-name="{{ !empty($booking['driver_name']) ? $booking['driver_name'] : (!empty($booking['driver']) ? $booking['driver'] : 'Not Assigned') }}"
                        data-bs-toggle="modal"
                        data-bs-target="#changeDriverModal">
                         <i class="bi bi-person-gear me-2"></i> Change Driver
@@ -368,19 +368,48 @@ $(document).ready(function() {
     const changeDriverSelect = document.getElementById('changeDriverSelect');
     const changeDriverForm = document.getElementById('changeDriverForm');
 
+    function populateChangeDriverModal(btn) {
+        if (!btn) return;
+        const bookingId = btn.getAttribute('data-booking-id') || '';
+        const bookingRef = btn.getAttribute('data-booking-ref') || bookingId || '-';
+        const driverId = btn.getAttribute('data-driver-id') || '';
+        const driverName = btn.getAttribute('data-driver-name') || 'Not Assigned';
+
+        if (changeBookingIdField) changeBookingIdField.value = bookingId;
+        if (changeBookingRefDisplay) changeBookingRefDisplay.innerText = bookingRef;
+        if (changeCurrentDriverName) changeCurrentDriverName.innerText = driverName;
+
+        if (changeDriverSelect) {
+            changeDriverSelect.value = '';
+            if (driverId) {
+                changeDriverSelect.value = driverId;
+            }
+            if (!changeDriverSelect.value && driverName && driverName !== 'Not Assigned') {
+                const normName = driverName.toLowerCase().trim();
+                for (let i = 0; i < changeDriverSelect.options.length; i++) {
+                    const optText = changeDriverSelect.options[i].text.toLowerCase();
+                    if (optText.includes(normName)) {
+                        changeDriverSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Global click listener for .change-driver-btn to guarantee population even if relatedTarget fails
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.change-driver-btn');
+        if (btn) {
+            populateChangeDriverModal(btn);
+        }
+    });
+
     if (changeModalEl) {
         changeModalEl.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            if (button) {
-                const bookingId = button.getAttribute('data-booking-id');
-                const bookingRef = button.getAttribute('data-booking-ref') || bookingId;
-                const driverId = button.getAttribute('data-driver-id') || '';
-                const driverName = button.getAttribute('data-driver-name') || 'Not Assigned';
-
-                if (changeBookingIdField) changeBookingIdField.value = bookingId;
-                if (changeBookingRefDisplay) changeBookingRefDisplay.innerText = bookingRef;
-                if (changeCurrentDriverName) changeCurrentDriverName.innerText = driverName;
-                if (changeDriverSelect && driverId) changeDriverSelect.value = driverId;
+            const button = event.relatedTarget || document.activeElement;
+            if (button && button.classList && button.classList.contains('change-driver-btn')) {
+                populateChangeDriverModal(button);
             }
         });
     }
@@ -416,19 +445,7 @@ $(document).ready(function() {
                     alert('✅ ' + (data.message || 'Driver updated successfully!'));
                     const modal = bootstrap.Modal.getInstance(changeModalEl);
                     if (modal) modal.hide();
-
-                    const row = document.getElementById('previous-row-' + bookingId);
-                    if (row) {
-                        const driverCell = row.querySelector('.driver-name-cell');
-                        if (driverCell) {
-                            driverCell.innerText = data.data?.driver_name || selectedDriverText;
-                        }
-                        const changeBtn = row.querySelector('.change-driver-btn');
-                        if (changeBtn) {
-                            changeBtn.setAttribute('data-driver-id', selectedDriverId);
-                            changeBtn.setAttribute('data-driver-name', data.data?.driver_name || selectedDriverText);
-                        }
-                    }
+                    window.location.reload();
                 } else {
                     alert('❌ ' + (data?.error || data?.message || 'Failed to update driver.'));
                 }

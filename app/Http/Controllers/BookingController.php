@@ -2806,6 +2806,23 @@ public function changeDriver(Request $request)
         $bookingRef = $this->database->getReference("bookings/{$bookingId}");
         $existingBooking = $bookingRef->getValue();
         if (!$existingBooking) {
+            $allBookings = $this->database->getReference('bookings')->getValue() ?? [];
+            if (is_array($allBookings)) {
+                foreach ($allBookings as $k => $b) {
+                    if (!is_array($b)) continue;
+                    if ((string)$k === $bookingId 
+                        || (string)($b['ref_no'] ?? '') === $bookingId 
+                        || (string)($b['id'] ?? '') === $bookingId) {
+                        $bookingId = (string)$k;
+                        $bookingRef = $this->database->getReference("bookings/{$bookingId}");
+                        $existingBooking = $b;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!$existingBooking) {
             return response()->json(['error' => 'Booking not found'], 404);
         }
 
@@ -2813,7 +2830,7 @@ public function changeDriver(Request $request)
         $driverRef = $this->database->getReference("drivers/{$driverId}");
         $existingDriver = $driverRef->getValue();
         if (!$existingDriver) {
-            $allDrivers = $this->firebase->getData('drivers') ?? [];
+            $allDrivers = $this->database->getReference('drivers')->getValue() ?? [];
             if (is_array($allDrivers)) {
                 foreach ($allDrivers as $k => $d) {
                     if (!is_array($d)) continue;
@@ -7596,14 +7613,18 @@ public function previousBookings()
 
             // Attach IDs & driver name
             $booking['id'] = $key;
-            $booking['driver_name'] = isset($booking['driver_id'], $driversMap[$booking['driver_id']])
-                ? $driversMap[$booking['driver_id']]
-                : 'Not Assigned';
+            $driverId = $booking['driver_id'] ?? ($booking['driverId'] ?? null);
+            $driverName = null;
+            if ($driverId && isset($driversMap[$driverId])) {
+                $driverName = $driversMap[$driverId];
+            } elseif (!empty($booking['driver_name'])) {
+                $driverName = $booking['driver_name'];
+            } elseif (!empty($booking['driver'])) {
+                $driverName = $booking['driver'];
+            }
+            $booking['driver_name'] = $driverName ?: 'Not Assigned';
                     
-                    
-                    
-                    
-                    $previousBookings->push($booking);
+            $previousBookings->push($booking);
                 
             }
         }
@@ -7658,10 +7679,17 @@ public function previousBookings()
         // Attach ID
         $booking['id'] = $key;
 
-        // Attach driver name
-        $booking['driver_name'] = isset($booking['driver_id'], $driversMap[$booking['driver_id']])
-            ? $driversMap[$booking['driver_id']]
-            : 'Not Assigned';
+        // Attach driver name safely
+        $driverId = $booking['driver_id'] ?? ($booking['driverId'] ?? null);
+        $driverName = null;
+        if ($driverId && isset($driversMap[$driverId])) {
+            $driverName = $driversMap[$driverId];
+        } elseif (!empty($booking['driver_name'])) {
+            $driverName = $booking['driver_name'];
+        } elseif (!empty($booking['driver'])) {
+            $driverName = $booking['driver'];
+        }
+        $booking['driver_name'] = $driverName ?: 'Not Assigned';
 
         // Only push completed bookings
         if (isset($booking['status']) && strtolower($booking['status']) === 'completed') {
@@ -7719,10 +7747,16 @@ public function searchBookings(Request $request)
         $booking['id'] = $key;
 
         // Attach driver name safely
-        $driverId = $booking['driver_id'] ?? null;
-        $booking['driver_name'] = $driverId && isset($driversMap[$driverId])
-            ? $driversMap[$driverId]
-            : 'Not Assigned';
+        $driverId = $booking['driver_id'] ?? ($booking['driverId'] ?? null);
+        $driverName = null;
+        if ($driverId && isset($driversMap[$driverId])) {
+            $driverName = $driversMap[$driverId];
+        } elseif (!empty($booking['driver_name'])) {
+            $driverName = $booking['driver_name'];
+        } elseif (!empty($booking['driver'])) {
+            $driverName = $booking['driver'];
+        }
+        $booking['driver_name'] = $driverName ?: 'Not Assigned';
 
         $completedBookings->push($booking);
     }
