@@ -148,6 +148,8 @@ Route::post('/booking/send-email', [BookingController::class, 'sendEmail'])->nam
 
 Route::post('/bookings/dispatch-driver', [BookingController::class, 'dispatchDriver'])
     ->name('booking.dispatchDriver');
+Route::post('/bookings/change-driver', [BookingController::class, 'changeDriver'])
+    ->name('booking.changeDriver');
     
     
 Route::get('/pricing/surcharge', [PricingController::class, 'get_surcharge'])->name('pricing.surcharge');

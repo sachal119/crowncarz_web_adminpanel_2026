@@ -100,7 +100,7 @@
        
         <tbody>
           @forelse ($completedBookings as $booking)
-          <tr style="border-bottom: 1px solid #F5DEB3;">
+          <tr id="completed-row-{{ $booking['id'] ?? '' }}" style="border-bottom: 1px solid #F5DEB3;">
             <td class="text-dark fw-semibold">{{ $booking['ref_no'] ?? $booking['id'] ?? '-' }}</td>
             <td>{{ $booking['passenger_name'] ?? '-' }}<br><small>{{ $booking['phone_no'] ?? '' }}</small></td>
             <td>
@@ -112,7 +112,7 @@
               <br><small class="text-muted">Dropoff Location</small>
             </td>
             <td>{{ !empty($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y, h:i A') : '-' }}</td>
-            <td>{{ !empty($booking['driver_name']) ? $booking['driver_name'] : 'Not Assigned' }}</td>
+            <td class="driver-name-cell">{{ !empty($booking['driver_name']) ? $booking['driver_name'] : 'Not Assigned' }}</td>
             <td>{{ !empty($booking['price']) ? $booking['price'] : '-' }}</td>
             @php
     $paymentType = strtolower($booking['payment_type'] ?? 'unknown');
@@ -143,17 +143,24 @@
         @endif
     </div>
 </td>
-            <!--<td>-->
-            <!--  <span class="badge rounded-pill px-3 py-2" style="background-color: #D39F61;">-->
-            <!--    {{ ucfirst($booking['payment_type']) }}-->
-            <!--  </span>-->
-            <!--</td>-->
             <td>
               <div class="dropdown">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <i class="bi bi-three-dots-vertical"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center text-primary change-driver-btn"
+                       href="#"
+                       data-booking-id="{{ $booking['id'] ?? '' }}"
+                       data-booking-ref="{{ $booking['ref_no'] ?? ($booking['id'] ?? '') }}"
+                       data-driver-id="{{ $booking['driver_id'] ?? ($booking['driverId'] ?? '') }}"
+                       data-driver-name="{{ $booking['driver_name'] ?? ($booking['driver'] ?? '') }}"
+                       data-bs-toggle="modal"
+                       data-bs-target="#changeDriverModal">
+                        <i class="bi bi-person-gear me-2"></i> Change Driver
+                    </a>
+                  </li>
                   <li>
                     <a class="dropdown-item d-flex align-items-center" href="{{ route('bookings.edit', $booking['id'] ?? '') }}">
                       <i class="bi bi-pencil me-2"></i> Edit Job
@@ -502,5 +509,144 @@ $(document).ready(function() {
             alert("❌ Error sending PDF receipt on WhatsApp.");
         }
     }
+
+    // 🚗 Change Driver Modal Logic (Completed Jobs)
+    const changeModalEl = document.getElementById('changeDriverModal');
+    const changeBookingIdField = document.getElementById('changeBookingId');
+    const changeBookingRefDisplay = document.getElementById('changeBookingRefDisplay');
+    const changeCurrentDriverName = document.getElementById('changeCurrentDriverName');
+    const changeDriverSelect = document.getElementById('changeDriverSelect');
+    const changeDriverForm = document.getElementById('changeDriverForm');
+
+    if (changeModalEl) {
+        changeModalEl.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            if (button) {
+                const bookingId = button.getAttribute('data-booking-id');
+                const bookingRef = button.getAttribute('data-booking-ref') || bookingId;
+                const driverId = button.getAttribute('data-driver-id') || '';
+                const driverName = button.getAttribute('data-driver-name') || 'Not Assigned';
+
+                if (changeBookingIdField) changeBookingIdField.value = bookingId;
+                if (changeBookingRefDisplay) changeBookingRefDisplay.innerText = bookingRef;
+                if (changeCurrentDriverName) changeCurrentDriverName.innerText = driverName;
+                if (changeDriverSelect && driverId) changeDriverSelect.value = driverId;
+            }
+        });
+    }
+
+    if (changeDriverForm) {
+        changeDriverForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('changeDriverSubmitBtn');
+            const origText = submitBtn ? submitBtn.innerHTML : 'Update Driver';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
+            }
+
+            const bookingId = changeBookingIdField.value;
+            const selectedDriverId = changeDriverSelect.value;
+            const selectedDriverText = changeDriverSelect.options[changeDriverSelect.selectedIndex]?.text || '';
+
+            try {
+                const response = await fetch("{{ route('booking.changeDriver') }}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new FormData(changeDriverForm)
+                });
+
+                const data = await response.json().catch(() => null);
+
+                if (response.ok && data?.success) {
+                    alert('✅ ' + (data.message || 'Driver updated successfully!'));
+                    const modal = bootstrap.Modal.getInstance(changeModalEl);
+                    if (modal) modal.hide();
+
+                    const row = document.getElementById('completed-row-' + bookingId);
+                    if (row) {
+                        const driverCell = row.querySelector('.driver-name-cell');
+                        if (driverCell) {
+                            driverCell.innerText = data.data?.driver_name || selectedDriverText;
+                        }
+                        const changeBtn = row.querySelector('.change-driver-btn');
+                        if (changeBtn) {
+                            changeBtn.setAttribute('data-driver-id', selectedDriverId);
+                            changeBtn.setAttribute('data-driver-name', data.data?.driver_name || selectedDriverText);
+                        }
+                    }
+                } else {
+                    alert('❌ ' + (data?.error || data?.message || 'Failed to update driver.'));
+                }
+            } catch (err) {
+                console.error('Driver update error:', err);
+                alert('❌ Network error while updating driver.');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = origText;
+                }
+            }
+        });
+    }
 </script>
+
+<!-- 🚗 Change Driver Modal (Completed Jobs) -->
+<div class="modal fade" id="changeDriverModal" tabindex="-1" aria-labelledby="changeDriverLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h6 class="modal-title" id="changeDriverLabel"><i class="bi bi-person-gear me-2"></i>Change Assigned Driver</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="changeDriverForm">
+            @csrf
+            <input type="hidden" name="booking_id" id="changeBookingId">
+            
+            <div class="alert alert-light border py-2 px-3 mb-3 d-flex align-items-center justify-content-between" style="font-size: 0.85rem;">
+                <div>
+                    <span class="text-muted small d-block">Booking Reference:</span>
+                    <strong id="changeBookingRefDisplay" class="text-dark">-</strong>
+                </div>
+                <div class="text-end">
+                    <span class="text-muted small d-block">Current Driver:</span>
+                    <span id="changeCurrentDriverName" class="badge bg-secondary">-</span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="changeDriverSelect" class="form-label fw-bold">Select New Driver</label>
+                <select class="form-select" id="changeDriverSelect" name="driver_id" required>
+                    <option value="" selected disabled>-- Choose Driver --</option>
+                    @foreach($drivers as $driver)
+                        <option value="{{ $driver['id'] }}">
+                            {{ !empty($driver['call_sign']) ? '[' . $driver['call_sign'] . '] ' : '' }}{{ $driver['name'] ?? 'Unnamed Driver' }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="changeNotifyDriver" name="notify_driver" value="1">
+                <label class="form-check-label small text-muted" for="changeNotifyDriver">
+                    Send SMS notification to new driver (optional for completed jobs)
+                </label>
+            </div>
+
+            <div class="text-end d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="changeDriverSubmitBtn">
+                    <i class="bi bi-check2-circle me-1"></i> Update Driver
+                </button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 @endsection

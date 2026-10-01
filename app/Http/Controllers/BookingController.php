@@ -2781,11 +2781,16 @@ foreach ($driversData as $id => $driver) {
 
 public function dispatchDriver(Request $request)
 {
+    return $this->changeDriver($request);
+}
+
+public function changeDriver(Request $request)
+{
     try {
         // ✅ Validate inputs
         $validator = \Validator::make($request->all(), [
             'booking_id' => 'required|string',
-            'driver_id' => 'required|string',
+            'driver_id'  => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -2795,7 +2800,7 @@ public function dispatchDriver(Request $request)
         }
 
         $bookingId = (string) $request->booking_id;
-        $driverId = (string) $request->driver_id;
+        $driverId  = (string) $request->driver_id;
 
         // ✅ Fetch booking
         $bookingRef = $this->database->getReference("bookings/{$bookingId}");
@@ -2831,144 +2836,157 @@ public function dispatchDriver(Request $request)
             return response()->json(['error' => 'Driver not found'], 404);
         }
 
-        // ✅ Update booking
+        $currentStatus = strtolower(trim($existingBooking['status'] ?? 'pending'));
+        $newStatus = $existingBooking['status'] ?? 'assigned';
+
+        // Keep status as completed if already completed, or preserve current in-progress status. Only set to 'assigned' if pending/unassigned
+        if (empty($currentStatus) || in_array($currentStatus, ['pending', 'unassigned', 'new'])) {
+            $newStatus = 'assigned';
+        }
+
+        $oldDriverId = $existingBooking['driver_id'] ?? ($existingBooking['driverId'] ?? null);
+        $oldDriverName = $existingBooking['driver_name'] ?? ($existingBooking['driver'] ?? null);
+        $oldCallSign = $existingBooking['driver_call_sign'] ?? ($existingBooking['call_sign'] ?? null);
+        $isReassignment = !empty($oldDriverId) && (string)$oldDriverId !== (string)$driverId;
+
+        // ✅ Update booking in Firebase
         $bookingData = [
             'driver_id'        => $driverId,
+            'driverId'         => $driverId,
             'driver_name'      => $existingDriver['name'] ?? null,
             'driver'           => $existingDriver['name'] ?? null,
             'driver_call_sign' => $existingDriver['call_sign'] ?? null,
             'call_sign'        => $existingDriver['call_sign'] ?? null,
-            'status'           => 'assigned',
+            'driver_phone'     => $existingDriver['phone'] ?? ($existingDriver['mobile'] ?? null),
+            'status'           => $newStatus,
             'updated_at'       => now()->toISOString(),
         ];
         $bookingRef->update($bookingData);
 
-        $dCallSign = !empty($existingDriver['call_sign']) ? $existingDriver['call_sign'] . '/' : '';
-        $this->recordBookingActivity($bookingId, 'Driver Dispatched', "Driver {$dCallSign}{$existingDriver['name']} was assigned to this booking.");
-        
-        // Send SMS to Driver
-        if (!empty($existingDriver['phone'])) {
-            try {
-                $smsMessage =
-                    "Dear {$existingDriver['name']},\n\n" .
-                    "A new job has been assigned to you.\n" .
-                    "Ref: " . ($existingBooking['ref_no'] ?? '') . "\n" .
-                    "Pickup: " . ($existingBooking['pickup_address'] ?? '') . "\n" .
-                    "Dropoff: " . ($existingBooking['dropoff_address'] ?? '') . "\n\n" .
-                    "Please check your app.";
+        // ✅ Staff activity audit log
+        $newDriverFormatted = (!empty($existingDriver['call_sign']) ? "[{$existingDriver['call_sign']}] " : '') . ($existingDriver['name'] ?? 'Driver');
+        $oldDriverFormatted = (!empty($oldCallSign) ? "[{$oldCallSign}] " : '') . ($oldDriverName ?: 'None');
 
-                Http::post(route('sms.login'), [
-                    'mobile'  => $existingDriver['phone'],
-                    'message' => $smsMessage
-                ]);
+        $actionTitle = $isReassignment ? 'Driver Changed' : 'Driver Dispatched';
+        $actionDesc = $isReassignment 
+            ? "Assigned driver changed from {$oldDriverFormatted} to {$newDriverFormatted}."
+            : "Driver {$newDriverFormatted} was assigned to this booking.";
+
+        $this->recordBookingActivity($bookingId, $actionTitle, $actionDesc);
+
+        // ✅ Determine if notifications should be sent
+        // For completed bookings, default notify to false unless explicitly requested
+        $notifyDriver = $request->has('notify_driver') 
+            ? filter_var($request->notify_driver, FILTER_VALIDATE_BOOLEAN) 
+            : ($currentStatus !== 'completed');
+
+        if ($notifyDriver) {
+            // Send SMS to Driver
+            if (!empty($existingDriver['phone'])) {
+                try {
+                    $smsMessage =
+                        "Dear {$existingDriver['name']},\n\n" .
+                        ($isReassignment ? "A job has been reassigned to you.\n" : "A new job has been assigned to you.\n") .
+                        "Ref: " . ($existingBooking['ref_no'] ?? '') . "\n" .
+                        "Pickup: " . ($existingBooking['pickup_address'] ?? '') . "\n" .
+                        "Dropoff: " . ($existingBooking['dropoff_address'] ?? '') . "\n\n" .
+                        "Please check your app.";
+
+                    Http::post(route('sms.login'), [
+                        'mobile'  => $existingDriver['phone'],
+                        'message' => $smsMessage
+                    ]);
+                } catch (\Throwable $e) {}
+            }
+
+            // --- Fetch vehicle image ---
+            $vehicles = [
+                ['title'=>'Saloon','img'=>rtrim(config('services.frontend.url'), '/') . '/public/images/1703168146Saloon.png'],
+                ['title'=>'Estate','img'=>rtrim(config('services.frontend.url'), '/') . '/public/images/1703168603_vehicles_large_5301798_336_3139_vehicle-5301798-001-20231020-062215-4d4570cb709d89abe6fd892c061e98100a36d35a219e72f070f653c0c93c2407-removebg-preview.png'],
+                ['title'=>'MPV','img'=>rtrim(config('services.frontend.url'), '/') . '/public/images/1700064078sharan.png'],
+                ['title'=>'8 Seater','img'=>rtrim(config('services.frontend.url'), '/') . '/public/images/17031687775bc3ohfc3rouccucg5jj1432m-removebg-preview.png'],
+                ['title'=>'Executive','img'=>rtrim(config('services.frontend.url'), '/') . '/public/images/1700064019exective_s_class-removebg-preview.png']
+            ];
+
+            $vehicleImage = null;
+            if(isset($existingBooking['vehicle_make'])){
+                foreach($vehicles as $v){
+                    if(strtolower($v['title']) === strtolower($existingBooking['vehicle_make'])){
+                        $vehicleImage = $v['img'];
+                        break;
+                    }
+                }
+            }
+
+            // --- Prepare booking details for email & notification ---
+            $bookingDetails = [
+                'ref_no' => $existingBooking['ref_no'] ?? null,
+                'status' => $newStatus,
+                'pickup_address' => $existingBooking['pickup_address'] ?? null,
+                'dropoff_address' => $existingBooking['dropoff_address'] ?? null,
+                'passenger_name' => $existingBooking['passenger_name'] ?? null,
+                'driver' => [
+                    'name' => $existingDriver['name'] ?? null,
+                    'phone' => $existingDriver['phone'] ?? null
+                ],
+                'vehicle_image' => $vehicleImage
+            ];
+            
+            if (!empty($existingDriver['email'])) {
+                try {
+                    Mail::to($existingDriver['email'])
+                        ->send(new \App\Mail\DriverBookingAssignedMail($bookingDetails));
+                } catch (\Exception $e) {
+                    \Log::error('Mail Error: ' . $e->getMessage());
+                }
+            }
+            
+            try {
+                $usersSnap = $this->database->getReference('users')->getSnapshot()->getValue();
+                $passengerKey = null;
+                if (is_array($usersSnap)) {
+                    foreach($usersSnap as $key => $user){
+                        if(is_array($user) && isset($user['name']) && $user['name'] === ($existingBooking['passenger_name'] ?? '')){
+                            $passengerKey = $key;
+                            break;
+                        }
+                    }
+                }
+
+                if($passengerKey && $currentStatus !== 'completed'){
+                    $this->sendFirebaseNotification($passengerKey, "Driver Assigned", "A driver ({$existingDriver['name']}) has been assigned to your booking (" . ($existingBooking['ref_no'] ?? '') . ").", 'user');
+                }
+            } catch (\Throwable $e) {}
+
+            try {
+                $driverSnap = $this->database->getReference('drivers')->getSnapshot()->getValue();
+                $driverKey = null;
+                if (is_array($driverSnap)) {
+                    foreach($driverSnap as $key => $driver){
+                        if(is_array($driver) && (string)$key === (string)$driverId){
+                            $driverKey = $key;
+                            break;
+                        }
+                    }
+                }
+
+                if($driverKey){
+                    $this->sendFirebaseNotification($driverKey, $isReassignment ? "Job Reassigned" : "New Job Assigned", "You have a job assigned. Ref: (" . ($existingBooking['ref_no'] ?? '') . ")", 'driver');
+                }
             } catch (\Throwable $e) {}
         }
 
-        // --- Fetch vehicle image ---
-        $vehicles = [
-            ['title'=>'Saloon','img'=>rtrim(config('services.frontend.url'), '/') . '/public/images/1703168146Saloon.png'],
-            ['title'=>'Estate','img'=>rtrim(config('services.frontend.url'), '/') . '/public/images/1703168603_vehicles_large_5301798_336_3139_vehicle-5301798-001-20231020-062215-4d4570cb709d89abe6fd892c061e98100a36d35a219e72f070f653c0c93c2407-removebg-preview.png'],
-            ['title'=>'MPV','img'=>rtrim(config('services.frontend.url'), '/') . '/public/images/1700064078sharan.png'],
-            ['title'=>'8 Seater','img'=>rtrim(config('services.frontend.url'), '/') . '/public/images/17031687775bc3ohfc3rouccucg5jj1432m-removebg-preview.png'],
-            ['title'=>'Executive','img'=>rtrim(config('services.frontend.url'), '/') . '/public/images/1700064019exective_s_class-removebg-preview.png']
-        ];
-
-        $vehicleImage = null;
-        if(isset($existingBooking['vehicle_make'])){
-            foreach($vehicles as $v){
-                if(strtolower($v['title']) === strtolower($existingBooking['vehicle_make'])){
-                    $vehicleImage = $v['img'];
-                    break;
-                }
-            }
-        }
-
-        // --- Prepare booking details for email & notification ---
-        $bookingDetails = [
-            'ref_no' => $existingBooking['ref_no'] ?? null,
-            'status' => 'assigned',
-            'pickup_address' => $existingBooking['pickup_address'] ?? null,
-            'dropoff_address' => $existingBooking['dropoff_address'] ?? null,
-            'passenger_name' => $existingBooking['passenger_name'] ?? null,
-            'driver' => [
-                'name' => $existingDriver['name'] ?? null,
-                'phone' => $existingDriver['phone'] ?? null
-            ],
-            'vehicle_image' => $vehicleImage
-        ];
-        
-        if (!empty($existingDriver['email'])) {
-            try {
-                Mail::to($existingDriver['email'])
-                    ->send(new \App\Mail\DriverBookingAssignedMail($bookingDetails));
-            } catch (\Exception $e) {
-                \Log::error('Mail Error: ' . $e->getMessage());
-            }
-        }
-        
-        try {
-            $usersSnap = $this->database->getReference('users')->getSnapshot()->getValue();
-            $passengerKey = null;
-            if (is_array($usersSnap)) {
-                foreach($usersSnap as $key => $user){
-                    if(is_array($user) && isset($user['name']) && $user['name'] === ($existingBooking['passenger_name'] ?? '')){
-                        $passengerKey = $key;
-                        break;
-                    }
-                }
-            }
-
-            if($passengerKey){
-                $this->sendFirebaseNotification($passengerKey, "Driver Assigned", "A driver ({$existingDriver['name']}) has been assigned to your booking (" . ($existingBooking['ref_no'] ?? '') . ").", 'user');
-            }
-        } catch (\Throwable $e) {}
-
-        try {
-            $driverSnap = $this->database->getReference('drivers')->getSnapshot()->getValue();
-            $driverKey = null;
-            if (is_array($driverSnap)) {
-                foreach($driverSnap as $key => $driver){
-                    if(is_array($driver) && (string)$key === (string)$driverId){
-                        $driverKey = $key;
-                        break;
-                    }
-                }
-            }
-
-            if($driverKey){
-                $this->sendFirebaseNotification($driverKey, "New Job Assigned", "You have a new job assigned. Ref: (" . ($existingBooking['ref_no'] ?? '') . ")", 'driver');
-            }
-        } catch (\Throwable $e) {}
-
-        // --- Send Firebase notification to passenger ---
-        // if(isset($existingBooking['passenger_id'])){
-        //     $this->sendFirebaseNotification(
-        //         $existingBooking['passenger_id'],
-        //         "Driver Assigned",
-        //         "A driver ({$existingDriver['name']}) has been assigned to your booking ({$existingBooking['ref_no']}).", 'user'
-        //     );
-        // }
-        //$this->sendFirebaseNotification($passengerId, "Driver Assigned", "A driver has been assigned.", 'user');
-        // if(isset($existingBooking['driver_id'])){
-        //     $this->sendFirebaseNotification(
-        //         $existingBooking['driver_id'], "New Booking Assigned", "You have a new job assigned. Ref: ({$existingBooking['ref_no']})", 'driver');
-        // }
-
-        // --- Send email to passenger ---
-        // if(isset($existingBooking['email'])){
-        //     Mail::to($existingBooking['email'])
-        //         ->send(new \App\Mail\BookingStatusUpdatedMail($bookingDetails));
-        // }
-        
-        // --- Send email to driver ---
-        
-
         return response()->json([
             'success' => true,
-            'message' => 'Driver dispatched successfully.',
+            'message' => $isReassignment ? 'Driver changed successfully.' : 'Driver dispatched successfully.',
             'data' => [
-                'booking_id' => $bookingId,
-                'driver_id' => $driverId,
+                'booking_id'        => $bookingId,
+                'driver_id'         => $driverId,
+                'driver_name'       => $existingDriver['name'] ?? '',
+                'driver_call_sign'  => $existingDriver['call_sign'] ?? '',
+                'call_sign'         => $existingDriver['call_sign'] ?? '',
+                'driver_phone'      => $existingDriver['phone'] ?? '',
+                'status'            => $newStatus,
             ]
         ], 200);
 
@@ -3244,8 +3262,13 @@ foreach ($driversData as $id => $driver) {
     if (!session('admin_logged_in')) {
         return redirect()->route('login')->with('error', 'Please login first.');
     }
-    // Fetch drivers from local database
-    $drivers = Driver::all();
+    // Fetch drivers from Firebase
+    $driversData = $this->firebase->getData('drivers') ?? [];
+    $drivers = collect($driversData)->map(fn($d, $id) => [
+        'id' => (string)$id,
+        'name' => $d['name'] ?? '',
+        'call_sign' => $d['call_sign'] ?? ''
+    ]);
     
     // Fetch vehicles from Firebase
     $firebaseVehicles = $this->firebase->getData('vehicles'); // 'vehicles' node in Firebase
@@ -8082,7 +8105,11 @@ public function sendEmaildashboard(Request $request)
         $booking['vias'] = $vias;
 
         $driversData = $this->firebase->getData('drivers') ?? [];
-        $drivers = collect($driversData)->map(fn($d, $id) => ['id' => $id, 'name' => $d['name']]);
+        $drivers = collect($driversData)->map(fn($d, $id) => [
+            'id' => (string)$id, 
+            'name' => $d['name'] ?? '',
+            'call_sign' => $d['call_sign'] ?? ''
+        ]);
 
         $vehiclesData = $this->firebase->getData('vehicles') ?? [];
         $vehicles = collect($vehiclesData)->map(fn($v, $id) => ['id' => $id, 'make' => $v['make'], 'model' => $v['model']]);
@@ -8121,6 +8148,7 @@ public function sendEmaildashboard(Request $request)
             'pickup_time'    => 'required',
             'vehicle_id'     => 'nullable|string',
             'vehicle_make'   => 'nullable|string',
+            'driver_id'      => 'nullable|string',
             'account_id'     => 'nullable|string',
             'account_name'   => 'nullable|string',
             
@@ -8144,10 +8172,45 @@ public function sendEmaildashboard(Request $request)
             $pickup_datetime = Carbon::parse($validated['pickup_date']);
         }
 
-        $driverId = null;
-        if (!empty($validated['vehicle_id'])) {
-            $vehicle = $this->firebase->getData('vehicles/'.$validated['vehicle_id']);
-            $driverId = $vehicle['driver_id'] ?? null;
+        $oldDriverId = $booking['driver_id'] ?? ($booking['driverId'] ?? null);
+        $oldDriverName = $booking['driver_name'] ?? ($booking['driver'] ?? null);
+        $oldCallSign = $booking['driver_call_sign'] ?? ($booking['call_sign'] ?? null);
+        $reqDriverId = $request->input('driver_id');
+
+        $driverChanged = false;
+        $driverId = $oldDriverId;
+        $driverName = $oldDriverName;
+        $driverCallSign = $oldCallSign;
+        $driverPhone = $booking['driver_phone'] ?? null;
+
+        if ($request->has('driver_id')) {
+            if (!empty($reqDriverId)) {
+                if ((string)$reqDriverId !== (string)$oldDriverId) {
+                    $dData = $this->firebase->getData("drivers/{$reqDriverId}");
+                    if ($dData) {
+                        $driverId = (string)$reqDriverId;
+                        $driverName = $dData['name'] ?? null;
+                        $driverCallSign = $dData['call_sign'] ?? null;
+                        $driverPhone = $dData['phone'] ?? ($dData['mobile'] ?? null);
+                        $driverChanged = true;
+                    }
+                }
+            } else {
+                // Driver cleared/unassigned
+                if (!empty($oldDriverId)) {
+                    $driverId = null;
+                    $driverName = null;
+                    $driverCallSign = null;
+                    $driverPhone = null;
+                    $driverChanged = true;
+                }
+            }
+        }
+
+        $currentStatus = strtolower(trim($booking['status'] ?? 'pending'));
+        $bookingStatus = $booking['status'] ?? 'pending';
+        if ($driverChanged && !empty($driverId) && (empty($currentStatus) || in_array($currentStatus, ['pending', 'unassigned']))) {
+            $bookingStatus = 'assigned';
         }
 
         $viaAddresses = [];
@@ -8169,33 +8232,50 @@ public function sendEmaildashboard(Request $request)
         }
 
         $updatedBooking = [
-            'passenger_name' => $validated['passenger_name'],
-            'phone_no'       => $validated['phone_no'],
-            'email'          => $validated['email'] ?? null,
-            'pickup_address' => $validated['pickup_address'],
-            'dropoff_address'=> $validated['dropoff_address'],
-            'via_addresses'  => $viaAddresses,
-            'vias'           => $viaAddresses,
-            'pickup_time'    => $pickup_datetime->toDateTimeString(),
-            'vehicle_id'     => $validated['vehicle_id'] ?? null,
-            'vehicle_make'   => $validated['vehicle_make'] ?? null,
+            'passenger_name'   => $validated['passenger_name'],
+            'phone_no'         => $validated['phone_no'],
+            'email'            => $validated['email'] ?? null,
+            'pickup_address'   => $validated['pickup_address'],
+            'dropoff_address'  => $validated['dropoff_address'],
+            'via_addresses'    => $viaAddresses,
+            'vias'             => $viaAddresses,
+            'pickup_time'      => $pickup_datetime->toDateTimeString(),
+            'vehicle_id'       => $validated['vehicle_id'] ?? null,
+            'vehicle_make'     => $validated['vehicle_make'] ?? null,
             
-            'fare'           => $validated['fare'] ?? 0,
-            'parking'        => $validated['parking'] ?? 0,
-            'extra'          => $validated['extra'] ?? 0,
-            'waiting_fee'    => $validated['waiting_fee'] ?? 0,
-            'price'          => $validated['price'] ?? 0,
+            'driver_id'        => $driverId,
+            'driverId'         => $driverId,
+            'driver_name'      => $driverName,
+            'driver'           => $driverName,
+            'driver_call_sign' => $driverCallSign,
+            'call_sign'        => $driverCallSign,
+            'driver_phone'     => $driverPhone,
+            'status'           => $bookingStatus,
+
+            'fare'             => $validated['fare'] ?? 0,
+            'parking'          => $validated['parking'] ?? 0,
+            'extra'            => $validated['extra'] ?? 0,
+            'waiting_fee'      => $validated['waiting_fee'] ?? 0,
+            'price'            => $validated['price'] ?? 0,
             
-            'payment_type'   => $validated['payment_type'],
-            'account_id'     => $accountId,
-            'account_name'   => $accountName,
-            'flight_no'      => $validated['flight_no'] ?? null,
-            'child_seat'     => $validated['child_seat'] ?? null,
-            'job_comment'    => $validated['job_comment'] ?? null,
+            'payment_type'     => $validated['payment_type'],
+            'account_id'       => $accountId,
+            'account_name'     => $accountName,
+            'flight_no'        => $validated['flight_no'] ?? null,
+            'child_seat'       => $validated['child_seat'] ?? null,
+            'job_comment'      => $validated['job_comment'] ?? null,
+            'updated_at'       => now()->toISOString(),
         ];
 
         $this->firebase->updateData("bookings/{$bookingId}", $updatedBooking);
-        $this->recordBookingActivity($bookingId, 'Booking Edited', 'Booking details updated by staff.');
+        
+        if ($driverChanged) {
+            $newFormatted = $driverName ? ((!empty($driverCallSign) ? "[{$driverCallSign}] " : '') . $driverName) : 'None (Unassigned)';
+            $oldFormatted = $oldDriverName ? ((!empty($oldCallSign) ? "[{$oldCallSign}] " : '') . $oldDriverName) : 'None';
+            $this->recordBookingActivity($bookingId, 'Driver Changed', "Driver changed from {$oldFormatted} to {$newFormatted} during booking edit.");
+        } else {
+            $this->recordBookingActivity($bookingId, 'Booking Edited', 'Booking details updated by staff.');
+        }
 
         return redirect('/dashboard')->with('success', 'Booking updated successfully!');
     }
@@ -8216,6 +8296,14 @@ public function sendEmaildashboard(Request $request)
         if ($driverId) {
             $driver = $this->firebase->getData("drivers/{$driverId}");
         }
+
+        // Fetch all drivers for quick assignment/reassignment
+        $driversData = $this->firebase->getData('drivers') ?? [];
+        $drivers = collect($driversData)->map(fn($d, $id) => [
+            'id'        => (string)$id,
+            'name'      => $d['name'] ?? 'Driver',
+            'call_sign' => $d['call_sign'] ?? ''
+        ])->values();
 
         // Activity logs
         $rawLogs = $this->firebase->getData("bookings/{$bookingId}/activity_logs") ?? [];
@@ -8249,8 +8337,9 @@ public function sendEmaildashboard(Request $request)
         });
 
         return view('bookings.view', [
-            'booking' => $booking,
-            'driver' => $driver,
+            'booking'       => $booking,
+            'driver'        => $driver,
+            'drivers'       => $drivers,
             'activity_logs' => $logs
         ]);
     }

@@ -430,69 +430,80 @@
     $pickupTime = isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : now()->addHour()->format('H:i');
 @endphp
             <div class="row g-2 g-md-3">
-              <div class="col-12 col-md-3 mb-2 mb-md-3">
-                <label class="form-label  fs-6 fs-md-6">Pickup Date</label>
-                <input type="date" name="pickup_date"  id="pickup_date"  class="form-control rounded-3 shadow-sm"
+              <div class="col-12 col-md-2 mb-2 mb-md-3">
+                <label class="form-label fs-6 fs-md-6">Pickup Date</label>
+                <input type="date" name="pickup_date" id="pickup_date" class="form-control rounded-3 shadow-sm"
                        value="{{ old('pickup_date', $pickupDate) }}" required>
               </div>
-              <div class="col-12 col-md-3 mb-2 mb-md-3">
-  <label class="form-label fs-6 fs-md-6">Pickup Time</label>
-  <input type="time" name="pickup_time" id="pickup_time" class="form-control rounded-3 shadow-sm"
-         value="{{ old('pickup_time', $pickupTime) }}" required>
-</div>
+              <div class="col-12 col-md-2 mb-2 mb-md-3">
+                <label class="form-label fs-6 fs-md-6">Pickup Time</label>
+                <input type="time" name="pickup_time" id="pickup_time" class="form-control rounded-3 shadow-sm"
+                       value="{{ old('pickup_time', $pickupTime) }}" required>
+              </div>
 
+              <div class="col-12 col-md-2 mb-2 mb-md-3">
+                <label class="form-label fs-6 fs-md-6">Flight No (Optional)</label>
+                <input type="text" name="flight_no" class="form-control rounded-3 shadow-sm" id="flight_no"
+                       value="{{ old('flight_no', $booking['flight_no'] ?? '') }}">
+              </div>
+              <div class="col-12 col-md-2 mb-2 mb-md-3">
+                <label class="form-label fs-6 fs-md-6">Payment Type</label>
+                <select name="payment_type" id="payment_type" class="form-select rounded-3 shadow-sm" required>
+                    <option value="cash" {{ (old('payment_type', $booking['payment_type'] ?? '') == 'cash') ? 'selected' : '' }}>Cash</option>
+                    <option value="card" {{ (old('payment_type', $booking['payment_type'] ?? '') == 'card') ? 'selected' : '' }}>Card</option>
+                    <option value="account" {{ (old('payment_type', $booking['payment_type'] ?? '') == 'account') ? 'selected' : '' }}>Account</option>
+                </select>
+              </div>
+              @php
+                // Fixed dropdown options in correct order
+                $fixedVehicles = [
+                    ['make' => 'Saloon', 'id' => 1],
+                    ['make' => 'Estate', 'id' => 2],
+                    ['make' => 'MPV', 'id' => 3],
+                    ['make' => '8 Seater', 'id' => 4],
+                    ['make' => 'Executive', 'id' => 5],
+                ];
+                
+                // Default = Saloon (ID = 1)
+                $defaultVehicleId = 1;
 
+                // Keep old selection logic as it is
+                $selectedVehicleId = old('vehicle_id', $booking['vehicle_id'] ?? $defaultVehicleId);
+              @endphp
 
-              
-              
-              
+              <div class="col-12 col-md-2 mb-2 mb-md-3">
+                <label class="form-label fs-6 fs-md-6">Vehicle</label>
+                <input type="hidden" name="vehicle_make" id="vehicle_make">
+                <select name="vehicle_id" id="vehicle_id" class="form-select rounded-3 shadow-sm">
+                    <option value="">-- Select Vehicle --</option>
+                    @foreach($fixedVehicles as $vehicle)
+                        <option data-make="{{ $vehicle['make'] }}" value="{{ $vehicle['id'] }}"
+                            {{ $selectedVehicleId == $vehicle['id'] ? 'selected' : '' }}>
+                            {{ $vehicle['make'] }}
+                        </option>
+                    @endforeach
+                </select>
+              </div>
 
-<div class="col-12 col-md-2 mb-2 mb-md-3">
-  <label class="form-label fs-6 fs-md-6">Flight No (Optional)</label>
-  <input type="text" name="flight_no" class="form-control rounded-3 shadow-sm" id="flight_no"
-         value="{{ old('flight_no', $booking['flight_no'] ?? '') }}">
-</div>
-<div class="col-12 col-md-2 mb-2 mb-md-3">
-            <label class="form-label fs-6 fs-md-6">Payment Type</label>
-            <select name="payment_type" id="payment_type" class="form-select rounded-3 shadow-sm" required>
-                <option value="cash" {{ (old('payment_type', $booking['payment_type'] ?? '') == 'cash') ? 'selected' : '' }}>Cash</option>
-                <option value="card" {{ (old('payment_type', $booking['payment_type'] ?? '') == 'card') ? 'selected' : '' }}>Card</option>
-                <option value="account" {{ (old('payment_type', $booking['payment_type'] ?? '') == 'account') ? 'selected' : '' }}>Account</option>
-            </select>
-        </div>
-         @php
-    // Fixed dropdown options in correct order
-    $fixedVehicles = [
-        ['make' => 'Saloon', 'id' => 1],
-        ['make' => 'Estate', 'id' => 2],
-        ['make' => 'MPV', 'id' => 3],
-        ['make' => '8 Seater', 'id' => 4],
-        ['make' => 'Executive', 'id' => 5],
-    ];
-    
-    // Default = Saloon (ID = 1)
-    $defaultVehicleId = 1;
-
-    // Keep old selection logic as it is
-    $selectedVehicleId = old('vehicle_id', $booking['vehicle_id'] ?? $defaultVehicleId);
-@endphp
-
-
-<div class="col-12 col-md-2 mb-2 mb-md-3">
-  <label class="form-label fs-6 fs-md-6">Vehicle</label>
-  <input type="hidden" name="vehicle_make" id="vehicle_make">
-<select name="vehicle_id" id="vehicle_id" class="form-select rounded-3 shadow-sm">
-    <option value="">-- Select Vehicle --</option>
-
-    @foreach($fixedVehicles as $vehicle)
-        <option data-make="{{ $vehicle['make'] }}" value="{{ $vehicle['id'] }}"
-            {{ $selectedVehicleId == $vehicle['id'] ? 'selected' : '' }}>
-            {{ $vehicle['make'] }}
-        </option>
-    @endforeach
-</select>
-
-</div>
+              <div class="col-12 col-md-2 mb-2 mb-md-3">
+                <label class="form-label fs-6 fs-md-6 fw-semibold text-primary">Assigned Driver</label>
+                @php
+                  $selectedDriverId = old('driver_id', $booking['driver_id'] ?? ($booking['driverId'] ?? ''));
+                @endphp
+                <select name="driver_id" id="driver_id_select" class="form-select rounded-3 shadow-sm" onchange="const dHid=document.getElementById('currentDriverId'); if(dHid) dHid.value=this.value;">
+                    <option value="">-- Unassigned --</option>
+                    @foreach($drivers as $d)
+                        @php
+                            $dId = is_array($d) ? ($d['id'] ?? '') : ($d->id ?? '');
+                            $dName = is_array($d) ? ($d['name'] ?? '') : ($d->name ?? '');
+                            $dCall = is_array($d) ? ($d['call_sign'] ?? '') : ($d->call_sign ?? '');
+                        @endphp
+                        <option value="{{ $dId }}" {{ (string)$selectedDriverId === (string)$dId ? 'selected' : '' }}>
+                            {{ !empty($dCall) ? '[' . $dCall . '] ' : '' }}{{ $dName }}
+                        </option>
+                    @endforeach
+                </select>
+              </div>
             </div>
            
            

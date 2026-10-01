@@ -994,12 +994,12 @@ td{
 
     
 
-<!-- 🚗 Dispatch Driver Modal -->
+<!-- 🚗 Dispatch / Change Driver Modal -->
 <div class="modal fade" id="dispatchDriverModal" tabindex="-1" aria-labelledby="dispatchDriverLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-header bg-primary text-white">
-        <h6 class="modal-title" id="dispatchDriverLabel">Dispatch Driver</h6>
+        <h6 class="modal-title" id="dispatchDriverLabel"><i class="bi bi-person-gear me-2"></i>Dispatch Driver</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -1007,18 +1007,34 @@ td{
             @csrf
             <input type="hidden" name="booking_id" id="dispatchBookingId">
             
+            <div id="dispatchCurrentDriverInfo" class="alert alert-info py-2 px-3 mb-3 d-none d-flex align-items-center justify-content-between" style="font-size: 0.85rem;">
+                <div>
+                    <span class="text-muted small d-block">Currently Assigned:</span>
+                    <strong class="current-driver-name">-</strong>
+                </div>
+                <span class="badge bg-primary">Reassigning</span>
+            </div>
+
             <div class="mb-3">
                 <label for="driverSelect" class="form-label fw-bold">Select Driver</label>
                 <select class="form-select" id="driverSelect" name="driver_id" required>
                     <option value="" selected disabled>-- Choose Driver --</option>
                     @foreach($drivers as $key => $driver)
-                        <option value="{{ $driver['id'] }}">{{$driver['call_sign'] ?? 'No Call Driver'}} / {{ $driver['name'] ?? 'Unnamed Driver' }}</option>
+                        <option value="{{ $driver['id'] }}">{{$driver['call_sign'] ?? 'No Call'}} / {{ $driver['name'] ?? 'Unnamed Driver' }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div class="text-end">
-                <button type="submit" class="btn btn-primary">Dispatch</button>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="dispatchNotifyDriver" name="notify_driver" value="1" checked>
+                <label class="form-check-label small text-muted" for="dispatchNotifyDriver">
+                    Send notification to driver (SMS / Email / App)
+                </label>
+            </div>
+
+            <div class="text-end d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="dispatchSubmitBtn">Dispatch</button>
             </div>
         </form>
       </div>
@@ -1954,6 +1970,17 @@ function buildBookingRowHtml(booking, isNew = false) {
                             <i class="bi bi-truck me-2"></i> Dispatch Driver
                         </a>
                     </li>
+                    <li class="action-change-driver-item" style="${!hasDriver ? 'display:none;' : ''}">
+                        <a class="dropdown-item d-flex align-items-center text-primary dispatch-driver-btn"
+                           href="#"
+                           data-booking-id="${id}"
+                           data-driver-id="${escapeHtml(booking.driver_id || booking.driverId || '')}"
+                           data-driver-name="${escapeHtml(booking.driver_name || booking.driver || '')}"
+                           data-bs-toggle="modal"
+                           data-bs-target="#dispatchDriverModal">
+                            <i class="bi bi-person-gear me-2"></i> Change Driver
+                        </a>
+                    </li>
                     <li class="action-track-item" style="${!hasDriver ? 'display:none;' : ''}">
                         <a class="dropdown-item d-flex align-items-center text-primary track-driver-link" href="/bookings/${id}/track">
                             <i class="bi bi-geo-alt me-2"></i> Track Driver
@@ -2080,6 +2107,15 @@ function updateBookingRowData(booking) {
 
     const hasDriver = !!(booking.driver_id || booking.driverId || booking.driver_name || booking.driver || booking.driver_call_sign || booking.call_sign);
     if (dispatchItem) dispatchItem.style.display = hasDriver ? 'none' : '';
+    const changeItem = row.querySelector('.action-change-driver-item');
+    if (changeItem) {
+        changeItem.style.display = hasDriver ? '' : 'none';
+        const changeBtn = changeItem.querySelector('.dispatch-driver-btn');
+        if (changeBtn) {
+            changeBtn.setAttribute('data-driver-id', booking.driver_id || booking.driverId || '');
+            changeBtn.setAttribute('data-driver-name', booking.driver_name || booking.driver || '');
+        }
+    }
     if (trackItem) trackItem.style.display = hasDriver ? '' : 'none';
     if (recallItem) recallItem.style.display = hasDriver ? '' : 'none';
 
@@ -2259,9 +2295,11 @@ function bindRowEvents(context = document) {
                         const driverCell = row.querySelector('.driver-cell');
                         if (driverCell) driverCell.innerHTML = `<span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>`;
                         const dispatchItem = row.querySelector('.action-dispatch-item');
+                        const changeItem = row.querySelector('.action-change-driver-item');
                         const trackItem = row.querySelector('.action-track-item');
                         const recallItem = row.querySelector('.action-recall-item');
                         if (dispatchItem) dispatchItem.style.display = '';
+                        if (changeItem) changeItem.style.display = 'none';
                         if (trackItem) trackItem.style.display = 'none';
                         if (recallItem) recallItem.style.display = 'none';
                     }
@@ -2904,7 +2942,29 @@ document.addEventListener('DOMContentLoaded', function () {
             const button = event.relatedTarget;
             if (button) {
                 const bookingId = button.getAttribute('data-booking-id');
+                const currentDriverId = button.getAttribute('data-driver-id') || '';
+                const currentDriverName = button.getAttribute('data-driver-name') || '';
                 if (bookingIdField) bookingIdField.value = bookingId;
+
+                const modalTitle = document.getElementById('dispatchDriverLabel');
+                const submitBtn = document.getElementById('dispatchSubmitBtn');
+                const currentInfo = document.getElementById('dispatchCurrentDriverInfo');
+
+                if (currentDriverId || currentDriverName) {
+                    if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-gear me-2"></i>Change / Reassign Driver';
+                    if (submitBtn) submitBtn.innerText = 'Update Driver';
+                    if (driverSelect && currentDriverId) driverSelect.value = currentDriverId;
+                    if (currentInfo) {
+                        currentInfo.classList.remove('d-none');
+                        const nameSpan = currentInfo.querySelector('.current-driver-name');
+                        if (nameSpan) nameSpan.innerText = currentDriverName || 'Assigned Driver';
+                    }
+                } else {
+                    if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-gear me-2"></i>Dispatch Driver';
+                    if (submitBtn) submitBtn.innerText = 'Dispatch';
+                    if (driverSelect) driverSelect.value = '';
+                    if (currentInfo) currentInfo.classList.add('d-none');
+                }
             }
         });
     }
@@ -2912,15 +2972,18 @@ document.addEventListener('DOMContentLoaded', function () {
     if (dispatchForm) {
         dispatchForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-            const submitBtn = dispatchForm.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Dispatching...';
+            const submitBtn = document.getElementById('dispatchSubmitBtn') || dispatchForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn ? submitBtn.innerText : 'Dispatch';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Updating...';
+            }
 
             const bookingId = bookingIdField.value;
             const selectedDriverId = driverSelect ? driverSelect.value : '';
 
             try {
-                const response = await fetch("{{ route('booking.dispatchDriver') }}", {
+                const response = await fetch("{{ route('booking.changeDriver') }}", {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': CSRF_TOKEN,
@@ -2933,7 +2996,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const data = await response.json().catch(() => null);
 
                 if (response.ok && data?.success) {
-                    showDashboardToast('Driver Dispatched', 'Driver assigned to booking successfully!', 'success');
+                    showDashboardToast('Driver Updated', data.message || 'Driver assigned to booking successfully!', 'success');
                     const modal = bootstrap.Modal.getInstance(dispatchModalEl);
                     if (modal) modal.hide();
 
@@ -2960,22 +3023,33 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
 
                         const dispatchItem = row.querySelector('.action-dispatch-item');
+                        const changeItem = row.querySelector('.action-change-driver-item');
                         const trackItem = row.querySelector('.action-track-item');
                         const recallItem = row.querySelector('.action-recall-item');
                         if (dispatchItem) dispatchItem.style.display = 'none';
+                        if (changeItem) {
+                            changeItem.style.display = '';
+                            const changeBtn = changeItem.querySelector('.dispatch-driver-btn');
+                            if (changeBtn) {
+                                changeBtn.setAttribute('data-driver-id', selectedDriverId);
+                                changeBtn.setAttribute('data-driver-name', dName);
+                            }
+                        }
                         if (trackItem) trackItem.style.display = '';
                         if (recallItem) recallItem.style.display = '';
                     }
                 } else {
-                    const errorMsg = data?.error || data?.message || 'Failed to dispatch driver.';
-                    showDashboardToast('Dispatch Failed', errorMsg, 'danger');
+                    const errorMsg = data?.error || data?.message || 'Failed to update driver.';
+                    showDashboardToast('Action Failed', errorMsg, 'danger');
                 }
             } catch (err) {
-                console.error('Dispatch error:', err);
-                showDashboardToast('Network Error', 'Could not complete dispatch.', 'danger');
+                console.error('Driver update error:', err);
+                showDashboardToast('Network Error', 'Could not complete driver update.', 'danger');
             } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = 'Dispatch';
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = originalBtnText;
+                }
             }
         });
     }

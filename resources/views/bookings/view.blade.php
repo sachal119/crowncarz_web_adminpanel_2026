@@ -109,6 +109,9 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-primary btn-sm text-white fw-semibold" data-bs-toggle="modal" data-bs-target="#changeDriverModal">
+                <i class="bi bi-person-gear me-1"></i> Change Driver
+            </button>
             <a href="{{ route('bookings.edit', $booking['id']) }}" class="btn btn-warning btn-sm text-dark fw-bold">
                 <i class="bi bi-pencil-square me-1"></i> Edit Booking
             </a>
@@ -132,10 +135,15 @@
         </div>
         <div class="col-6 col-md-3">
             <div class="p-3 rounded-3 bg-white border shadow-sm h-100">
-                <span class="text-muted small text-uppercase fw-semibold d-block" style="font-size: 0.72rem;">
-                    <i class="bi bi-car-front-fill me-1 text-info"></i> Vehicle & Driver
-                </span>
-                <span class="fw-bold text-dark mt-1 d-block">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span class="text-muted small text-uppercase fw-semibold" style="font-size: 0.72rem;">
+                        <i class="bi bi-car-front-fill me-1 text-info"></i> Vehicle & Driver
+                    </span>
+                    <a href="#" class="small text-primary text-decoration-none fw-semibold" data-bs-toggle="modal" data-bs-target="#changeDriverModal" style="font-size: 0.75rem;">
+                        Change
+                    </a>
+                </div>
+                <span class="fw-bold text-dark mt-1 d-block" id="top-driver-badge-container">
                     @if($driver)
                         <span class="badge bg-success-subtle text-success-emphasis border">
                             @if(!empty($driver['call_sign'])) [{{ $driver['call_sign'] }}] @endif
@@ -301,8 +309,13 @@
                             <div class="fw-semibold text-dark">{{ $booking['vehicle_make'] ?? ($booking['vehicle_id'] ?? '-') }}</div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="small text-muted" style="font-size: 0.78rem;">Assigned Driver</div>
-                            <div class="fw-semibold text-dark">
+                            <div class="small text-muted d-flex align-items-center justify-content-between" style="font-size: 0.78rem;">
+                                <span>Assigned Driver</span>
+                                <button type="button" class="btn btn-link p-0 text-primary fw-semibold" style="font-size: 0.75rem; text-decoration: none;" data-bs-toggle="modal" data-bs-target="#changeDriverModal">
+                                    <i class="bi bi-pencil-square me-1"></i>Change Driver
+                                </button>
+                            </div>
+                            <div class="fw-semibold text-dark mt-1" id="breakdown-driver-badge-container">
                                 @if($driver)
                                     <span class="badge bg-success-subtle text-success-emphasis border">
                                         @if(!empty($driver['call_sign'])) [{{ $driver['call_sign'] }}] @endif
@@ -385,7 +398,7 @@
                 
                 <div class="card-body p-3 flex-grow-1" style="max-height: 540px; overflow-y: auto;">
                     @if(!empty($activity_logs))
-                        <div class="activity-timeline-container position-relative ps-3">
+                        <div class="activity-timeline-container position-relative ps-3" id="activityLogsTimeline">
                             @foreach($activity_logs as $log)
                                 @php
                                     $action = $log['action'] ?? 'Activity';
@@ -398,7 +411,7 @@
                                         $actionClass = 'action-status';
                                         $badgeClass = 'bg-info-subtle text-info-emphasis border border-info-subtle';
                                         $icon = 'bi-arrow-repeat';
-                                    } elseif (str_contains($actLower, 'dispatch') || str_contains($actLower, 'assign')) {
+                                    } elseif (str_contains($actLower, 'dispatch') || str_contains($actLower, 'assign') || str_contains($actLower, 'driver')) {
                                         $actionClass = 'action-dispatch';
                                         $badgeClass = 'bg-success-subtle text-success-emphasis border border-success-subtle';
                                         $icon = 'bi-person-check';
@@ -476,4 +489,118 @@
         </div>
     </div>
 </div>
+
+<!-- 🚗 Change Driver Modal (Booking Details View) -->
+<div class="modal fade" id="changeDriverModal" tabindex="-1" aria-labelledby="changeDriverLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h6 class="modal-title" id="changeDriverLabel"><i class="bi bi-person-gear me-2"></i>Change Assigned Driver</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="viewChangeDriverForm">
+            @csrf
+            <input type="hidden" name="booking_id" value="{{ $booking['id'] }}">
+            
+            <div class="alert alert-light border py-2 px-3 mb-3 d-flex align-items-center justify-content-between" style="font-size: 0.85rem;">
+                <div>
+                    <span class="text-muted small d-block">Booking Reference:</span>
+                    <strong class="text-dark">{{ $booking['ref_no'] ?? $booking['id'] }}</strong>
+                </div>
+                <div class="text-end">
+                    <span class="text-muted small d-block">Currently Assigned:</span>
+                    <span class="badge bg-secondary">
+                        @if($driver)
+                            {{ !empty($driver['call_sign']) ? '[' . $driver['call_sign'] . '] ' : '' }}{{ $driver['name'] ?? 'Driver' }}
+                        @else
+                            Not Assigned
+                        @endif
+                    </span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="viewDriverSelect" class="form-label fw-bold">Select Driver</label>
+                <select class="form-select" id="viewDriverSelect" name="driver_id" required>
+                    <option value="" disabled {{ empty($booking['driver_id']) ? 'selected' : '' }}>-- Choose Driver --</option>
+                    @foreach($drivers as $d)
+                        <option value="{{ $d['id'] }}" {{ (string)($booking['driver_id'] ?? ($booking['driverId'] ?? '')) === (string)$d['id'] ? 'selected' : '' }}>
+                            {{ !empty($d['call_sign']) ? '[' . $d['call_sign'] . '] ' : '' }}{{ $d['name'] ?? 'Driver' }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            @php
+                $isCompleted = strtolower($booking['status'] ?? '') === 'completed';
+            @endphp
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="viewNotifyDriver" name="notify_driver" value="1" {{ !$isCompleted ? 'checked' : '' }}>
+                <label class="form-check-label small text-muted" for="viewNotifyDriver">
+                    Send notification to driver (SMS / Email / App)
+                </label>
+            </div>
+
+            <div class="text-end d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="viewChangeDriverSubmitBtn">
+                    <i class="bi bi-check2-circle me-1"></i> Update Driver
+                </button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const changeForm = document.getElementById('viewChangeDriverForm');
+    const modalEl = document.getElementById('changeDriverModal');
+
+    if (changeForm) {
+        changeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('viewChangeDriverSubmitBtn');
+            const origText = submitBtn ? submitBtn.innerHTML : 'Update Driver';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
+            }
+
+            try {
+                const response = await fetch("{{ route('booking.changeDriver') }}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new FormData(changeForm)
+                });
+
+                const data = await response.json().catch(() => null);
+
+                if (response.ok && data?.success) {
+                    alert('✅ ' + (data.message || 'Driver updated successfully!'));
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                    window.location.reload();
+                } else {
+                    alert('❌ ' + (data?.error || data?.message || 'Failed to update driver.'));
+                }
+            } catch (err) {
+                console.error('Driver update error:', err);
+                alert('❌ Network error while updating driver.');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = origText;
+                }
+            }
+        });
+    }
+});
+</script>
 @endsection

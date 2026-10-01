@@ -297,6 +297,17 @@
                             <i class="bi bi-truck me-2"></i> Dispatch Driver
                         </a>
                     </li>
+                    <li class="action-change-driver-item" style="{{ !$hasDriver ? 'display:none;' : '' }}">
+                        <a class="dropdown-item d-flex align-items-center text-primary dispatch-driver-btn"
+                           href="#"
+                           data-booking-id="{{ $booking['id'] ?? '' }}"
+                           data-driver-id="{{ $bDriverId }}"
+                           data-driver-name="{{ $bDriverName }}"
+                           data-bs-toggle="modal"
+                           data-bs-target="#dispatchDriverModal">
+                            <i class="bi bi-person-gear me-2"></i> Change Driver
+                        </a>
+                    </li>
                     <li class="action-track-item" style="{{ !$hasDriver ? 'display:none;' : '' }}">
                         <a class="dropdown-item d-flex align-items-center text-primary track-driver-link" href="{{ route('bookings.track', $booking['id']) }}">
                             <i class="bi bi-geo-alt me-2"></i> Track Driver
