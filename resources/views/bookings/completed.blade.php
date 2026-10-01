@@ -155,9 +155,7 @@
                        data-booking-id="{{ $booking['id'] ?? '' }}"
                        data-booking-ref="{{ $booking['ref_no'] ?? ($booking['id'] ?? '') }}"
                        data-driver-id="{{ $booking['driver_id'] ?? ($booking['driverId'] ?? '') }}"
-                       data-driver-name="{{ !empty($booking['driver_name']) ? $booking['driver_name'] : (!empty($booking['driver']) ? $booking['driver'] : 'Not Assigned') }}"
-                       data-bs-toggle="modal"
-                       data-bs-target="#changeDriverModal">
+                       data-driver-name="{{ !empty($booking['driver_name']) ? $booking['driver_name'] : (!empty($booking['driver']) ? $booking['driver'] : 'Not Assigned') }}">
                         <i class="bi bi-person-gear me-2"></i> Change Driver
                     </a>
                   </li>
@@ -602,11 +600,17 @@ $(document).ready(function() {
         }
     }
 
-    // Global click listener for .change-driver-btn to guarantee population even if relatedTarget fails
+    // Global click listener for .change-driver-btn to guarantee population & opening
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('.change-driver-btn');
         if (btn) {
+            e.preventDefault();
             populateChangeDriverModal(btn);
+            const modalEl = document.getElementById('changeDriverModal');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
         }
     });
 
