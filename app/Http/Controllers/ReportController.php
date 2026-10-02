@@ -677,7 +677,7 @@ $totalJobs = count($accountBookings) + count($cashBookings);
 //     ]);
 // }
 
-public function getTurnoverData($from, $to, $status = 'completed')
+public function getTurnoverData($from, $to, $status = 'all')
 {
     $firebaseBookings = $this->firebase->getData('bookings') ?? [];
     $totals = [
@@ -702,10 +702,17 @@ public function getTurnoverData($from, $to, $status = 'completed')
         foreach ($firebaseBookings as $booking) {
             if (!isset($booking['price'], $booking['pickup_time'])) continue;
             
-            // 🔹 Booking Status Filter
-            $bStatus = $booking['status'] ?? $booking['booking_status'] ?? '';
-            if (!$this->matchesBookingStatus($bStatus, $status)) {
+            // 🔹 EXCLUDE job_cancelled / cancelled bookings
+            $bStatus = strtolower(trim($booking['status'] ?? $booking['booking_status'] ?? ''));
+            if ($bStatus === 'job_cancelled' || $bStatus === 'cancelled') {
                 continue;
+            }
+
+            // If a specific status filter is requested and not 'all', check match
+            if (!empty($status) && $status !== 'all') {
+                if (!$this->matchesBookingStatus($bStatus, $status)) {
+                    continue;
+                }
             }
 
             $bookingDate = date('Y-m-d', strtotime($booking['pickup_time']));
@@ -742,7 +749,8 @@ public function turnover(Request $request)
 {
     $from = $request->from_date ?? $request->from;
     $to   = $request->to_date ?? $request->to;
-    $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
+    $rawStatus = $request->get('booking_status', $request->get('status', 'all'));
+    $status = !empty($rawStatus) ? (is_array($rawStatus) ? implode(',', array_filter($rawStatus)) : (string)$rawStatus) : 'all';
 
     $totals = $this->getTurnoverData($from, $to, $status);
     
@@ -769,7 +777,8 @@ public function downloadTurnover(Request $request)
 {
     $from = $request->from ?? $request->from_date;
     $to   = $request->to ?? $request->to_date;
-    $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
+    $rawStatus = $request->get('booking_status', $request->get('status', 'all'));
+    $status = !empty($rawStatus) ? (is_array($rawStatus) ? implode(',', array_filter($rawStatus)) : (string)$rawStatus) : 'all';
 
     $totals = $this->getTurnoverData($from, $to, $status);
     $invoiceDate = date('d M Y');
@@ -796,7 +805,8 @@ public function sendTurnoverEmail(Request $request)
 
     $from = $request->from;
     $to   = $request->to;
-    $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
+    $rawStatus = $request->get('booking_status', $request->get('status', 'all'));
+    $status = !empty($rawStatus) ? (is_array($rawStatus) ? implode(',', array_filter($rawStatus)) : (string)$rawStatus) : 'all';
     $totals = $this->getTurnoverData($from, $to, $status);
     $invoiceDate = date('d M Y');
 
@@ -976,14 +986,22 @@ public function sendTurnoverEmail(Request $request)
         $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
         // Use unified function to get filtered data
-        $customers = $this->getCustomerReportData($from, $to, $type, $customerId, $status);
+        $reportData = $this->getCustomerReportDataInternal($from, $to, $type, $customerId, $status);
+        $customers = $reportData['bookings'];
+        $selectedCustomerName  = $reportData['selectedCustomerName'];
+        $selectedCustomerPhone = $reportData['selectedCustomerPhone'];
+        $selectedCustomerEmail = $reportData['selectedCustomerEmail'];
 
         // Load the PDF-specific view
         $pdf = Pdf::loadView('reports.customer_report_pdf', [
-            'customers' => $customers,
-            'from' => $from,
-            'to'   => $to,
-            'status' => $status,
+            'customers'             => $customers,
+            'from'                  => $from,
+            'to'                    => $to,
+            'type'                  => $type,
+            'status'                => $status,
+            'selectedCustomerName'  => $selectedCustomerName,
+            'selectedCustomerPhone' => $selectedCustomerPhone,
+            'selectedCustomerEmail' => $selectedCustomerEmail,
         ]);
 
         return $pdf->download("customer_report_{$from}_to_{$to}.pdf");
@@ -1180,8 +1198,8 @@ public function sendTurnoverEmail(Request $request)
 
         $from = $request->from;
         $to   = $request->to;
-        $phone = $request->phone;
-        $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
+        $rawStatus = $request->get('booking_status', $request->get('status', 'all'));
+        $status = !empty($rawStatus) ? (is_array($rawStatus) ? implode(',', array_filter($rawStatus)) : (string)$rawStatus) : 'all';
 
         try {
             $totals = $this->getTurnoverData($from, $to, $status);
@@ -1238,15 +1256,21 @@ public function sendTurnoverEmail(Request $request)
         $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
         $result = $this->getCustomerReportDataInternal($from, $to, $type, $customerId, $status);
-        $filteredBookings     = $result['bookings'];
-        $selectedCustomerName = $result['selectedCustomerName'];
+        $filteredBookings      = $result['bookings'];
+        $selectedCustomerName  = $result['selectedCustomerName'];
+        $selectedCustomerPhone = $result['selectedCustomerPhone'];
+        $selectedCustomerEmail = $result['selectedCustomerEmail'];
 
         try {
             $pdf = Pdf::loadView('reports.customer_report_pdf', [
-                'customers' => $filteredBookings,
-                'from'      => $from,
-                'to'        => $to,
-                'status'    => $status,
+                'customers'             => $filteredBookings,
+                'from'                  => $from,
+                'to'                    => $to,
+                'type'                  => $type,
+                'status'                => $status,
+                'selectedCustomerName'  => $selectedCustomerName,
+                'selectedCustomerPhone' => $selectedCustomerPhone,
+                'selectedCustomerEmail' => $selectedCustomerEmail,
             ]);
 
             $rawPdf = $pdf->output();

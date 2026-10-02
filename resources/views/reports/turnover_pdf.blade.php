@@ -205,7 +205,7 @@
         <button class="btn btn-dark shadow-sm px-3" onclick="window.print()">
             <i class="bi bi-printer me-1"></i> Print
         </button>
-        <a href="{{ route('reports.turnover.download', ['from' => $from, 'to' => $to, 'booking_status' => $status ?? 'completed']) }}" class="btn btn-danger shadow-sm px-3 text-white">
+        <a href="{{ route('reports.turnover.download', ['from' => $from, 'to' => $to, 'booking_status' => $status ?? 'all']) }}" class="btn btn-danger shadow-sm px-3 text-white">
             <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
         </a>
         <button class="btn btn-warning shadow-sm px-3 text-dark fw-semibold" id="emailTurnoverReport">
