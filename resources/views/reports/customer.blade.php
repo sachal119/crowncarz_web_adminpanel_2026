@@ -328,7 +328,7 @@
 
     <!-- Top Action Toolbar -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 no-print gap-2">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary btn-sm px-3">
+        <a href="{{ route('reports') }}" class="btn btn-outline-secondary btn-sm px-3">
             <i class="bi bi-arrow-left me-1"></i> Back to Reports
         </a>
         <div class="d-flex flex-wrap gap-2">

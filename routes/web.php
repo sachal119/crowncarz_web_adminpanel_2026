@@ -252,6 +252,7 @@ Route::get('/bookings/{booking}/messages', [MessageController::class, 'index'])-
 // Route::get('/reports/turnover', [ReportController::class, 'turnover'])->name('reports.turnover');
 // Route::get('/reports/customer', [ReportController::class, 'customer'])->name('reports.customer');
 Route::get('/reports', [ReportController::class, 'index'])->name('reports');
+Route::get('/reports/index', [ReportController::class, 'index'])->name('reports.index');
 Route::get('/reports/driver-commission', [ReportController::class, 'driverCommission'])->name('reports.driver_commission');
 Route::get('/reports/driver-commission/download', [ReportController::class, 'downloadDriverCommission'])
     ->name('reports.driver_commission.download');
