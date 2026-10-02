@@ -374,21 +374,10 @@
         <!-- Meta Summary Boxes -->
         <div class="row g-3 mb-2">
             <div class="col-md-6 col-12">
-                <div class="invoice-card-box">
+                <div class="invoice-card-box d-flex flex-column justify-content-center">
                     <div class="invoice-card-title"><i class="bi bi-person-badge me-1"></i> Billed To (Client / Account)</div>
-                    <div class="invoice-card-name">
+                    <div class="invoice-card-name" style="font-size: 16px; margin-top: 2px;">
                         {{ !empty($selectedCustomerName) ? $selectedCustomerName : 'All Account Customers' }}
-                    </div>
-                    <div class="invoice-card-meta">
-                        @if(!empty($selectedCustomerPhone))
-                            <div><i class="bi bi-telephone text-muted me-1"></i> {{ $selectedCustomerPhone }}</div>
-                        @endif
-                        @if(!empty($selectedCustomerEmail))
-                            <div><i class="bi bi-envelope text-muted me-1"></i> {{ $selectedCustomerEmail }}</div>
-                        @endif
-                        @if(!empty($type))
-                            <div class="mt-1"><span class="badge bg-secondary" style="font-size: 9.5px;">Payment Type: {{ strtoupper($type) }}</span></div>
-                        @endif
                     </div>
                 </div>
             </div>

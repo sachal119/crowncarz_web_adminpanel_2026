@@ -333,19 +333,8 @@
         <tr>
             <td class="summary-card" style="width: 49%; padding-right: 8px;">
                 <div class="summary-card-title">Billed To (Client / Account)</div>
-                <div class="summary-client-name">
+                <div class="summary-client-name" style="font-size: 11pt; margin-top: 4px;">
                     {{ !empty($selectedCustomerName) ? $selectedCustomerName : 'All Account Customers' }}
-                </div>
-                <div class="summary-meta-text">
-                    @if(!empty($selectedCustomerPhone))
-                        <div>Phone: {{ $selectedCustomerPhone }}</div>
-                    @endif
-                    @if(!empty($selectedCustomerEmail))
-                        <div>Email: {{ $selectedCustomerEmail }}</div>
-                    @endif
-                    @if(!empty($type))
-                        <div style="margin-top: 2px;">Payment Type: <strong>{{ strtoupper($type) }}</strong></div>
-                    @endif
                 </div>
             </td>
             <td style="width: 2%;"></td>
