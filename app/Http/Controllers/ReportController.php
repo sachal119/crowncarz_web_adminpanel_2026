@@ -1065,22 +1065,47 @@ public function sendTurnoverEmail(Request $request)
         $customerId = $request->customer_id;
         $status = $this->normalizeStatus($request->get('booking_status', $request->get('status', 'completed')));
 
-        $filteredBookings = $this->getCustomerReportData($from, $to, $type, $customerId, $status);
+        $result = $this->getCustomerReportDataInternal($from, $to, $type, $customerId, $status);
+        $filteredBookings      = $result['bookings'];
+        $selectedCustomerName  = $result['selectedCustomerName'];
+        $selectedCustomerPhone = $result['selectedCustomerPhone'];
+        $selectedCustomerEmail = $result['selectedCustomerEmail'];
 
         try {
+            // Generate official luxury PDF
+            $pdf = Pdf::loadView('reports.customer_report_pdf', [
+                'customers'             => $filteredBookings,
+                'from'                  => $from,
+                'to'                    => $to,
+                'type'                  => $type,
+                'status'                => $status,
+                'selectedCustomerName'  => $selectedCustomerName,
+                'selectedCustomerPhone' => $selectedCustomerPhone,
+                'selectedCustomerEmail' => $selectedCustomerEmail,
+            ]);
+
+            $pdfContent = $pdf->output();
+
             \Mail::to($request->email)
-                ->send(new \App\Mail\CustomerReportMail($filteredBookings, $from, $to));
+                ->send(new \App\Mail\CustomerReportMail(
+                    $filteredBookings,
+                    $from,
+                    $to,
+                    $selectedCustomerName,
+                    $pdfContent
+                ));
 
             return response()->json([
                 'success' => true,
-                'message' => 'Report sent successfully!'
+                'message' => 'Invoice Statement PDF emailed successfully!'
             ]);
         } catch (\Exception $e) {
+            \Log::error('Send customer invoice email error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Email sending failed.',
+                'message' => 'Email sending failed: ' . $e->getMessage(),
                 'error'   => $e->getMessage()
-            ]);
+            ], 500);
         }
     }
 

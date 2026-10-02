@@ -1,595 +1,249 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
     <meta charset="utf-8">
-
-    <title>Customer Booking Report - CrownCarz</title>
-
+    <title>Customer Invoice Statement - Crown Carz</title>
     <style>
-
-        /* Base styles matching the image vibe */
-
         body {
-
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-
-            color: #333;
-
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f1f5f9;
             margin: 0;
-
-            padding: 0;
-
-            background-color: #f4f4f4; /* Light background to simulate a page */
-
+            padding: 24px 12px;
+            color: #334155;
+            -webkit-font-smoothing: antialiased;
         }
-
-
-
-        /* Container to simulate physical page */
-
-        .page-container {
-
-            width: 210mm; /* A4 width */
-
-            min-height: 297mm; /* A4 height */
-
-            margin: 20px auto;
-
-            background: white;
-
-            padding: 20px 40px;
-
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-
-            position: relative;
-
-            box-sizing: border-box;
-
+        .email-wrapper {
+            max-width: 620px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
-
-
-
-        /* The dark header strip */
-
-        .header-dark {
-
-            background-color: #3d3d3d; /* Dark grey like image */
-
-            color: white;
-
-            padding: 40px;
-
-            margin: -20px -40px 30px -40px; /* Offset page padding */
-
-            overflow: auto;
-
+        .email-header {
+            background-color: #0f172a;
+            padding: 24px 30px;
+            border-bottom: 3px solid #E6B04A;
         }
-
-
-
-        .header-left {
-
-            float: left;
-
-            width: 50%;
-
-        }
-
-
-
-        .header-right {
-
-            float: right;
-
-            width: 50%;
-
-            text-align: right;
-
-        }
-
-
-
-        .header-right h1 {
-
-            margin: 0;
-
-            font-size: 36px;
-
-            font-weight: 300;
-
-            letter-spacing: 2px;
-
-            text-transform: uppercase;
-
-        }
-
-
-
-        /* Styling for the text that replaces the "Logo" placeholder in image */
-
-        .company-header-info {
-
-            font-size: 13px;
-
-            line-height: 1.5;
-
-        }
-
-
-
-        .company-header-info strong {
-
-            font-size: 18px;
-
-            display: block;
-
-            margin-bottom: 5px;
-
-        }
-
-
-
-        /* Meta details section below dark header (two column) */
-
-        .meta-details {
-
-            overflow: auto;
-
-            margin: 20px;
-
-        }
-
-
-
-        .billing-from {
-
-            float: left;
-
-            width: 40%;
-
-            font-size: 13px;
-
-            line-height: 1.6;
-
-        }
-
-
-
-        .billing-from-label {
-
-            color: #888;
-
-            text-transform: uppercase;
-
-            font-size: 11px;
-
-            font-weight: bold;
-
-            margin-bottom: 5px;
-
-        }
-
-
-
-        .report-meta {
-
-            float: right;
-
-            width: 50%;
-
-            text-align: right;
-
-            font-size: 13px;
-
-            margin: 20px;
-
-        }
-
-
-
-        .report-meta table {
-
-            border-collapse: collapse;
-
-            margin-left: auto; /* align table right */
-
-        }
-
-
-
-        .report-meta td {
-
-            padding: 2px 0 2px 20px;
-
-        }
-
-
-
-        .meta-label {
-
-            text-transform: uppercase;
-
-            font-size: 11px;
-
-            font-weight: bold;
-
-            color: #333;
-
-        }
-
-
-
-        /* The Main Booking Table */
-
-        .booking-table {
-
+        .header-table {
             width: 100%;
-
             border-collapse: collapse;
-
-            margin-bottom: 30px;
-
-            font-size: 13px;
-
         }
-
-
-
-        .booking-table thead th {
-
-            text-align: left;
-
-            padding: 12px 8px;
-
-            background-color: transparent; /* Changed from old gold */
-
-            color: #333;
-
+        .company-title {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 2px 0;
+        }
+        .company-sub {
+            color: #94a3b8;
             font-size: 11px;
-
-            font-weight: bold;
-
+            margin: 0;
+        }
+        .email-body {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 12px;
+        }
+        .intro-text {
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 22px;
+        }
+        .summary-title {
+            font-size: 11px;
+            font-weight: 700;
             text-transform: uppercase;
-
-            letter-spacing: 1px;
-
-            /* The specific green top border from the image */
-
-            border-top: 3px solid #b09300; 
-
-            border-bottom: 1px solid #e0e0e0;
-
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 6px;
         }
-
-
-
-        .booking-table tbody td {
-
-            padding: 15px 8px;
-
-            border-bottom: 1px solid #e0e0e0; /* Subtle row lines */
-
-            vertical-align: top;
-
-        }
-
-
-
-        /* Highlight total row slightly */
-
-        .booking-table tfoot td {
-
-            padding: 15px 8px;
-
-            font-weight: bold;
-
-            border-top: 2px solid #333;
-
-        }
-
-
-
-        /* Utilities for alignment/sizing */
-
-        .text-right { text-align: right !important; }
-
-        .w-ref { width: 10%; }
-
-        .w-date { width: 18%; }
-
-        .w-money { width: 10%; }
-
-
-
-        /* Comments/Sign-off area */
-
-        .footer-area {
-
-            overflow: auto;
-
-            margin-top: 40px;
-
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
             font-size: 13px;
-
         }
-
-
-
-        .comments-section {
-
-            float: left;
-
-            width: 50%;
-
+        .summary-table td {
+            padding: 5px 0;
         }
-
-
-
-        .sign-off-section {
-
-            float: right;
-
-            width: 40%;
-
-            text-align: right;
-
+        .pdf-notice {
+            background-color: #fefce8;
+            border: 1px solid #fef08a;
+            border-left: 4px solid #eab308;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-size: 12.5px;
+            color: #854d0e;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
         }
-
-
-
-        /* Ensure colors print correctly */
-
-        @media print {
-
-            body { background-color: white; }
-
-            .page-container {
-
-                box-shadow: none;
-
-                margin: 0;
-
-                padding: 10mm;
-
-            }
-
-            .header-dark {
-
-                background-color: #3d3d3d !important;
-
-                -webkit-print-color-adjust: exact;
-
-                color: white !important;
-
-            }
-
-            .booking-table thead th {
-
-                border-top: 3px solid #b09300 !important;
-
-                -webkit-print-color-adjust: exact;
-
-            }
-
+        .bank-card {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
         }
-
+        .bank-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .bank-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+        }
+        .bank-table td {
+            padding: 4px 0;
+        }
+        .email-footer {
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
     </style>
-
 </head>
-
 <body>
 
+    @php
+        $totalFare = 0;
+        $totalParking = 0;
+        foreach ($customers as $b) {
+            $totalPrice = (float) ($b->price ?? 0);
+            $parking = (float) ($b->parking ?? 0);
+            $fare = isset($b->fare) ? (float) $b->fare : max(0.00, $totalPrice - $parking);
+            $totalFare += $fare;
+            $totalParking += $parking;
+        }
+        $grandTotal = $totalFare + $totalParking;
+        $customerName = !empty($selectedCustomerName) ? $selectedCustomerName : 'Valued Customer';
+        $formattedFrom = \Carbon\Carbon::parse($from)->format('d M Y');
+        $formattedTo = \Carbon\Carbon::parse($to)->format('d M Y');
+    @endphp
 
-
-    <div class="page-container">
-
+    <div class="email-wrapper">
         
-
-        <!-- Dark Header matching image_0.png -->
-
-        <div class="header-dark">
-
-            <div class="header-left">
-
-                <div class="company-header-info">
-
-                    <!-- This replaces the 'Logo' area with company details as typically done in this style -->
-
-                    <img src="https://crowncarz.com/admin/public/images/logo.png" alt="Crown Airport Travels Logo" width="150" style="max-width: 150px; display: block;">
-
-                </div>
-
-            </div>
-
-            <div class="header-right">
-
-                <!-- Using 'BOOKING REPORT' instead of 'INVOICE' to match the data content -->
-
-                <h1>Customer Booking Report</h1>
-
-            </div>
-
+        <!-- Header -->
+        <div class="email-header">
+            <table class="header-table">
+                <tr>
+                    <td style="vertical-align: middle;">
+                        <div class="company-title">Crown Carz Ltd</div>
+                        <div class="company-sub">52 Elvaston Way, Reading, RG30 4LU | www.crowncarz.com</div>
+                    </td>
+                    <td style="text-align: right; vertical-align: middle;">
+                        <span style="background-color: #E6B04A; color: #0f172a; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.5px;">INVOICE</span>
+                    </td>
+                </tr>
+            </table>
         </div>
 
+        <!-- Body -->
+        <div class="email-body">
+            
+            <div class="greeting">Dear {{ $customerName }},</div>
 
-
-        <!-- Meta info section: Company Details & Report Period -->
-
-        <div class="meta-details">
-
-            <div class="billing-from">
-
-                <div class="billing-from-label">REPORT FROM</div>
-
-                CrownCarz<br>
-
-                Street address<br>
-
-                City, Province Postal code
-
+            <div class="intro-text">
+                Please find attached your official <strong>Customer Invoice &amp; Booking Statement</strong> for the period <strong>{{ $formattedFrom }}</strong> to <strong>{{ $formattedTo }}</strong>.
             </div>
 
-            
-
-            <div class="report-meta">
-
-                <table>
-
+            <!-- Statement Summary Box -->
+            <div class="summary-card">
+                <div class="summary-title">Statement Summary</div>
+                <table class="summary-table">
                     <tr>
-
-                        <td class="meta-label">REPORT DATE</td>
-
-                        <!-- Dynamic date of generation -->
-
-                        <td>{{ \Carbon\Carbon::now()->format('d-M-Y') }}</td>
-
+                        <td style="color: #64748b;">Billing Period:</td>
+                        <td style="text-align: right; font-weight: 600; color: #0f172a;">{{ $formattedFrom }} &ndash; {{ $formattedTo }}</td>
                     </tr>
-
                     <tr>
-
-                        <td class="meta-label">PERIOD FROM</td>
-
-                        <td>{{ $from }}</td>
-
+                        <td style="color: #64748b;">Total Completed Bookings:</td>
+                        <td style="text-align: right; font-weight: 600; color: #0284c7;">{{ count($customers) }} Booking(s)</td>
                     </tr>
-
                     <tr>
-
-                        <td class="meta-label">PERIOD TO</td>
-
-                        <td>{{ $to }}</td>
-
+                        <td style="color: #64748b;">Base Fares Total:</td>
+                        <td style="text-align: right; font-weight: 600; color: #0f172a;">&pound;{{ number_format($totalFare, 2) }}</td>
                     </tr>
-
+                    <tr>
+                        <td style="color: #64748b;">Parking / Extras Total:</td>
+                        <td style="text-align: right; font-weight: 600; color: #0f172a;">&pound;{{ number_format($totalParking, 2) }}</td>
+                    </tr>
+                    <tr style="border-top: 1px solid #e2e8f0;">
+                        <td style="padding-top: 8px; font-weight: 700; color: #0f172a; font-size: 14px;">Total Balance Due:</td>
+                        <td style="padding-top: 8px; text-align: right; font-weight: 800; color: #b45309; font-size: 15px;">&pound;{{ number_format($grandTotal, 2) }}</td>
+                    </tr>
                 </table>
-
             </div>
 
-        </div>
+            <!-- Attached PDF Notice -->
+            <div class="pdf-notice">
+                📎 <strong>PDF Attached:</strong> A comprehensive itemised breakdown of all journeys, routes, timings, and charges is attached to this email as a PDF document.
+            </div>
 
-
-
-        <!-- Main Data Table -->
-
-        <table class="booking-table">
-
-            <thead>
-
-                <tr>
-
-                    <th class="w-ref">REF</th>
-
-                    <th class="w-date">DATE/TIME</th>
-
-                    <th>PICK UP</th>
-
-                    <th>DROP OFF</th>
-
-                    <th class="w-money text-right">FARE (£)</th>
-
-                    <th class="w-money text-right">PARKING (£)</th>
-
-                    <!-- Commented out COMMENTS column from original template as it often breaks layouts in clean invoice-style sheets -->
-
-                     <!--<th>COMMENTS</th> -->
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                @php $totalFare = 0; $totalParking = 0; @endphp
-
-                @foreach ($customers as $b)
-
-                    @php 
-                        $totalPrice = (float) ($b->price ?? 0);
-                        $parking = (float) ($b->parking ?? 0);
-                        $fare = isset($b->fare) ? (float) $b->fare : max(0.00, $totalPrice - $parking);
-                        $totalFare += $fare; 
-                        $totalParking += $parking;
-                    @endphp
-
+            <!-- Bank Remittance Details -->
+            <div class="bank-card">
+                <div class="bank-card-title">Bank Transfer Details</div>
+                <table class="bank-table">
                     <tr>
-
-                        <td>{{ $b->ref_no ?? 'N/A' }}</td>
-
-                        <td>{{ \Carbon\Carbon::parse($b->pickup_time)->format('d-M-Y h:i A') }}</td>
-
-                        <td>{{ $b->pickup_address ?? 'N/A' }}</td>
-
-                        <td>{{ $b->dropoff_address ?? 'N/A' }}</td>
-
-                        <td class="text-right">{{ number_format($fare, 2) }}</td>
-
-                        <td class="text-right">{{ number_format($parking, 2) }}</td>
-
-                         <!--<td>{{ $b->comments ?? 'N/A' }}</td> -->
-
+                        <td style="color: #64748b; width: 40%;">Bank Name:</td>
+                        <td style="font-weight: 700; color: #0f172a;">HSBC Bank UK</td>
                     </tr>
-
-                @endforeach
-
-            </tbody>
-
-            <tfoot>
-
-                <tr>
-
-                    <td colspan="4" class="text-right">SUBTOTAL</td>
-
-                    <td class="text-right">£ {{ number_format($totalFare, 2) }}</td>
-
-                    <td class="text-right">£ {{ number_format($totalParking, 2) }}</td>
-
-                </tr>
-
-                <tr style="font-size: 16px;">
-
-                    <td colspan="4" class="text-right">TOTAL REPORT AMOUNT</td>
-
-                    <td colspan="2" class="text-right" style="border-bottom: 2px solid #333;">£ {{ number_format($totalFare + $totalParking, 2) }}</td>
-
-                </tr>
-
-            </tfoot>
-
-        </table>
-
-
-
-        <!-- Bottom section with comments and sign-off -->
-
-        <div class="footer-area">
-
-            <div class="comments-section">
-
-                <div class="billing-from-label">REPORT NOTES</div>
-
-                This report displays all completed bookings within the specified period.
-
+                    <tr>
+                        <td style="color: #64748b;">Account Name:</td>
+                        <td style="font-weight: 700; color: #0f172a;">Crown Carz Ltd</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #64748b;">Sort Code:</td>
+                        <td style="font-weight: 700; font-family: monospace; color: #0f172a;">40-38-04</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #64748b;">Account Number:</td>
+                        <td style="font-weight: 700; font-family: monospace; color: #0f172a;">85304792</td>
+                    </tr>
+                </table>
+                <div style="font-size: 11px; color: #64748b; margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 6px;">
+                    Kindly quote your account name or invoice reference with your bank transfer.
+                </div>
             </div>
 
-            
-
-            <div class="sign-off-section">
-
-                <p>Kind regards,<br><br><br><strong>CrownCarz Team</strong></p>
-
+            <div style="font-size: 13px; color: #475569; line-height: 1.5;">
+                If you have any questions regarding this invoice, please feel free to contact us at <a href="mailto:info@crowncarz.com" style="color: #0284c7; text-decoration: none;">info@crowncarz.com</a>.
+                <br><br>
+                Thank you for your business.<br>
+                <strong>Crown Carz Team</strong>
             </div>
 
         </div>
 
+        <!-- Footer -->
+        <div class="email-footer">
+            &copy; {{ date('Y') }} Crown Carz Ltd. All rights reserved.<br>
+            52 Elvaston Way, Reading, RG30 4LU | Registered in England &amp; Wales
+        </div>
 
-
-    </div><!-- .page-container -->
-
-
+    </div>
 
 </body>
-
 </html>
