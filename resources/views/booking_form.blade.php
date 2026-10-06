@@ -2648,8 +2648,12 @@ document.addEventListener('DOMContentLoaded', function() {
       e.target._firebaseSelected = true;
       window.markPricingInteraction?.();
       recalcFeesAndTotal(true);
-      if (typeof window.fetchPrice === 'function') window.fetchPrice();
-      if (typeof updateRoute === 'function') updateRoute();
+      if (typeof window.debouncedRecalculateAll === 'function') {
+        window.debouncedRecalculateAll();
+      } else {
+        if (typeof window.fetchPrice === 'function') window.fetchPrice();
+        if (typeof updateRoute === 'function') updateRoute();
+      }
     } else {
       e.target._firebaseSelected = false;
     }
@@ -2667,8 +2671,12 @@ document.addEventListener('DOMContentLoaded', function() {
       e.target._firebaseSelected = true;
       window.markPricingInteraction?.();
       recalcFeesAndTotal(true);
-      if (typeof window.fetchPrice === 'function') window.fetchPrice();
-      if (typeof updateRoute === 'function') updateRoute();
+      if (typeof window.debouncedRecalculateAll === 'function') {
+        window.debouncedRecalculateAll();
+      } else {
+        if (typeof window.fetchPrice === 'function') window.fetchPrice();
+        if (typeof updateRoute === 'function') updateRoute();
+      }
     } else {
       e.target._firebaseSelected = false;
     }
@@ -2929,13 +2937,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function debounce(fn, delay) {
         let timeout;
-        return function() {
+        return function(...args) {
             clearTimeout(timeout);
-            timeout = setTimeout(fn, delay);
+            timeout = setTimeout(() => fn.apply(this, args), delay);
         };
     }
-    const debouncedUpdateRoute = debounce(updateRoute, 400);
-    window.debouncedUpdateRoute = debouncedUpdateRoute;
+
+    window.latestPriceRequestId = 0;
+    let userHasInteracted = false;
+
+    window.markPricingInteraction = function() {
+        window.userHasInteracted = true;
+        userHasInteracted = true;
+    };
 
     window.calculateTotal = function(force = false) {
         if (window.IS_EDIT_MODE && !window.userHasInteracted && !force) {
@@ -2958,13 +2972,8 @@ document.addEventListener("DOMContentLoaded", function () {
         totalInput.value = Math.ceil(total);
     };
 
-    window.latestPriceRequestId = 0;
-    let userHasInteracted = false;
-
-    window.markPricingInteraction = function() {
-        window.userHasInteracted = true;
-        userHasInteracted = true;
-    };
+    window.priceClientCache = window.priceClientCache || new Map();
+    let priceAbortController = null;
 
     async function doFetchPrice() {
         const requestId = ++window.latestPriceRequestId;
@@ -2982,22 +2991,41 @@ document.addEventListener("DOMContentLoaded", function () {
         var pickupDate = document.getElementById('pickup_date')?.value || '';
         var pickupTime = document.getElementById('pickup_time')?.value || '';
 
-        if (priceInput) priceInput.value = '';
-        if (mileageInput) mileageInput.value = '';
+        if (priceAbortController) {
+            priceAbortController.abort();
+            priceAbortController = null;
+        }
 
         if (vehicleId && pickupPostcode && dropoffPostcode) {
-            if (priceLoader) priceLoader.style.display = 'inline-flex';
-            if (typeof window.showLoadingModal === 'function') window.showLoadingModal('Calculating fare and mileage, please wait...');
-            try {
-                let url = `/admin/booking/get-price?vehicle_id=${encodeURIComponent(vehicleMake)}&pickup=${encodeURIComponent(pickupPostcode)}&dropoff=${encodeURIComponent(dropoffPostcode)}&pickup_date=${encodeURIComponent(pickupDate)}&pickup_time=${encodeURIComponent(pickupTime)}`;
-                vias.forEach(v => url += `&vias[]=${encodeURIComponent(v)}`);
+            let url = `/admin/booking/get-price?vehicle_id=${encodeURIComponent(vehicleMake)}&pickup=${encodeURIComponent(pickupPostcode)}&dropoff=${encodeURIComponent(dropoffPostcode)}&pickup_date=${encodeURIComponent(pickupDate)}&pickup_time=${encodeURIComponent(pickupTime)}`;
+            vias.forEach(v => url += `&vias[]=${encodeURIComponent(v)}`);
 
-                const response = await fetch(url);
+            // Check client-side instant cache
+            if (window.priceClientCache.has(url)) {
+                const data = window.priceClientCache.get(url);
+                if (data.success) {
+                    if (priceInput) priceInput.value = data.price;
+                    if (mileageInput) mileageInput.value = data.journey_distance;
+                    window.calculateTotal(true);
+                    if (priceLoader) priceLoader.style.display = 'none';
+                    return;
+                }
+            }
+
+            if (priceInput) priceInput.value = '';
+            if (mileageInput) mileageInput.value = '';
+            if (priceLoader) priceLoader.style.display = 'inline-flex';
+
+            priceAbortController = new AbortController();
+
+            try {
+                const response = await fetch(url, { signal: priceAbortController.signal });
                 const data = await response.json();
 
                 if (requestId !== window.latestPriceRequestId) return;
 
                 if (data.success) {
+                    window.priceClientCache.set(url, data);
                     if (priceInput) priceInput.value = data.price;
                     if (mileageInput) mileageInput.value = data.journey_distance;
                     window.calculateTotal(true);
@@ -3005,18 +3033,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     console.error("Price calculation failed:", data.message);
                 }
             } catch (error) {
-                if (requestId === window.latestPriceRequestId) {
+                if (error.name !== 'AbortError' && requestId === window.latestPriceRequestId) {
                     console.error("Error fetching price:", error);
                 }
             } finally {
                 if (requestId === window.latestPriceRequestId) {
                     if (priceLoader) priceLoader.style.display = 'none';
-                    if (typeof window.hideLoadingModal === 'function') window.hideLoadingModal();
                 }
             }
         } else {
             if (priceLoader) priceLoader.style.display = 'none';
-            if (typeof window.hideLoadingModal === 'function') window.hideLoadingModal();
+            if (priceInput) priceInput.value = '';
+            if (mileageInput) mileageInput.value = '';
             window.calculateTotal(true);
         }
     }
@@ -3028,46 +3056,72 @@ document.addEventListener("DOMContentLoaded", function () {
         return doFetchPrice();
     };
 
+    function recalculateAll(force = false) {
+        if (typeof updateRoute === 'function') updateRoute();
+        if (typeof window.fetchPrice === 'function') window.fetchPrice(force);
+        if (typeof window.recalcFeesAndTotal === 'function') window.recalcFeesAndTotal(force);
+    }
+    window.recalculateAll = recalculateAll;
+
+    const debouncedRecalculateAll = debounce(function() {
+        recalculateAll(true);
+    }, 450);
+    window.debouncedRecalculateAll = debouncedRecalculateAll;
+    window.debouncedUpdateRoute = debouncedRecalculateAll;
+
+    function handleAddressInput(e) {
+        window.markPricingInteraction();
+        const val = e.target.value.trim();
+        const pc = extractPostcodeFromAddress(val);
+        if (e.target.id === 'pickup_address') {
+            const pPC = document.getElementById('pickup_postcode');
+            if (pPC && pc) pPC.value = pc;
+        } else if (e.target.id === 'dropoff_address') {
+            const dPC = document.getElementById('dropoff_postcode');
+            if (dPC && pc) dPC.value = pc;
+        } else if (e.target.name === 'via_addresses[]') {
+            const viaId = e.target.id;
+            const viaPC = document.getElementById(`${viaId}_postcode`);
+            if (viaPC && pc) viaPC.value = pc;
+        }
+        debouncedRecalculateAll();
+    }
+
+    function handleAddressBlur() {
+        window.markPricingInteraction();
+        recalculateAll(true);
+    }
+
     // Attach listeners for pickup, dropoff, vehicle, date, time
     if (pickupInput) {
-        pickupInput.addEventListener('input', debouncedUpdateRoute);
-        pickupInput.addEventListener('blur', function() {
-            window.markPricingInteraction();
-            window.fetchPrice();
-            updateRoute();
-        });
+        pickupInput.addEventListener('input', handleAddressInput);
+        pickupInput.addEventListener('blur', handleAddressBlur);
     }
     if (dropoffInput) {
-        dropoffInput.addEventListener('input', debouncedUpdateRoute);
-        dropoffInput.addEventListener('blur', function() {
-            window.markPricingInteraction();
-            window.fetchPrice();
-            updateRoute();
-        });
+        dropoffInput.addEventListener('input', handleAddressInput);
+        dropoffInput.addEventListener('blur', handleAddressBlur);
     }
     if (vehicleSelect) {
         vehicleSelect.addEventListener('change', function() {
             window.markPricingInteraction();
-            window.fetchPrice();
+            recalculateAll(true);
         });
     }
 
     document.getElementById('pickup_date')?.addEventListener('change', function() {
         window.markPricingInteraction();
-        window.fetchPrice();
+        recalculateAll(true);
+    });
+    document.getElementById('pickup_time')?.addEventListener('change', function() {
+        window.markPricingInteraction();
+        recalculateAll(true);
     });
 
     // Helper to attach input & blur listeners to any via input
     window.attachViaEventListeners = function(inputEl) {
         if (!inputEl) return;
-        inputEl.addEventListener('input', function() {
-            debouncedUpdateRoute();
-        });
-        inputEl.addEventListener('blur', function() {
-            window.markPricingInteraction();
-            window.fetchPrice();
-            updateRoute();
-        });
+        inputEl.addEventListener('input', handleAddressInput);
+        inputEl.addEventListener('blur', handleAddressBlur);
     };
 
     // Attach listeners to all pre-existing via inputs
@@ -3085,8 +3139,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (field) {
                     field.remove();
                     window.markPricingInteraction();
-                    updateRoute();
-                    setTimeout(() => window.fetchPrice(), 100);
+                    recalculateAll(true);
                 }
             }
         });
@@ -3129,10 +3182,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 onSelect: function () {
                     document.dispatchEvent(new CustomEvent('taxibase:select', { detail: { fieldId: viaId } }));
                     window.markPricingInteraction();
-                    setTimeout(() => {
-                        window.fetchPrice();
-                        updateRoute();
-                    }, 50);
+                    recalculateAll(true);
                 }
             });
         }
@@ -3166,6 +3216,7 @@ class AddressAutocomplete {
         this.latField = document.getElementById(options.latFieldId);
         this.longField = document.getElementById(options.longFieldId);
         this.onSelectCallback = options.onSelect;
+        this.abortController = null;
 
         if (this.field) {
             this.init();
@@ -3196,10 +3247,14 @@ class AddressAutocomplete {
             const query = this.field.value.trim();
             if (query.length < 3) {
                 this.listContainer.style.display = 'none';
+                if (this.abortController) {
+                    this.abortController.abort();
+                    this.abortController = null;
+                }
                 return;
             }
 
-            debounceTimer = setTimeout(() => this.fetchOSPlaces(query), 400);
+            debounceTimer = setTimeout(() => this.fetchOSPlaces(query), 350);
         });
 
         document.addEventListener('click', (e) => {
@@ -3210,14 +3265,21 @@ class AddressAutocomplete {
     }
 
     async fetchOSPlaces(query) {
+        if (this.abortController) {
+            this.abortController.abort();
+        }
+        this.abortController = new AbortController();
+
         const url = `https://api.os.uk/search/places/v1/find?query=${encodeURIComponent(query)}&key=${this.apiKey}&output_srs=EPSG:4326&maxresults=10`;
 
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, { signal: this.abortController.signal });
             const data = await response.json();
             this.renderDropdown(data.results || []);
         } catch (error) {
-            console.error('OS Places API Error:', error);
+            if (error.name !== 'AbortError') {
+                console.error('OS Places API Error:', error);
+            }
         }
     }
 
@@ -3260,9 +3322,12 @@ class AddressAutocomplete {
                 if (this.longField) this.longField.value = place.LNG || '';
 
                 this.listContainer.style.display = 'none';
+                window.markPricingInteraction?.();
 
                 if (typeof this.onSelectCallback === 'function') {
-                    setTimeout(() => this.onSelectCallback(), 50);
+                    this.onSelectCallback();
+                } else if (typeof window.recalculateAll === 'function') {
+                    window.recalculateAll(true);
                 }
             });
 
@@ -3305,9 +3370,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         onSelect: function () {
             notifyAddressSelected('pickup_address');
             window.markPricingInteraction?.();
-            setTimeout(() => {
-                document.getElementById('pickup_address').dispatchEvent(new Event('blur'));
-            }, 100);
+            window.recalculateAll?.(true);
         }
     });
 
@@ -3321,9 +3384,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         onSelect: function () {
             notifyAddressSelected('dropoff_address');
             window.markPricingInteraction?.();
-            setTimeout(() => {
-                document.getElementById('dropoff_address').dispatchEvent(new Event('blur'));
-            }, 100);
+            window.recalculateAll?.(true);
         }
     });
 
@@ -3339,9 +3400,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             onSelect: function () {
                 notifyAddressSelected(viaId);
                 window.markPricingInteraction?.();
-                setTimeout(() => {
-                    input.dispatchEvent(new Event('blur'));
-                }, 100);
+                window.recalculateAll?.(true);
             }
         });
     });

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Services\FirebaseService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Models\FixedPrice;
 use App\Models\MileagePrice;
 use App\Models\PricingPercentage;
@@ -6696,7 +6697,25 @@ if ($this->isLondonPostcode($pickup) || $this->isLondonPostcode($dropoff)) {
 
 private function calculateDistance($from, $to): float
 {
+    $from = strtoupper(trim((string)$from));
+    $to   = strtoupper(trim((string)$to));
+
+    if (empty($from) || empty($to) || $from === $to) {
+        return 0.0;
+    }
+
+    $cacheKey = 'dist_' . md5($from . '_' . $to);
+    $reverseKey = 'dist_' . md5($to . '_' . $from);
+
+    if (Cache::has($cacheKey)) {
+        return (float) Cache::get($cacheKey);
+    }
+    if (Cache::has($reverseKey)) {
+        return (float) Cache::get($reverseKey);
+    }
+
     try {
+        $distance = 0.0;
         $apiKey = config('services.google_maps.key');
         $payload = [
             'origin' => ['address' => $from],
@@ -6707,8 +6726,8 @@ private function calculateDistance($from, $to): float
         ];
 
         if (!empty($apiKey)) {
-            $response = Http::connectTimeout(5)
-                ->timeout(12)
+            $response = Http::connectTimeout(2)
+                ->timeout(4)
                 ->withHeaders([
                     'X-Goog-Api-Key' => $apiKey,
                     'X-Goog-FieldMask' => 'routes.distanceMeters,routes.duration',
@@ -6717,27 +6736,27 @@ private function calculateDistance($from, $to): float
 
             $distanceMeters = (float) ($response->json('routes.0.distanceMeters') ?? 0);
             if ($response->successful() && $distanceMeters > 0) {
-                return round($distanceMeters / 1609.344, 2);
+                $distance = round($distanceMeters / 1609.344, 2);
             }
-
-            \Log::warning("Google Routes returned no distance for {$from} → {$to}", [
-                'status' => $response->status(),
-                'response' => $response->body(),
-            ]);
         }
 
-        $fallbackDistance = $this->calculateOsrmDistance($from, $to);
-        if ($fallbackDistance > 0) {
-            \Log::info("Using OSRM distance fallback for {$from} → {$to}", [
-                'miles' => $fallbackDistance,
-            ]);
+        if ($distance <= 0) {
+            $distance = $this->calculateOsrmDistance($from, $to);
         }
 
-        return $fallbackDistance;
+        if ($distance > 0) {
+            Cache::put($cacheKey, $distance, now()->addDays(30));
+        }
+
+        return $distance;
 
     } catch (\Throwable $e) {
         \Log::error("Distance calculation failed for {$from} → {$to}: " . $e->getMessage());
-        return $this->calculateOsrmDistance($from, $to);
+        $distance = $this->calculateOsrmDistance($from, $to);
+        if ($distance > 0) {
+            Cache::put($cacheKey, $distance, now()->addDays(30));
+        }
+        return $distance;
     }
 }
 
@@ -6760,8 +6779,8 @@ private function calculateOsrmDistance(string $from, string $to): float
             $toCoordinates['lat']
         );
 
-        $response = Http::connectTimeout(5)
-            ->timeout(12)
+        $response = Http::connectTimeout(2)
+            ->timeout(4)
             ->get("https://router.project-osrm.org/route/v1/driving/{$coordinates}", [
                 'overview' => 'false',
                 'alternatives' => 'false',
@@ -6782,6 +6801,12 @@ private function calculateOsrmDistance(string $from, string $to): float
 private function geocodeUkPostcode(string $address): ?array
 {
     $address = strtoupper(trim($address));
+    $cacheKey = 'geocode_' . md5($address);
+
+    if (Cache::has($cacheKey)) {
+        return Cache::get($cacheKey);
+    }
+
     $endpoint = null;
 
     if (preg_match('/\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/', $address, $match)) {
@@ -6796,7 +6821,7 @@ private function geocodeUkPostcode(string $address): ?array
     }
 
     try {
-        $response = Http::connectTimeout(5)->timeout(8)->acceptJson()->get($endpoint);
+        $response = Http::connectTimeout(2)->timeout(3)->acceptJson()->get($endpoint);
         $latitude = $response->json('result.latitude');
         $longitude = $response->json('result.longitude');
 
@@ -6804,7 +6829,9 @@ private function geocodeUkPostcode(string $address): ?array
             return null;
         }
 
-        return ['lat' => (float) $latitude, 'lng' => (float) $longitude];
+        $result = ['lat' => (float) $latitude, 'lng' => (float) $longitude];
+        Cache::put($cacheKey, $result, now()->addDays(30));
+        return $result;
     } catch (\Throwable $e) {
         \Log::error('UK postcode geocoding failed: '.$e->getMessage(), ['address' => $address]);
         return null;
