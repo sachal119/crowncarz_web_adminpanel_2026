@@ -3008,6 +3008,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (mileageInput) mileageInput.value = data.journey_distance;
                     window.calculateTotal(true);
                     if (priceLoader) priceLoader.style.display = 'none';
+                    if (typeof window.hideLoadingModal === 'function') window.hideLoadingModal();
                     return;
                 }
             }
@@ -3015,6 +3016,9 @@ document.addEventListener("DOMContentLoaded", function () {
             if (priceInput) priceInput.value = '';
             if (mileageInput) mileageInput.value = '';
             if (priceLoader) priceLoader.style.display = 'inline-flex';
+            if (typeof window.showLoadingModal === 'function') {
+                window.showLoadingModal('Calculating fare and mileage, please wait...');
+            }
 
             priceAbortController = new AbortController();
 
@@ -3039,10 +3043,16 @@ document.addEventListener("DOMContentLoaded", function () {
             } finally {
                 if (requestId === window.latestPriceRequestId) {
                     if (priceLoader) priceLoader.style.display = 'none';
+                    if (typeof window.hideLoadingModal === 'function') {
+                        window.hideLoadingModal();
+                    }
                 }
             }
         } else {
             if (priceLoader) priceLoader.style.display = 'none';
+            if (typeof window.hideLoadingModal === 'function') {
+                window.hideLoadingModal();
+            }
             if (priceInput) priceInput.value = '';
             if (mileageInput) mileageInput.value = '';
             window.calculateTotal(true);
