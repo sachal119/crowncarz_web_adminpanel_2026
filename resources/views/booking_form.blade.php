@@ -574,6 +574,12 @@
         $savedFare = $calcFare > 0 ? $calcFare : $booking['price'];
     }
 @endphp
+<div id="pricing-status-pill" class="col-12 mb-2 d-none">
+  <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-warning bg-opacity-10 text-dark border border-warning border-opacity-50 shadow-sm" style="font-size: 0.85rem; font-weight: 500;">
+    <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+    <span>Calculating fare & mileage, please wait...</span>
+  </div>
+</div>
 <div class="col-12 col-md-2 mb-2 mb-md-3">
     <label class="form-label fs-6 fs-md-6">Fare (£)</label>
     <input type="number" name="fare" id="fare"
@@ -2975,6 +2981,28 @@ document.addEventListener("DOMContentLoaded", function () {
     window.priceClientCache = window.priceClientCache || new Map();
     let priceAbortController = null;
 
+    function setPriceLoadingState(isLoading) {
+        const pill = document.getElementById('pricing-status-pill');
+        const loader = document.getElementById('price-loader-container');
+        const submitBtn = document.querySelector('#booking-form button[type="submit"]');
+
+        if (isLoading) {
+            if (pill) pill.classList.remove('d-none');
+            if (loader) loader.style.display = 'inline-flex';
+            if (submitBtn) {
+                submitBtn.dataset.originalHtml = submitBtn.dataset.originalHtml || submitBtn.innerHTML;
+                submitBtn.disabled = true;
+            }
+        } else {
+            if (pill) pill.classList.add('d-none');
+            if (loader) loader.style.display = 'none';
+            if (submitBtn && !window.formIsSubmitting) {
+                submitBtn.disabled = false;
+            }
+        }
+    }
+    window.setPriceLoadingState = setPriceLoadingState;
+
     async function doFetchPrice() {
         const requestId = ++window.latestPriceRequestId;
         if (!vehicleSelect || !pickupInput || !dropoffInput) return;
@@ -2996,7 +3024,7 @@ document.addEventListener("DOMContentLoaded", function () {
             priceAbortController = null;
         }
 
-        if (vehicleId && pickupPostcode && dropoffPostcode) {
+        if (vehicleId && pickupPostcode && dropoffPostcode && pickupAddress.length >= 3 && dropoffAddress.length >= 3) {
             let url = `/admin/booking/get-price?vehicle_id=${encodeURIComponent(vehicleMake)}&pickup=${encodeURIComponent(pickupPostcode)}&dropoff=${encodeURIComponent(dropoffPostcode)}&pickup_date=${encodeURIComponent(pickupDate)}&pickup_time=${encodeURIComponent(pickupTime)}`;
             vias.forEach(v => url += `&vias[]=${encodeURIComponent(v)}`);
 
@@ -3007,19 +3035,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (priceInput) priceInput.value = data.price;
                     if (mileageInput) mileageInput.value = data.journey_distance;
                     window.calculateTotal(true);
-                    if (priceLoader) priceLoader.style.display = 'none';
-                    if (typeof window.hideLoadingModal === 'function') window.hideLoadingModal();
+                    setPriceLoadingState(false);
                     return;
                 }
             }
 
-            if (priceInput) priceInput.value = '';
-            if (mileageInput) mileageInput.value = '';
-            if (priceLoader) priceLoader.style.display = 'inline-flex';
-            if (typeof window.showLoadingModal === 'function') {
-                window.showLoadingModal('Calculating fare and mileage, please wait...');
-            }
-
+            setPriceLoadingState(true);
             priceAbortController = new AbortController();
 
             try {
@@ -3042,17 +3063,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             } finally {
                 if (requestId === window.latestPriceRequestId) {
-                    if (priceLoader) priceLoader.style.display = 'none';
-                    if (typeof window.hideLoadingModal === 'function') {
-                        window.hideLoadingModal();
-                    }
+                    setPriceLoadingState(false);
                 }
             }
         } else {
-            if (priceLoader) priceLoader.style.display = 'none';
-            if (typeof window.hideLoadingModal === 'function') {
-                window.hideLoadingModal();
-            }
+            setPriceLoadingState(false);
             if (priceInput) priceInput.value = '';
             if (mileageInput) mileageInput.value = '';
             window.calculateTotal(true);
