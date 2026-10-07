@@ -341,18 +341,22 @@
                     <li>
                         <a class="dropdown-item d-flex align-items-center text-warning send-confirmation-sms-btn"
                            href="#"
-                           data-booking-id="{{ $booking['ref_no'] ?? '' }}"
+                           data-booking-id="{{ $booking['ref_no'] ?? ($booking['id'] ?? '') }}"
+                           data-raw-id="{{ $booking['id'] ?? '' }}"
                            data-phone="{{ $booking['phone_no'] ?? '' }}"
                            data-name="{{ $booking['passenger_name'] ?? '' }}"
-                           data-date="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '' }}"
+                           data-date="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d/M/Y') : '' }}"
                            data-time="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '' }}"
                            data-vehicle="{{ $booking['vehicle_make'] ?? '' }}"
                            data-price="{{ $booking['price'] ?? '' }}"
-                           data-payment="{{ ucfirst($booking['payment_type'] ?? '') }}"
+                           data-fare="{{ $booking['fare'] ?? ($booking['base_price'] ?? ($booking['price'] ?? '')) }}"
+                           data-parking="{{ $booking['parking'] ?? ($booking['car_park'] ?? '0.00') }}"
+                           data-payment="{{ $booking['payment_type'] ?? '' }}"
                            data-pickup="{{ $booking['pickup_address'] ?? '' }}"
                            data-dropoff="{{ $booking['dropoff_address'] ?? '' }}"
                            data-flight_no="{{ $booking['flight_no'] ?? '' }}"
-                           data-via="{{ !empty($booking['vias']) ? implode(' → ', $booking['vias']) : '-' }}">
+                           data-via="{{ !empty($booking['vias']) ? (is_array($booking['vias']) ? implode(' → ', $booking['vias']) : $booking['vias']) : '-' }}"
+                           data-vias-json="{{ json_encode(is_array($booking['vias'] ?? null) ? array_values(array_filter($booking['vias'])) : (!empty($booking['vias']) ? [trim($booking['vias'])] : [])) }}">
                             <i class="bi bi-chat-left-text me-2"></i> Send Confirmation SMS
                         </a>
                     </li>
@@ -363,15 +367,18 @@
                            data-raw-id="{{ $booking['id'] ?? '' }}"
                            data-phone="{{ $booking['phone_no'] ?? '' }}"
                            data-name="{{ $booking['passenger_name'] ?? '' }}"
-                           data-date="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '' }}"
+                           data-date="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d/M/Y') : '' }}"
                            data-time="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '' }}"
                            data-vehicle="{{ $booking['vehicle_make'] ?? '' }}"
                            data-price="{{ $booking['price'] ?? '' }}"
-                           data-payment="{{ ucfirst($booking['payment_type'] ?? '') }}"
+                           data-fare="{{ $booking['fare'] ?? ($booking['base_price'] ?? ($booking['price'] ?? '')) }}"
+                           data-parking="{{ $booking['parking'] ?? ($booking['car_park'] ?? '0.00') }}"
+                           data-payment="{{ $booking['payment_type'] ?? '' }}"
                            data-pickup="{{ $booking['pickup_address'] ?? '' }}"
                            data-dropoff="{{ $booking['dropoff_address'] ?? '' }}"
                            data-flight_no="{{ $booking['flight_no'] ?? '' }}"
-                           data-via="{{ !empty($booking['vias']) ? (is_array($booking['vias']) ? implode(' → ', $booking['vias']) : $booking['vias']) : '-' }}">
+                           data-via="{{ !empty($booking['vias']) ? (is_array($booking['vias']) ? implode(' → ', $booking['vias']) : $booking['vias']) : '-' }}"
+                           data-vias-json="{{ json_encode(is_array($booking['vias'] ?? null) ? array_values(array_filter($booking['vias'])) : (!empty($booking['vias']) ? [trim($booking['vias'])] : [])) }}">
                             <i class="bi bi-whatsapp me-2"></i> Send Confirmation WhatsApp
                         </a>
                     </li>

@@ -2022,11 +2022,14 @@ function buildBookingRowHtml(booking, isNew = false) {
                            data-time="${pickupTime}"
                            data-vehicle="${booking.vehicle_make || ''}"
                            data-price="${booking.price || ''}"
-                           data-payment="${booking.payment_type ? booking.payment_type.charAt(0).toUpperCase() + booking.payment_type.slice(1) : ''}"
+                           data-fare="${booking.fare || booking.base_price || booking.price || ''}"
+                           data-parking="${booking.parking || booking.car_park || '0.00'}"
+                           data-payment="${booking.payment_type || ''}"
                            data-pickup="${booking.pickup_address || ''}"
                            data-dropoff="${booking.dropoff_address || ''}"
                            data-flight_no="${booking.flight_no || ''}"
-                           data-via="${viasText}">
+                           data-via="${viasText}"
+                           data-vias-json='${JSON.stringify(Array.isArray(booking.vias) ? booking.vias : (booking.vias ? [booking.vias] : [])).replace(/'/g, "&apos;")}'>
                             <i class="bi bi-chat-left-text me-2"></i> Send Confirmation SMS
                         </a>
                     </li>
@@ -2041,11 +2044,14 @@ function buildBookingRowHtml(booking, isNew = false) {
                            data-time="${pickupTime}"
                            data-vehicle="${booking.vehicle_make || ''}"
                            data-price="${booking.price || ''}"
-                           data-payment="${booking.payment_type ? booking.payment_type.charAt(0).toUpperCase() + booking.payment_type.slice(1) : ''}"
+                           data-fare="${booking.fare || booking.base_price || booking.price || ''}"
+                           data-parking="${booking.parking || booking.car_park || '0.00'}"
+                           data-payment="${booking.payment_type || ''}"
                            data-pickup="${booking.pickup_address || ''}"
                            data-dropoff="${booking.dropoff_address || ''}"
                            data-flight_no="${booking.flight_no || ''}"
-                           data-via="${viasText}">
+                           data-via="${viasText}"
+                           data-vias-json='${JSON.stringify(Array.isArray(booking.vias) ? booking.vias : (booking.vias ? [booking.vias] : [])).replace(/'/g, "&apos;")}'>
                             <i class="bi bi-whatsapp me-2"></i> Send Confirmation WhatsApp
                         </a>
                     </li>
@@ -2461,6 +2467,128 @@ function bindRowEvents(context = document) {
         });
     }
 
+    // Unified Confirmation Message Formatter
+    function formatBookingConfirmationMessage(b) {
+        if (!b) return '';
+        const passengerName = b.passenger_name || b.caller || b.name || 'Customer';
+        const jobRef = b.ref_no || b.booking_id || b.bookingId || b.id || '';
+        
+        // Format Date: DD/MMM/YYYY (e.g. 07/Oct/2026)
+        let rawDate = b.pickup_date || b.job_date || b.date || '';
+        let formattedDate = rawDate;
+        if (rawDate) {
+            if (/^\d{2}\/[A-Za-z]{3}\/\d{4}$/.test(rawDate.trim())) {
+                formattedDate = rawDate.trim();
+            } else {
+                const cleanDate = rawDate.includes('T') || rawDate.includes('-') 
+                    ? rawDate 
+                    : rawDate.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1');
+                const d = new Date(cleanDate);
+                if (!isNaN(d.getTime())) {
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = months[d.getMonth()];
+                    const year = d.getFullYear();
+                    formattedDate = `${day}/${month}/${year}`;
+                }
+            }
+        }
+
+        // Format Time: HH:mm (24 Hour Clock)
+        let rawTime = (b.pickup_time || b.job_time || b.time || '').trim();
+        if (rawTime.toLowerCase().includes('(24 hour clock)')) {
+            rawTime = rawTime.replace(/\s*\(24\s*hour\s*clock\)/i, '').trim();
+        }
+        if (rawTime.includes(' ') && rawTime.includes(':')) {
+            const parts = rawTime.split(' ');
+            const timePart = parts[parts.length - 1];
+            if (timePart.includes(':')) {
+                rawTime = timePart.substring(0, 5);
+            }
+        } else if (rawTime.length >= 5 && rawTime.indexOf(':') === 2) {
+            rawTime = rawTime.substring(0, 5);
+        }
+        const timeWithClock = rawTime ? `${rawTime} (24 Hour Clock)` : '(24 Hour Clock)';
+
+        const phone = b.phone_no || b.mobile || b.phone || '';
+        const pickup = b.pickup_address || b.pickup || '';
+        const dropoff = b.dropoff_address || b.dropoff || b.destination || '';
+        const flightNo = b.flight_no || b.flight || '';
+        const vehicleType = b.vehicle_make || b.vehicle_type || b.vehicle || '';
+        
+        let baseFare = (b.fare !== undefined && b.fare !== '' && b.fare !== null) 
+            ? b.fare 
+            : (b.base_price !== undefined && b.base_price !== '' ? b.base_price : (b.price || '0'));
+        let parking = (b.parking !== undefined && b.parking !== '' && b.parking !== null) 
+            ? b.parking 
+            : (b.car_park !== undefined && b.car_park !== '' ? b.car_park : (b.mcar_park !== undefined && b.mcar_park !== '' ? b.mcar_park : '0.00'));
+
+        // Payment Type mapping: Cash -> Pay in Car, Card -> Payment Received, Account -> Account
+        let rawPayment = (b.payment_type || b.payment || '').toLowerCase().trim();
+        let paymentDisplay = 'Pay in Car';
+        if (rawPayment === 'cash' || rawPayment.includes('pay in car')) {
+            paymentDisplay = 'Pay in Car';
+        } else if (rawPayment === 'card' || rawPayment.includes('payment received')) {
+            paymentDisplay = 'Payment Received';
+        } else if (rawPayment === 'account') {
+            paymentDisplay = 'Account';
+        } else if (b.payment_type || b.payment) {
+            paymentDisplay = b.payment_type || b.payment;
+        }
+
+        // Vias formatting: Middle position, Via 1, Via 2 if multiple
+        let viasArr = [];
+        if (b.viasJson) {
+            try {
+                const parsed = typeof b.viasJson === 'string' ? JSON.parse(b.viasJson) : b.viasJson;
+                if (Array.isArray(parsed)) viasArr = parsed;
+            } catch(e) {}
+        }
+        if (!viasArr.length) {
+            if (Array.isArray(b.vias)) {
+                viasArr = b.vias.filter(v => typeof v === 'string' ? v.trim() : (v && v.address ? v.address.trim() : false));
+            } else if (Array.isArray(b.via_addresses)) {
+                viasArr = b.via_addresses.filter(v => typeof v === 'string' && v.trim());
+            } else if (typeof b.via === 'string' && b.via && b.via !== '-' && b.via !== 'undefined') {
+                viasArr = b.via.split(/,|→/).map(s => s.trim()).filter(Boolean);
+            } else if (typeof b.vias === 'string' && b.vias && b.vias !== '-' && b.vias !== 'undefined') {
+                viasArr = b.vias.split(/,|→/).map(s => s.trim()).filter(Boolean);
+            } else if (typeof b.via_address === 'string' && b.via_address && b.via_address !== '-' && b.via_address !== 'undefined') {
+                viasArr = b.via_address.split(/,|→/).map(s => s.trim()).filter(Boolean);
+            }
+        }
+
+        let viaLines = '';
+        if (viasArr.length === 1) {
+            const vText = typeof viasArr[0] === 'object' && viasArr[0].address ? viasArr[0].address : viasArr[0];
+            viaLines = `Via 1: ${vText}\n`;
+        } else if (viasArr.length > 1) {
+            viaLines = viasArr.map((v, i) => `Via ${i + 1}: ${typeof v === 'object' && v.address ? v.address : v}`).join('\n') + '\n';
+        }
+
+        let msg = `Dear ${passengerName},\n\n`;
+        msg += `Please find booking confirmation for job reference: ${jobRef}\n\n`;
+        msg += `Job Date: ${formattedDate}\n`;
+        msg += `Job Time: ${timeWithClock}\n`;
+        msg += `Phone No: ${phone}\n`;
+        msg += `Pick up: ${pickup}\n`;
+        if (viaLines) {
+            msg += viaLines;
+        }
+        msg += `Drop off: ${dropoff}\n`;
+        msg += `Flight No: ${flightNo}\n`;
+        msg += `Vehicle Type: ${vehicleType}\n`;
+        msg += `Base Fare: ${baseFare}\n`;
+        msg += `Parking: ${parking}\n`;
+        msg += `Payment Type: ${paymentDisplay}\n\n`;
+        msg += `Please let us know in case of any changes in your schedule.\n`;
+        msg += `To download our app, Leave a review or visit the website, please tap the link below:\n\n`;
+        msg += `https://linktr.ee/crowncarz\n\n`;
+        msg += `Kind Regards,\nCrown Carz Ltd.\nTel: +44(0)1189 47 47 47\nEmail: info@crowncarz.com\nWebsite: www.crowncarz.com`;
+
+        return msg;
+    }
+
     // Quick SMS trigger from inside View Booking modal
     const modalQuickSmsBtn = document.getElementById('modal-btn-sms');
     if (modalQuickSmsBtn) {
@@ -2470,16 +2598,6 @@ function bindRowEvents(context = document) {
             const b = activeViewBookingData;
             const bookingId = b.id || b.booking_id || '';
             const phone = b.phone_no || '';
-            const passengerName = b.passenger_name || '';
-            const pickupDate = b.pickup_date || '';
-            const pickupTime = b.pickup_time || '';
-            const vehicleType = b.vehicle_make || b.vehicle_id || '';
-            const price = b.price || '';
-            const payment = b.payment_type || '';
-            const pickup = b.pickup_address || '';
-            const dropoff = b.dropoff_address || '';
-            const via = Array.isArray(b.vias) ? b.vias.join(', ') : (b.vias || '-');
-            const flight_no = b.flight_no || '';
 
             const smsModalEl = document.getElementById('sendSmsModal');
             if (!smsModalEl) return;
@@ -2487,26 +2605,7 @@ function bindRowEvents(context = document) {
             document.getElementById('smsBookingId').value = bookingId;
             document.getElementById('smsPhone').value = phone;
 
-            const messageTemplate = `Dear ${passengerName},
-
-Please find booking confirmation for job reference: ${b.ref_no || bookingId}
-Job Date: ${pickupDate}
-Job Time: ${pickupTime}
-Phone No: ${phone}
-Pickup: ${pickup}
-Dropoff: ${dropoff}
-Via: ${via}
-Flight No: ${flight_no}
-Vehicle Type: ${vehicleType}
-Total Fare: ${price}
-Payment Type: ${payment}
-
-Kind Regards,
-Crown Carz Ltd.
-Tel: +44(0)1189 47 47 47
-Email: info@crowncarz.com
-Website: www.crowncarz.com`;
-
+            const messageTemplate = formatBookingConfirmationMessage(b);
             document.getElementById('smsMessage').value = messageTemplate;
             const smsModal = bootstrap.Modal.getOrCreateInstance(smsModalEl);
             smsModal.show();
@@ -2522,16 +2621,6 @@ Website: www.crowncarz.com`;
             const b = activeViewBookingData;
             const bookingId = b.id || b.booking_id || '';
             const phone = b.phone_no || '';
-            const passengerName = b.passenger_name || '';
-            const pickupDate = b.pickup_date || '';
-            const pickupTime = b.pickup_time || '';
-            const vehicleType = b.vehicle_make || b.vehicle_id || '';
-            const price = b.price || '';
-            const payment = b.payment_type || '';
-            const pickup = b.pickup_address || '';
-            const dropoff = b.dropoff_address || '';
-            const via = Array.isArray(b.vias) ? b.vias.join(', ') : (b.vias || '-');
-            const flight_no = b.flight_no || '';
 
             const waModalEl = document.getElementById('sendWhatsAppModal');
             if (!waModalEl) return;
@@ -2540,26 +2629,7 @@ Website: www.crowncarz.com`;
             document.getElementById('waRawBookingId').value = bookingId;
             document.getElementById('waPhone').value = phone;
 
-            const messageTemplate = `Dear ${passengerName},
-
-Please find booking confirmation for job reference: ${b.ref_no || bookingId}
-Job Date: ${pickupDate}
-Job Time: ${pickupTime}
-Phone No: ${phone}
-Pickup: ${pickup}
-Dropoff: ${dropoff}
-Via: ${via}
-Flight No: ${flight_no}
-Vehicle Type: ${vehicleType}
-Total Fare: £${price}
-Payment Type: ${payment}
-
-Kind Regards,
-Crown Carz Ltd.
-Tel: +44(0)1189 47 47 47
-Email: info@crowncarz.com
-Website: www.crowncarz.com`;
-
+            const messageTemplate = formatBookingConfirmationMessage(b);
             document.getElementById('waMessage').value = messageTemplate;
             const waModal = bootstrap.Modal.getOrCreateInstance(waModalEl);
             waModal.show();
@@ -2619,40 +2689,11 @@ Website: www.crowncarz.com`;
             e.preventDefault();
             const bookingId = this.dataset.bookingId || '';
             const phone = this.dataset.phone || '';
-            const passengerName = this.dataset.name || '';
-            const pickupDate = this.dataset.date || '';
-            const pickupTime = this.dataset.time || '';
-            const vehicleType = this.dataset.vehicle || '';
-            const price = this.dataset.price || '';
-            const payment = this.dataset.payment || '';
-            const pickup = this.dataset.pickup || '';
-            const dropoff = this.dataset.dropoff || '';
-            const via = this.dataset.via || '-';
-            const flight_no = this.dataset.flight_no || '';
 
             document.getElementById('smsBookingId').value = bookingId;
             document.getElementById('smsPhone').value = phone;
 
-            const messageTemplate = `Dear ${passengerName},
-
-Please find booking confirmation for job reference: ${bookingId}
-Job Date: ${pickupDate}
-Job Time: ${pickupTime}
-Phone No: ${phone}
-Pickup: ${pickup}
-Dropoff: ${dropoff}
-Via: ${via}
-Flight No: ${flight_no}
-Vehicle Type: ${vehicleType}
-Total Fare: ${price}
-Payment Type: ${payment}
-
-Kind Regards,
-Crown Carz Ltd.
-Tel: +44(0)1189 47 47 47
-Email: info@crowncarz.com
-Website: www.crowncarz.com`;
-
+            const messageTemplate = formatBookingConfirmationMessage(this.dataset);
             document.getElementById('smsMessage').value = messageTemplate;
             const modal = new bootstrap.Modal(document.getElementById('sendSmsModal'));
             modal.show();
@@ -2667,41 +2708,12 @@ Website: www.crowncarz.com`;
             const bookingId = this.dataset.bookingId || '';
             const rawId = this.dataset.rawId || bookingId;
             const phone = this.dataset.phone || '';
-            const passengerName = this.dataset.name || '';
-            const pickupDate = this.dataset.date || '';
-            const pickupTime = this.dataset.time || '';
-            const vehicleType = this.dataset.vehicle || '';
-            const price = this.dataset.price || '';
-            const payment = this.dataset.payment || '';
-            const pickup = this.dataset.pickup || '';
-            const dropoff = this.dataset.dropoff || '';
-            const via = this.dataset.via || '-';
-            const flight_no = this.dataset.flight_no || '';
 
             document.getElementById('waBookingId').value = bookingId;
             document.getElementById('waRawBookingId').value = rawId;
             document.getElementById('waPhone').value = phone;
 
-            const messageTemplate = `Dear ${passengerName},
-
-Please find booking confirmation for job reference: ${bookingId}
-Job Date: ${pickupDate}
-Job Time: ${pickupTime}
-Phone No: ${phone}
-Pickup: ${pickup}
-Dropoff: ${dropoff}
-Via: ${via}
-Flight No: ${flight_no}
-Vehicle Type: ${vehicleType}
-Total Fare: £${price}
-Payment Type: ${payment}
-
-Kind Regards,
-Crown Carz Ltd.
-Tel: +44(0)1189 47 47 47
-Email: info@crowncarz.com
-Website: www.crowncarz.com`;
-
+            const messageTemplate = formatBookingConfirmationMessage(this.dataset);
             document.getElementById('waMessage').value = messageTemplate;
             const modal = new bootstrap.Modal(document.getElementById('sendWhatsAppModal'));
             modal.show();

@@ -183,15 +183,18 @@
                        data-raw-id="{{ $booking['id'] ?? '' }}"
                        data-phone="{{ $booking['phone_no'] ?? '' }}"
                        data-name="{{ $booking['passenger_name'] ?? '' }}"
-                       data-date="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '' }}"
+                       data-date="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d/M/Y') : '' }}"
                        data-time="{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '' }}"
                        data-vehicle="{{ $booking['vehicle_make'] ?? '' }}"
                        data-price="{{ $booking['price'] ?? '' }}"
-                       data-payment="{{ ucfirst($booking['payment_type'] ?? '') }}"
+                       data-fare="{{ $booking['fare'] ?? ($booking['base_price'] ?? ($booking['price'] ?? '')) }}"
+                       data-parking="{{ $booking['parking'] ?? ($booking['car_park'] ?? '0.00') }}"
+                       data-payment="{{ $booking['payment_type'] ?? '' }}"
                        data-pickup="{{ $booking['pickup_address'] ?? '' }}"
                        data-dropoff="{{ $booking['dropoff_address'] ?? '' }}"
                        data-flight_no="{{ $booking['flight_no'] ?? '' }}"
-                       data-via="{{ !empty($booking['vias']) ? (is_array($booking['vias']) ? implode(' → ', $booking['vias']) : $booking['vias']) : '-' }}">
+                       data-via="{{ !empty($booking['vias']) ? (is_array($booking['vias']) ? implode(' → ', $booking['vias']) : $booking['vias']) : '-' }}"
+                       data-vias-json="{{ json_encode(is_array($booking['vias'] ?? null) ? array_values(array_filter($booking['vias'])) : (!empty($booking['vias']) ? [trim($booking['vias'])] : [])) }}">
                         <i class="bi bi-whatsapp me-2"></i> Send WhatsApp Confirmation
                     </a>
                   </li>
@@ -385,38 +388,85 @@ $(document).ready(function() {
             const refNo   = this.getAttribute("data-booking-id") || "";
             const rawId   = this.getAttribute("data-raw-id") || "";
             const phone   = this.getAttribute("data-phone") || "";
-            const name    = this.getAttribute("data-name") || "";
-            const date    = this.getAttribute("data-date") || "";
-            const time    = this.getAttribute("data-time") || "";
+            const name    = this.getAttribute("data-name") || "Customer";
+            let rawDate   = this.getAttribute("data-date") || "";
+            let rawTime   = (this.getAttribute("data-time") || "").trim();
             const vehicle = this.getAttribute("data-vehicle") || "";
-            const price   = this.getAttribute("data-price") || "";
-            const payment = this.getAttribute("data-payment") || "";
+            const fare    = this.getAttribute("data-fare") || this.getAttribute("data-price") || "0";
+            const parking = this.getAttribute("data-parking") || "0.00";
+            const rawPayment = (this.getAttribute("data-payment") || "").toLowerCase().trim();
             const pickup  = this.getAttribute("data-pickup") || "";
             const dropoff = this.getAttribute("data-dropoff") || "";
             const flight  = this.getAttribute("data-flight_no") || "";
-            const via     = this.getAttribute("data-via") || "";
+            const viaJson = this.getAttribute("data-vias-json");
+            const viaStr  = this.getAttribute("data-via") || "";
 
-            let message = `*Crown Carz - Booking Confirmation*\n` +
-                          `━━━━━━━━━━━━━━━━━━\n` +
-                          `*Ref #:* ${refNo}\n` +
-                          `*Passenger:* ${name}\n` +
-                          `*Pickup Date/Time:* ${date} ${time}\n` +
-                          `*From:* ${pickup}\n` +
-                          `*To:* ${dropoff}\n`;
+            let formattedDate = rawDate;
+            if (rawDate && !/^\d{2}\/[A-Za-z]{3}\/\d{4}$/.test(rawDate.trim())) {
+                const d = new Date(rawDate.includes('T') || rawDate.includes('-') ? rawDate : rawDate.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1'));
+                if (!isNaN(d.getTime())) {
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = months[d.getMonth()];
+                    const year = d.getFullYear();
+                    formattedDate = `${day}/${month}/${year}`;
+                }
+            }
 
-            if (via && via !== '-' && via !== 'undefined') {
-                message += `*Via:* ${via}\n`;
+            if (rawTime.toLowerCase().includes('(24 hour clock)')) {
+                rawTime = rawTime.replace(/\s*\(24\s*hour\s*clock\)/i, '').trim();
             }
-            if (flight && flight !== '-' && flight !== 'undefined') {
-                message += `*Flight #:* ${flight}\n`;
+            const timeWithClock = rawTime ? `${rawTime} (24 Hour Clock)` : '(24 Hour Clock)';
+
+            let paymentDisplay = 'Pay in Car';
+            if (rawPayment === 'cash' || rawPayment.includes('pay in car')) {
+                paymentDisplay = 'Pay in Car';
+            } else if (rawPayment === 'card' || rawPayment.includes('payment received')) {
+                paymentDisplay = 'Payment Received';
+            } else if (rawPayment === 'account') {
+                paymentDisplay = 'Account';
+            } else if (this.getAttribute("data-payment")) {
+                paymentDisplay = this.getAttribute("data-payment");
             }
-            if (vehicle) {
-                message += `*Vehicle:* ${vehicle}\n`;
+
+            let viasArr = [];
+            if (viaJson) {
+                try {
+                    const parsed = JSON.parse(viaJson);
+                    if (Array.isArray(parsed)) viasArr = parsed;
+                } catch(e) {}
             }
-            if (price) {
-                message += `*Price:* £${price} (${payment})\n`;
+            if (!viasArr.length && viaStr && viaStr !== '-' && viaStr !== 'undefined') {
+                viasArr = viaStr.split(/,|→/).map(s => s.trim()).filter(Boolean);
             }
-            message += `━━━━━━━━━━━━━━━━━━\nThank you for choosing Crown Carz!`;
+
+            let viaLines = '';
+            if (viasArr.length === 1) {
+                const vText = typeof viasArr[0] === 'object' && viasArr[0].address ? viasArr[0].address : viasArr[0];
+                viaLines = `Via 1: ${vText}\n`;
+            } else if (viasArr.length > 1) {
+                viaLines = viasArr.map((v, i) => `Via ${i + 1}: ${typeof v === 'object' && v.address ? v.address : v}`).join('\n') + '\n';
+            }
+
+            let message = `Dear ${name},\n\n`;
+            message += `Please find booking confirmation for job reference: ${refNo}\n\n`;
+            message += `Job Date: ${formattedDate}\n`;
+            message += `Job Time: ${timeWithClock}\n`;
+            message += `Phone No: ${phone}\n`;
+            message += `Pick up: ${pickup}\n`;
+            if (viaLines) {
+                message += viaLines;
+            }
+            message += `Drop off: ${dropoff}\n`;
+            message += `Flight No: ${flight}\n`;
+            message += `Vehicle Type: ${vehicle}\n`;
+            message += `Base Fare: ${fare}\n`;
+            message += `Parking: ${parking}\n`;
+            message += `Payment Type: ${paymentDisplay}\n\n`;
+            message += `Please let us know in case of any changes in your schedule.\n`;
+            message += `To download our app, Leave a review or visit the website, please tap the link below:\n\n`;
+            message += `https://linktr.ee/crowncarz\n\n`;
+            message += `Kind Regards,\nCrown Carz Ltd.\nTel: +44(0)1189 47 47 47\nEmail: info@crowncarz.com\nWebsite: www.crowncarz.com`;
 
             document.getElementById("waBookingId").value = rawId;
             document.getElementById("waRecipientPhone").value = phone;

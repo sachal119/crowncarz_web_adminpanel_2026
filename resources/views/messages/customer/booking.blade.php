@@ -28,7 +28,7 @@
         {{-- SMS Message --}}
         <div class="mb-3">
           <label class="form-label fw-semibold">SMS Message</label>
-          <textarea name="message" id="smsMessage" rows="8"
+          <textarea name="message" id="smsMessage" rows="14"
             class="form-control rounded-3 shadow-sm"
             placeholder="Enter SMS message here...">{{ old('message', $smsTemplate->message ?? 
 "Dear {name},
@@ -39,15 +39,17 @@ Job Date: {job_date}
 Job Time: {job_time}
 Phone No: {mobile}
 Pick up: {pickup}
-Via address: {via_address}
-Drop off: {destination}
+{via_address}Drop off: {destination}
 Flight No: {flight_no}
 Vehicle Type: {vehicle_type}
-Fare: {fare}
+Base Fare: {fare}
 Parking: {car_park}
 Payment Type: {payment}
 
 Please let us know in case of any changes in your schedule.
+To download our app, Leave a review or visit the website, please tap the link below:
+
+https://linktr.ee/crowncarz
 
 Kind Regards,
 Crown Carz Ltd.
@@ -61,24 +63,24 @@ Website: www.crowncarz.com") }}</textarea>
           <strong>Available Variables:</strong><br>
           <code>{name}</code> — Passenger Name <br>
           <code>{job_ref}</code> — Job Reference <br>
-          <code>{job_date}</code> — Job Date <br>
-          <code>{job_time}</code> — Job Time <br>
+          <code>{job_date}</code> — Job Date (e.g. 07/Oct/2026) <br>
+          <code>{job_time}</code> — Job Time (e.g. 04:00 (24 Hour Clock)) <br>
           <code>{mobile}</code> — Phone Number <br>
-          <code>{pickup}</code> — Pickup <br>
-          <code>{via_address}</code> — Via Address <br>
-          <code>{destination}</code> — Dropoff <br>
+          <code>{pickup}</code> — Pick up Address <br>
+          <code>{via_address}</code> — Via Address(es) (e.g. Via 1: ..., Via 2: ...) <br>
+          <code>{destination}</code> — Drop off Address <br>
           <code>{flight_no}</code> — Flight Number <br>
           <code>{vehicle_type}</code> — Vehicle Type <br>
-          <code>{fare}</code> — Fare <br>
+          <code>{fare}</code> — Base Fare <br>
           <code>{car_park}</code> — Parking <br>
-          <code>{payment}</code> — Payment Type <br>
+          <code>{payment}</code> — Payment Type (Pay in Car / Payment Received / Account) <br>
         </div>
 
         {{-- Preview --}}
         <div class="mt-4">
           <label class="form-label fw-semibold">Live Preview</label>
           <div class="card border-0 shadow-sm rounded-4 p-3 bg-light" style="font-family: monospace;">
-            <div id="smsPreview" class="text-dark"></div>
+            <div id="smsPreview" class="text-dark" style="white-space: pre-wrap;"></div>
           </div>
         </div>
 
@@ -101,19 +103,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const preview  = document.getElementById("smsPreview");
 
   const sampleData = {
-    "{name}": "John Doe",
-    "{job_ref}": "CC-58293",
-    "{job_date}": "12 Nov 2025",
-    "{job_time}": "10:30 AM",
-    "{mobile}": "+447912345678",
-    "{pickup}": "Heathrow Airport",
-    "{via_address}": "Stop 1, Oxford Street",
-    "{destination}": "Reading Station",
-    "{flight_no}": "BA044",
-    "{vehicle_type}": "Saloon",
-    "{fare}": "£70",
-    "{car_park}": "£5",
-    "{payment}": "Card"
+    "{name}": "Neil, Peter and Ian",
+    "{job_ref}": "CCZ52802",
+    "{job_date}": "07/Oct/2026",
+    "{job_time}": "04:00 (24 Hour Clock)",
+    "{mobile}": "07798605040",
+    "{pickup}": "THE BOTHY, GODDARDS FARM, GODDARDS LANE, HOOK, RG27 0EL",
+    "{via_address}": "Via 1: 7, NORTHFIELD ROAD, HOOK, RG27 0DR\nVia 2: 100A, GRAZELEY ROAD, READING, RG7 1BJ\n",
+    "{destination}": "Heathrow Airport (LHR) Terminal 5, HOUNSLOW TW6",
+    "{flight_no}": "",
+    "{vehicle_type}": "MPV",
+    "{fare}": "130",
+    "{car_park}": "7.00",
+    "{payment}": "Payment Received"
   };
 
   function updatePreview() {

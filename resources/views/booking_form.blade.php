@@ -1379,13 +1379,8 @@ function getFormData() {
    
 
 let formattedDate = '';
-// if (pickupDateValue) {
-//     const parts = pickupDateValue.split('-'); // ["2025", "11", "16"]
-//     formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // "16/11/2025"
-// }
 if (pickupDateValue) {
     const parts = pickupDateValue.split('-'); // ["2025", "11", "16"]
-
     const months = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -1398,41 +1393,91 @@ if (pickupDateValue) {
     formattedDate = `${day}/${month}/${year}`;
 }
 
-console.log(formattedDate); // dd/mm/yyyy 
+  // Payment mapping: Cash -> Pay in Car, Card -> Payment Received, Account -> Account
+  const rawPayment = document.querySelector("select[name='payment_type']")?.value || "";
+  let paymentDisplay = 'Pay in Car';
+  const pLower = rawPayment.toLowerCase().trim();
+  if (pLower === 'cash' || pLower.includes('pay in car')) {
+      paymentDisplay = 'Pay in Car';
+  } else if (pLower === 'card' || pLower.includes('payment received')) {
+      paymentDisplay = 'Payment Received';
+  } else if (pLower === 'account') {
+      paymentDisplay = 'Account';
+  } else if (rawPayment) {
+      paymentDisplay = rawPayment;
+  }
 
+  // Via formatting: if multiple: Via 1: ..., Via 2: ...
+  const viasArr = Array.from(document.querySelectorAll("input[name='via_addresses[]']"))
+      .map(v => v.value.trim())
+      .filter(Boolean);
+  let viaLines = '';
+  if (viasArr.length === 1) {
+      viaLines = `Via 1: ${viasArr[0]}\n`;
+  } else if (viasArr.length > 1) {
+      viaLines = viasArr.map((v, i) => `Via ${i + 1}: ${v}`).join('\n') + '\n';
+  }
 
+  // Time format: HH:mm (24 Hour Clock)
+  let rawTime = (document.querySelector("input[name='pickup_time']")?.value || '').trim();
+  if (rawTime.toLowerCase().includes('(24 hour clock)')) {
+      rawTime = rawTime.replace(/\s*\(24\s*hour\s*clock\)/i, '').trim();
+  }
+  const timeWithClock = rawTime ? `${rawTime} (24 Hour Clock)` : '(24 Hour Clock)';
+
+  const passName = document.querySelector("input[name='passenger_name']")?.value || "";
+  const phoneNo = document.querySelector("input[name='phone_no']")?.value || "";
+  const refNo = document.querySelector("input[name='ref_no']")?.value || "";
+  const pickupAddr = document.querySelector("#pickup_address")?.value || "";
+  const dropoffAddr = document.querySelector("#dropoff_address")?.value || "";
+  const flightNoVal = document.querySelector("input[name='flight_no']")?.value || "";
+  const baseFareVal = document.querySelector("input[name='fare']")?.value || document.querySelector("input[name='price']")?.value || "0";
+  const parkingVal = document.querySelector("input[name='parking']")?.value || "0.00";
 
   return {
-    caller: document.querySelector("input[name='passenger_name']").value,
-    mobile: document.querySelector("input[name='phone_no']").value,
-    email: document.querySelector("input[name='email']").value,
+    name: passName,
+    caller: passName,
+    passenger_name: passName,
+    mobile: phoneNo,
+    phone: phoneNo,
+    phone_no: phoneNo,
+    email: document.querySelector("input[name='email']")?.value || "",
     
-    job_ref: document.querySelector("input[name='ref_no']").value,
-    pickup: document.querySelector("#pickup_address").value,
-    dropoff: document.querySelector("#dropoff_address").value,
+    job_ref: refNo,
+    pickup: pickupAddr,
+    pickup_address: pickupAddr,
+    dropoff: dropoffAddr,
+    dropoff_address: dropoffAddr,
+    destination: dropoffAddr,
 
     job_date: formattedDate,
-    job_time: document.querySelector("input[name='pickup_time']").value,
+    pickup_date: formattedDate,
+    job_time: timeWithClock,
+    pickup_time: timeWithClock,
 
-    flight_no: document.querySelector("input[name='flight_no']").value,
-    via_address: getViaAddresses(),
+    flight_no: flightNoVal,
+    via_address: viaLines,
+    vias: viasArr,
 
-    payment: document.querySelector("select[name='payment_type']").value,
+    payment: paymentDisplay,
+    payment_type: paymentDisplay,
 
-    fare: Math.ceil(Number(document.querySelector("input[name='price']").value || 0)),
-base_price: Math.ceil(Number(document.querySelector("input[name='fare']").value || 0)),
-
+    fare: baseFareVal,
+    base_price: baseFareVal,
+    price: document.querySelector("input[name='price']")?.value || baseFareVal,
     
-    mcar_park: document.querySelector("input[name='parking']").value,
+    parking: parkingVal,
+    car_park: parkingVal,
+    mcar_park: parkingVal,
     comments: document.querySelector("textarea[name='comments']")?.value || "",
     
     Job_comments: document.querySelector("textarea[name='job_comment']")?.value || "",
 
     vehicle_type: vehicle_type,
+    vehicle_make: vehicle_type,
     
-    // NEW
-        driver_name: document.getElementById("currentDriverName")?.value || "",
-        driver_phone: document.getElementById("currentDriverPhone")?.value || ""
+    driver_name: document.getElementById("currentDriverName")?.value || "",
+    driver_phone: document.getElementById("currentDriverPhone")?.value || ""
   };
 }
 
@@ -1440,7 +1485,131 @@ base_price: Math.ceil(Number(document.querySelector("input[name='fare']").value 
 function getViaAddresses() {
   let vias = document.querySelectorAll("input[name='via_addresses[]']");
   if (!vias.length) return "";
-  return Array.from(vias).map(v => v.value).join(", ");
+  return Array.from(vias).map(v => v.value.trim()).filter(Boolean).join(", ");
+}
+
+// ---------------------------
+// UNIFIED CONFIRMATION MESSAGE FORMATTER
+// ---------------------------
+function formatBookingConfirmationMessage(b) {
+    if (!b) return '';
+    const passengerName = b.passenger_name || b.caller || b.name || 'Customer';
+    const jobRef = b.ref_no || b.job_ref || b.booking_id || b.bookingId || b.id || '';
+    
+    // Format Date: DD/MMM/YYYY (e.g. 07/Oct/2026)
+    let rawDate = b.pickup_date || b.job_date || b.date || '';
+    let formattedDate = rawDate;
+    if (rawDate) {
+        if (/^\d{2}\/[A-Za-z]{3}\/\d{4}$/.test(rawDate.trim())) {
+            formattedDate = rawDate.trim();
+        } else {
+            const cleanDate = rawDate.includes('T') || rawDate.includes('-') 
+                ? rawDate 
+                : rawDate.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1');
+            const d = new Date(cleanDate);
+            if (!isNaN(d.getTime())) {
+                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = months[d.getMonth()];
+                const year = d.getFullYear();
+                formattedDate = `${day}/${month}/${year}`;
+            }
+        }
+    }
+
+    // Format Time: HH:mm (24 Hour Clock)
+    let rawTime = (b.pickup_time || b.job_time || b.time || '').trim();
+    if (rawTime.toLowerCase().includes('(24 hour clock)')) {
+        rawTime = rawTime.replace(/\s*\(24\s*hour\s*clock\)/i, '').trim();
+    }
+    if (rawTime.includes(' ') && rawTime.includes(':')) {
+        const parts = rawTime.split(' ');
+        const timePart = parts[parts.length - 1];
+        if (timePart.includes(':')) {
+            rawTime = timePart.substring(0, 5);
+        }
+    } else if (rawTime.length >= 5 && rawTime.indexOf(':') === 2) {
+        rawTime = rawTime.substring(0, 5);
+    }
+    const timeWithClock = rawTime ? `${rawTime} (24 Hour Clock)` : '(24 Hour Clock)';
+
+    const phone = b.phone_no || b.mobile || b.phone || '';
+    const pickup = b.pickup_address || b.pickup || '';
+    const dropoff = b.dropoff_address || b.dropoff || b.destination || '';
+    const flightNo = b.flight_no || b.flight || '';
+    const vehicleType = b.vehicle_make || b.vehicle_type || b.vehicle || '';
+    
+    let baseFare = (b.fare !== undefined && b.fare !== '' && b.fare !== null) 
+        ? b.fare 
+        : (b.base_price !== undefined && b.base_price !== '' ? b.base_price : (b.price || '0'));
+    let parking = (b.parking !== undefined && b.parking !== '' && b.parking !== null) 
+        ? b.parking 
+        : (b.car_park !== undefined && b.car_park !== '' ? b.car_park : (b.mcar_park !== undefined && b.mcar_park !== '' ? b.mcar_park : '0.00'));
+
+    // Payment Type mapping: Cash -> Pay in Car, Card -> Payment Received, Account -> Account
+    let rawPayment = (b.payment_type || b.payment || '').toLowerCase().trim();
+    let paymentDisplay = 'Pay in Car';
+    if (rawPayment === 'cash' || rawPayment.includes('pay in car')) {
+        paymentDisplay = 'Pay in Car';
+    } else if (rawPayment === 'card' || rawPayment.includes('payment received')) {
+        paymentDisplay = 'Payment Received';
+    } else if (rawPayment === 'account') {
+        paymentDisplay = 'Account';
+    } else if (b.payment_type || b.payment) {
+        paymentDisplay = b.payment_type || b.payment;
+    }
+
+    // Vias formatting: Middle position, Via 1, Via 2 if multiple
+    let viasArr = [];
+    if (b.viasJson) {
+        try {
+            const parsed = typeof b.viasJson === 'string' ? JSON.parse(b.viasJson) : b.viasJson;
+            if (Array.isArray(parsed)) viasArr = parsed;
+        } catch(e) {}
+    }
+    if (!viasArr.length) {
+        if (Array.isArray(b.vias)) {
+            viasArr = b.vias.filter(v => typeof v === 'string' ? v.trim() : (v && v.address ? v.address.trim() : false));
+        } else if (Array.isArray(b.via_addresses)) {
+            viasArr = b.via_addresses.filter(v => typeof v === 'string' && v.trim());
+        } else if (typeof b.via === 'string' && b.via && b.via !== '-' && b.via !== 'undefined') {
+            viasArr = b.via.split(/,|→/).map(s => s.trim()).filter(Boolean);
+        } else if (typeof b.vias === 'string' && b.vias && b.vias !== '-' && b.vias !== 'undefined') {
+            viasArr = b.vias.split(/,|→/).map(s => s.trim()).filter(Boolean);
+        } else if (typeof b.via_address === 'string' && b.via_address && b.via_address !== '-' && b.via_address !== 'undefined') {
+            viasArr = b.via_address.split(/,|→/).map(s => s.trim()).filter(Boolean);
+        }
+    }
+
+    let viaLines = '';
+    if (viasArr.length === 1) {
+        const vText = typeof viasArr[0] === 'object' && viasArr[0].address ? viasArr[0].address : viasArr[0];
+        viaLines = `Via 1: ${vText}\n`;
+    } else if (viasArr.length > 1) {
+        viaLines = viasArr.map((v, i) => `Via ${i + 1}: ${typeof v === 'object' && v.address ? v.address : v}`).join('\n') + '\n';
+    }
+
+    let msg = `Dear ${passengerName},\n\n`;
+    msg += `Please find booking confirmation for job reference: ${jobRef}\n\n`;
+    msg += `Job Date: ${formattedDate}\n`;
+    msg += `Job Time: ${timeWithClock}\n`;
+    msg += `Phone No: ${phone}\n`;
+    msg += `Pick up: ${pickup}\n`;
+    if (viaLines) {
+        msg += viaLines;
+    }
+    msg += `Drop off: ${dropoff}\n`;
+    msg += `Flight No: ${flightNo}\n`;
+    msg += `Vehicle Type: ${vehicleType}\n`;
+    msg += `Base Fare: ${baseFare}\n`;
+    msg += `Parking: ${parking}\n`;
+    msg += `Payment Type: ${paymentDisplay}\n\n`;
+    msg += `Please let us know in case of any changes in your schedule.\n`;
+    msg += `To download our app, Leave a review or visit the website, please tap the link below:\n\n`;
+    msg += `https://linktr.ee/crowncarz\n\n`;
+    msg += `Kind Regards,\nCrown Carz Ltd.\nTel: +44(0)1189 47 47 47\nEmail: info@crowncarz.com\nWebsite: www.crowncarz.com`;
+
+    return msg;
 }
 
 // ---------------------------
@@ -1587,6 +1756,13 @@ async function sendSMS(mobile, message) {
 // LOAD TEMPLATE FROM FIREBASE
 // ---------------------------
 async function loadSMS(templateName) {
+  if (templateName === "booking_confirmation") {
+    const data = getFormData();
+    const finalText = formatBookingConfirmationMessage(data);
+    showModal(finalText);
+    return;
+  }
+
   const snap = await get(ref(db, "sms_templates/" + templateName));
   if (!snap.exists()) return alert("Template not found!");
 
