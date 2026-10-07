@@ -64,7 +64,7 @@ Website: www.crowncarz.com") }}</textarea>
           <code>{name}</code> — Passenger Name <br>
           <code>{job_ref}</code> — Job Reference <br>
           <code>{job_date}</code> — Job Date (e.g. 07/Oct/2026) <br>
-          <code>{job_time}</code> — Job Time (e.g. 04:00 (24 Hour Clock)) <br>
+          <code>{job_time}</code> — Job Time (e.g. 06:00 PM) <br>
           <code>{mobile}</code> — Phone Number <br>
           <code>{pickup}</code> — Pick up Address <br>
           <code>{via_address}</code> — Via Address(es) (e.g. Via 1: ..., Via 2: ...) <br>
@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "{name}": "Neil, Peter and Ian",
     "{job_ref}": "CCZ52802",
     "{job_date}": "07/Oct/2026",
-    "{job_time}": "04:00 (24 Hour Clock)",
+    "{job_time}": "06:00 PM",
     "{mobile}": "07798605040",
     "{pickup}": "THE BOTHY, GODDARDS FARM, GODDARDS LANE, HOOK, RG27 0EL",
     "{via_address}": "Via 1: 7, NORTHFIELD ROAD, HOOK, RG27 0DR\nVia 2: 100A, GRAZELEY ROAD, READING, RG7 1BJ\n",

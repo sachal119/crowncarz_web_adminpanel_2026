@@ -1418,12 +1418,9 @@ if (pickupDateValue) {
       viaLines = viasArr.map((v, i) => `Via ${i + 1}: ${v}`).join('\n') + '\n';
   }
 
-  // Time format: HH:mm (24 Hour Clock)
+  // Time format: 12 Hour Clock (AM/PM)
   let rawTime = (document.querySelector("input[name='pickup_time']")?.value || '').trim();
-  if (rawTime.toLowerCase().includes('(24 hour clock)')) {
-      rawTime = rawTime.replace(/\s*\(24\s*hour\s*clock\)/i, '').trim();
-  }
-  const timeWithClock = rawTime ? `${rawTime} (24 Hour Clock)` : '(24 Hour Clock)';
+  const formattedTime = formatTime12Hour(rawTime);
 
   const passName = document.querySelector("input[name='passenger_name']")?.value || "";
   const phoneNo = document.querySelector("input[name='phone_no']")?.value || "";
@@ -1452,8 +1449,8 @@ if (pickupDateValue) {
 
     job_date: formattedDate,
     pickup_date: formattedDate,
-    job_time: timeWithClock,
-    pickup_time: timeWithClock,
+    job_time: formattedTime,
+    pickup_time: formattedTime,
 
     flight_no: flightNoVal,
     via_address: viaLines,
@@ -1479,6 +1476,45 @@ if (pickupDateValue) {
     driver_name: document.getElementById("currentDriverName")?.value || "",
     driver_phone: document.getElementById("currentDriverPhone")?.value || ""
   };
+}
+
+// ---------------------------
+// 12-HOUR TIME FORMATTER (AM/PM)
+// ---------------------------
+function formatTime12Hour(timeStr) {
+    if (!timeStr) return '';
+    let str = String(timeStr).trim();
+    str = str.replace(/\s*\(\s*24\s*hour\s*clock\s*\)/gi, '').trim();
+
+    if (/(am|pm)$/i.test(str)) {
+        const m = str.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
+        if (m) {
+            const h = String(parseInt(m[1], 10)).padStart(2, '0');
+            return `${h}:${m[2]} ${m[3].toUpperCase()}`;
+        }
+        return str;
+    }
+
+    if (str.includes('T') || str.includes(' ')) {
+        const parts = str.split(/[T ]/);
+        const lastPart = parts[parts.length - 1];
+        if (lastPart.includes(':')) {
+            str = lastPart;
+        }
+    }
+
+    const match = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
+    if (match) {
+        let hours = parseInt(match[1], 10);
+        const minutes = match[2];
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const paddedHours = String(hours).padStart(2, '0');
+        return `${paddedHours}:${minutes} ${ampm}`;
+    }
+
+    return str;
 }
 
 // VIA HANDLER
@@ -1517,21 +1553,9 @@ function formatBookingConfirmationMessage(b) {
         }
     }
 
-    // Format Time: HH:mm (24 Hour Clock)
+    // Format Time: 12-Hour Clock (AM/PM)
     let rawTime = (b.pickup_time || b.job_time || b.time || '').trim();
-    if (rawTime.toLowerCase().includes('(24 hour clock)')) {
-        rawTime = rawTime.replace(/\s*\(24\s*hour\s*clock\)/i, '').trim();
-    }
-    if (rawTime.includes(' ') && rawTime.includes(':')) {
-        const parts = rawTime.split(' ');
-        const timePart = parts[parts.length - 1];
-        if (timePart.includes(':')) {
-            rawTime = timePart.substring(0, 5);
-        }
-    } else if (rawTime.length >= 5 && rawTime.indexOf(':') === 2) {
-        rawTime = rawTime.substring(0, 5);
-    }
-    const timeWithClock = rawTime ? `${rawTime} (24 Hour Clock)` : '(24 Hour Clock)';
+    const formattedTime = formatTime12Hour(rawTime);
 
     const phone = b.phone_no || b.mobile || b.phone || '';
     const pickup = b.pickup_address || b.pickup || '';
@@ -1592,7 +1616,7 @@ function formatBookingConfirmationMessage(b) {
     let msg = `Dear ${passengerName},\n\n`;
     msg += `Please find booking confirmation for job reference: ${jobRef}\n\n`;
     msg += `Job Date: ${formattedDate}\n`;
-    msg += `Job Time: ${timeWithClock}\n`;
+    msg += `Job Time: ${formattedTime}\n`;
     msg += `Phone No: ${phone}\n`;
     msg += `Pick up: ${pickup}\n`;
     if (viaLines) {

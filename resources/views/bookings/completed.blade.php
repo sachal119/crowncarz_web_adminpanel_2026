@@ -379,6 +379,42 @@ $(document).ready(function() {
         });
     });
 
+    function formatTime12Hour(timeStr) {
+        if (!timeStr) return '';
+        let str = String(timeStr).trim();
+        str = str.replace(/\s*\(\s*24\s*hour\s*clock\s*\)/gi, '').trim();
+
+        if (/(am|pm)$/i.test(str)) {
+            const m = str.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
+            if (m) {
+                const h = String(parseInt(m[1], 10)).padStart(2, '0');
+                return `${h}:${m[2]} ${m[3].toUpperCase()}`;
+            }
+            return str;
+        }
+
+        if (str.includes('T') || str.includes(' ')) {
+            const parts = str.split(/[T ]/);
+            const lastPart = parts[parts.length - 1];
+            if (lastPart.includes(':')) {
+                str = lastPart;
+            }
+        }
+
+        const match = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
+        if (match) {
+            let hours = parseInt(match[1], 10);
+            const minutes = match[2];
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const paddedHours = String(hours).padStart(2, '0');
+            return `${paddedHours}:${minutes} ${ampm}`;
+        }
+
+        return str;
+    }
+
 /* ----------------------
        WHATSAPP HANDLERS
     ---------------------- */
@@ -413,10 +449,7 @@ $(document).ready(function() {
                 }
             }
 
-            if (rawTime.toLowerCase().includes('(24 hour clock)')) {
-                rawTime = rawTime.replace(/\s*\(24\s*hour\s*clock\)/i, '').trim();
-            }
-            const timeWithClock = rawTime ? `${rawTime} (24 Hour Clock)` : '(24 Hour Clock)';
+            const formattedTime = formatTime12Hour(rawTime);
 
             let paymentDisplay = 'Pay in Car';
             if (rawPayment === 'cash' || rawPayment.includes('pay in car')) {
@@ -451,7 +484,7 @@ $(document).ready(function() {
             let message = `Dear ${name},\n\n`;
             message += `Please find booking confirmation for job reference: ${refNo}\n\n`;
             message += `Job Date: ${formattedDate}\n`;
-            message += `Job Time: ${timeWithClock}\n`;
+            message += `Job Time: ${formattedTime}\n`;
             message += `Phone No: ${phone}\n`;
             message += `Pick up: ${pickup}\n`;
             if (viaLines) {
