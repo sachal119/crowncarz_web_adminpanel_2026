@@ -6,7 +6,8 @@
   <meta name="csrf-token" content="{{ csrf_token() }}" />
 
   <title>Crown Carz Panel</title>
-  <link href="{{ asset('public/images/logo_black.png') }}" rel="icon" type="image/x-icon">
+  <link rel="icon" type="image/png" href="https://crowncarz.com/admin/public/images/logo.png">
+  <link rel="shortcut icon" type="image/png" href="{{ asset('public/images/logo.png') }}">
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />

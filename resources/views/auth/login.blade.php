@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CrownCarz Admin — Login</title>
 
+    <link rel="icon" type="image/png" href="https://crowncarz.com/admin/public/images/logo.png">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('public/images/logo.png') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -60,22 +63,25 @@
         }
 
         .brand-logo {
-            width: 52px;
-            height: 52px;
+            width: 76px;
+            height: 76px;
             margin: 0 auto 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #171b24;
-            border: 1px solid #232a38;
-            border-radius: 14px;
-            padding: 8px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(201, 162, 77, 0.15);
+            background: #000000;
         }
 
         .brand-logo img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
+            border-radius: 20px;
+            display: block;
         }
 
         .brand-title {
