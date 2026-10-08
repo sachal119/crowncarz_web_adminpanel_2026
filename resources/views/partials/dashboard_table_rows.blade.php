@@ -74,16 +74,14 @@
             });
         }
         if (!$driver && $bDriverCallSign !== '' && isset($drivers)) {
-            $driver = collect($drivers)->first(function($d) use ($bDriverCallSign) {
-                return strcasecmp(trim($d['call_sign'] ?? ''), $bDriverCallSign) === 0;
-            });
-        }
+        $bPrice = is_numeric($booking['price'] ?? null) ? (float)$booking['price'] : 0;
+        $isHighPrice = $bPrice > 50;
     @endphp
-    <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row align-middle" style="{{ $rowStyle }}">
-        <td class="col-ref fw-bold text-nowrap" style="{{ $rowStyle }}">
+    <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row align-middle {{ $isHighPrice ? 'high-value-row' : '' }}">
+        <td class="col-ref fw-bold text-nowrap">
             <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">{{ $booking['ref_no'] ?? 'N/A' }}</span>
         </td>
-        <td class="col-payment" style="{{ $rowStyle }}">
+        <td class="col-payment">
             @php
                 $accName = $booking['account_name'] ?? '';
                 if (empty($accName) && !empty($booking['account_id']) && isset($accounts)) {
@@ -228,10 +226,14 @@
                 <span class="text-muted small">-</span>
             @endif
         </td>
-        <td class="col-price fw-bold text-dark text-nowrap" style="{{ $rowStyle }}">
-            £{{ is_numeric($booking['price'] ?? null) ? number_format((float)$booking['price'], 2) : ($booking['price'] ?? '-') }}
+        <td class="col-price text-nowrap">
+            @if($isHighPrice)
+                <span class="high-price-badge">£{{ number_format($bPrice, 2) }}</span>
+            @else
+                <span class="normal-price-text">£{{ is_numeric($booking['price'] ?? null) ? number_format((float)$booking['price'], 2) : ($booking['price'] ?? '-') }}</span>
+            @endif
         </td>
-        <td class="col-comment" style="{{ $rowStyle }}" title="{{ !empty($booking['job_comment']) ? $booking['job_comment'] : (!empty($booking['comments']) ? $booking['comments'] : 'No comment') }}">
+        <td class="col-comment" title="{{ !empty($booking['job_comment']) ? $booking['job_comment'] : (!empty($booking['comments']) ? $booking['comments'] : 'No comment') }}">
             @php
                 $comm = !empty($booking['job_comment']) ? $booking['job_comment'] : (!empty($booking['comments']) ? $booking['comments'] : 'No comment');
             @endphp

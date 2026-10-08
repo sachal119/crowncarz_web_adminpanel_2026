@@ -1889,34 +1889,40 @@ function buildBookingRowHtml(booking, isNew = false) {
         }
     }
 
+    const priceNum = parseFloat(booking.price) || 0;
+    const isHighPrice = priceNum > 50;
     const highlightClass = isNew ? 'new-booking-highlight' : '';
+    const highValueClass = isHighPrice ? 'high-value-row' : '';
+    const priceDisplayHtml = isHighPrice 
+        ? `<span class="high-price-badge">£${priceNum.toFixed(2)}</span>`
+        : `<span class="normal-price-text">${formattedPrice}</span>`;
 
     return `
-    <tr id="booking-row-${id}" data-booking-id="${id}" class="booking-table-row align-middle ${highlightClass}" style="${rowStyle}">
-        <td class="col-ref fw-bold text-nowrap" style="${rowStyle}">
+    <tr id="booking-row-${id}" data-booking-id="${id}" class="booking-table-row align-middle ${highlightClass} ${highValueClass}">
+        <td class="col-ref fw-bold text-nowrap">
             <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">${booking.ref_no || 'N/A'}</span>
         </td>
-        <td class="col-payment" style="${rowStyle}">${getPaymentBadgeHtml(booking.payment_type, accName)}</td>
-        <td class="col-passenger fw-semibold" style="${rowStyle}" title="${passengerName}">
+        <td class="col-payment">${getPaymentBadgeHtml(booking.payment_type, accName)}</td>
+        <td class="col-passenger fw-semibold" title="${passengerName}">
             <span class="two-line-clamp text-dark" style="max-width: 140px; font-size: 11.5px;">${passengerName}</span>
         </td>
-        <td class="col-driver driver-cell" style="${rowStyle}">${driverHtml}</td>
-        <td class="col-phone font-monospace" style="${rowStyle}">
+        <td class="col-driver driver-cell">${driverHtml}</td>
+        <td class="col-phone font-monospace">
             <a href="tel:${booking.phone_no || ''}" class="text-decoration-none text-dark" style="font-size: 11.5px;" title="${booking.phone_no || 'N/A'}">
                 ${booking.phone_no || 'N/A'}
             </a>
         </td>
-        <td class="col-pickup" style="${rowStyle}" title="${pickupAddress}">
+        <td class="col-pickup" title="${pickupAddress}">
             <span class="two-line-clamp text-dark" style="max-width: 145px; font-size: 11.5px;">${pickupAddress}</span>
         </td>
-        <td class="col-dropoff" style="${rowStyle}" title="${dropoffAddress}">
+        <td class="col-dropoff" title="${dropoffAddress}">
             <span class="two-line-clamp text-dark" style="max-width: 145px; font-size: 11.5px;">${dropoffAddress}</span>
         </td>
-        <td class="col-vias text-center" style="${rowStyle}">${viasText}</td>
-        <td class="col-date fw-semibold text-nowrap" style="${rowStyle}">${pickupDate}</td>
-        <td class="col-time font-monospace text-nowrap fw-bold" style="${rowStyle}">${pickupTime}</td>
-        <td class="col-vehicle text-center" style="${rowStyle}">${getVehicleBadgeHtml(booking.vehicle_make)}</td>
-        <td class="col-flight text-nowrap" style="${rowStyle}" title="${flightNo}">
+        <td class="col-vias text-center">${viasText}</td>
+        <td class="col-date fw-semibold text-nowrap">${pickupDate}</td>
+        <td class="col-time font-monospace text-nowrap fw-bold">${pickupTime}</td>
+        <td class="col-vehicle text-center">${getVehicleBadgeHtml(booking.vehicle_make)}</td>
+        <td class="col-flight text-nowrap" title="${flightNo}">
             ${flightNo !== '-' ? `
                 <a href="https://www.google.com/search?q=${encodeURIComponent(flightNo)}" 
                    target="_blank" 
@@ -1930,11 +1936,11 @@ function buildBookingRowHtml(booking, isNew = false) {
                 </a>
             ` : '<span class="text-muted small">-</span>'}
         </td>
-        <td class="col-price fw-bold text-dark text-nowrap" style="${rowStyle}">${formattedPrice}</td>
-        <td class="col-comment" style="${rowStyle}" title="${commentText}">
+        <td class="col-price text-nowrap">${priceDisplayHtml}</td>
+        <td class="col-comment" title="${commentText}">
             <span class="truncate-cell text-muted" style="max-width: 120px; font-size: 11px;">${commentText}</span>
         </td>
-        <td class="col-status" style="${rowStyle}">
+        <td class="col-status">
             <form method="POST" action="{{ url('bookings') }}/${encodeURIComponent(id)}/update-status-manual" class="statusForm">
                 <input type="hidden" name="_token" value="${CSRF_TOKEN}">
                 <select class="form-select form-select-sm text-black statusSelect fw-semibold"

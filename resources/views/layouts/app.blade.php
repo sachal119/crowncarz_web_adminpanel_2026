@@ -527,9 +527,59 @@
       font-weight: 700 !important;
     }
 
-    [data-bs-theme="dark"] .col-price {
-      color: #34d399 !important; /* Crisp high-contrast emerald green for revenue/price */
-      font-weight: 700 !important;
+    /* 💰 High Value (> £50) & Normal Price Styling (Light Mode Defaults) */
+    .high-value-row {
+      background-color: rgba(230, 176, 74, 0.08) !important;
+    }
+    .high-value-row:hover {
+      background-color: rgba(230, 176, 74, 0.15) !important;
+    }
+    .high-value-row td:first-child {
+      border-left: 3.5px solid #d97706 !important;
+    }
+
+    .high-price-badge {
+      display: inline-flex;
+      align-items: center;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-weight: 800;
+      font-size: 11.5px;
+      letter-spacing: 0.2px;
+      box-shadow: 0 1px 2px rgba(180, 83, 9, 0.08);
+    }
+
+    .normal-price-text {
+      font-weight: 700;
+      color: #1e293b;
+      font-size: 12px;
+    }
+
+    /* 💰 High Value (> £50) & Price Styling (Dark Mode) */
+    [data-bs-theme="dark"] .high-value-row {
+      background-color: rgba(245, 158, 11, 0.09) !important;
+    }
+    [data-bs-theme="dark"] .high-value-row:hover {
+      background-color: rgba(245, 158, 11, 0.16) !important;
+    }
+    [data-bs-theme="dark"] .high-value-row td:first-child {
+      border-left: 3.5px solid #f59e0b !important;
+    }
+
+    [data-bs-theme="dark"] .high-price-badge {
+      background: rgba(245, 158, 11, 0.18) !important;
+      color: #fbbf24 !important;
+      border: 1px solid rgba(245, 158, 11, 0.4) !important;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.15) !important;
+    }
+
+    [data-bs-theme="dark"] .normal-price-text {
+      color: #34d399 !important; /* Crisp emerald for standard prices */
+      font-weight: 700;
+      font-size: 12px;
     }
 
     [data-bs-theme="dark"] .col-comment span,
