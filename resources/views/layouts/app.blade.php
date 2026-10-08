@@ -528,28 +528,41 @@
     }
 
     /* 💰 High Value (> £50) & Normal Price Styling (Light Mode Defaults) */
-    .high-value-row {
-      background-color: rgba(230, 176, 74, 0.08) !important;
+    .high-value-row,
+    .high-value-row > td,
+    tr.high-value-row td,
+    .custom-dashboard-table tbody tr.high-value-row td {
+      background-color: #fef08a !important; /* Prominent, vibrant, and clear golden-amber row highlight */
+      border-bottom: 1px solid #fde047 !important;
     }
-    .high-value-row:hover {
-      background-color: rgba(230, 176, 74, 0.15) !important;
+    .high-value-row:hover,
+    .high-value-row:hover > td,
+    tr.high-value-row:hover td,
+    .custom-dashboard-table tbody tr.high-value-row:hover td {
+      background-color: #fde047 !important;
     }
-    .high-value-row td:first-child {
-      border-left: 3.5px solid #d97706 !important;
+    .high-value-row td:first-child,
+    tr.high-value-row td:first-child {
+      border-left: 5px solid #d97706 !important;
+    }
+    .high-value-row .text-dark,
+    .high-value-row a.text-dark {
+      color: #78350f !important;
+      font-weight: 600;
     }
 
     .high-price-badge {
       display: inline-flex;
       align-items: center;
-      background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fde68a;
+      background: #f59e0b;
+      color: #ffffff;
+      border: 1px solid #d97706;
       border-radius: 6px;
-      padding: 2px 7px;
+      padding: 2px 8px;
       font-weight: 800;
       font-size: 11.5px;
       letter-spacing: 0.2px;
-      box-shadow: 0 1px 2px rgba(180, 83, 9, 0.08);
+      box-shadow: 0 2px 4px rgba(180, 83, 9, 0.25);
     }
 
     .normal-price-text {
@@ -559,21 +572,34 @@
     }
 
     /* 💰 High Value (> £50) & Price Styling (Dark Mode) */
-    [data-bs-theme="dark"] .high-value-row {
-      background-color: rgba(245, 158, 11, 0.09) !important;
+    [data-bs-theme="dark"] .high-value-row,
+    [data-bs-theme="dark"] .high-value-row > td,
+    [data-bs-theme="dark"] tr.high-value-row td,
+    [data-bs-theme="dark"] .custom-dashboard-table tbody tr.high-value-row td {
+      background-color: #382813 !important; /* Rich prominent dark bronze/amber highlight */
+      border-bottom: 1px solid rgba(245, 158, 11, 0.3) !important;
     }
-    [data-bs-theme="dark"] .high-value-row:hover {
-      background-color: rgba(245, 158, 11, 0.16) !important;
+    [data-bs-theme="dark"] .high-value-row:hover,
+    [data-bs-theme="dark"] .high-value-row:hover > td,
+    [data-bs-theme="dark"] tr.high-value-row:hover td,
+    [data-bs-theme="dark"] .custom-dashboard-table tbody tr.high-value-row:hover td {
+      background-color: #483418 !important;
     }
-    [data-bs-theme="dark"] .high-value-row td:first-child {
-      border-left: 3.5px solid #f59e0b !important;
+    [data-bs-theme="dark"] .high-value-row td:first-child,
+    [data-bs-theme="dark"] tr.high-value-row td:first-child {
+      border-left: 5px solid #f59e0b !important;
+    }
+    [data-bs-theme="dark"] .high-value-row td,
+    [data-bs-theme="dark"] .high-value-row .text-dark,
+    [data-bs-theme="dark"] .high-value-row a.text-dark {
+      color: #fef3c7 !important;
     }
 
     [data-bs-theme="dark"] .high-price-badge {
-      background: rgba(245, 158, 11, 0.18) !important;
-      color: #fbbf24 !important;
-      border: 1px solid rgba(245, 158, 11, 0.4) !important;
-      box-shadow: 0 0 10px rgba(245, 158, 11, 0.15) !important;
+      background: rgba(245, 158, 11, 0.3) !important;
+      color: #fcd34d !important;
+      border: 1px solid rgba(245, 158, 11, 0.6) !important;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.25) !important;
     }
 
     [data-bs-theme="dark"] .normal-price-text {
@@ -612,6 +638,107 @@
     [data-bs-theme="dark"] .table-bordered td,
     [data-bs-theme="dark"] .table-bordered th {
       border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* 📅 Modern Timeline Date Divider & Time Badges (Light Mode) */
+    .timeline-date-divider-row {
+      border: none !important;
+    }
+    .timeline-date-divider-row td,
+    .custom-dashboard-table tbody tr.timeline-date-divider-row td {
+      padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+    }
+    .timeline-date-bar {
+      background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 35%, #f8fafc 100%);
+      border-top: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .timeline-dot-icon {
+      width: 10px;
+      height: 10px;
+      background: #f59e0b;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+    }
+    .timeline-date-pill {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      padding: 3px 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      font-size: 11.5px;
+      color: #0f172a;
+    }
+    .timeline-track-line {
+      height: 2px;
+      background: linear-gradient(90deg, #cbd5e1 0%, rgba(203, 213, 225, 0.2) 100%);
+      border-radius: 2px;
+    }
+    .timeline-badge-subtle {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #64748b;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 2px 8px;
+    }
+    .timeline-time-badge {
+      display: inline-flex;
+      align-items: center;
+      background: #f1f5f9;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .high-value-row .timeline-time-badge {
+      background: #fef08a;
+      border-color: #fde047;
+      color: #78350f;
+    }
+
+    /* 🌙 Timeline Styling (Dark Mode) */
+    [data-bs-theme="dark"] .timeline-date-bar {
+      background: linear-gradient(90deg, #0b1320 0%, #1e293b 40%, #0f172a 100%);
+      border-top: 1px solid #334155;
+      border-bottom: 1px solid #334155;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+    }
+    [data-bs-theme="dark"] .timeline-dot-icon {
+      background: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+    }
+    [data-bs-theme="dark"] .timeline-date-pill {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #f8fafc;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+    [data-bs-theme="dark"] .timeline-track-line {
+      background: linear-gradient(90deg, #475569 0%, rgba(71, 85, 105, 0.15) 100%);
+    }
+    [data-bs-theme="dark"] .timeline-badge-subtle {
+      color: #94a3b8;
+      background: #1e293b;
+      border: 1px solid #334155;
+    }
+    [data-bs-theme="dark"] .timeline-time-badge {
+      background: #0f172a;
+      color: #38bdf8;
+      border: 1px solid #334155;
+    }
+    [data-bs-theme="dark"] .high-value-row .timeline-time-badge {
+      background: #2b1f0e;
+      border-color: rgba(245, 158, 11, 0.5);
+      color: #fcd34d;
     }
 
     /* 🏷️ Pricing & Setup Screens Custom Theme Overrides */

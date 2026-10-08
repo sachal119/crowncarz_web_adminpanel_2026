@@ -1,6 +1,32 @@
+@php
+    $lastTimelineDate = null;
+@endphp
 @forelse($bookings as $booking)
     @php
         $rowStyle = '';
+        
+        $rawDateVal = $booking['pickup_time'] ?? ($booking['pickup_date'] ?? ($booking['job_date'] ?? null));
+        $currentTimelineGroup = null;
+        $timelineDateLabel = '';
+        $timelineRelativeBadge = '';
+        
+        if (!empty($rawDateVal)) {
+            try {
+                $dtObj = \Carbon\Carbon::parse($rawDateVal);
+                $currentTimelineGroup = $dtObj->format('Y-m-d');
+                $timelineDateLabel = $dtObj->format('l, d M Y');
+                if ($dtObj->isToday()) {
+                    $timelineRelativeBadge = 'Today';
+                } elseif ($dtObj->isTomorrow()) {
+                    $timelineRelativeBadge = 'Tomorrow';
+                } elseif ($dtObj->isYesterday()) {
+                    $timelineRelativeBadge = 'Yesterday';
+                }
+            } catch (\Exception $e) {
+                $currentTimelineGroup = (string)$rawDateVal;
+                $timelineDateLabel = (string)$rawDateVal;
+            }
+        }
        
         $platform = (int) ($booking['platform'] ?? 1);
         $partner = strtolower((string) ($booking['partner'] ?? ''));
@@ -82,6 +108,31 @@
         $bPrice = is_numeric($booking['price'] ?? null) ? (float)$booking['price'] : 0;
         $isHighPrice = $bPrice > 50;
     @endphp
+    @if($currentTimelineGroup && $currentTimelineGroup !== $lastTimelineDate)
+        @php $lastTimelineDate = $currentTimelineGroup; @endphp
+        <tr class="timeline-date-divider-row" data-timeline-group="{{ $currentTimelineGroup }}">
+            <td colspan="17" class="timeline-date-divider-cell p-0">
+                <div class="timeline-date-bar d-flex align-items-center justify-content-between px-3 py-1.5">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="timeline-dot-icon"></span>
+                        <div class="timeline-date-pill d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-calendar3 text-warning"></i>
+                            <span class="timeline-date-title fw-bold">{{ $timelineDateLabel }}</span>
+                            @if(!empty($timelineRelativeBadge))
+                                <span class="badge rounded-pill {{ $timelineRelativeBadge === 'Today' ? 'bg-success' : ($timelineRelativeBadge === 'Tomorrow' ? 'bg-primary' : 'bg-secondary') }} text-white px-2 py-0.5" style="font-size: 10px; font-weight: 700;">
+                                    {{ $timelineRelativeBadge }}
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="timeline-track-line flex-grow-1 mx-3 d-none d-md-block"></div>
+                    <div class="timeline-meta-info text-muted small d-flex align-items-center gap-2">
+                        <span class="timeline-badge-subtle"><i class="bi bi-clock-history me-1"></i>Timeline Schedule</span>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    @endif
     <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row align-middle {{ $isHighPrice ? 'high-value-row' : '' }}">
         <td class="col-ref fw-bold text-nowrap">
             <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">{{ $booking['ref_no'] ?? 'N/A' }}</span>
@@ -199,7 +250,11 @@
             @endif
         </td>
         <td class="col-date fw-semibold text-nowrap" style="{{ $rowStyle }}">{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '-' }}</td>
-        <td class="col-time font-monospace text-nowrap fw-bold" style="{{ $rowStyle }}">{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '-' }}</td>
+        <td class="col-time font-monospace text-nowrap fw-bold" style="{{ $rowStyle }}">
+            <span class="timeline-time-badge">
+                <i class="bi bi-clock me-1 text-primary"></i>{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '-' }}
+            </span>
+        </td>
         <td class="col-vehicle text-center" style="{{ $rowStyle }}">
             @php
                 $type = $booking['vehicle_make'] ?? '-';

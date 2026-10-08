@@ -468,7 +468,7 @@ td{
 .custom-dashboard-table tbody tr {
     transition: background-color 0.15s ease;
 }
-.custom-dashboard-table tbody tr:hover {
+.custom-dashboard-table tbody tr:not(.high-value-row):hover {
     background-color: #f1f5f9 !important;
 }
 .custom-dashboard-table td {
@@ -1920,7 +1920,7 @@ function buildBookingRowHtml(booking, isNew = false) {
         </td>
         <td class="col-vias text-center">${viasText}</td>
         <td class="col-date fw-semibold text-nowrap">${pickupDate}</td>
-        <td class="col-time font-monospace text-nowrap fw-bold">${pickupTime}</td>
+        <td class="col-time font-monospace text-nowrap fw-bold"><span class="timeline-time-badge"><i class="bi bi-clock me-1 text-primary"></i>${pickupTime}</span></td>
         <td class="col-vehicle text-center">${getVehicleBadgeHtml(booking.vehicle_make)}</td>
         <td class="col-flight text-nowrap" title="${flightNo}">
             ${flightNo !== '-' ? `
