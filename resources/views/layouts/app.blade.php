@@ -13,7 +13,65 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
 
+  <!-- Early Theme Initialization to Prevent Flash -->
+  <script>
+    (function() {
+      try {
+        const savedTheme = localStorage.getItem('crowncarz_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        if (savedTheme === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        } else {
+          document.documentElement.classList.remove('dark-mode');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <style>
+    /* ==========================================================
+       🌟 CROWN CARZ THEME SYSTEM (LIGHT & DARK MODE)
+       ========================================================== */
+    :root {
+      --cc-bg-main: #f8f9fa;
+      --cc-bg-card: #ffffff;
+      --cc-bg-card-subtle: #f8fafc;
+      --cc-border: #e2e8f0;
+      --cc-border-subtle: #eaedf1;
+      --cc-text-primary: #1e293b;
+      --cc-text-secondary: #64748b;
+      --cc-text-muted: #94a3b8;
+      --cc-input-bg: #ffffff;
+      --cc-input-border: #ced4da;
+      --cc-input-color: #1e293b;
+      --cc-gold: #E6B04A;
+      --cc-gold-hover: #d49a37;
+      --cc-table-th-bg: #f8fafc;
+      --cc-table-th-color: #475569;
+      --cc-table-hover: #f1f5f9;
+      --cc-modal-bg: #ffffff;
+    }
+
+    [data-bs-theme="dark"] {
+      --cc-bg-main: #0b0f19;
+      --cc-bg-card: #151d2c;
+      --cc-bg-card-subtle: #1a2333;
+      --cc-border: rgba(255, 255, 255, 0.08);
+      --cc-border-subtle: rgba(255, 255, 255, 0.06);
+      --cc-text-primary: #f8fafc;
+      --cc-text-secondary: #cbd5e1;
+      --cc-text-muted: #94a3b8;
+      --cc-input-bg: #0d131f;
+      --cc-input-border: rgba(255, 255, 255, 0.16);
+      --cc-input-color: #f8fafc;
+      --cc-gold: #E6B04A;
+      --cc-gold-hover: #d49a37;
+      --cc-table-th-bg: #0d131f;
+      --cc-table-th-color: #94a3b8;
+      --cc-table-hover: rgba(255, 255, 255, 0.04);
+      --cc-modal-bg: #151d2c;
+    }
+
     *, *::before, *::after {
       box-sizing: border-box;
     }
@@ -21,9 +79,11 @@
       margin: 0;
       padding: 0;
       min-height: 100vh;
-      background-color: #f8f9fa;
+      background-color: var(--cc-bg-main);
+      color: var(--cc-text-primary);
       font-size: 14px;
       -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
     }
     body {
       display: flex;
@@ -204,6 +264,384 @@
     }
     .flight-track-badge:hover .flight-ext-icon {
       opacity: 1;
+    }
+
+    /* ==========================================================
+       🌓 THEME TOGGLE SWITCH BUTTON STYLING
+       ========================================================== */
+    .theme-switch-wrapper {
+      display: inline-flex;
+      align-items: center;
+    }
+    .theme-toggle-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 30px;
+      padding: 3px 8px 3px 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 11.5px;
+      font-weight: 600;
+      outline: none;
+      user-select: none;
+    }
+    .theme-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: #E6B04A;
+      color: #E6B04A;
+      box-shadow: 0 0 12px rgba(230, 176, 74, 0.25);
+    }
+    .theme-toggle-track {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      background: #1f2937;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.25s ease;
+    }
+    .theme-icon-sun {
+      font-size: 10.5px;
+      color: #f59e0b;
+      z-index: 1;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    .theme-icon-moon {
+      font-size: 10px;
+      color: #93c5fd;
+      z-index: 1;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    .theme-toggle-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #E6B04A 0%, #d48b48 100%);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.25s ease;
+    }
+
+    /* Dark Mode Active States for Switch */
+    [data-bs-theme="dark"] .theme-toggle-track {
+      background: #090d16;
+      border-color: rgba(230, 176, 74, 0.35);
+    }
+    [data-bs-theme="dark"] .theme-toggle-thumb {
+      transform: translateX(18px);
+      background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    }
+    [data-bs-theme="dark"] .theme-toggle-btn {
+      border-color: rgba(96, 165, 250, 0.35);
+    }
+    [data-bs-theme="dark"] .theme-toggle-btn:hover {
+      border-color: #60a5fa;
+      color: #60a5fa;
+      box-shadow: 0 0 12px rgba(96, 165, 250, 0.25);
+    }
+
+    /* ==========================================================
+       🌑 DARK MODE SYSTEM-WIDE OVERRIDES
+       ========================================================== */
+    [data-bs-theme="dark"] {
+      color-scheme: dark;
+    }
+
+    [data-bs-theme="dark"] body {
+      background-color: #0b0f19 !important;
+      color: #e2e8f0 !important;
+    }
+
+    /* Cards & Panels */
+    [data-bs-theme="dark"] .card,
+    [data-bs-theme="dark"] .glass-panel,
+    [data-bs-theme="dark"] .dashboard-section > .card {
+      background-color: #151d2c !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+      color: #f8fafc !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    [data-bs-theme="dark"] .card-header {
+      background-color: rgba(13, 19, 31, 0.8) !important;
+      border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+      color: #f8fafc !important;
+    }
+
+    [data-bs-theme="dark"] .card-footer {
+      background-color: rgba(13, 19, 31, 0.8) !important;
+      border-top-color: rgba(255, 255, 255, 0.08) !important;
+      color: #cbd5e1 !important;
+    }
+
+    /* Generic Light/White BG Overrides */
+    [data-bs-theme="dark"] .bg-white,
+    [data-bs-theme="dark"] [style*="background: #ffffff"],
+    [data-bs-theme="dark"] [style*="background:#ffffff"],
+    [data-bs-theme="dark"] [style*="background: white"],
+    [data-bs-theme="dark"] [style*="background:white"] {
+      background-color: #151d2c !important;
+      color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .bg-light,
+    [data-bs-theme="dark"] [style*="background: #f8f9fa"],
+    [data-bs-theme="dark"] [style*="background:#f8f9fa"],
+    [data-bs-theme="dark"] [style*="background: #f8fafc"],
+    [data-bs-theme="dark"] [style*="background:#f8fafc"],
+    [data-bs-theme="dark"] [style*="background: #fbf7f2"] {
+      background-color: #0d131f !important;
+      color: #cbd5e1 !important;
+    }
+
+    /* Typography & Text */
+    [data-bs-theme="dark"] .text-dark,
+    [data-bs-theme="dark"] h1,
+    [data-bs-theme="dark"] h2,
+    [data-bs-theme="dark"] h3,
+    [data-bs-theme="dark"] h4,
+    [data-bs-theme="dark"] h5,
+    [data-bs-theme="dark"] h6 {
+      color: #f8fafc !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted,
+    [data-bs-theme="dark"] .text-secondary {
+      color: #94a3b8 !important;
+    }
+
+    [data-bs-theme="dark"] label,
+    [data-bs-theme="dark"] .form-label {
+      color: #cbd5e1 !important;
+    }
+
+    /* Form Controls & Inputs */
+    [data-bs-theme="dark"] .form-control,
+    [data-bs-theme="dark"] .form-select,
+    [data-bs-theme="dark"] select,
+    [data-bs-theme="dark"] textarea {
+      background-color: #0d131f !important;
+      color: #f8fafc !important;
+      border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    }
+
+    [data-bs-theme="dark"] .form-control:focus,
+    [data-bs-theme="dark"] .form-select:focus,
+    [data-bs-theme="dark"] select:focus,
+    [data-bs-theme="dark"] textarea:focus {
+      background-color: #0d131f !important;
+      color: #ffffff !important;
+      border-color: #E6B04A !important;
+      box-shadow: 0 0 0 0.25rem rgba(230, 176, 74, 0.22) !important;
+    }
+
+    [data-bs-theme="dark"] .form-control::placeholder {
+      color: #64748b !important;
+    }
+
+    [data-bs-theme="dark"] .input-group-text {
+      background-color: #090d16 !important;
+      color: #cbd5e1 !important;
+      border-color: rgba(255, 255, 255, 0.16) !important;
+    }
+
+    /* Tables */
+    [data-bs-theme="dark"] table,
+    [data-bs-theme="dark"] .table,
+    [data-bs-theme="dark"] .custom-dashboard-table {
+      background-color: #151d2c !important;
+      color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] table thead th,
+    [data-bs-theme="dark"] .custom-dashboard-table thead th {
+      background: #0d131f !important;
+      color: #94a3b8 !important;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+      border-top: none !important;
+    }
+
+    [data-bs-theme="dark"] table tbody td,
+    [data-bs-theme="dark"] .custom-dashboard-table td {
+      background-color: transparent !important;
+      color: #e2e8f0 !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    }
+
+    [data-bs-theme="dark"] table tbody tr:hover,
+    [data-bs-theme="dark"] .custom-dashboard-table tbody tr:hover {
+      background-color: rgba(255, 255, 255, 0.04) !important;
+    }
+
+    [data-bs-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd)>* {
+      background-color: rgba(255, 255, 255, 0.02) !important;
+      color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .table-bordered td,
+    [data-bs-theme="dark"] .table-bordered th {
+      border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* Modals */
+    [data-bs-theme="dark"] .modal-content {
+      background-color: #151d2c !important;
+      color: #f8fafc !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65) !important;
+    }
+
+    [data-bs-theme="dark"] .modal-header,
+    [data-bs-theme="dark"] .modal-footer {
+      background-color: #0d131f !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    [data-bs-theme="dark"] .btn-close {
+      filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* Dropdowns */
+    [data-bs-theme="dark"] .dropdown-menu {
+      background-color: #151d2c !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.55) !important;
+      color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .dropdown-item {
+      color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .dropdown-item:hover,
+    [data-bs-theme="dark"] .dropdown-item:focus {
+      background-color: rgba(230, 176, 74, 0.18) !important;
+      color: #E6B04A !important;
+    }
+
+    [data-bs-theme="dark"] .dropdown-divider {
+      border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    [data-bs-theme="dark"] .dropdown-header {
+      color: #E6B04A !important;
+    }
+
+    /* Tabs & Navs */
+    [data-bs-theme="dark"] .nav-tabs {
+      border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    [data-bs-theme="dark"] .nav-tabs .nav-link {
+      color: #94a3b8 !important;
+      border-color: transparent !important;
+    }
+
+    [data-bs-theme="dark"] .nav-tabs .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      color: #E6B04A !important;
+    }
+
+    [data-bs-theme="dark"] .nav-tabs .nav-link.active {
+      background: linear-gradient(135deg, #b5651d, #cf7925) !important;
+      color: #ffffff !important;
+    }
+
+    /* Pagination */
+    [data-bs-theme="dark"] .page-link {
+      background-color: #151d2c !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #cbd5e1 !important;
+    }
+
+    [data-bs-theme="dark"] .page-item.active .page-link {
+      background-color: #E6B04A !important;
+      border-color: #E6B04A !important;
+      color: #111827 !important;
+      font-weight: 700;
+    }
+
+    /* Flatpickr Date Picker Dark Overrides */
+    [data-bs-theme="dark"] .flatpickr-calendar {
+      background: #151d2c !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    [data-bs-theme="dark"] .flatpickr-calendar .flatpickr-day {
+      color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .flatpickr-calendar .flatpickr-day:hover:not(.selected):not(.startRange):not(.endRange) {
+      background: rgba(230, 176, 74, 0.25) !important;
+      color: #E6B04A !important;
+    }
+
+    /* Flight Track Badge */
+    [data-bs-theme="dark"] .flight-track-badge {
+      background-color: #082f49 !important;
+      color: #7dd3fc !important;
+      border-color: #0369a1 !important;
+    }
+
+    [data-bs-theme="dark"] .flight-track-badge .flight-icon,
+    [data-bs-theme="dark"] .flight-track-badge .flight-ext-icon {
+      color: #38bdf8 !important;
+    }
+
+    [data-bs-theme="dark"] .flight-track-badge:hover {
+      background-color: #0c4a6e !important;
+      color: #bae6fd !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 3px 8px rgba(56, 189, 248, 0.3) !important;
+    }
+
+    /* Borders & Dividers */
+    [data-bs-theme="dark"] .border,
+    [data-bs-theme="dark"] .border-top,
+    [data-bs-theme="dark"] .border-bottom,
+    [data-bs-theme="dark"] .border-start,
+    [data-bs-theme="dark"] .border-end,
+    [data-bs-theme="dark"] .border-end-lg {
+      border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* List Groups & Accordions */
+    [data-bs-theme="dark"] .list-group-item {
+      background-color: #151d2c !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+      color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .accordion-item {
+      background-color: #151d2c !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    [data-bs-theme="dark"] .accordion-button {
+      background-color: #151d2c !important;
+      color: #f8fafc !important;
+    }
+
+    [data-bs-theme="dark"] .accordion-button:not(.collapsed) {
+      background-color: #0d131f !important;
+      color: #E6B04A !important;
+    }
+
+    [data-bs-theme="dark"] .accordion-body {
+      background-color: #151d2c !important;
+      color: #cbd5e1 !important;
     }
   </style>
 </head>
@@ -411,12 +849,27 @@
       </div>
       
 
-@if (session('admin_logged_in'))
-      <form class="d-flex ms-auto my-auto" method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to log out of Crown Carz Admin Panel?');">
-        @csrf
-        <button type="submit" class="btn btn-sm btn-danger py-1 px-2.5 d-flex align-items-center" style="font-size: 12px; border-radius: 6px;"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
-      </form>
-@endif
+      <!-- Right Side Actions (Logout + Theme Switcher) -->
+      <div class="d-flex align-items-center ms-auto my-auto gap-2">
+        @if (session('admin_logged_in'))
+          <form class="d-flex my-auto" method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to log out of Crown Carz Admin Panel?');">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-danger py-1 px-2.5 d-flex align-items-center" style="font-size: 12px; border-radius: 6px;"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
+          </form>
+        @endif
+
+        <!-- 🌓 Light/Dark Theme Switcher in Top Bar -->
+        <div class="theme-switch-wrapper my-auto">
+          <button id="themeToggleBtn" type="button" class="theme-toggle-btn" onclick="toggleCrowncarzTheme()" title="Switch Light / Dark Theme" aria-label="Toggle Light / Dark Theme">
+            <span class="theme-toggle-track">
+              <i class="bi bi-sun-fill theme-icon-sun"></i>
+              <i class="bi bi-moon-stars-fill theme-icon-moon"></i>
+              <span class="theme-toggle-thumb"></span>
+            </span>
+            <span class="theme-toggle-label d-none d-sm-inline" id="themeToggleLabel">Theme</span>
+          </button>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -430,6 +883,59 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- 🌓 Theme Switcher Logic -->
+  <script>
+  (function() {
+      window.applyCrowncarzTheme = function(theme) {
+          document.documentElement.setAttribute('data-bs-theme', theme);
+          if (theme === 'dark') {
+              document.documentElement.classList.add('dark-mode');
+              if (document.body) document.body.classList.add('dark-mode');
+          } else {
+              document.documentElement.classList.remove('dark-mode');
+              if (document.body) document.body.classList.remove('dark-mode');
+          }
+          try {
+              localStorage.setItem('crowncarz_theme', theme);
+          } catch (e) {}
+
+          const labelEl = document.getElementById('themeToggleLabel');
+          if (labelEl) {
+              labelEl.textContent = theme === 'dark' ? 'Dark' : 'Light';
+          }
+
+          const btnEl = document.getElementById('themeToggleBtn');
+          if (btnEl) {
+              btnEl.setAttribute('title', theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode');
+              btnEl.setAttribute('aria-label', theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode');
+          }
+
+          window.dispatchEvent(new CustomEvent('crowncarz-theme-changed', { detail: { theme: theme } }));
+      };
+
+      window.toggleCrowncarzTheme = function() {
+          const currentTheme = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
+          const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          window.applyCrowncarzTheme(nextTheme);
+      };
+
+      // Sync label on DOM ready
+      function syncThemeUI() {
+          const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
+          const labelEl = document.getElementById('themeToggleLabel');
+          if (labelEl) {
+              labelEl.textContent = currentTheme === 'dark' ? 'Dark' : 'Light';
+          }
+      }
+
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', syncThemeUI);
+      } else {
+          syncThemeUI();
+      }
+  })();
+  </script>
   <script>
   document.addEventListener("DOMContentLoaded", function() {
       try {
