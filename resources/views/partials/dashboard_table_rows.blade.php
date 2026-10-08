@@ -74,6 +74,11 @@
             });
         }
         if (!$driver && $bDriverCallSign !== '' && isset($drivers)) {
+            $driver = collect($drivers)->first(function($d) use ($bDriverCallSign) {
+                return strcasecmp(trim($d['call_sign'] ?? ''), $bDriverCallSign) === 0;
+            });
+        }
+
         $bPrice = is_numeric($booking['price'] ?? null) ? (float)$booking['price'] : 0;
         $isHighPrice = $bPrice > 50;
     @endphp
