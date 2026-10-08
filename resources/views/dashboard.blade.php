@@ -814,6 +814,19 @@ td{
                     </h6>
                     <span class="badge bg-dark text-white rounded-pill px-2.5 py-1" id="bookingsTotalCount" style="font-size: 11px;">{{ $bookings->total() }}</span>
                 </div>
+
+                <!-- 🔀 Modern View Switcher (Table vs Calendar) -->
+                <div class="d-flex align-items-center gap-2">
+                    <div class="btn-group btn-group-sm p-0.5 rounded-3 border bg-light" role="group" id="bookingViewSwitcher">
+                        <button type="button" class="btn btn-sm px-2.5 py-1 fw-bold active rounded-2" id="switchTableViewBtn" onclick="switchBookingDashboardView('table')">
+                            <i class="bi bi-list-ul me-1"></i> Table View
+                        </button>
+                        <button type="button" class="btn btn-sm px-2.5 py-1 fw-bold rounded-2 text-muted" id="switchCalendarViewBtn" onclick="switchBookingDashboardView('calendar')">
+                            <i class="bi bi-calendar3 me-1"></i> Calendar View
+                        </button>
+                    </div>
+                </div>
+
                 <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
                     <div class="d-flex align-items-center" id="bookingsPaginationContainer">
                         {{ $bookings->links('pagination::bootstrap-5') }}
@@ -823,7 +836,9 @@ td{
                     </span>
                 </div>
             </div>
-            <div class="table-responsive">
+
+            <!-- 📊 Table View Container -->
+            <div id="bookingTableViewWrapper" class="table-responsive">
                 <table class="table table-hover align-middle mb-0 custom-dashboard-table" id="futureBookingsTable">
                    <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
     <tr class="text-uppercase text-muted" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 700;">
@@ -850,6 +865,23 @@ td{
 @include('partials.dashboard_table_rows', ['bookings' => $bookings, 'drivers' => $drivers, 'accounts' => $accounts])
 </tbody>
                 </table>
+            </div>
+
+            <!-- 📅 Interactive Calendly-Style Calendar View Container -->
+            <div id="bookingCalendarViewWrapper" class="p-3" style="display: none;">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                    <div class="d-flex align-items-center gap-2 flex-wrap small">
+                        <span class="fw-bold text-dark"><i class="bi bi-info-circle text-primary me-1"></i>Status Legend:</span>
+                        <span class="badge bg-warning text-dark px-2 py-1">Pending</span>
+                        <span class="badge bg-info text-dark px-2 py-1">Accepted</span>
+                        <span class="badge bg-primary text-white px-2 py-1">On Route</span>
+                        <span class="badge bg-success text-white px-2 py-1">Picked Up</span>
+                    </div>
+                    <div class="text-muted small">
+                        <i class="bi bi-hand-index-thumb text-warning me-1"></i>Click any booking event on the calendar to view full details
+                    </div>
+                </div>
+                <div id="dashboardBookingsCalendar"></div>
             </div>
         </div>
 <!-- Confirmation Modal -->
@@ -1540,6 +1572,9 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+window.INITIAL_BOOKINGS_DATA = @json($bookings->items());
+let dashboardCalendarInstance = null;
+
 const PAYMENT_COLORS = {
     'cash': '#28a745',
     'card': '#0d6efd',
@@ -1553,6 +1588,172 @@ const VEHICLE_BADGES = {
     '8 Seater': 'danger',
     'Executive': 'dark',
 };
+
+// 🗓️ Calendar Event Colors based on Status
+function getCalendarEventColor(status) {
+    const s = String(status || 'pending').toLowerCase();
+    switch (s) {
+        case 'pending':
+            return { bg: '#f59e0b', border: '#d97706', text: '#000000' };
+        case 'accepted':
+            return { bg: '#0284c7', border: '#0369a1', text: '#ffffff' };
+        case 'onroute':
+            return { bg: '#6366f1', border: '#4f46e5', text: '#ffffff' };
+        case 'arrived':
+        case 'pickedup':
+            return { bg: '#10b981', border: '#059669', text: '#ffffff' };
+        case 'completed':
+            return { bg: '#475569', border: '#334155', text: '#ffffff' };
+        case 'declined':
+        case 'job_cancelled':
+            return { bg: '#ef4444', border: '#dc2626', text: '#ffffff' };
+        default:
+            return { bg: '#0284c7', border: '#0369a1', text: '#ffffff' };
+    }
+}
+
+// 🗓️ Map single booking to FullCalendar Event Format
+function mapBookingToCalendarEvent(b) {
+    if (!b) return null;
+    const id = b.id || b.key || '';
+    const passenger = b.passenger_name || b.caller || b.name || 'Passenger';
+    const ref = b.ref_no || id;
+    const price = (b.price && !isNaN(Number(b.price))) ? `£${Number(b.price).toFixed(2)}` : (b.price ? `£${b.price}` : '');
+    const vehicle = b.vehicle_make || '';
+    
+    let startIso = b.pickup_time || b.pickup_date || b.job_date;
+    if (!startIso) return null;
+    
+    // If only date provided, default to full day or append time
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(startIso).trim())) {
+        const timePart = b.job_time || '00:00:00';
+        startIso = `${startIso.trim()}T${timePart}`;
+    }
+
+    const colors = getCalendarEventColor(b.status || 'pending');
+    
+    return {
+        id: String(id),
+        title: `${ref ? '[' + ref + '] ' : ''}${passenger} ${price ? '(' + price + ')' : ''} ${vehicle ? '• ' + vehicle : ''}`,
+        start: startIso,
+        backgroundColor: colors.bg,
+        borderColor: colors.border,
+        textColor: colors.text,
+        extendedProps: {
+            booking: b,
+            id: id,
+            ref_no: ref,
+            passenger_name: passenger,
+            pickup_address: b.pickup_address || '',
+            dropoff_address: b.dropoff_address || '',
+            driver_name: b.driver_name || '',
+            price: price,
+            status: b.status || 'pending'
+        }
+    };
+}
+
+// 🗓️ Initialize FullCalendar
+function initDashboardCalendar() {
+    const calEl = document.getElementById('dashboardBookingsCalendar');
+    if (!calEl || typeof FullCalendar === 'undefined') return;
+
+    if (dashboardCalendarInstance) {
+        dashboardCalendarInstance.destroy();
+    }
+
+    const eventsList = (window.INITIAL_BOOKINGS_DATA || []).map(mapBookingToCalendarEvent).filter(Boolean);
+
+    dashboardCalendarInstance = new FullCalendar.Calendar(calEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        height: 'auto',
+        navLinks: true,
+        nowIndicator: true,
+        dayMaxEvents: 3,
+        events: eventsList,
+        eventTimeFormat: {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        },
+        eventClick: function(info) {
+            const bId = info.event.extendedProps.id;
+            if (bId) {
+                const triggerBtn = document.querySelector(`.view-booking-btn[data-booking-id="${bId}"]`);
+                if (triggerBtn) {
+                    triggerBtn.click();
+                } else if (typeof loadBookingDetailsAndLogs === 'function') {
+                    loadBookingDetailsAndLogs(bId);
+                    const modalEl = document.getElementById('viewBookingModal');
+                    if (modalEl) {
+                        const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        bsModal.show();
+                    }
+                }
+            }
+        }
+    });
+
+    dashboardCalendarInstance.render();
+}
+
+// 🔀 Switch between Table View and Calendar View
+function switchBookingDashboardView(mode) {
+    const tableWrapper = document.getElementById('bookingTableViewWrapper');
+    const calWrapper = document.getElementById('bookingCalendarViewWrapper');
+    const tableBtn = document.getElementById('switchTableViewBtn');
+    const calBtn = document.getElementById('switchCalendarViewBtn');
+    const paginContainer = document.getElementById('bookingsPaginationContainer');
+
+    if (mode === 'calendar') {
+        if (tableWrapper) tableWrapper.style.display = 'none';
+        if (calWrapper) calWrapper.style.display = 'block';
+        if (paginContainer) paginContainer.style.display = 'none';
+        
+        if (tableBtn) {
+            tableBtn.classList.remove('active');
+            tableBtn.classList.add('text-muted');
+        }
+        if (calBtn) {
+            calBtn.classList.add('active');
+            calBtn.classList.remove('text-muted');
+        }
+
+        setTimeout(() => {
+            initDashboardCalendar();
+            if (dashboardCalendarInstance) {
+                dashboardCalendarInstance.updateSize();
+            }
+        }, 50);
+        localStorage.setItem('crowncarz_bookings_view', 'calendar');
+    } else {
+        if (tableWrapper) tableWrapper.style.display = 'block';
+        if (calWrapper) calWrapper.style.display = 'none';
+        if (paginContainer) paginContainer.style.display = 'flex';
+
+        if (calBtn) {
+            calBtn.classList.remove('active');
+            calBtn.classList.add('text-muted');
+        }
+        if (tableBtn) {
+            tableBtn.classList.add('active');
+            tableBtn.classList.remove('text-muted');
+        }
+        localStorage.setItem('crowncarz_bookings_view', 'table');
+    }
+}
+
+// Re-render calendar when theme changes
+window.addEventListener('crowncarz-theme-changed', function() {
+    if (dashboardCalendarInstance) {
+        dashboardCalendarInstance.render();
+    }
+});
 
 // 🔊 Pleasant Web Audio API notification chime (no external audio files required)
 function playNewBookingChime() {
@@ -2931,6 +3132,12 @@ function initFirebase() {
 document.addEventListener('DOMContentLoaded', function () {
     // 🚀 Initialize Realtime Firebase Sync for bookings & drivers
     initFirebase();
+
+    // 🔀 Restore saved view mode (Table vs Calendar)
+    const savedViewMode = localStorage.getItem('crowncarz_bookings_view');
+    if (savedViewMode === 'calendar') {
+        switchBookingDashboardView('calendar');
+    }
     // Filter collapse toggle
     const collapseEl = document.getElementById('filtersCollapse');
     const chevron = document.querySelector('.filter-chevron');

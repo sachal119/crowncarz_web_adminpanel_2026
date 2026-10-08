@@ -112,22 +112,22 @@
         @php $lastTimelineDate = $currentTimelineGroup; @endphp
         <tr class="timeline-date-divider-row" data-timeline-group="{{ $currentTimelineGroup }}">
             <td colspan="17" class="timeline-date-divider-cell p-0">
-                <div class="timeline-date-bar d-flex align-items-center justify-content-between px-3 py-1.5">
+                <div class="timeline-date-header-clean d-flex align-items-center justify-content-between px-3 py-2">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="timeline-dot-icon"></span>
-                        <div class="timeline-date-pill d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-calendar3 text-warning"></i>
-                            <span class="timeline-date-title fw-bold">{{ $timelineDateLabel }}</span>
-                            @if(!empty($timelineRelativeBadge))
-                                <span class="badge rounded-pill {{ $timelineRelativeBadge === 'Today' ? 'bg-success' : ($timelineRelativeBadge === 'Tomorrow' ? 'bg-primary' : 'bg-secondary') }} text-white px-2 py-0.5" style="font-size: 10px; font-weight: 700;">
-                                    {{ $timelineRelativeBadge }}
-                                </span>
-                            @endif
-                        </div>
+                        <span class="timeline-calendar-icon-box">
+                            <i class="bi bi-calendar2-week-fill"></i>
+                        </span>
+                        <span class="timeline-date-heading">{{ $timelineDateLabel }}</span>
+                        @if(!empty($timelineRelativeBadge))
+                            <span class="badge rounded-pill {{ $timelineRelativeBadge === 'Today' ? 'bg-success' : ($timelineRelativeBadge === 'Tomorrow' ? 'bg-primary' : 'bg-secondary') }} text-white px-2.5 py-1" style="font-size: 10px; font-weight: 700;">
+                                {{ $timelineRelativeBadge }}
+                            </span>
+                        @endif
                     </div>
-                    <div class="timeline-track-line flex-grow-1 mx-3 d-none d-md-block"></div>
-                    <div class="timeline-meta-info text-muted small d-flex align-items-center gap-2">
-                        <span class="timeline-badge-subtle"><i class="bi bi-clock-history me-1"></i>Timeline Schedule</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="timeline-count-badge">
+                            <i class="bi bi-clock-history me-1"></i>Timeline Schedule
+                        </span>
                     </div>
                 </div>
             </td>
