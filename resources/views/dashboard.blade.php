@@ -622,7 +622,7 @@ td{
                     </div>
 
                     <div class="d-flex gap-1 mb-2" id="filterButtonsGroup">
-                        <button type="submit" id="filterSubmitBtn" class="btn text-white fw-bold w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="background: linear-gradient(135deg, #B87333, #d48b48); border-radius: 10px; border: none; font-size: 12px; height: 34px;">
+                        <button type="submit" id="filterSubmitBtn" class="btn text-white fw-bold w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="background: linear-gradient(135deg, #0284c7, #0369a1); border-radius: 10px; border: none; font-size: 12px; height: 34px;">
                             <i class="bi bi-search"></i>
                             <span>Filter</span>
                         </button>
@@ -1806,16 +1806,7 @@ function getViasBadgeHtml(booking) {
 // 🛠️ Render a complete table row for a booking
 function buildBookingRowHtml(booking, isNew = false) {
     const id = booking.id;
-    const isHidden = !!booking.hidden;
-    const price = parseFloat(booking.price) || 0;
-    const isHighPrice = price > 50;
-
     let rowStyle = '';
-    if (isHidden) {
-        rowStyle = 'background-color: yellow; color: #000;';
-    } else if (isHighPrice) {
-        rowStyle = 'background-color: burlywood; color: #000;';
-    }
 
     const currentStatus = booking.status || 'pending';
     const statusSelectStyle = getStatusSelectStyle(currentStatus);

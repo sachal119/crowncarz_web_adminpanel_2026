@@ -160,14 +160,11 @@ body > .modal {
 
 @section('content')
 <div class="container mt-4">
-  <div class="card shadow-sm border-0" style="background-color: #FFFBE6; border-left: 5px solid #AEB7BF;">
+  <div class="card shadow-sm border-0">
     <div class="card-body">
       {{-- Header --}}
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="fw-bold" style="color: #6B3E26;">Fixed Pricing (Postcode to Postcode)</h4>
-        {{-- <p class="text-muted">
-    Showing {{ count($fixedPrices) }} of {{ $totalCount }} total records
-</p> --}}
+        <h4 class="fw-bold mb-0">Fixed Pricing (Postcode to Postcode)</h4>
       </div>
 
 <div class="d-flex justify-content-between">
@@ -178,19 +175,17 @@ body > .modal {
       <input id="pricingFile" type="file" name="file" class="form-control form-control-sm" accept=".xlsx,.xls,.csv" required>
     </div>
     <div class="col-auto">
-      <button id="uploadBtn" type="submit" class="btn btn-sm" style="background-color: #AEB7BF; color: white;">
+      <button id="uploadBtn" type="submit" class="btn btn-sm btn-secondary">
         Upload
       </button>
 <!-- Button -->
-<button type="button" class="btn btn-sm"
-        style="background-color: #6B3E26; color: white;" 
+<button type="button" class="btn btn-sm btn-primary" 
         data-bs-toggle="modal" 
         data-bs-target="#percentageModal">
   Set & Save Percentages
 </button>
 <!-- Add New Surcharge Button -->
-<button type="button" class="btn btn-sm"
-        style="background-color: #6B3E26; color: white;"
+<button type="button" class="btn btn-sm btn-warning"
         onclick="window.location.href='{{ route('pricing.surcharge') }}'">
   ➕ Surcharge Screen
 </button>
@@ -563,7 +558,7 @@ body > .modal {
 </div> --}}
 <div class="table-responsive">
     <table class="table table-hover table-borderless align-middle" id="fixedPricesTable">
-       <thead style="background-color: #D7E0E6; color: #6B3E26;">
+       <thead class="table-header-custom">
             <tr>
               <th>From</th>
               <th>To</th>
@@ -575,7 +570,7 @@ body > .modal {
               <th>Action</th>
             </tr>
           </thead>
-          <tbody style="background-color: #EAFDFD;">
+          <tbody class="table-body-custom">
             @forelse($fixedPrices as $key => $fp)
               <tr style="border-bottom: 1px solid #D9E1E7;">
                 <td>{{ $fp['from_postcode'] }}</td>

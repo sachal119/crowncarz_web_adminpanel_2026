@@ -1,15 +1,6 @@
 @forelse($bookings as $booking)
     @php
-        $isHighPrice   = ($booking['price'] ?? 0) > 50;
-        $isHidden      = ($booking['hidden'] ?? false) == true;
-
-        if ($isHidden) {
-            $rowStyle = 'background-color: yellow; color: #000;';
-        } elseif ($isHighPrice) {
-            $rowStyle = 'background-color: burlywood; color: #000;';
-        } else {
-            $rowStyle = '';
-        }
+        $rowStyle = '';
        
         $platform = (int) ($booking['platform'] ?? 1);
         $partner = strtolower((string) ($booking['partner'] ?? ''));

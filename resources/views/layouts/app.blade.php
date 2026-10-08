@@ -460,28 +460,98 @@
     [data-bs-theme="dark"] table,
     [data-bs-theme="dark"] .table,
     [data-bs-theme="dark"] .custom-dashboard-table {
-      background-color: #151d2c !important;
-      color: #e2e8f0 !important;
+      background-color: #111827 !important;
+      color: #f1f5f9 !important;
     }
 
     [data-bs-theme="dark"] table thead th,
     [data-bs-theme="dark"] .custom-dashboard-table thead th {
-      background: #0d131f !important;
+      background: #090d16 !important;
       color: #94a3b8 !important;
       border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
       border-top: none !important;
+      font-weight: 700 !important;
+    }
+
+    [data-bs-theme="dark"] table tbody tr,
+    [data-bs-theme="dark"] .custom-dashboard-table tbody tr {
+      background-color: #111827 !important;
+      color: #f1f5f9 !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
     }
 
     [data-bs-theme="dark"] table tbody td,
     [data-bs-theme="dark"] .custom-dashboard-table td {
       background-color: transparent !important;
       color: #e2e8f0 !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
     }
 
     [data-bs-theme="dark"] table tbody tr:hover,
     [data-bs-theme="dark"] .custom-dashboard-table tbody tr:hover {
-      background-color: rgba(255, 255, 255, 0.04) !important;
+      background-color: #1a2333 !important;
+    }
+
+    /* Specific table cell texts in dark mode for maximum readability */
+    [data-bs-theme="dark"] .col-ref span,
+    [data-bs-theme="dark"] .col-ref {
+      color: #f8fafc !important;
+      font-weight: 700 !important;
+    }
+
+    [data-bs-theme="dark"] .col-passenger span,
+    [data-bs-theme="dark"] .col-passenger {
+      color: #ffffff !important;
+      font-weight: 600 !important;
+    }
+
+    [data-bs-theme="dark"] .col-phone a,
+    [data-bs-theme="dark"] .col-phone {
+      color: #e2e8f0 !important;
+    }
+    [data-bs-theme="dark"] .col-phone a:hover {
+      color: #38bdf8 !important;
+    }
+
+    [data-bs-theme="dark"] .col-pickup span,
+    [data-bs-theme="dark"] .col-dropoff span {
+      color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .col-date {
+      color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .col-time {
+      color: #38bdf8 !important;
+      font-weight: 700 !important;
+    }
+
+    [data-bs-theme="dark"] .col-price {
+      color: #34d399 !important; /* Crisp high-contrast emerald green for revenue/price */
+      font-weight: 700 !important;
+    }
+
+    [data-bs-theme="dark"] .col-comment span,
+    [data-bs-theme="dark"] .truncate-cell {
+      color: #94a3b8 !important;
+    }
+
+    [data-bs-theme="dark"] .unassigned-driver {
+      background-color: #1e293b !important;
+      color: #94a3b8 !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-light {
+      background-color: #1e293b !important;
+      color: #e2e8f0 !important;
+      border-color: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    [data-bs-theme="dark"] .statusSelect {
+      border-radius: 6px !important;
+      font-weight: 600 !important;
     }
 
     [data-bs-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd)>* {
@@ -492,6 +562,70 @@
     [data-bs-theme="dark"] .table-bordered td,
     [data-bs-theme="dark"] .table-bordered th {
       border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* 🏷️ Pricing & Setup Screens Custom Theme Overrides */
+    .table-header-custom {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      font-weight: 700;
+    }
+    .table-header-custom th {
+      font-weight: 700;
+      color: inherit;
+    }
+    [data-bs-theme="dark"] .table-header-custom {
+      background-color: #090d16 !important;
+      color: #94a3b8 !important;
+    }
+    [data-bs-theme="dark"] .table-header-custom th {
+      background-color: #090d16 !important;
+      color: #94a3b8 !important;
+    }
+    [data-bs-theme="dark"] .table-body-custom tr,
+    [data-bs-theme="dark"] .table-body-custom td {
+      background-color: transparent !important;
+      color: #f1f5f9 !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+    }
+    [data-bs-theme="dark"] .table-body-custom tr:hover {
+      background-color: #1a2333 !important;
+    }
+
+    /* Catch-all dark overrides for inline legacy styles */
+    [data-bs-theme="dark"] [style*="background-color: #EAFDFD"],
+    [data-bs-theme="dark"] [style*="background-color:#EAFDFD"],
+    [data-bs-theme="dark"] [style*="background-color: #FFF9E5"],
+    [data-bs-theme="dark"] [style*="background-color:#FFF9E5"],
+    [data-bs-theme="dark"] [style*="background-color: #FFFBE6"],
+    [data-bs-theme="dark"] [style*="background-color:#FFFBE6"],
+    [data-bs-theme="dark"] [style*="background-color: #FAF0C3"],
+    [data-bs-theme="dark"] [style*="background-color:#FAF0C3"] {
+      background-color: #151d2c !important;
+      color: #f1f5f9 !important;
+    }
+    [data-bs-theme="dark"] [style*="background-color: #D7E0E6"],
+    [data-bs-theme="dark"] [style*="background-color:#D7E0E6"],
+    [data-bs-theme="dark"] [style*="background-color: #FAD788"],
+    [data-bs-theme="dark"] [style*="background-color:#FAD788"],
+    [data-bs-theme="dark"] [style*="background-color: #F3D166"],
+    [data-bs-theme="dark"] [style*="background-color:#F3D166"] {
+      background-color: #090d16 !important;
+      color: #94a3b8 !important;
+    }
+    [data-bs-theme="dark"] [style*="color: #6B3E26"],
+    [data-bs-theme="dark"] [style*="color:#6B3E26"],
+    [data-bs-theme="dark"] [style*="color: #4B3621"],
+    [data-bs-theme="dark"] [style*="color:#4B3621"] {
+      color: #f8fafc !important;
+    }
+    [data-bs-theme="dark"] [style*="background-color: #6B3E26"],
+    [data-bs-theme="dark"] [style*="background-color:#6B3E26"],
+    [data-bs-theme="dark"] [style*="background-color: #B87333"],
+    [data-bs-theme="dark"] [style*="background-color:#B87333"] {
+      background-color: #0284c7 !important;
+      color: #ffffff !important;
+      border-color: #0284c7 !important;
     }
 
     /* Modals */

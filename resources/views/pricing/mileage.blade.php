@@ -118,11 +118,11 @@
   <div class="row justify-content-center">
     <div class="col-lg-12">
       <div class="card shadow rounded-4 border-0">
-        <div class="card-header text-white" style="background-color: #F3D166;">
-          <h5 class="mb-0" style="color: #4B3621;">Mileage Pricing (Postcode to Postcode)</h5>
+        <div class="card-header bg-dark text-white">
+          <h5 class="mb-0">Mileage Pricing (Postcode to Postcode)</h5>
         </div>
 
-        <div class="card-body" style="background-color: #FAF0C3;">
+        <div class="card-body">
           {{-- Save Pricing Form --}}
           <form action="{{ route('pricing.mileage.save') }}" method="POST" id="mileageForm">
             @csrf
@@ -131,17 +131,6 @@
         <label class="form-label">Minimum Price (£)</label>
         <input type="number" min="10" name="minimum_price" class="form-control no-spinner" required>
       </div>
-      <!--<div class="col-md-6">-->
-      <!--  <label class="form-label">Select Car Type</label>-->
-      <!--  <select name="car_type" class="form-control" required>-->
-      <!--    <option value="" disabled selected>-- Select Car Type --</option>-->
-      <!--    <option value="Saloon">Saloon</option>-->
-      <!--    <option value="Estate">Estate</option>-->
-      <!--    <option value="6 Seater">6 Seater</option>-->
-      <!--    <option value="7 to 8 Seater">7 to 8 Seater</option>-->
-      <!--    <option value="10 to 12 Seater">10 to 12 Seater</option>-->
-      <!--  </select>-->
-      <!--</div>-->
       <div class="col-md-6">
     <label class="form-label">Select Car Type</label>
     <select name="car_type" class="form-control" required>
@@ -189,26 +178,25 @@
             </div>
 
             <div class="mb-4">
-              <button type="submit" class="btn w-100" style="background-color: #B87333; color: white;">Save All Pricing</button>
+              <button type="submit" class="btn btn-primary w-100 fw-bold">Save All Pricing</button>
             </div>
             
           </form>
           
           <div class="table-responsive">
     <table class="table table-bordered align-middle">
-        <thead style="background-color: #FAD788; color: #6B3E26;">
+        <thead class="table-header-custom">
             <tr>
                 <th>Car Type</th>
                 <th>Mileage Bracket</th>
                 <th>Cost Per Mile (£)</th>
                 <th>Minimum Price (£)</th>
                  <th>Action</th>
-                <!--<th>Record Key (ID)</th> <th>Created At</th>-->
             </tr>
         </thead>
-        <tbody>
+        <tbody class="table-body-custom">
             @forelse($mileagePrices as $id => $m)
-                <tr style="background-color: #FFF9E5;">
+                <tr>
                     <td>{{ $m['car_type'] ?? '-' }}</td>
                    <td>{{ ($m['from_mileage'] ?? '-') . ' – ' . ($m['to_mileage'] ?? '-') }}</td>
                     <td>£{{ number_format($m['cost_per_mileage'] ?? 0, 2) }}</td>

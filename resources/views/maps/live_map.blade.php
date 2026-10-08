@@ -602,6 +602,155 @@
         width: 100%;
     }
 }
+
+/* ==========================================================
+   🌑 DARK MODE OVERRIDES FOR LIVE DRIVER MAP
+   ========================================================== */
+[data-bs-theme="dark"] #liveGoogleMap {
+    background-color: #111827 !important;
+}
+
+[data-bs-theme="dark"] .glass-panel {
+    background: rgba(17, 24, 39, 0.94) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5) !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .radar-badge {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .radar-badge .badge {
+    background: #090d16 !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-bs-theme="dark"] .filter-pill {
+    color: #cbd5e1 !important;
+}
+
+[data-bs-theme="dark"] .filter-pill:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .filter-pill.active {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 12px rgba(2, 132, 199, 0.45) !important;
+}
+
+[data-bs-theme="dark"] .map-search-box input {
+    background: #0d131f !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
+
+[data-bs-theme="dark"] .map-search-box input::placeholder {
+    color: #64748b !important;
+}
+
+[data-bs-theme="dark"] .map-search-box i {
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .glass-panel .btn-light {
+    background: #0d131f !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-bs-theme="dark"] .glass-panel .btn-light:hover {
+    background: #1e293b !important;
+    color: #38bdf8 !important;
+}
+
+[data-bs-theme="dark"] .driver-sidebar-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-bs-theme="dark"] .driver-sidebar-header .text-dark {
+    color: #f8fafc !important;
+}
+
+/* 🚗 Driver Card in Sidebar */
+[data-bs-theme="dark"] .driver-card-item {
+    background: #151d2c !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #e2e8f0 !important;
+}
+
+[data-bs-theme="dark"] .driver-card-item:hover {
+    background: #1a2333 !important;
+    border-color: #0284c7 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+}
+
+[data-bs-theme="dark"] .driver-card-item.selected {
+    background: #1e293b !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35) !important;
+}
+
+[data-bs-theme="dark"] .driver-card-item .text-dark {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .driver-card-item .border-top {
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-bs-theme="dark"] .driver-badge-sign {
+    background: #090d16 !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
+
+[data-bs-theme="dark"] .uk-reg-badge {
+    background: #facc15 !important;
+    color: #111827 !important;
+    font-weight: 800 !important;
+    border: 1px solid #eab308 !important;
+}
+
+/* 📋 Driver Details Drawer */
+[data-bs-theme="dark"] .drawer-header {
+    background: linear-gradient(135deg, #090d16, #111827) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-bs-theme="dark"] .detail-card {
+    background: #0d131f !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-bs-theme="dark"] .detail-row:not(:last-child) {
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-bs-theme="dark"] .detail-row .label {
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .detail-row .value {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .detail-section-title {
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .driver-drawer .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+[data-bs-theme="dark"] .driver-sidebar .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
 </style>
 
 <div class="live-map-wrapper">
@@ -904,6 +1053,34 @@ function initLiveMapPage() {
 
     const ukCenter = { lat: 51.4543, lng: -0.9781 }; // Reading / London Hub
 
+    const GOOGLE_MAP_DARK_STYLES = [
+        { elementType: "geometry", stylers: [{ color: "#1f293d" }] },
+        { elementType: "labels.text.stroke", stylers: [{ color: "#1f293d" }] },
+        { elementType: "labels.text.fill", stylers: [{ color: "#8ca0ba" }] },
+        { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#cbd5e1" }] },
+        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+        { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#162e2e" }] },
+        { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#528574" }] },
+        { featureType: "road", elementType: "geometry", stylers: [{ color: "#2d3748" }] },
+        { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#1a202c" }] },
+        { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+        { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#3b4758" }] },
+        { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1a202c" }] },
+        { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#e2e8f0" }] },
+        { featureType: "transit", elementType: "geometry", stylers: [{ color: "#232f3e" }] },
+        { featureType: "transit", elementType: "labels", stylers: [{ visibility: "off" }] },
+        { featureType: "water", elementType: "geometry", stylers: [{ color: "#0d1b2a" }] },
+        { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#415a77" }] },
+        { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#0d1b2a" }] }
+    ];
+
+    const GOOGLE_MAP_LIGHT_STYLES = [
+        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+        { featureType: "transit", elementType: "labels", stylers: [{ visibility: "off" }] }
+    ];
+
+    const isDarkMode = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
     map = new google.maps.Map(mapEl, {
         center: ukCenter,
         zoom: 12,
@@ -917,10 +1094,16 @@ function initLiveMapPage() {
         zoomControlOptions: {
             position: google.maps.ControlPosition.RIGHT_BOTTOM
         },
-        styles: [
-            { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
-            { featureType: "transit", elementType: "labels", stylers: [{ visibility: "off" }] }
-        ]
+        styles: isDarkMode ? GOOGLE_MAP_DARK_STYLES : GOOGLE_MAP_LIGHT_STYLES
+    });
+
+    // Dynamically update map theme when theme switcher is toggled
+    window.addEventListener('crowncarz-theme-changed', function(e) {
+        if (!map) return;
+        const currentTheme = e.detail ? e.detail.theme : (document.documentElement.getAttribute('data-bs-theme') || 'light');
+        map.setOptions({
+            styles: currentTheme === 'dark' ? GOOGLE_MAP_DARK_STYLES : GOOGLE_MAP_LIGHT_STYLES
+        });
     });
 
     trafficLayer = new google.maps.TrafficLayer();
