@@ -683,6 +683,55 @@
       background-color: #1e293b !important;
       color: #ffffff !important;
     }
+    [data-bs-theme="dark"] #perPageSelect {
+      background-color: #1e293b !important;
+      color: #f1f5f9 !important;
+      border-color: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    [data-bs-theme="dark"] .quick-calc-btn,
+    [data-bs-theme="dark"] #swapPickupDropoffBtn,
+    [data-bs-theme="dark"] #addViaToggleBtn {
+      background-color: #1e293b !important;
+      color: #f1f5f9 !important;
+      border-color: rgba(255, 255, 255, 0.16) !important;
+    }
+    [data-bs-theme="dark"] .quick-calc-btn:hover,
+    [data-bs-theme="dark"] #swapPickupDropoffBtn:hover,
+    [data-bs-theme="dark"] #addViaToggleBtn:hover {
+      background-color: #334155 !important;
+      color: #ffffff !important;
+      border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    [data-bs-theme="dark"] .quick-calc-btn span,
+    [data-bs-theme="dark"] #swapPickupDropoffBtn span,
+    [data-bs-theme="dark"] #addViaToggleBtn span {
+      color: #f1f5f9 !important;
+    }
+
+    [data-bs-theme="dark"] .trend-badge-today {
+      background-color: #090d16 !important;
+      color: #fbbf24 !important;
+      border-color: rgba(251, 191, 36, 0.4) !important;
+    }
+    [data-bs-theme="dark"] .trend-badge-today i {
+      color: #fbbf24 !important;
+    }
+    [data-bs-theme="dark"] .trend-badge-today strong {
+      color: #ffffff !important;
+    }
+
+    [data-bs-theme="dark"] .trend-badge-15d {
+      background-color: #1e293b !important;
+      color: #f59e0b !important;
+      border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    }
+    [data-bs-theme="dark"] .trend-badge-15d i {
+      color: #f59e0b !important;
+    }
+    [data-bs-theme="dark"] .trend-badge-15d strong {
+      color: #f8fafc !important;
+    }
 
     [data-bs-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd)>* {
       background-color: rgba(255, 255, 255, 0.02) !important;

@@ -567,6 +567,101 @@ td{
     padding-left: 4px !important;
     padding-right: 6px !important;
 }
+
+/* ⚡ Quick Calc Buttons (Swap / +Via) */
+.quick-calc-btn {
+    border-radius: 8px;
+    font-size: 10.5px;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+.quick-calc-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+[data-bs-theme="dark"] .quick-calc-btn {
+    background: #1e293b !important;
+    color: #f1f5f9 !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
+[data-bs-theme="dark"] .quick-calc-btn:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+[data-bs-theme="dark"] .quick-calc-btn span {
+    color: #f1f5f9 !important;
+}
+
+/* 📈 Bookings Trend Badges */
+.trend-badge-today {
+    background: #111827;
+    color: #E6B04A;
+    border: 1px solid rgba(230, 176, 74, 0.5);
+    font-size: 11.5px;
+    border-radius: 7px;
+    font-weight: 600;
+}
+.trend-badge-today i {
+    color: #E6B04A;
+}
+.trend-badge-today strong {
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.trend-badge-15d {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    font-size: 11.5px;
+    border-radius: 7px;
+    font-weight: 600;
+}
+.trend-badge-15d i {
+    color: #d97706;
+}
+.trend-badge-15d strong {
+    color: #78350f;
+    font-weight: 800;
+}
+
+[data-bs-theme="dark"] .trend-badge-today {
+    background: #090d16 !important;
+    color: #fbbf24 !important;
+    border-color: rgba(251, 191, 36, 0.4) !important;
+}
+[data-bs-theme="dark"] .trend-badge-today i {
+    color: #fbbf24 !important;
+}
+[data-bs-theme="dark"] .trend-badge-today strong {
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .trend-badge-15d {
+    background: #1e293b !important;
+    color: #f59e0b !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+[data-bs-theme="dark"] .trend-badge-15d i {
+    color: #f59e0b !important;
+}
+[data-bs-theme="dark"] .trend-badge-15d strong {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] #calcDistanceBadge {
+    background: rgba(14, 165, 233, 0.2) !important;
+    color: #38bdf8 !important;
+    border-color: rgba(56, 189, 248, 0.4) !important;
+}
 </style>
 
 <!-- 🌟 Fullscreen Screen-Level Search & Filter Loader -->
@@ -701,11 +796,11 @@ td{
                     <i class="bi bi-calculator-fill text-warning"></i> Get Instant Price
                 </h6>
                 <div class="d-flex align-items-center gap-1">
-                    <button type="button" class="btn btn-sm btn-light py-0 px-2 text-dark" id="swapPickupDropoffBtn" title="Swap Pickup & Dropoff" style="border-radius: 8px; font-size: 10.5px; border: 1px solid #e2e8f0;">
-                        <i class="bi bi-arrow-left-right text-primary"></i> Swap
+                    <button type="button" class="btn btn-sm quick-calc-btn py-0 px-2" id="swapPickupDropoffBtn" title="Swap Pickup & Dropoff">
+                        <i class="bi bi-arrow-left-right text-primary"></i> <span class="calc-btn-text">Swap</span>
                     </button>
-                    <button type="button" class="btn btn-sm btn-light py-0 px-2 text-dark" id="addViaToggleBtn" style="border-radius: 8px; font-size: 10.5px; border: 1px solid #e2e8f0;">
-                        <i class="bi bi-plus-circle text-success"></i> +Via
+                    <button type="button" class="btn btn-sm quick-calc-btn py-0 px-2" id="addViaToggleBtn" title="Add Via Location">
+                        <i class="bi bi-plus-circle text-success"></i> <span class="calc-btn-text">+Via</span>
                     </button>
                 </div>
             </div>
@@ -829,11 +924,11 @@ td{
                         $todayBookingItem = collect($chartList)->firstWhere('is_today', true);
                         $todayCount = $todayBookingItem['count'] ?? 0;
                     @endphp
-                    <span class="badge px-2 py-1 shadow-sm d-inline-flex align-items-center gap-1" style="background: #111827; color: #E6B04A; border: 1px solid rgba(230, 176, 74, 0.5); font-size: 11.5px; border-radius: 7px;" title="Today's Bookings">
-                        <i class="bi bi-calendar-check-fill" style="color: #E6B04A;"></i> Today: <strong class="text-white ms-0.5">{{ $todayCount }}</strong>
+                    <span class="badge trend-badge-today px-2 py-1 shadow-sm d-inline-flex align-items-center gap-1" title="Today's Bookings">
+                        <i class="bi bi-calendar-check-fill"></i> Today: <strong>{{ $todayCount }}</strong>
                     </span>
-                    <span class="badge px-2 py-1 shadow-sm d-inline-flex align-items-center gap-1" style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size: 11.5px; border-radius: 7px;" title="15-Day Timeline Total">
-                        <i class="bi bi-collection-fill" style="color: #d97706;"></i> 15D: <strong class="text-dark ms-0.5">{{ $totalWindowBookings }}</strong>
+                    <span class="badge trend-badge-15d px-2 py-1 shadow-sm d-inline-flex align-items-center gap-1" title="15-Day Timeline Total">
+                        <i class="bi bi-collection-fill"></i> 15D: <strong>{{ $totalWindowBookings }}</strong>
                     </span>
                 </div>
             </div>
@@ -871,8 +966,18 @@ td{
                 </div>
 
                 <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
+                    <!-- 📄 Per Page Selector -->
+                    <div class="d-flex align-items-center gap-1" id="perPageSelectorWrapper">
+                        <label for="perPageSelect" class="text-muted fw-semibold mb-0 text-nowrap" style="font-size: 11px;">Per Page:</label>
+                        <select id="perPageSelect" class="form-select form-select-sm fw-semibold" style="font-size: 11px; width: 68px; padding: 2px 20px 2px 8px; height: 26px; border-radius: 6px; cursor: pointer;" onchange="changePerPage(this.value)">
+                            @foreach([10, 20, 50, 100, 200] as $size)
+                                <option value="{{ $size }}" {{ (request('per_page', 20) == $size) ? 'selected' : '' }}>{{ $size }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <div class="d-flex align-items-center" id="bookingsPaginationContainer">
-                        {{ $bookings->links('pagination::bootstrap-5') }}
+                        {{ $bookings->appends(request()->except('page'))->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
@@ -1743,6 +1848,14 @@ function initDashboardCalendar() {
     dashboardCalendarInstance.render();
 }
 
+// 📄 Change items per page
+function changePerPage(size) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('per_page', size);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+}
+
 // 🔀 Switch between Table View and Calendar View
 function switchBookingDashboardView(mode) {
     const tableWrapper = document.getElementById('bookingTableViewWrapper');
@@ -1750,11 +1863,13 @@ function switchBookingDashboardView(mode) {
     const tableBtn = document.getElementById('switchTableViewBtn');
     const calBtn = document.getElementById('switchCalendarViewBtn');
     const paginContainer = document.getElementById('bookingsPaginationContainer');
+    const perPageWrapper = document.getElementById('perPageSelectorWrapper');
 
     if (mode === 'calendar') {
         if (tableWrapper) tableWrapper.style.display = 'none';
         if (calWrapper) calWrapper.style.display = 'block';
         if (paginContainer) paginContainer.style.display = 'none';
+        if (perPageWrapper) perPageWrapper.style.display = 'none';
         
         if (tableBtn) {
             tableBtn.classList.remove('active');
@@ -1776,6 +1891,7 @@ function switchBookingDashboardView(mode) {
         if (tableWrapper) tableWrapper.style.display = 'block';
         if (calWrapper) calWrapper.style.display = 'none';
         if (paginContainer) paginContainer.style.display = 'flex';
+        if (perPageWrapper) perPageWrapper.style.display = 'flex';
 
         if (calBtn) {
             calBtn.classList.remove('active');

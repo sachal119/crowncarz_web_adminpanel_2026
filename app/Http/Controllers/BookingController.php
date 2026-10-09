@@ -2236,8 +2236,14 @@ if ($bookingsSnapshot) {
 $bookingsCollection = collect($bookings);
 
 // Pagination settings
-$perPage = 20; // 👈 change if you want
-$currentPage = request()->get('page', 1);
+$perPage = (int) request()->get('per_page', 20);
+if ($perPage <= 0 || $perPage > 500) {
+    $perPage = 20;
+}
+$currentPage = (int) request()->get('page', 1);
+if ($currentPage <= 0) {
+    $currentPage = 1;
+}
 
 // Slice data for current page
 $currentPageItems = $bookingsCollection
