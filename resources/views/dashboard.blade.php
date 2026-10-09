@@ -2213,14 +2213,12 @@ function buildBookingRowHtml(booking, isNew = false) {
         </td>
         <td class="col-datetime text-nowrap">
             <div class="d-flex flex-column align-items-start" title="${escapeHtml(fullDateTimeTitle)}">
-                <div class="d-flex align-items-center text-dark fw-bold" style="font-size: 12px; line-height: 1.3;">
-                    <i class="bi bi-calendar3 me-1.5 text-secondary" style="font-size: 10.5px;"></i>
-                    <span>${escapeHtml(pickupDate)}</span>
-                </div>
-                <div class="d-flex align-items-center text-muted fw-bold font-monospace mt-0.5" style="font-size: 11.5px; line-height: 1.3;">
-                    <i class="bi bi-clock me-1.5 text-primary" style="font-size: 10px;"></i>
-                    <span class="text-dark">${escapeHtml(pickupTime)}</span>
-                </div>
+                <span class="text-dark fw-bold" style="font-size: 12px; line-height: 1.3;">
+                    ${escapeHtml(pickupDate)}
+                </span>
+                <span class="text-secondary fw-semibold font-monospace mt-0.5" style="font-size: 11.5px; line-height: 1.2;">
+                    ${escapeHtml(pickupTime)}
+                </span>
             </div>
         </td>
         <td class="col-flight">

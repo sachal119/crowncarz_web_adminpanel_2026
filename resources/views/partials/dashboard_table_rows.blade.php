@@ -253,14 +253,12 @@
                 }
             @endphp
             <div class="d-flex flex-column align-items-start" title="{{ $fullDateTimeTitle }}">
-                <div class="d-flex align-items-center text-dark fw-bold" style="font-size: 12px; line-height: 1.3;">
-                    <i class="bi bi-calendar3 me-1.5 text-secondary" style="font-size: 10.5px;"></i>
-                    <span>{{ $formattedDate }}</span>
-                </div>
-                <div class="d-flex align-items-center text-muted fw-bold font-monospace mt-0.5" style="font-size: 11.5px; line-height: 1.3;">
-                    <i class="bi bi-clock me-1.5 text-primary" style="font-size: 10px;"></i>
-                    <span class="text-dark">{{ $formattedTime }}</span>
-                </div>
+                <span class="text-dark fw-bold" style="font-size: 12px; line-height: 1.3;">
+                    {{ $formattedDate }}
+                </span>
+                <span class="text-secondary fw-semibold font-monospace mt-0.5" style="font-size: 11.5px; line-height: 1.2;">
+                    {{ $formattedTime }}
+                </span>
             </div>
         </td>
         <td class="col-flight" style="{{ $rowStyle }}">
