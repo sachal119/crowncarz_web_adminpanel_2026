@@ -516,12 +516,6 @@ td{
     min-width: 220px;
     max-width: 320px;
 }
-.custom-dashboard-table .col-vias,
-.custom-dashboard-table th.th-vias {
-    width: 85px;
-    min-width: 75px;
-    max-width: 95px;
-}
 .custom-dashboard-table .col-datetime,
 .custom-dashboard-table th.th-datetime {
     min-width: 105px;
@@ -531,6 +525,15 @@ td{
 .custom-dashboard-table th.th-vehicle {
     min-width: 95px;
     text-align: left;
+}
+.custom-dashboard-table .col-actions,
+.custom-dashboard-table th.th-actions {
+    width: 48px;
+    min-width: 44px;
+    max-width: 54px;
+    text-align: center;
+    padding-left: 4px !important;
+    padding-right: 6px !important;
 }
 </style>
 
@@ -815,19 +818,17 @@ td{
   <div class="col-lg-12 mt-3">
         <div class="card shadow-sm border-0" style="border-radius: 14px; border: 1px solid #eaedf1 !important;">
             <div class="card-header bg-white py-2.5 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom" style="border-top-left-radius: 13px; border-top-right-radius: 13px; border-color: #f1f5f9 !important;">
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="badge d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(184, 115, 51, 0.12); color: #B87333;">
                         <i class="bi bi-calendar2-range-fill fs-6"></i>
                     </span>
                     <h6 class="mb-0 fw-bold text-dark" style="font-size: 14px; letter-spacing: -0.2px;">
                         Future Bookings
                     </h6>
-                    <span class="badge bg-dark text-white rounded-pill px-2.5 py-1" id="bookingsTotalCount" style="font-size: 11px;">{{ $bookings->total() }}</span>
-                </div>
+                    <span class="badge bg-dark text-white rounded-pill px-2.5 py-1 me-1" id="bookingsTotalCount" style="font-size: 11px;">{{ $bookings->total() }}</span>
 
-                <!-- 🔀 Modern View Switcher (Table vs Calendar) -->
-                <div class="d-flex align-items-center gap-2">
-                    <div class="btn-group btn-group-sm p-0.5 rounded-3 border bg-light" role="group" id="bookingViewSwitcher">
+                    <!-- 🔀 Modern View Switcher (Table vs Calendar) -->
+                    <div class="btn-group btn-group-sm p-0.5 rounded-3 border bg-light ms-1" role="group" id="bookingViewSwitcher">
                         <button type="button" class="btn btn-sm px-2.5 py-1 fw-bold active rounded-2" id="switchTableViewBtn" onclick="switchBookingDashboardView('table')">
                             <i class="bi bi-list-ul me-1"></i> Table View
                         </button>
@@ -841,9 +842,6 @@ td{
                     <div class="d-flex align-items-center" id="bookingsPaginationContainer">
                         {{ $bookings->links('pagination::bootstrap-5') }}
                     </div>
-                    <span class="badge bg-success bg-opacity-75 text-white d-flex align-items-center gap-1.5 px-2.5 py-1.5 shadow-xs" id="liveSyncStatus" style="border-radius: 8px; font-size: 11px;">
-                        <i class="bi bi-broadcast"></i> Live Sync Active
-                    </span>
                 </div>
             </div>
 
@@ -857,14 +855,13 @@ td{
                             <th class="py-2.5 px-2 th-passenger">Passenger</th>
                             <th class="py-2.5 px-2 th-driver">Driver</th>
                             <th class="py-2.5 px-2 th-route">Pickup &amp; Dropoff</th>
-                            <th class="py-2.5 px-2 text-center th-vias">Vias</th>
                             <th class="py-2.5 px-2 th-datetime">Date &amp; Time</th>
                             <th class="py-2.5 px-2 th-vehicle">Vehicle / Flight</th>
                             <th class="py-2.5 px-2 th-price">Price</th>
                             <th class="py-2.5 px-2 th-comments">Comments</th>
                             <th class="py-2.5 px-2 th-status">Status</th>
                             <th class="py-2.5 px-2 text-center th-platform">Platform</th>
-                            <th class="py-2.5 px-3 text-center th-actions">Actions</th>
+                            <th class="py-2.5 px-2 text-center th-actions" title="Actions Menu"><i class="bi bi-three-dots text-secondary fs-6"></i></th>
                         </tr>
                     </thead>
 <tbody class="small" id="bookingsTableBody">
@@ -2132,6 +2129,25 @@ function buildBookingRowHtml(booking, isNew = false) {
             <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
         </a>` : '';
 
+    let viaHtml = '';
+    let viasArr = [];
+    if (Array.isArray(booking.vias) && booking.vias.length > 0) {
+        viasArr = booking.vias;
+    } else if (Array.isArray(booking.via_addresses) && booking.via_addresses.length > 0) {
+        viasArr = booking.via_addresses;
+    } else if (typeof booking.vias === 'string' && booking.vias.trim()) {
+        viasArr = [booking.vias.trim()];
+    }
+    viasArr = viasArr.filter(v => v && String(v).trim() !== '');
+    if (viasArr.length > 0) {
+        const fullVias = escapeHtml(viasArr.join(' → '));
+        viaHtml = `
+            <div class="d-flex align-items-center text-truncate ps-1" title="Via: ${fullVias}">
+                <i class="bi bi-arrow-return-right text-warning me-1.5 flex-shrink-0" style="font-size: 10px;"></i>
+                <span class="text-truncate text-secondary fw-semibold" style="font-size: 11px; line-height: 1.25;">Via: ${fullVias}</span>
+            </div>`;
+    }
+
     const fullDateTimeTitle = `${pickupDate} - ${pickupTime}`;
 
     return `
@@ -2148,18 +2164,18 @@ function buildBookingRowHtml(booking, isNew = false) {
         </td>
         <td class="col-driver driver-cell">${driverHtml}</td>
         <td class="col-route">
-            <div class="d-flex flex-column gap-1" style="max-width: 280px;">
+            <div class="d-flex flex-column gap-1" style="max-width: 290px;">
                 <div class="d-flex align-items-center text-truncate" title="Pickup: ${escapeHtml(pickupAddress)}">
                     <i class="bi bi-geo-alt-fill text-success me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
                     <span class="text-truncate text-dark fw-medium" style="font-size: 11.5px; line-height: 1.25;">${escapeHtml(pickupAddress)}</span>
                 </div>
+                ${viaHtml}
                 <div class="d-flex align-items-center text-truncate" title="Dropoff: ${escapeHtml(dropoffAddress)}">
                     <i class="bi bi-geo-alt-fill text-danger me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
                     <span class="text-truncate text-muted" style="font-size: 11.5px; line-height: 1.25;">${escapeHtml(dropoffAddress)}</span>
                 </div>
             </div>
         </td>
-        <td class="col-vias text-center">${viasText}</td>
         <td class="col-datetime text-nowrap">
             <div class="d-flex flex-column align-items-start" title="${escapeHtml(fullDateTimeTitle)}">
                 <span class="text-dark fw-bold font-monospace" style="font-size: 11.5px; letter-spacing: 0.2px;">

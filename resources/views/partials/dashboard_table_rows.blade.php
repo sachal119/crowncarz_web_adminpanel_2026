@@ -181,20 +181,6 @@
             @php
                 $pAddress = $booking['pickup_address'] ?? '-';
                 $dAddress = $booking['dropoff_address'] ?? '-';
-            @endphp
-            <div class="d-flex flex-column gap-1" style="max-width: 280px;">
-                <div class="d-flex align-items-center text-truncate" title="Pickup: {{ $pAddress }}">
-                    <i class="bi bi-geo-alt-fill text-success me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
-                    <span class="text-truncate text-dark fw-medium" style="font-size: 11.5px; line-height: 1.25;">{{ $pAddress }}</span>
-                </div>
-                <div class="d-flex align-items-center text-truncate" title="Dropoff: {{ $dAddress }}">
-                    <i class="bi bi-geo-alt-fill text-danger me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
-                    <span class="text-truncate text-muted" style="font-size: 11.5px; line-height: 1.25;">{{ $dAddress }}</span>
-                </div>
-            </div>
-        </td>
-        <td class="col-vias text-center" style="{{ $rowStyle }}">
-            @php
                 $viasList = [];
                 if (!empty($booking['vias'])) {
                     $viasList = is_array($booking['vias']) ? $booking['vias'] : [$booking['vias']];
@@ -202,14 +188,24 @@
                     $viasList = is_array($booking['via_addresses']) ? $booking['via_addresses'] : [$booking['via_addresses']];
                 }
                 $viasList = array_filter(array_map('trim', $viasList));
-                $viasCount = count($viasList);
                 $viasFull = implode(' → ', $viasList);
             @endphp
-            @if($viasCount > 0)
-                <span class="badge bg-light text-dark border px-1.5 py-1 two-line-clamp text-start" style="font-size: 10px; font-weight: 500; max-width: 85px; white-space: normal; line-height: 1.15;" title="{{ $viasFull }}">{{ $viasFull }}</span>
-            @else
-                <span class="text-muted small">-</span>
-            @endif
+            <div class="d-flex flex-column gap-1" style="max-width: 290px;">
+                <div class="d-flex align-items-center text-truncate" title="Pickup: {{ $pAddress }}">
+                    <i class="bi bi-geo-alt-fill text-success me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
+                    <span class="text-truncate text-dark fw-medium" style="font-size: 11.5px; line-height: 1.25;">{{ $pAddress }}</span>
+                </div>
+                @if(!empty($viasFull))
+                    <div class="d-flex align-items-center text-truncate ps-1" title="Via: {{ $viasFull }}">
+                        <i class="bi bi-arrow-return-right text-warning me-1.5 flex-shrink-0" style="font-size: 10px;"></i>
+                        <span class="text-truncate text-secondary fw-semibold" style="font-size: 11px; line-height: 1.25;">Via: {{ $viasFull }}</span>
+                    </div>
+                @endif
+                <div class="d-flex align-items-center text-truncate" title="Dropoff: {{ $dAddress }}">
+                    <i class="bi bi-geo-alt-fill text-danger me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
+                    <span class="text-truncate text-muted" style="font-size: 11.5px; line-height: 1.25;">{{ $dAddress }}</span>
+                </div>
+            </div>
         </td>
         <td class="col-datetime text-nowrap" style="{{ $rowStyle }}">
             @php
@@ -451,6 +447,6 @@
     </tr>
 @empty
     <tr id="emptyBookingsRow">
-        <td colspan="13" class="text-center text-muted py-4">No future bookings found.</td>
+        <td colspan="12" class="text-center text-muted py-4">No future bookings found.</td>
     </tr>
 @endforelse
