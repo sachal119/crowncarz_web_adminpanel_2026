@@ -996,7 +996,7 @@ td{
                             <th class="py-2.5 px-2 th-datetime">Date &amp; Time</th>
                             <th class="py-2.5 px-2 th-comments">Comments / Flight</th>
                             <th class="py-2.5 px-2 th-status">Status</th>
-                            <th class="py-2.5 px-2 text-center th-platform">Platform</th>
+                            <th class="py-2.5 px-2 text-center th-platform">Origin</th>
                             <th class="py-2.5 px-2 text-center th-actions" title="Actions Menu"><i class="bi bi-three-dots text-secondary fs-6"></i></th>
                         </tr>
                     </thead>
