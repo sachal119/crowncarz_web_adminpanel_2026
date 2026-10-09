@@ -545,8 +545,8 @@ td{
 }
 .custom-dashboard-table .col-route,
 .custom-dashboard-table th.th-route {
-    min-width: 220px;
-    max-width: 320px;
+    min-width: 290px;
+    max-width: 440px;
 }
 .custom-dashboard-table .col-datetime,
 .custom-dashboard-table th.th-datetime {
@@ -2355,7 +2355,7 @@ function buildBookingRowHtml(booking, isNew = false) {
         </td>
         <td class="col-driver driver-cell">${driverHtml}</td>
         <td class="col-route">
-            <div class="d-flex flex-column gap-1" style="max-width: 290px;">
+            <div class="d-flex flex-column gap-1" style="max-width: 420px;">
                 <div class="d-flex align-items-center text-truncate" title="Pickup: ${escapeHtml(pickupAddress)}">
                     <i class="bi bi-geo-alt-fill text-success me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
                     <span class="text-truncate text-dark fw-medium" style="font-size: 11.5px; line-height: 1.25;">${escapeHtml(pickupAddress)}</span>

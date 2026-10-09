@@ -221,7 +221,7 @@
                 $viasList = array_filter(array_map('trim', $viasList));
                 $viasFull = implode(' → ', $viasList);
             @endphp
-            <div class="d-flex flex-column gap-1" style="max-width: 290px;">
+            <div class="d-flex flex-column gap-1" style="max-width: 420px;">
                 <div class="d-flex align-items-center text-truncate" title="Pickup: {{ $pAddress }}">
                     <i class="bi bi-geo-alt-fill text-success me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
                     <span class="text-truncate text-dark fw-medium" style="font-size: 11.5px; line-height: 1.25;">{{ $pAddress }}</span>
