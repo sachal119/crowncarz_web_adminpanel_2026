@@ -2293,12 +2293,14 @@ function buildBookingRowHtml(booking, isNew = false) {
     const passengerPhoneHtml = passengerPhone ? `
         <a href="tel:${escapeHtml(passengerPhone)}" class="font-monospace text-decoration-none text-muted d-inline-block text-truncate mt-0.5" style="max-width: 100%; font-size: 11px; letter-spacing: 0.2px;" title="${escapeHtml(passengerPhone)}">${escapeHtml(passengerPhone)}</a>` : '';
 
-    const rawComm = (booking.job_comment || booking.comments || '').trim();
-    const isBadComm = !rawComm || ['undefined', 'null', 'no comment', 'none', '-'].includes(rawComm.toLowerCase());
-    const hasRealComment = !isBadComm;
-    const fullComment = hasRealComment ? rawComm : '';
+    let displayComment = 'No comments added';
+    if (booking.job_comment !== null && booking.job_comment !== undefined && String(booking.job_comment).trim() !== '') {
+        displayComment = String(booking.job_comment);
+    } else if (booking.comments !== null && booking.comments !== undefined && String(booking.comments).trim() !== '') {
+        displayComment = String(booking.comments);
+    }
 
-    const hasFlight = booking.flight_no && !['-', 'undefined', 'null', 'none'].includes(String(booking.flight_no).toLowerCase().trim());
+    const hasFlight = booking.flight_no && !['-', 'none'].includes(String(booking.flight_no).toLowerCase().trim());
     const cleanFlight = hasFlight ? String(booking.flight_no).trim() : '';
     const flightHtml = hasFlight ? `
         <a href="https://www.google.com/search?q=${encodeURIComponent('flight ' + cleanFlight)}" 
@@ -2313,12 +2315,7 @@ function buildBookingRowHtml(booking, isNew = false) {
             <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
         </a>` : '';
 
-    let commentFlightContent = '';
-    if (hasRealComment) {
-        commentFlightContent += `<span class="truncate-cell text-muted" style="max-width: 140px; font-size: 11px; line-height: 1.25;" title="${escapeHtml(fullComment)}">${escapeHtml(fullComment)}</span>`;
-    } else if (!hasFlight) {
-        commentFlightContent += `<span class="text-muted" style="font-size: 11px;">-</span>`;
-    }
+    let commentFlightContent = `<span class="truncate-cell text-muted" style="max-width: 140px; font-size: 11px; line-height: 1.25;" title="${escapeHtml(displayComment)}">${escapeHtml(displayComment)}</span>`;
     if (hasFlight) {
         commentFlightContent += flightHtml;
     }

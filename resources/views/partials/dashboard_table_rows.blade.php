@@ -267,22 +267,21 @@
         </td>
         <td class="col-comment" style="{{ $rowStyle }}">
             @php
-                $rawComment = trim((string)($booking['job_comment'] ?? ($booking['comments'] ?? '')));
-                $hasRealComment = !empty($rawComment) && !in_array(strtolower($rawComment), ['undefined', 'null', 'no comment', 'none', '-']);
-                $displayComment = $hasRealComment ? $rawComment : '';
+                $rawComment = $booking['job_comment'] ?? ($booking['comments'] ?? null);
+                if ($rawComment === null || trim((string)$rawComment) === '') {
+                    $displayComment = 'No comments added';
+                } else {
+                    $displayComment = (string)$rawComment;
+                }
 
                 $rawFlight = trim((string)($booking['flight_no'] ?? ''));
                 $hasFlight = !empty($rawFlight) && !in_array(strtolower($rawFlight), ['-', 'undefined', 'null', 'none']);
                 $fNo = $hasFlight ? $rawFlight : '';
             @endphp
             <div class="d-flex flex-column align-items-start gap-1" style="max-width: 145px;">
-                @if($hasRealComment)
-                    <span class="truncate-cell text-muted" style="max-width: 140px; font-size: 11px; line-height: 1.25;" title="{{ $displayComment }}">
-                        {{ $displayComment }}
-                    </span>
-                @elseif(!$hasFlight)
-                    <span class="text-muted" style="font-size: 11px;">-</span>
-                @endif
+                <span class="truncate-cell text-muted" style="max-width: 140px; font-size: 11px; line-height: 1.25;" title="{{ $displayComment }}">
+                    {{ $displayComment }}
+                </span>
 
                 @if($hasFlight)
                     <a href="https://www.google.com/search?q={{ urlencode('flight ' . $fNo) }}" 
