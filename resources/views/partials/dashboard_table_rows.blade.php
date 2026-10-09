@@ -118,7 +118,7 @@
                 }
             @endphp
             <div class="d-flex flex-column align-items-start gap-1">
-                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
                     <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs" style="background-color: {{ $bgColor }}; font-size: 10.5px; font-weight: 600;">
                         {{ ucfirst($paymentType) }}
                     </span>
@@ -300,7 +300,7 @@
                 @csrf
                 <select class="form-select form-select-sm text-black statusSelect fw-semibold"
                         name="status"
-                        style="{{ $statusSelectStyle }}; min-width: 106px; font-size: 11px; border-radius: 6px; padding: 2px 22px 2px 8px;"
+                        style="{{ $statusSelectStyle }}; min-width: 92px; max-width: 104px; font-size: 10.5px; border-radius: 6px; padding: 2px 18px 2px 6px; height: 24px; line-height: 1.2;"
                         data-booking-id="{{ $booking['id'] }}">
                     @php
                         $statusOptions = [

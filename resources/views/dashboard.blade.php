@@ -514,9 +514,19 @@ td{
 .statusSelect {
     cursor: pointer;
     transition: all 0.2s ease;
+    height: 24px;
+    font-size: 10.5px !important;
+    padding: 2px 18px 2px 6px !important;
+    border-radius: 6px !important;
+    line-height: 1.2 !important;
 }
 .statusSelect:focus {
     box-shadow: 0 0 0 2px rgba(184, 115, 51, 0.3);
+}
+.custom-dashboard-table .col-status,
+.custom-dashboard-table th.th-status {
+    min-width: 95px;
+    max-width: 108px;
 }
 .custom-dashboard-table .col-payment,
 .custom-dashboard-table th.th-payment {
@@ -1914,7 +1924,7 @@ function getPaymentBadgeHtml(paymentType, accountName = '', priceDisplayHtml = '
     const label = type.charAt(0).toUpperCase() + type.slice(1);
     
     let html = `<div class="d-flex flex-column align-items-start gap-1">
-        <div class="d-flex align-items-center gap-1.5 flex-wrap">
+        <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
             <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs" style="background-color: ${bg}; font-size: 10.5px; font-weight: 600;">${label}</span>
             ${priceDisplayHtml}
         </div>`;
@@ -2239,7 +2249,7 @@ function buildBookingRowHtml(booking, isNew = false) {
                 <input type="hidden" name="_token" value="${CSRF_TOKEN}">
                 <select class="form-select form-select-sm text-black statusSelect fw-semibold"
                         name="status"
-                        style="${statusSelectStyle}; min-width: 106px; font-size: 11px; border-radius: 6px; padding: 2px 22px 2px 8px;"
+                        style="${statusSelectStyle}; min-width: 92px; max-width: 104px; font-size: 10.5px; border-radius: 6px; padding: 2px 18px 2px 6px; height: 24px; line-height: 1.2;"
                         data-booking-id="${id}">
                     ${statusOptionsHtml}
                 </select>
