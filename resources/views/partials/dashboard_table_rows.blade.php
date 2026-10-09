@@ -265,32 +265,39 @@
                 </span>
             </div>
         </td>
-        <td class="col-flight" style="{{ $rowStyle }}">
+        <td class="col-comment" style="{{ $rowStyle }}">
             @php
-                $hasFlight = !empty($booking['flight_no']) && $booking['flight_no'] !== '-' && $booking['flight_no'] !== 'undefined';
-                $fNo = $hasFlight ? trim($booking['flight_no']) : '';
+                $rawComment = trim((string)($booking['job_comment'] ?? ($booking['comments'] ?? '')));
+                $hasRealComment = !empty($rawComment) && !in_array(strtolower($rawComment), ['undefined', 'null', 'no comment', 'none', '-']);
+                $displayComment = $hasRealComment ? $rawComment : '';
+
+                $rawFlight = trim((string)($booking['flight_no'] ?? ''));
+                $hasFlight = !empty($rawFlight) && !in_array(strtolower($rawFlight), ['-', 'undefined', 'null', 'none']);
+                $fNo = $hasFlight ? $rawFlight : '';
             @endphp
-            @if($hasFlight)
-                <a href="https://www.google.com/search?q={{ urlencode('flight ' . $fNo) }}" 
-                   target="_blank" 
-                   rel="noopener noreferrer" 
-                   onclick="openFlightTracker(event, '{{ addslashes($fNo) }}')"
-                   class="flight-track-badge" 
-                   style="font-size: 11px; padding: 2.5px 7px;"
-                   title="Click to track flight {{ $fNo }} in new tab">
-                    <i class="bi bi-airplane-fill flight-icon"></i>
-                    <span class="text-truncate" style="max-width: 80px;">{{ $fNo }}</span>
-                    <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
-                </a>
-            @else
-                <span class="text-muted" style="font-size: 11px;">-</span>
-            @endif
-        </td>
-        <td class="col-comment" title="{{ !empty($booking['job_comment']) ? $booking['job_comment'] : (!empty($booking['comments']) ? $booking['comments'] : 'No comment') }}">
-            @php
-                $comm = !empty($booking['job_comment']) ? $booking['job_comment'] : (!empty($booking['comments']) ? $booking['comments'] : 'No comment');
-            @endphp
-            <span class="truncate-cell text-muted" style="max-width: 120px; font-size: 11px;">{{ $comm }}</span>
+            <div class="d-flex flex-column align-items-start gap-1" style="max-width: 145px;">
+                @if($hasRealComment)
+                    <span class="truncate-cell text-muted" style="max-width: 140px; font-size: 11px; line-height: 1.25;" title="{{ $displayComment }}">
+                        {{ $displayComment }}
+                    </span>
+                @elseif(!$hasFlight)
+                    <span class="text-muted" style="font-size: 11px;">-</span>
+                @endif
+
+                @if($hasFlight)
+                    <a href="https://www.google.com/search?q={{ urlencode('flight ' . $fNo) }}" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       onclick="openFlightTracker(event, '{{ addslashes($fNo) }}')"
+                       class="flight-track-badge" 
+                       style="font-size: 10.5px; padding: 1.5px 6px;"
+                       title="Click to track flight {{ $fNo }} in new tab">
+                        <i class="bi bi-airplane-fill flight-icon"></i>
+                        <span class="text-truncate" style="max-width: 75px;">{{ $fNo }}</span>
+                        <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
+                    </a>
+                @endif
+            </div>
         </td>
         <td class="col-status" style="{{ $rowStyle }}">
             <form method="POST" action="{{ route('bookings.updateStatusManual', $booking['id']) }}" class="statusForm">
@@ -461,6 +468,6 @@
     </tr>
 @empty
     <tr id="emptyBookingsRow">
-        <td colspan="11" class="text-center text-muted py-4">No future bookings found.</td>
+        <td colspan="10" class="text-center text-muted py-4">No future bookings found.</td>
     </tr>
 @endforelse

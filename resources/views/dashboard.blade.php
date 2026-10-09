@@ -553,9 +553,10 @@ td{
     min-width: 105px;
     white-space: nowrap;
 }
-.custom-dashboard-table .col-flight,
-.custom-dashboard-table th.th-flight {
-    min-width: 85px;
+.custom-dashboard-table .col-comment,
+.custom-dashboard-table th.th-comments {
+    min-width: 125px;
+    max-width: 175px;
     text-align: left;
 }
 .custom-dashboard-table .col-actions,
@@ -993,8 +994,7 @@ td{
                             <th class="py-2.5 px-2 th-driver">Driver</th>
                             <th class="py-2.5 px-2 th-route">Pickup &amp; Dropoff</th>
                             <th class="py-2.5 px-2 th-datetime">Date &amp; Time</th>
-                            <th class="py-2.5 px-2 th-flight">Flight</th>
-                            <th class="py-2.5 px-2 th-comments">Comments</th>
+                            <th class="py-2.5 px-2 th-comments">Comments / Flight</th>
                             <th class="py-2.5 px-2 th-status">Status</th>
                             <th class="py-2.5 px-2 text-center th-platform">Platform</th>
                             <th class="py-2.5 px-2 text-center th-actions" title="Actions Menu"><i class="bi bi-three-dots text-secondary fs-6"></i></th>
@@ -2293,7 +2293,12 @@ function buildBookingRowHtml(booking, isNew = false) {
     const passengerPhoneHtml = passengerPhone ? `
         <a href="tel:${escapeHtml(passengerPhone)}" class="font-monospace text-decoration-none text-muted d-inline-block text-truncate mt-0.5" style="max-width: 100%; font-size: 11px; letter-spacing: 0.2px;" title="${escapeHtml(passengerPhone)}">${escapeHtml(passengerPhone)}</a>` : '';
 
-    const hasFlight = booking.flight_no && booking.flight_no !== '-' && booking.flight_no !== 'undefined';
+    const rawComm = (booking.job_comment || booking.comments || '').trim();
+    const isBadComm = !rawComm || ['undefined', 'null', 'no comment', 'none', '-'].includes(rawComm.toLowerCase());
+    const hasRealComment = !isBadComm;
+    const fullComment = hasRealComment ? rawComm : '';
+
+    const hasFlight = booking.flight_no && !['-', 'undefined', 'null', 'none'].includes(String(booking.flight_no).toLowerCase().trim());
     const cleanFlight = hasFlight ? String(booking.flight_no).trim() : '';
     const flightHtml = hasFlight ? `
         <a href="https://www.google.com/search?q=${encodeURIComponent('flight ' + cleanFlight)}" 
@@ -2301,12 +2306,22 @@ function buildBookingRowHtml(booking, isNew = false) {
            rel="noopener noreferrer" 
            onclick="openFlightTracker(event, '${cleanFlight.replace(/'/g, "\\'")}')"
            class="flight-track-badge" 
-           style="font-size: 11px; padding: 2.5px 7px;"
+           style="font-size: 10.5px; padding: 1.5px 6px;"
            title="Click to track flight ${escapeHtml(cleanFlight)} in new tab">
             <i class="bi bi-airplane-fill flight-icon"></i>
-            <span class="text-truncate" style="max-width: 80px;">${escapeHtml(cleanFlight)}</span>
+            <span class="text-truncate" style="max-width: 75px;">${escapeHtml(cleanFlight)}</span>
             <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
         </a>` : '';
+
+    let commentFlightContent = '';
+    if (hasRealComment) {
+        commentFlightContent += `<span class="truncate-cell text-muted" style="max-width: 140px; font-size: 11px; line-height: 1.25;" title="${escapeHtml(fullComment)}">${escapeHtml(fullComment)}</span>`;
+    } else if (!hasFlight) {
+        commentFlightContent += `<span class="text-muted" style="font-size: 11px;">-</span>`;
+    }
+    if (hasFlight) {
+        commentFlightContent += flightHtml;
+    }
 
     let viaHtml = '';
     let viasArr = [];
@@ -2365,11 +2380,10 @@ function buildBookingRowHtml(booking, isNew = false) {
                 </span>
             </div>
         </td>
-        <td class="col-flight">
-            ${flightHtml || '<span class="text-muted" style="font-size: 11px;">-</span>'}
-        </td>
-        <td class="col-comment" title="${commentText}">
-            <span class="truncate-cell text-muted" style="max-width: 120px; font-size: 11px;">${commentText}</span>
+        <td class="col-comment">
+            <div class="d-flex flex-column align-items-start gap-1" style="max-width: 145px;">
+                ${commentFlightContent}
+            </div>
         </td>
         <td class="col-status">
             <form method="POST" action="{{ url('bookings') }}/${encodeURIComponent(id)}/update-status-manual" class="statusForm">
