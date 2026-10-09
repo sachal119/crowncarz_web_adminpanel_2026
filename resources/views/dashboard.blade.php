@@ -518,6 +518,11 @@ td{
 .statusSelect:focus {
     box-shadow: 0 0 0 2px rgba(184, 115, 51, 0.3);
 }
+.custom-dashboard-table .col-payment,
+.custom-dashboard-table th.th-payment {
+    min-width: 125px;
+    max-width: 175px;
+}
 .custom-dashboard-table .col-passenger,
 .custom-dashboard-table th.th-passenger {
     min-width: 130px;
@@ -868,13 +873,12 @@ td{
                     <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
                         <tr class="text-uppercase text-muted" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 700;">
                             <th class="py-2.5 px-3 th-ref">Ref#</th>
-                            <th class="py-2.5 px-2 th-payment">Account Type</th>
+                            <th class="py-2.5 px-2 th-payment">Account / Price</th>
                             <th class="py-2.5 px-2 th-passenger">Passenger</th>
                             <th class="py-2.5 px-2 th-driver">Driver</th>
                             <th class="py-2.5 px-2 th-route">Pickup &amp; Dropoff</th>
                             <th class="py-2.5 px-2 th-datetime">Date &amp; Time</th>
                             <th class="py-2.5 px-2 th-flight">Flight</th>
-                            <th class="py-2.5 px-2 th-price">Price</th>
                             <th class="py-2.5 px-2 th-comments">Comments</th>
                             <th class="py-2.5 px-2 th-status">Status</th>
                             <th class="py-2.5 px-2 text-center th-platform">Platform</th>
@@ -1904,16 +1908,19 @@ function updateBookingsCountBadge(delta = 0, exact = null) {
 }
 
 // 🎨 Helper to format payment badge
-function getPaymentBadgeHtml(paymentType, accountName = '') {
+function getPaymentBadgeHtml(paymentType, accountName = '', priceDisplayHtml = '') {
     const type = (paymentType || 'unknown').toLowerCase();
     const bg = PAYMENT_COLORS[type] || '#6c757d';
     const label = type.charAt(0).toUpperCase() + type.slice(1);
     
-    let html = `<div class="d-flex flex-column align-items-start">
-        <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs" style="background-color: ${bg}; font-size: 10.5px; font-weight: 600;">${label}</span>`;
+    let html = `<div class="d-flex flex-column align-items-start gap-1">
+        <div class="d-flex align-items-center gap-1.5 flex-wrap">
+            <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs" style="background-color: ${bg}; font-size: 10.5px; font-weight: 600;">${label}</span>
+            ${priceDisplayHtml}
+        </div>`;
     
     if (type === 'account' && accountName) {
-        html += `<span class="text-truncate fw-bold text-dark mt-1" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="${escapeHtml(accountName)}">${escapeHtml(accountName)}</span>`;
+        html += `<span class="text-truncate fw-bold text-dark" style="max-width: 130px; font-size: 10.5px; line-height: 1.2;" title="${escapeHtml(accountName)}">${escapeHtml(accountName)}</span>`;
     }
     html += `</div>`;
     return html;
@@ -2142,8 +2149,8 @@ function buildBookingRowHtml(booking, isNew = false) {
     const highlightClass = isNew ? 'new-booking-highlight' : '';
     const highValueClass = isHighPrice ? 'high-value-row' : '';
     const priceDisplayHtml = isHighPrice 
-        ? `<span class="high-price-badge">£${priceNum.toFixed(2)}</span>`
-        : `<span class="normal-price-text">${formattedPrice}</span>`;
+        ? `<span class="high-price-badge" style="font-size: 10.5px; padding: 1.5px 6px;">£${priceNum.toFixed(2)}</span>`
+        : `<span class="normal-price-badge" style="font-size: 10.5px; padding: 1.5px 6px;">${formattedPrice}</span>`;
 
     const passengerPhone = booking.phone_no || '';
     const passengerPhoneHtml = passengerPhone ? `
@@ -2190,7 +2197,7 @@ function buildBookingRowHtml(booking, isNew = false) {
         <td class="col-ref fw-bold text-nowrap">
             <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">${booking.ref_no || 'N/A'}</span>
         </td>
-        <td class="col-payment">${getPaymentBadgeHtml(booking.payment_type, accName)}</td>
+        <td class="col-payment">${getPaymentBadgeHtml(booking.payment_type, accName, priceDisplayHtml)}</td>
         <td class="col-passenger">
             <div class="d-flex flex-column align-items-start" style="max-width: 145px;">
                 <span class="text-truncate fw-semibold text-dark w-100" style="font-size: 11.5px; line-height: 1.25;" title="${escapeHtml(passengerName)}">${escapeHtml(passengerName)}</span>
@@ -2224,7 +2231,6 @@ function buildBookingRowHtml(booking, isNew = false) {
         <td class="col-flight">
             ${flightHtml || '<span class="text-muted" style="font-size: 11px;">-</span>'}
         </td>
-        <td class="col-price text-nowrap">${priceDisplayHtml}</td>
         <td class="col-comment" title="${commentText}">
             <span class="truncate-cell text-muted" style="max-width: 120px; font-size: 11px;">${commentText}</span>
         </td>

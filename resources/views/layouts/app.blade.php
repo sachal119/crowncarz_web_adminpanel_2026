@@ -581,11 +581,26 @@
       color: #b45309;
       border: 1px solid #f59e0b;
       border-radius: 6px;
-      padding: 2px 8px;
+      padding: 1.5px 6px;
       font-weight: 800;
-      font-size: 11.5px;
+      font-size: 11px;
+      font-family: var(--bs-font-monospace);
       letter-spacing: 0.2px;
       box-shadow: 0 1px 2px rgba(180, 83, 9, 0.15);
+    }
+
+    .normal-price-badge {
+      display: inline-flex;
+      align-items: center;
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 1.5px 6px;
+      font-weight: 700;
+      font-size: 11px;
+      font-family: var(--bs-font-monospace);
+      letter-spacing: 0.2px;
     }
 
     .normal-price-text {
@@ -595,6 +610,17 @@
     }
 
     /* 💰 High Value (> £50) & Price Styling (Dark Mode) */
+    [data-bs-theme="dark"] .high-price-badge {
+      background: #451a03 !important;
+      color: #fde68a !important;
+      border-color: #d97706 !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+    [data-bs-theme="dark"] .normal-price-badge {
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      border-color: rgba(255, 255, 255, 0.2) !important;
+    }
     [data-bs-theme="dark"] .high-value-row,
     [data-bs-theme="dark"] .high-value-row > td,
     [data-bs-theme="dark"] tr.high-value-row td,

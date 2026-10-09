@@ -117,12 +117,19 @@
                     $accName = is_string($booking['account']) ? $booking['account'] : ($booking['account']['business_name'] ?? ($booking['account']['name'] ?? ''));
                 }
             @endphp
-            <div class="d-flex flex-column align-items-start">
-                <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs" style="background-color: {{ $bgColor }}; font-size: 10.5px; font-weight: 600;">
-                    {{ ucfirst($paymentType) }}
-                </span>
+            <div class="d-flex flex-column align-items-start gap-1">
+                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                    <span class="badge rounded-pill px-2.5 py-1 text-white shadow-xs" style="background-color: {{ $bgColor }}; font-size: 10.5px; font-weight: 600;">
+                        {{ ucfirst($paymentType) }}
+                    </span>
+                    @if($isHighPrice)
+                        <span class="high-price-badge" style="font-size: 10.5px; padding: 1.5px 6px;">£{{ number_format($bPrice, 2) }}</span>
+                    @else
+                        <span class="normal-price-badge" style="font-size: 10.5px; padding: 1.5px 6px;">£{{ is_numeric($booking['price'] ?? null) ? number_format((float)$booking['price'], 2) : ($booking['price'] ?? '-') }}</span>
+                    @endif
+                </div>
                 @if($paymentType === 'account' && !empty($accName))
-                    <span class="text-truncate fw-bold text-dark mt-1" style="max-width: 120px; font-size: 10.5px; line-height: 1.2;" title="{{ $accName }}">
+                    <span class="text-truncate fw-bold text-dark" style="max-width: 130px; font-size: 10.5px; line-height: 1.2;" title="{{ $accName }}">
                         {{ $accName }}
                     </span>
                 @endif
@@ -280,13 +287,6 @@
                 </a>
             @else
                 <span class="text-muted" style="font-size: 11px;">-</span>
-            @endif
-        </td>
-        <td class="col-price text-nowrap">
-            @if($isHighPrice)
-                <span class="high-price-badge">£{{ number_format($bPrice, 2) }}</span>
-            @else
-                <span class="normal-price-text">£{{ is_numeric($booking['price'] ?? null) ? number_format((float)$booking['price'], 2) : ($booking['price'] ?? '-') }}</span>
             @endif
         </td>
         <td class="col-comment" title="{{ !empty($booking['job_comment']) ? $booking['job_comment'] : (!empty($booking['comments']) ? $booking['comments'] : 'No comment') }}">
@@ -464,6 +464,6 @@
     </tr>
 @empty
     <tr id="emptyBookingsRow">
-        <td colspan="12" class="text-center text-muted py-4">No future bookings found.</td>
+        <td colspan="11" class="text-center text-muted py-4">No future bookings found.</td>
     </tr>
 @endforelse
