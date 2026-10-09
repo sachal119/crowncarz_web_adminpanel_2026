@@ -2014,7 +2014,7 @@ function getViasBadgeHtml(booking) {
     }
 
     const fullVias = escapeHtml(viasArr.join(' → '));
-    return `<span class="badge bg-light text-dark border px-2 py-1 two-line-clamp text-start" style="font-size: 10.5px; font-weight: 500; max-width: 130px;" title="${fullVias}"><i class="bi bi-signpost-split text-warning me-1"></i>${fullVias}</span>`;
+    return `<span class="badge bg-light text-dark border px-2 py-1 two-line-clamp text-start" style="font-size: 10.5px; font-weight: 500; max-width: 130px;" title="${fullVias}">${fullVias}</span>`;
 }
 
 // 🛠️ Render a complete table row for a booking

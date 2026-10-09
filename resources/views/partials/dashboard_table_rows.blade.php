@@ -206,9 +206,7 @@
                 $viasFull = implode(' → ', $viasList);
             @endphp
             @if($viasCount > 0)
-                <span class="badge bg-light text-dark border px-1.5 py-1 two-line-clamp text-start" style="font-size: 10px; font-weight: 500; max-width: 85px; white-space: normal; line-height: 1.15;" title="{{ $viasFull }}">
-                    <i class="bi bi-signpost-split text-warning me-0.5"></i>{{ $viasFull }}
-                </span>
+                <span class="badge bg-light text-dark border px-1.5 py-1 two-line-clamp text-start" style="font-size: 10px; font-weight: 500; max-width: 85px; white-space: normal; line-height: 1.15;" title="{{ $viasFull }}">{{ $viasFull }}</span>
             @else
                 <span class="text-muted small">-</span>
             @endif
