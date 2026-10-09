@@ -2110,9 +2110,7 @@ function buildBookingRowHtml(booking, isNew = false) {
 
     const passengerPhone = booking.phone_no || '';
     const passengerPhoneHtml = passengerPhone ? `
-        <a href="tel:${escapeHtml(passengerPhone)}" class="font-monospace text-decoration-none text-muted d-inline-block text-truncate mt-0.5" style="max-width: 100%; font-size: 11px; letter-spacing: 0.2px;" title="${escapeHtml(passengerPhone)}">
-            <i class="bi bi-telephone text-muted me-1" style="font-size: 9.5px;"></i>${escapeHtml(passengerPhone)}
-        </a>` : '';
+        <a href="tel:${escapeHtml(passengerPhone)}" class="font-monospace text-decoration-none text-muted d-inline-block text-truncate mt-0.5" style="max-width: 100%; font-size: 11px; letter-spacing: 0.2px;" title="${escapeHtml(passengerPhone)}">${escapeHtml(passengerPhone)}</a>` : '';
 
     const hasFlight = booking.flight_no && booking.flight_no !== '-' && booking.flight_no !== 'undefined';
     const cleanFlight = hasFlight ? String(booking.flight_no).trim() : '';
@@ -2178,12 +2176,14 @@ function buildBookingRowHtml(booking, isNew = false) {
         </td>
         <td class="col-datetime text-nowrap">
             <div class="d-flex flex-column align-items-start" title="${escapeHtml(fullDateTimeTitle)}">
-                <span class="text-dark fw-bold font-monospace" style="font-size: 11.5px; letter-spacing: 0.2px;">
-                    <i class="bi bi-calendar-event me-1 text-muted" style="font-size: 10px;"></i>${escapeHtml(pickupDate)}
-                </span>
-                <span class="timeline-time-badge mt-0.5">
-                    <i class="bi bi-clock me-1 text-primary"></i>${escapeHtml(pickupTime)}
-                </span>
+                <div class="d-flex align-items-center text-dark fw-bold" style="font-size: 12px; line-height: 1.3;">
+                    <i class="bi bi-calendar3 me-1.5 text-secondary" style="font-size: 10.5px;"></i>
+                    <span>${escapeHtml(pickupDate)}</span>
+                </div>
+                <div class="d-flex align-items-center text-muted fw-bold font-monospace mt-0.5" style="font-size: 11.5px; line-height: 1.3;">
+                    <i class="bi bi-clock me-1.5 text-primary" style="font-size: 10px;"></i>
+                    <span class="text-dark">${escapeHtml(pickupTime)}</span>
+                </div>
             </div>
         </td>
         <td class="col-vehicle">
