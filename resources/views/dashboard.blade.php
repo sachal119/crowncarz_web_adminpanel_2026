@@ -468,8 +468,20 @@ td{
 .custom-dashboard-table tbody tr {
     transition: background-color 0.15s ease;
 }
-.custom-dashboard-table tbody tr:not(.high-value-row):hover {
+.custom-dashboard-table tbody tr:not(.high-value-row):hover,
+.custom-dashboard-table tbody tr:not(.high-value-row):hover > td,
+.custom-dashboard-table.table-hover > tbody > tr:not(.high-value-row):hover > * {
     background-color: #f1f5f9 !important;
+    --bs-table-hover-bg: #f1f5f9 !important;
+    --bs-table-accent-bg: #f1f5f9 !important;
+}
+[data-bs-theme="dark"] .custom-dashboard-table tbody tr:not(.high-value-row):hover,
+[data-bs-theme="dark"] .custom-dashboard-table tbody tr:not(.high-value-row):hover > td,
+[data-bs-theme="dark"] .custom-dashboard-table.table-hover > tbody > tr:not(.high-value-row):hover > * {
+    background-color: #1a2333 !important;
+    --bs-table-hover-bg: #1a2333 !important;
+    --bs-table-accent-bg: #1a2333 !important;
+    color: #f1f5f9 !important;
 }
 .custom-dashboard-table td {
     padding: 9px 8px;
@@ -511,6 +523,11 @@ td{
     min-width: 130px;
     max-width: 170px;
 }
+.custom-dashboard-table .col-driver,
+.custom-dashboard-table th.th-driver {
+    min-width: 110px;
+    max-width: 155px;
+}
 .custom-dashboard-table .col-route,
 .custom-dashboard-table th.th-route {
     min-width: 220px;
@@ -521,9 +538,9 @@ td{
     min-width: 105px;
     white-space: nowrap;
 }
-.custom-dashboard-table .col-vehicle,
-.custom-dashboard-table th.th-vehicle {
-    min-width: 95px;
+.custom-dashboard-table .col-flight,
+.custom-dashboard-table th.th-flight {
+    min-width: 85px;
     text-align: left;
 }
 .custom-dashboard-table .col-actions,
@@ -856,7 +873,7 @@ td{
                             <th class="py-2.5 px-2 th-driver">Driver</th>
                             <th class="py-2.5 px-2 th-route">Pickup &amp; Dropoff</th>
                             <th class="py-2.5 px-2 th-datetime">Date &amp; Time</th>
-                            <th class="py-2.5 px-2 th-vehicle">Vehicle / Flight</th>
+                            <th class="py-2.5 px-2 th-flight">Flight</th>
                             <th class="py-2.5 px-2 th-price">Price</th>
                             <th class="py-2.5 px-2 th-comments">Comments</th>
                             <th class="py-2.5 px-2 th-status">Status</th>
@@ -1972,26 +1989,46 @@ function getDriverBadgeHtml(booking) {
     if (driver) {
         const name = driver.name || 'Driver';
         const number = driver.call_sign || driver.phone || driver.phone_no || '';
+        let subText = '';
+        if (number && vMake) {
+            subText = `${number}/${vMake}`;
+        } else if (number) {
+            subText = number;
+        } else if (vMake) {
+            subText = vMake;
+        }
         return `
         <div class="d-flex flex-column align-items-start gap-1">
             <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(name)}">
                 ${escapeHtml(name)}
             </span>
-            ${number ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 120px;" title="${escapeHtml(number)}">${escapeHtml(number)}</span>` : ''}
+            ${subText ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="${escapeHtml(subText)}">${escapeHtml(subText)}</span>` : ''}
         </div>`;
     } else if (dName || dCall || (booking.driver && typeof booking.driver === 'string' && booking.driver.trim() !== '')) {
         const name = dName || booking.driver || 'Driver';
         const number = dCall || booking.driver_phone || '';
+        let subText = '';
+        if (number && vMake) {
+            subText = `${number}/${vMake}`;
+        } else if (number) {
+            subText = number;
+        } else if (vMake) {
+            subText = vMake;
+        }
         return `
         <div class="d-flex flex-column align-items-start gap-1">
             <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(name)}">
                 ${escapeHtml(name)}
             </span>
-            ${number ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 120px;" title="${escapeHtml(number)}">${escapeHtml(number)}</span>` : ''}
+            ${subText ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="${escapeHtml(subText)}">${escapeHtml(subText)}</span>` : ''}
         </div>`;
     }
 
-    return `<span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>`;
+    return `
+    <div class="d-flex flex-column align-items-start gap-1">
+        <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>
+        ${vMake ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="${escapeHtml(vMake)}">${escapeHtml(vMake)}</span>` : ''}
+    </div>`;
 }
 
 // 🎨 Helper to format vias badge
@@ -2120,10 +2157,10 @@ function buildBookingRowHtml(booking, isNew = false) {
            rel="noopener noreferrer" 
            onclick="openFlightTracker(event, '${cleanFlight.replace(/'/g, "\\'")}')"
            class="flight-track-badge" 
-           style="font-size: 10.5px; padding: 2px 6px;"
+           style="font-size: 11px; padding: 2.5px 7px;"
            title="Click to track flight ${escapeHtml(cleanFlight)} in new tab">
             <i class="bi bi-airplane-fill flight-icon"></i>
-            <span class="text-truncate" style="max-width: 75px;">${escapeHtml(cleanFlight)}</span>
+            <span class="text-truncate" style="max-width: 80px;">${escapeHtml(cleanFlight)}</span>
             <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
         </a>` : '';
 
@@ -2186,11 +2223,8 @@ function buildBookingRowHtml(booking, isNew = false) {
                 </div>
             </div>
         </td>
-        <td class="col-vehicle">
-            <div class="d-flex flex-column align-items-start gap-1">
-                ${getVehicleBadgeHtml(booking.vehicle_make)}
-                ${flightHtml}
-            </div>
+        <td class="col-flight">
+            ${flightHtml || '<span class="text-muted" style="font-size: 11px;">-</span>'}
         </td>
         <td class="col-price text-nowrap">${priceDisplayHtml}</td>
         <td class="col-comment" title="${commentText}">

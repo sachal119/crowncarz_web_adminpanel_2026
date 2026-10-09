@@ -143,18 +143,30 @@
             </div>
         </td>
         <td class="col-driver driver-cell" style="{{ $rowStyle }}">
+            @php
+                $vMake = $booking['vehicle_make'] ?? '';
+                $cleanVMake = (!empty($vMake) && $vMake !== '-') ? $vMake : '';
+            @endphp
             @if($driver)
                 @php
                     $dName = $driver['name'] ?? 'Driver';
                     $dNumber = $driver['call_sign'] ?? ($driver['callsign'] ?? ($driver['phone'] ?? ($driver['phone_no'] ?? '')));
+                    $driverCallSignVehicle = '';
+                    if (!empty($dNumber) && !empty($cleanVMake)) {
+                        $driverCallSignVehicle = $dNumber . '/' . $cleanVMake;
+                    } elseif (!empty($dNumber)) {
+                        $driverCallSignVehicle = $dNumber;
+                    } elseif (!empty($cleanVMake)) {
+                        $driverCallSignVehicle = $cleanVMake;
+                    }
                 @endphp
                 <div class="d-flex flex-column align-items-start gap-1">
                     <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="{{ $dName }}">
                         {{ $dName }}
                     </span>
-                    @if(!empty($dNumber))
-                        <span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 120px;" title="{{ $dNumber }}">
-                            {{ $dNumber }}
+                    @if(!empty($driverCallSignVehicle))
+                        <span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="{{ $driverCallSignVehicle }}">
+                            {{ $driverCallSignVehicle }}
                         </span>
                     @endif
                 </div>
@@ -162,19 +174,34 @@
                 @php
                     $dName = $bDriverName ?: ($booking['driver'] ?? 'Driver');
                     $dNumber = $bDriverCallSign ?: ($booking['driver_phone'] ?? '');
+                    $driverCallSignVehicle = '';
+                    if (!empty($dNumber) && !empty($cleanVMake)) {
+                        $driverCallSignVehicle = $dNumber . '/' . $cleanVMake;
+                    } elseif (!empty($dNumber)) {
+                        $driverCallSignVehicle = $dNumber;
+                    } elseif (!empty($cleanVMake)) {
+                        $driverCallSignVehicle = $cleanVMake;
+                    }
                 @endphp
                 <div class="d-flex flex-column align-items-start gap-1">
                     <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="{{ $dName }}">
                         {{ $dName }}
                     </span>
-                    @if(!empty($dNumber))
-                        <span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 120px;" title="{{ $dNumber }}">
-                            {{ $dNumber }}
+                    @if(!empty($driverCallSignVehicle))
+                        <span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="{{ $driverCallSignVehicle }}">
+                            {{ $driverCallSignVehicle }}
                         </span>
                     @endif
                 </div>
             @else
-                <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;" title="No driver assigned yet">Not Assigned</span>
+                <div class="d-flex flex-column align-items-start gap-1">
+                    <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;" title="No driver assigned yet">Not Assigned</span>
+                    @if(!empty($cleanVMake))
+                        <span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="{{ $cleanVMake }}">
+                            {{ $cleanVMake }}
+                        </span>
+                    @endif
+                </div>
             @endif
         </td>
         <td class="col-route" style="{{ $rowStyle }}">
@@ -236,36 +263,26 @@
                 </div>
             </div>
         </td>
-        <td class="col-vehicle" style="{{ $rowStyle }}">
+        <td class="col-flight" style="{{ $rowStyle }}">
             @php
-                $type = $booking['vehicle_make'] ?? '-';
-                $badges = [
-                    'Saloon' => 'primary',
-                    'Estate' => 'success',
-                    'MPV' => 'warning',
-                    '8 Seater' => 'danger',
-                    'Executive' => 'dark',
-                ];
-                $badgeClass = $badges[$type] ?? 'secondary';
                 $hasFlight = !empty($booking['flight_no']) && $booking['flight_no'] !== '-' && $booking['flight_no'] !== 'undefined';
                 $fNo = $hasFlight ? trim($booking['flight_no']) : '';
             @endphp
-            <div class="d-flex flex-column align-items-start gap-1">
-                <span class="badge bg-{{ $badgeClass }} px-2 py-0.5" style="font-size: 10.5px; font-weight: 600;" title="{{ $type }}">{{ $type }}</span>
-                @if($hasFlight)
-                    <a href="https://www.google.com/search?q={{ urlencode('flight ' . $fNo) }}" 
-                       target="_blank" 
-                       rel="noopener noreferrer" 
-                       onclick="openFlightTracker(event, '{{ addslashes($fNo) }}')"
-                       class="flight-track-badge" 
-                       style="font-size: 10.5px; padding: 2px 6px;"
-                       title="Click to track flight {{ $fNo }} in new tab">
-                        <i class="bi bi-airplane-fill flight-icon"></i>
-                        <span class="text-truncate" style="max-width: 75px;">{{ $fNo }}</span>
-                        <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
-                    </a>
-                @endif
-            </div>
+            @if($hasFlight)
+                <a href="https://www.google.com/search?q={{ urlencode('flight ' . $fNo) }}" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   onclick="openFlightTracker(event, '{{ addslashes($fNo) }}')"
+                   class="flight-track-badge" 
+                   style="font-size: 11px; padding: 2.5px 7px;"
+                   title="Click to track flight {{ $fNo }} in new tab">
+                    <i class="bi bi-airplane-fill flight-icon"></i>
+                    <span class="text-truncate" style="max-width: 80px;">{{ $fNo }}</span>
+                    <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
+                </a>
+            @else
+                <span class="text-muted" style="font-size: 11px;">-</span>
+            @endif
         </td>
         <td class="col-price text-nowrap">
             @if($isHighPrice)
