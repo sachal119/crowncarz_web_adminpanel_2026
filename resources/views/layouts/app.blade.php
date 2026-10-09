@@ -508,20 +508,25 @@
       font-weight: 600 !important;
     }
 
+    [data-bs-theme="dark"] .col-passenger a,
     [data-bs-theme="dark"] .col-phone a,
     [data-bs-theme="dark"] .col-phone {
-      color: #e2e8f0 !important;
+      color: #94a3b8 !important;
     }
+    [data-bs-theme="dark"] .col-passenger a:hover,
     [data-bs-theme="dark"] .col-phone a:hover {
       color: #38bdf8 !important;
     }
 
+    [data-bs-theme="dark"] .col-route span,
     [data-bs-theme="dark"] .col-pickup span,
     [data-bs-theme="dark"] .col-dropoff span {
       color: #e2e8f0 !important;
     }
 
-    [data-bs-theme="dark"] .col-date {
+    [data-bs-theme="dark"] .col-date,
+    [data-bs-theme="dark"] .col-datetime span,
+    [data-bs-theme="dark"] .col-datetime {
       color: #e2e8f0 !important;
     }
 

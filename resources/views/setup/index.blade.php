@@ -332,6 +332,220 @@
             padding: 12px 10px;
         }
     }
+
+    /* ==========================================================
+       🌙 SETUP SCREEN DARK MODE STYLES
+       ========================================================== */
+    [data-bs-theme="dark"] h2,
+    [data-bs-theme="dark"] h3,
+    [data-bs-theme="dark"] .form-card-title,
+    [data-bs-theme="dark"] .setup-directory-header h3,
+    [data-bs-theme="dark"] .staff-directory-header h3 {
+        color: #f8fafc !important;
+    }
+
+    [data-bs-theme="dark"] label {
+        color: #cbd5e1 !important;
+    }
+
+    [data-bs-theme="dark"] .nav-tabs {
+        border-bottom-color: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .nav-tabs .nav-link {
+        color: #94a3b8 !important;
+    }
+
+    [data-bs-theme="dark"] .nav-tabs .nav-link:hover {
+        background-color: #1e293b !important;
+        border-color: #334155 #334155 transparent !important;
+        color: #f8fafc !important;
+    }
+
+    [data-bs-theme="dark"] .nav-tabs .nav-link.active {
+        background: linear-gradient(135deg, #b5651d, #cf7925) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(181, 101, 29, 0.4) !important;
+    }
+
+    [data-bs-theme="dark"] .form-card,
+    [data-bs-theme="dark"] .setup-directory,
+    [data-bs-theme="dark"] .staff-directory {
+        background: #111827 !important;
+        border-color: #334155 !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    [data-bs-theme="dark"] .form-card-title,
+    [data-bs-theme="dark"] .setup-directory-header,
+    [data-bs-theme="dark"] .staff-directory-header {
+        background: #1e293b !important;
+        border-bottom: 1px solid #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .setup-table thead th,
+    [data-bs-theme="dark"] .staff-table th {
+        background: #0b1320 !important;
+        color: #94a3b8 !important;
+        border-color: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .setup-table td,
+    [data-bs-theme="dark"] .staff-table td {
+        background: transparent !important;
+        color: #f1f5f9 !important;
+        border-color: #1e293b !important;
+    }
+
+    [data-bs-theme="dark"] .setup-table tbody tr.driver-row:hover,
+    [data-bs-theme="dark"] .staff-table tbody tr:hover {
+        background-color: #1e293b !important;
+    }
+
+    [data-bs-theme="dark"] .text-dark {
+        color: #f1f5f9 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: #94a3b8 !important;
+    }
+
+    [data-bs-theme="dark"] .form-control,
+    [data-bs-theme="dark"] .form-select {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    [data-bs-theme="dark"] .form-control:focus,
+    [data-bs-theme="dark"] .form-select:focus {
+        background-color: #1e293b !important;
+        border-color: #E6B04A !important;
+        color: #f8fafc !important;
+        box-shadow: 0 0 0 0.2rem rgba(230, 176, 74, 0.25) !important;
+    }
+
+    [data-bs-theme="dark"] .form-control::placeholder {
+        color: #64748b !important;
+    }
+
+    [data-bs-theme="dark"] .input-group-text {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #94a3b8 !important;
+    }
+
+    [data-bs-theme="dark"] .alert-light {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #cbd5e1 !important;
+    }
+
+    [data-bs-theme="dark"] .alert-warning {
+        background-color: rgba(245, 158, 11, 0.15) !important;
+        border-color: rgba(245, 158, 11, 0.3) !important;
+        color: #fcd34d !important;
+    }
+
+    [data-bs-theme="dark"] .form-text {
+        color: #94a3b8 !important;
+    }
+
+    [data-bs-theme="dark"] .btn-outline-dark {
+        color: #e2e8f0 !important;
+        border-color: #475569 !important;
+    }
+
+    [data-bs-theme="dark"] .btn-outline-dark:hover {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+    }
+
+    [data-bs-theme="dark"] .btn-outline-secondary {
+        color: #94a3b8 !important;
+        border-color: #475569 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.text-bg-dark {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+        border: 1px solid #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.text-bg-light,
+    [data-bs-theme="dark"] .badge.bg-light {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+        border-color: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .staff-role-admin {
+        background: rgba(59, 130, 246, 0.2) !important;
+        color: #60a5fa !important;
+        border: 1px solid rgba(59, 130, 246, 0.4) !important;
+    }
+
+    [data-bs-theme="dark"] .staff-role-collaborator {
+        background: rgba(245, 158, 11, 0.2) !important;
+        color: #fbbf24 !important;
+        border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    }
+
+    [data-bs-theme="dark"] .callsign-badge {
+        background: #1e293b !important;
+        color: #fbbf24 !important;
+        border-color: #78350f !important;
+    }
+
+    [data-bs-theme="dark"] .vehicle-item-badge {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+    [data-bs-theme="dark"] .vehicle-item-badge:hover {
+        background: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .reg-plate,
+    [data-bs-theme="dark"] .reg-plate-uk {
+        background: #fbbf24 !important;
+        color: #0f172a !important;
+        border-color: #d97706 !important;
+    }
+
+    [data-bs-theme="dark"] .bg-light,
+    [data-bs-theme="dark"] .bg-light.bg-opacity-75 {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .modal-content {
+        background-color: #111827 !important;
+        color: #f8fafc !important;
+        border: 1px solid #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .modal-header,
+    [data-bs-theme="dark"] .modal-footer {
+        border-color: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .modal-body.bg-light,
+    [data-bs-theme="dark"] .modal-footer.bg-light,
+    [data-bs-theme="dark"] .modal-footer.bg-white {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .modal-body .bg-white {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .modal-title {
+        color: #f8fafc !important;
+    }
 </style>
 
 {{-- Driver & Vehicle Mapping Logic --}}

@@ -506,21 +506,31 @@ td{
 .statusSelect:focus {
     box-shadow: 0 0 0 2px rgba(184, 115, 51, 0.3);
 }
-.custom-dashboard-table .col-pickup,
-.custom-dashboard-table th.th-pickup {
-    min-width: 175px;
-    max-width: 220px;
+.custom-dashboard-table .col-passenger,
+.custom-dashboard-table th.th-passenger {
+    min-width: 130px;
+    max-width: 170px;
 }
-.custom-dashboard-table .col-dropoff,
-.custom-dashboard-table th.th-dropoff {
-    min-width: 175px;
-    max-width: 220px;
+.custom-dashboard-table .col-route,
+.custom-dashboard-table th.th-route {
+    min-width: 220px;
+    max-width: 320px;
 }
 .custom-dashboard-table .col-vias,
 .custom-dashboard-table th.th-vias {
     width: 85px;
     min-width: 75px;
     max-width: 95px;
+}
+.custom-dashboard-table .col-datetime,
+.custom-dashboard-table th.th-datetime {
+    min-width: 105px;
+    white-space: nowrap;
+}
+.custom-dashboard-table .col-vehicle,
+.custom-dashboard-table th.th-vehicle {
+    min-width: 95px;
+    text-align: center;
 }
 </style>
 
@@ -840,27 +850,23 @@ td{
             <!-- 📊 Table View Container -->
             <div id="bookingTableViewWrapper" class="table-responsive">
                 <table class="table table-hover align-middle mb-0 custom-dashboard-table" id="futureBookingsTable">
-                   <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-    <tr class="text-uppercase text-muted" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 700;">
-        <th class="py-2.5 px-3 th-ref">Ref#</th>
-        <th class="py-2.5 px-2 th-payment">Account Type</th>
-        <th class="py-2.5 px-2 th-passenger">Passenger</th>
-        <th class="py-2.5 px-2 th-driver">Driver</th>
-        <th class="py-2.5 px-2 th-phone">Phone</th>
-        <th class="py-2.5 px-2 th-pickup">Pickup</th>
-        <th class="py-2.5 px-2 th-dropoff">Dropoff</th>
-        <th class="py-2.5 px-2 text-center th-vias">Vias</th>
-        <th class="py-2.5 px-2 th-date">Job Date</th>
-        <th class="py-2.5 px-2 th-time">Job Time</th>
-        <th class="py-2.5 px-2 text-center th-vehicle">Vehicle</th>
-        <th class="py-2.5 px-2 th-flight">Flight</th>
-        <th class="py-2.5 px-2 th-price">Price</th>
-        <th class="py-2.5 px-2 th-comments">Comments</th>
-        <th class="py-2.5 px-2 th-status">Status</th>
-        <th class="py-2.5 px-2 text-center th-platform">Platform</th>
-        <th class="py-2.5 px-3 text-center th-actions">Actions</th>
-    </tr>
-</thead>
+                    <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                        <tr class="text-uppercase text-muted" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 700;">
+                            <th class="py-2.5 px-3 th-ref">Ref#</th>
+                            <th class="py-2.5 px-2 th-payment">Account Type</th>
+                            <th class="py-2.5 px-2 th-passenger">Passenger</th>
+                            <th class="py-2.5 px-2 th-driver">Driver</th>
+                            <th class="py-2.5 px-2 th-route">Pickup &amp; Dropoff</th>
+                            <th class="py-2.5 px-2 text-center th-vias">Vias</th>
+                            <th class="py-2.5 px-2 th-datetime">Date &amp; Time</th>
+                            <th class="py-2.5 px-2 text-center th-vehicle">Vehicle / Flight</th>
+                            <th class="py-2.5 px-2 th-price">Price</th>
+                            <th class="py-2.5 px-2 th-comments">Comments</th>
+                            <th class="py-2.5 px-2 th-status">Status</th>
+                            <th class="py-2.5 px-2 text-center th-platform">Platform</th>
+                            <th class="py-2.5 px-3 text-center th-actions">Actions</th>
+                        </tr>
+                    </thead>
 <tbody class="small" id="bookingsTableBody">
 @include('partials.dashboard_table_rows', ['bookings' => $bookings, 'drivers' => $drivers, 'accounts' => $accounts])
 </tbody>
@@ -2098,44 +2104,70 @@ function buildBookingRowHtml(booking, isNew = false) {
         ? `<span class="high-price-badge">£${priceNum.toFixed(2)}</span>`
         : `<span class="normal-price-text">${formattedPrice}</span>`;
 
+    const passengerPhone = booking.phone_no || '';
+    const passengerPhoneHtml = passengerPhone ? `
+        <a href="tel:${escapeHtml(passengerPhone)}" class="font-monospace text-decoration-none text-muted d-inline-block text-truncate mt-0.5" style="max-width: 100%; font-size: 11px; letter-spacing: 0.2px;" title="${escapeHtml(passengerPhone)}">
+            <i class="bi bi-telephone text-muted me-1" style="font-size: 9.5px;"></i>${escapeHtml(passengerPhone)}
+        </a>` : '';
+
+    const hasFlight = booking.flight_no && booking.flight_no !== '-' && booking.flight_no !== 'undefined';
+    const cleanFlight = hasFlight ? String(booking.flight_no).trim() : '';
+    const flightHtml = hasFlight ? `
+        <a href="https://www.google.com/search?q=${encodeURIComponent('flight ' + cleanFlight)}" 
+           target="_blank" 
+           rel="noopener noreferrer" 
+           onclick="openFlightTracker(event, '${cleanFlight.replace(/'/g, "\\'")}')"
+           class="flight-track-badge" 
+           style="font-size: 10.5px; padding: 2px 6px;"
+           title="Click to track flight ${escapeHtml(cleanFlight)} in new tab">
+            <i class="bi bi-airplane-fill flight-icon"></i>
+            <span class="text-truncate" style="max-width: 75px;">${escapeHtml(cleanFlight)}</span>
+            <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
+        </a>` : '';
+
+    const fullDateTimeTitle = `${pickupDate} - ${pickupTime}`;
+
     return `
     <tr id="booking-row-${id}" data-booking-id="${id}" class="booking-table-row align-middle ${highlightClass} ${highValueClass}">
         <td class="col-ref fw-bold text-nowrap">
             <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">${booking.ref_no || 'N/A'}</span>
         </td>
         <td class="col-payment">${getPaymentBadgeHtml(booking.payment_type, accName)}</td>
-        <td class="col-passenger fw-semibold" title="${passengerName}">
-            <span class="two-line-clamp text-dark" style="max-width: 140px; font-size: 11.5px;">${passengerName}</span>
+        <td class="col-passenger">
+            <div class="d-flex flex-column align-items-start" style="max-width: 145px;">
+                <span class="two-line-clamp fw-semibold text-dark" style="font-size: 11.5px; line-height: 1.25;" title="${escapeHtml(passengerName)}">${escapeHtml(passengerName)}</span>
+                ${passengerPhoneHtml}
+            </div>
         </td>
         <td class="col-driver driver-cell">${driverHtml}</td>
-        <td class="col-phone font-monospace">
-            <a href="tel:${booking.phone_no || ''}" class="text-decoration-none text-dark" style="font-size: 11.5px;" title="${booking.phone_no || 'N/A'}">
-                ${booking.phone_no || 'N/A'}
-            </a>
-        </td>
-        <td class="col-pickup" title="${pickupAddress}">
-            <span class="two-line-clamp text-dark" style="max-width: 145px; font-size: 11.5px;">${pickupAddress}</span>
-        </td>
-        <td class="col-dropoff" title="${dropoffAddress}">
-            <span class="two-line-clamp text-dark" style="max-width: 145px; font-size: 11.5px;">${dropoffAddress}</span>
+        <td class="col-route">
+            <div class="d-flex flex-column gap-1" style="max-width: 280px;">
+                <div class="d-flex align-items-center text-truncate" title="Pickup: ${escapeHtml(pickupAddress)}">
+                    <i class="bi bi-geo-alt-fill text-success me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
+                    <span class="text-truncate text-dark fw-medium" style="font-size: 11.5px; line-height: 1.25;">${escapeHtml(pickupAddress)}</span>
+                </div>
+                <div class="d-flex align-items-center text-truncate" title="Dropoff: ${escapeHtml(dropoffAddress)}">
+                    <i class="bi bi-geo-alt-fill text-danger me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
+                    <span class="text-truncate text-muted" style="font-size: 11.5px; line-height: 1.25;">${escapeHtml(dropoffAddress)}</span>
+                </div>
+            </div>
         </td>
         <td class="col-vias text-center">${viasText}</td>
-        <td class="col-date fw-semibold text-nowrap">${pickupDate}</td>
-        <td class="col-time font-monospace text-nowrap fw-bold"><span class="timeline-time-badge"><i class="bi bi-clock me-1 text-primary"></i>${pickupTime}</span></td>
-        <td class="col-vehicle text-center">${getVehicleBadgeHtml(booking.vehicle_make)}</td>
-        <td class="col-flight text-nowrap" title="${flightNo}">
-            ${flightNo !== '-' ? `
-                <a href="https://www.google.com/search?q=${encodeURIComponent(flightNo)}" 
-                   target="_blank" 
-                   rel="noopener noreferrer" 
-                   onclick="openFlightTracker(event, '${flightNo.replace(/'/g, "\\'")}')"
-                   class="flight-track-badge" 
-                   title="Click to track flight ${flightNo} on Google">
-                    <i class="bi bi-airplane-fill flight-icon"></i>
-                    <span>${flightNo}</span>
-                    <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
-                </a>
-            ` : '<span class="text-muted small">-</span>'}
+        <td class="col-datetime text-nowrap">
+            <div class="d-flex flex-column align-items-start" title="${escapeHtml(fullDateTimeTitle)}">
+                <span class="text-dark fw-bold font-monospace" style="font-size: 11.5px; letter-spacing: 0.2px;">
+                    <i class="bi bi-calendar-event me-1 text-muted" style="font-size: 10px;"></i>${escapeHtml(pickupDate)}
+                </span>
+                <span class="timeline-time-badge mt-0.5">
+                    <i class="bi bi-clock me-1 text-primary"></i>${escapeHtml(pickupTime)}
+                </span>
+            </div>
+        </td>
+        <td class="col-vehicle">
+            <div class="d-flex flex-column align-items-center gap-1">
+                ${getVehicleBadgeHtml(booking.vehicle_make)}
+                ${flightHtml}
+            </div>
         </td>
         <td class="col-price text-nowrap">${priceDisplayHtml}</td>
         <td class="col-comment" title="${commentText}">

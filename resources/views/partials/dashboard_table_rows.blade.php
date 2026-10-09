@@ -111,7 +111,7 @@
     @if($currentTimelineGroup && $currentTimelineGroup !== $lastTimelineDate)
         @php $lastTimelineDate = $currentTimelineGroup; @endphp
         <tr class="timeline-date-divider-row" data-timeline-group="{{ $currentTimelineGroup }}">
-            <td colspan="17" class="timeline-date-divider-cell p-0">
+            <td colspan="13" class="timeline-date-divider-cell p-0">
                 <div class="timeline-date-header-clean d-flex align-items-center justify-content-between px-3 py-2">
                     <div class="d-flex align-items-center gap-2">
                         <span class="timeline-calendar-icon-box">
@@ -180,8 +180,19 @@
                 @endif
             </div>
         </td>
-        <td class="col-passenger fw-semibold" style="{{ $rowStyle }}" title="{{ $booking['passenger_name'] ?? 'N/A' }}">
-            <span class="two-line-clamp text-dark" style="max-width: 140px; font-size: 11.5px;">{{ $booking['passenger_name'] ?? 'N/A' }}</span>
+        <td class="col-passenger" style="{{ $rowStyle }}">
+            @php
+                $pName = $booking['passenger_name'] ?? 'N/A';
+                $pPhone = $booking['phone_no'] ?? '';
+            @endphp
+            <div class="d-flex flex-column align-items-start" style="max-width: 145px;">
+                <span class="two-line-clamp fw-semibold text-dark" style="font-size: 11.5px; line-height: 1.25;" title="{{ $pName }}">{{ $pName }}</span>
+                @if(!empty($pPhone))
+                    <a href="tel:{{ $pPhone }}" class="font-monospace text-decoration-none text-muted d-inline-block text-truncate mt-0.5" style="max-width: 100%; font-size: 11px; letter-spacing: 0.2px;" title="{{ $pPhone }}">
+                        <i class="bi bi-telephone text-muted me-1" style="font-size: 9.5px;"></i>{{ $pPhone }}
+                    </a>
+                @endif
+            </div>
         </td>
         <td class="col-driver driver-cell" style="{{ $rowStyle }}">
             @if($driver)
@@ -218,16 +229,21 @@
                 <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;" title="No driver assigned yet">Not Assigned</span>
             @endif
         </td>
-        <td class="col-phone font-monospace" style="{{ $rowStyle }}">
-            <a href="tel:{{ $booking['phone_no'] ?? '' }}" class="text-decoration-none text-dark" style="font-size: 11.5px;" title="{{ $booking['phone_no'] ?? 'N/A' }}">
-                {{ $booking['phone_no'] ?? 'N/A' }}
-            </a>
-        </td>
-        <td class="col-pickup" style="{{ $rowStyle }}" title="{{ $booking['pickup_address'] ?? '-' }}">
-            <span class="two-line-clamp text-dark" style="max-width: 210px; font-size: 11.5px; line-height: 1.25;">{{ $booking['pickup_address'] ?? '-' }}</span>
-        </td>
-        <td class="col-dropoff" style="{{ $rowStyle }}" title="{{ $booking['dropoff_address'] ?? '-' }}">
-            <span class="two-line-clamp text-dark" style="max-width: 210px; font-size: 11.5px; line-height: 1.25;">{{ $booking['dropoff_address'] ?? '-' }}</span>
+        <td class="col-route" style="{{ $rowStyle }}">
+            @php
+                $pAddress = $booking['pickup_address'] ?? '-';
+                $dAddress = $booking['dropoff_address'] ?? '-';
+            @endphp
+            <div class="d-flex flex-column gap-1" style="max-width: 280px;">
+                <div class="d-flex align-items-center text-truncate" title="Pickup: {{ $pAddress }}">
+                    <i class="bi bi-geo-alt-fill text-success me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
+                    <span class="text-truncate text-dark fw-medium" style="font-size: 11.5px; line-height: 1.25;">{{ $pAddress }}</span>
+                </div>
+                <div class="d-flex align-items-center text-truncate" title="Dropoff: {{ $dAddress }}">
+                    <i class="bi bi-geo-alt-fill text-danger me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
+                    <span class="text-truncate text-muted" style="font-size: 11.5px; line-height: 1.25;">{{ $dAddress }}</span>
+                </div>
+            </div>
         </td>
         <td class="col-vias text-center" style="{{ $rowStyle }}">
             @php
@@ -249,13 +265,34 @@
                 <span class="text-muted small">-</span>
             @endif
         </td>
-        <td class="col-date fw-semibold text-nowrap" style="{{ $rowStyle }}">{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('d M Y') : '-' }}</td>
-        <td class="col-time font-monospace text-nowrap fw-bold" style="{{ $rowStyle }}">
-            <span class="timeline-time-badge">
-                <i class="bi bi-clock me-1 text-primary"></i>{{ isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : '-' }}
-            </span>
+        <td class="col-datetime text-nowrap" style="{{ $rowStyle }}">
+            @php
+                $rawJobDate = $booking['pickup_time'] ?? ($booking['pickup_date'] ?? ($booking['job_date'] ?? null));
+                $formattedDate = '-';
+                $formattedTime = '-';
+                $fullDateTimeTitle = '-';
+                if (!empty($rawJobDate)) {
+                    try {
+                        $dtCarbon = \Carbon\Carbon::parse($rawJobDate);
+                        $formattedDate = $dtCarbon->format('d M Y');
+                        $formattedTime = $dtCarbon->format('H:i');
+                        $fullDateTimeTitle = $dtCarbon->format('l, d M Y - H:i');
+                    } catch (\Exception $e) {
+                        $formattedDate = (string)$rawJobDate;
+                        $fullDateTimeTitle = (string)$rawJobDate;
+                    }
+                }
+            @endphp
+            <div class="d-flex flex-column align-items-start" title="{{ $fullDateTimeTitle }}">
+                <span class="text-dark fw-bold font-monospace" style="font-size: 11.5px; letter-spacing: 0.2px;">
+                    <i class="bi bi-calendar-event me-1 text-muted" style="font-size: 10px;"></i>{{ $formattedDate }}
+                </span>
+                <span class="timeline-time-badge mt-0.5">
+                    <i class="bi bi-clock me-1 text-primary"></i>{{ $formattedTime }}
+                </span>
+            </div>
         </td>
-        <td class="col-vehicle text-center" style="{{ $rowStyle }}">
+        <td class="col-vehicle" style="{{ $rowStyle }}">
             @php
                 $type = $booking['vehicle_make'] ?? '-';
                 $badges = [
@@ -266,25 +303,25 @@
                     'Executive' => 'dark',
                 ];
                 $badgeClass = $badges[$type] ?? 'secondary';
+                $hasFlight = !empty($booking['flight_no']) && $booking['flight_no'] !== '-' && $booking['flight_no'] !== 'undefined';
+                $fNo = $hasFlight ? trim($booking['flight_no']) : '';
             @endphp
-            <span class="badge bg-{{ $badgeClass }} px-2 py-1" style="font-size: 11px; font-weight: 600;">{{ $type }}</span>
-        </td>
-        <td class="col-flight text-nowrap" style="{{ $rowStyle }}" title="{{ $booking['flight_no'] ?? '-' }}">
-            @if(!empty($booking['flight_no']) && $booking['flight_no'] !== '-' && $booking['flight_no'] !== 'undefined')
-                @php $fNo = trim($booking['flight_no']); @endphp
-                <a href="https://www.google.com/search?q={{ urlencode($fNo) }}" 
-                   target="_blank" 
-                   rel="noopener noreferrer" 
-                   onclick="openFlightTracker(event, '{{ addslashes($fNo) }}')"
-                   class="flight-track-badge" 
-                   title="Click to track flight {{ $fNo }} on Google">
-                    <i class="bi bi-airplane-fill flight-icon"></i>
-                    <span>{{ $fNo }}</span>
-                    <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
-                </a>
-            @else
-                <span class="text-muted small">-</span>
-            @endif
+            <div class="d-flex flex-column align-items-center gap-1">
+                <span class="badge bg-{{ $badgeClass }} px-2 py-0.5" style="font-size: 10.5px; font-weight: 600;" title="{{ $type }}">{{ $type }}</span>
+                @if($hasFlight)
+                    <a href="https://www.google.com/search?q={{ urlencode('flight ' . $fNo) }}" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       onclick="openFlightTracker(event, '{{ addslashes($fNo) }}')"
+                       class="flight-track-badge" 
+                       style="font-size: 10.5px; padding: 2px 6px;"
+                       title="Click to track flight {{ $fNo }} in new tab">
+                        <i class="bi bi-airplane-fill flight-icon"></i>
+                        <span class="text-truncate" style="max-width: 75px;">{{ $fNo }}</span>
+                        <i class="bi bi-box-arrow-up-right flight-ext-icon"></i>
+                    </a>
+                @endif
+            </div>
         </td>
         <td class="col-price text-nowrap">
             @if($isHighPrice)
@@ -468,6 +505,6 @@
     </tr>
 @empty
     <tr id="emptyBookingsRow">
-        <td colspan="17" class="text-center text-muted py-4">No future bookings found.</td>
+        <td colspan="13" class="text-center text-muted py-4">No future bookings found.</td>
     </tr>
 @endforelse
