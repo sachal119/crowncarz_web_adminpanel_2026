@@ -676,7 +676,12 @@
 
     [data-bs-theme="dark"] .statusSelect {
       border-radius: 6px !important;
-      font-weight: 600 !important;
+      font-weight: 700 !important;
+      color: #000000 !important;
+    }
+    .statusSelect option {
+      background-color: #1e293b !important;
+      color: #ffffff !important;
     }
 
     [data-bs-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd)>* {

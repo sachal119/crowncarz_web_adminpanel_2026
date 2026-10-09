@@ -25,23 +25,20 @@
             }
         }
 
-        $statusBadges = [
-            'pending'      => 'warning',
-            'accepted'     => 'info',
-            'declined'     => 'danger',
-            'onroute'      => 'primary',
-            'arrived'      => 'success',
-            'pickedup'     => 'success',
-            'completed'    => 'primary',
-            'job_cancelled'=> 'danger',
-            'no_show'      => 'secondary',
+        $statusStyles = [
+            'pending'       => 'background-color: #ffc107 !important; color: #000000 !important; border-color: #ffc107 !important;',
+            'accepted'      => 'background-color: #0dcaf0 !important; color: #000000 !important; border-color: #0dcaf0 !important;',
+            'declined'      => 'background-color: #dc3545 !important; color: #000000 !important; border-color: #dc3545 !important;',
+            'onroute'       => 'background-color: #0d6efd !important; color: #000000 !important; border-color: #0d6efd !important;',
+            'arrived'       => 'background-color: #198754 !important; color: #000000 !important; border-color: #198754 !important;',
+            'pickedup'      => 'background-color: #198754 !important; color: #000000 !important; border-color: #198754 !important;',
+            'completed'     => 'background-color: #0d6efd !important; color: #000000 !important; border-color: #0d6efd !important;',
+            'job_cancelled' => 'background-color: #dc3545 !important; color: #000000 !important; border-color: #dc3545 !important;',
+            'no_show'       => 'background-color: #6c757d !important; color: #000000 !important; border-color: #6c757d !important;',
         ];
 
-        $currentStatus = $booking['status'] ?? 'pending';
-        $statusBadgeClass = $statusBadges[$currentStatus] ?? 'warning';
-        $statusSelectStyle = $statusBadgeClass === 'secondary' 
-            ? '' 
-            : "background-color: var(--bs-{$statusBadgeClass}); color: var(--bs-black); border-color: var(--bs-{$statusBadgeClass});";
+        $currentStatus = strtolower($booking['status'] ?? 'pending');
+        $statusSelectStyle = $statusStyles[$currentStatus] ?? $statusStyles['pending'];
 
         $paymentType = strtolower($booking['payment_type'] ?? 'unknown');
         $paymentColors = [

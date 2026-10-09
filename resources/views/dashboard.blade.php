@@ -1962,11 +1962,22 @@ function getVehicleBadgeHtml(vehicleMake) {
     return `<span class="badge bg-${badgeClass}" style="font-size: 0.85rem;">${make}</span>`;
 }
 
+const STATUS_STYLES_MAP = {
+    'pending': 'background-color: #ffc107 !important; color: #000000 !important; border-color: #ffc107 !important;',
+    'accepted': 'background-color: #0dcaf0 !important; color: #000000 !important; border-color: #0dcaf0 !important;',
+    'declined': 'background-color: #dc3545 !important; color: #000000 !important; border-color: #dc3545 !important;',
+    'onroute': 'background-color: #0d6efd !important; color: #000000 !important; border-color: #0d6efd !important;',
+    'arrived': 'background-color: #198754 !important; color: #000000 !important; border-color: #198754 !important;',
+    'pickedup': 'background-color: #198754 !important; color: #000000 !important; border-color: #198754 !important;',
+    'completed': 'background-color: #0d6efd !important; color: #000000 !important; border-color: #0d6efd !important;',
+    'job_cancelled': 'background-color: #dc3545 !important; color: #000000 !important; border-color: #dc3545 !important;',
+    'no_show': 'background-color: #6c757d !important; color: #000000 !important; border-color: #6c757d !important;',
+};
+
 // 🎨 Helper to format status select style
 function getStatusSelectStyle(status) {
-    const badgeClass = STATUS_BADGES[status] || 'warning';
-    if (badgeClass === 'secondary') return '';
-    return `background-color: var(--bs-${badgeClass}); color: var(--bs-black); border-color: var(--bs-${badgeClass});`;
+    const s = String(status || 'pending').toLowerCase();
+    return STATUS_STYLES_MAP[s] || STATUS_STYLES_MAP['pending'];
 }
 
 // 🎨 Helper to format driver badge
