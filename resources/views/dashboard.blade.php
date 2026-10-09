@@ -970,11 +970,14 @@ td{
                     <!-- 📄 Per Page Selector -->
                     <div class="d-flex align-items-center gap-1" id="perPageSelectorWrapper">
                         <label for="perPageSelect" class="text-muted fw-semibold mb-0 text-nowrap" style="font-size: 11px;">Per Page:</label>
-                        <select id="perPageSelect" class="form-select form-select-sm fw-semibold" style="font-size: 11px; width: 68px; padding: 2px 20px 2px 8px; height: 26px; border-radius: 6px; cursor: pointer;" onchange="changePerPage(this.value)">
-                            @foreach([10, 20, 50, 100, 200] as $size)
-                                <option value="{{ $size }}" {{ (request('per_page', 20) == $size) ? 'selected' : '' }}>{{ $size }}</option>
-                            @endforeach
-                        </select>
+                        <div class="d-inline-flex align-items-center">
+                            <select id="perPageSelect" class="form-select form-select-sm fw-semibold" style="font-size: 11px; width: 68px; padding: 2px 20px 2px 8px; height: 26px; border-radius: 6px; cursor: pointer;" onchange="changePerPage(this.value)">
+                                @foreach([10, 20, 50, 100, 200] as $size)
+                                    <option value="{{ $size }}" {{ (request('per_page', 20) == $size) ? 'selected' : '' }}>{{ $size }}</option>
+                                @endforeach
+                            </select>
+                            <span id="perPageSpinner" class="spinner-border spinner-border-sm text-warning ms-1" style="display: none; width: 14px; height: 14px; border-width: 2px;" role="status"></span>
+                        </div>
                     </div>
 
                     <div class="d-flex align-items-center" id="bookingsPaginationContainer">
@@ -1848,11 +1851,38 @@ function initDashboardCalendar() {
     dashboardCalendarInstance.render();
 }
 
-// 📄 Change items per page
+// 📄 Change items per page with instant visual loader & spinner feedback
 function changePerPage(size) {
     const url = new URL(window.location.href);
     url.searchParams.set('per_page', size);
     url.searchParams.set('page', '1');
+
+    // 1. Show inline spinner & disable select
+    const selectEl = document.getElementById('perPageSelect');
+    const spinnerEl = document.getElementById('perPageSpinner');
+    if (selectEl) selectEl.disabled = true;
+    if (spinnerEl) spinnerEl.style.display = 'inline-block';
+
+    // 2. Dim table wrapper for instant feedback
+    const tableWrapper = document.getElementById('bookingTableViewWrapper') || document.getElementById('futureBookingsTable');
+    if (tableWrapper) {
+        tableWrapper.style.transition = 'opacity 0.2s ease';
+        tableWrapper.style.opacity = '0.35';
+        tableWrapper.style.pointerEvents = 'none';
+    }
+
+    // 3. Show global loader popup
+    const loader = document.getElementById('dashboardGlobalLoader');
+    if (loader) {
+        const titleEl = loader.querySelector('h6');
+        const descEl = loader.querySelector('p');
+        if (titleEl) titleEl.textContent = `Loading ${size} Bookings Per Page...`;
+        if (descEl) descEl.textContent = 'Updating table records, please wait';
+        loader.style.display = 'flex';
+        loader.offsetHeight;
+        loader.classList.add('active');
+    }
+
     window.location.href = url.toString();
 }
 
@@ -3988,8 +4018,12 @@ document.addEventListener('DOMContentLoaded', function () {
     let searchDebounceTimer = null;
     let currentFilterAbortController = null;
 
-    function showGlobalLoader() {
+    function showGlobalLoader(title = 'Searching Bookings...', desc = 'Applying filters & updating results') {
         if (globalLoader) {
+            const titleEl = globalLoader.querySelector('h6');
+            const descEl = globalLoader.querySelector('p');
+            if (titleEl) titleEl.textContent = title;
+            if (descEl) descEl.textContent = desc;
             globalLoader.style.display = 'flex';
             globalLoader.offsetHeight;
             globalLoader.classList.add('active');
@@ -4219,6 +4253,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const pageLink = e.target.closest('a.page-link');
             if (pageLink && pageLink.href) {
                 e.preventDefault();
+                showGlobalLoader('Loading Page...', 'Fetching bookings records, please wait');
                 applyDashboardFilter(pageLink.href);
                 const tableEl = document.getElementById('futureBookingsTable');
                 if (tableEl) {
