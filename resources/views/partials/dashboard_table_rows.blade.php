@@ -1,33 +1,6 @@
-@php
-    $lastTimelineDate = null;
-@endphp
 @forelse($bookings as $booking)
     @php
         $rowStyle = '';
-        
-        $rawDateVal = $booking['pickup_time'] ?? ($booking['pickup_date'] ?? ($booking['job_date'] ?? null));
-        $currentTimelineGroup = null;
-        $timelineDateLabel = '';
-        $timelineRelativeBadge = '';
-        
-        if (!empty($rawDateVal)) {
-            try {
-                $dtObj = \Carbon\Carbon::parse($rawDateVal);
-                $currentTimelineGroup = $dtObj->format('Y-m-d');
-                $timelineDateLabel = $dtObj->format('l, d M Y');
-                if ($dtObj->isToday()) {
-                    $timelineRelativeBadge = 'Today';
-                } elseif ($dtObj->isTomorrow()) {
-                    $timelineRelativeBadge = 'Tomorrow';
-                } elseif ($dtObj->isYesterday()) {
-                    $timelineRelativeBadge = 'Yesterday';
-                }
-            } catch (\Exception $e) {
-                $currentTimelineGroup = (string)$rawDateVal;
-                $timelineDateLabel = (string)$rawDateVal;
-            }
-        }
-       
         $platform = (int) ($booking['platform'] ?? 1);
         $partner = strtolower((string) ($booking['partner'] ?? ''));
 
@@ -108,31 +81,6 @@
         $bPrice = is_numeric($booking['price'] ?? null) ? (float)$booking['price'] : 0;
         $isHighPrice = $bPrice > 50;
     @endphp
-    @if($currentTimelineGroup && $currentTimelineGroup !== $lastTimelineDate)
-        @php $lastTimelineDate = $currentTimelineGroup; @endphp
-        <tr class="timeline-date-divider-row" data-timeline-group="{{ $currentTimelineGroup }}">
-            <td colspan="13" class="timeline-date-divider-cell p-0">
-                <div class="timeline-date-header-clean d-flex align-items-center justify-content-between px-3 py-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="timeline-calendar-icon-box">
-                            <i class="bi bi-calendar2-week-fill"></i>
-                        </span>
-                        <span class="timeline-date-heading">{{ $timelineDateLabel }}</span>
-                        @if(!empty($timelineRelativeBadge))
-                            <span class="badge rounded-pill {{ $timelineRelativeBadge === 'Today' ? 'bg-success' : ($timelineRelativeBadge === 'Tomorrow' ? 'bg-primary' : 'bg-secondary') }} text-white px-2.5 py-1" style="font-size: 10px; font-weight: 700;">
-                                {{ $timelineRelativeBadge }}
-                            </span>
-                        @endif
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="timeline-count-badge">
-                            <i class="bi bi-clock-history me-1"></i>Timeline Schedule
-                        </span>
-                    </div>
-                </div>
-            </td>
-        </tr>
-    @endif
     <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row align-middle {{ $isHighPrice ? 'high-value-row' : '' }}">
         <td class="col-ref fw-bold text-nowrap">
             <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">{{ $booking['ref_no'] ?? 'N/A' }}</span>
@@ -186,7 +134,7 @@
                 $pPhone = $booking['phone_no'] ?? '';
             @endphp
             <div class="d-flex flex-column align-items-start" style="max-width: 145px;">
-                <span class="two-line-clamp fw-semibold text-dark" style="font-size: 11.5px; line-height: 1.25;" title="{{ $pName }}">{{ $pName }}</span>
+                <span class="text-truncate fw-semibold text-dark w-100" style="font-size: 11.5px; line-height: 1.25;" title="{{ $pName }}">{{ $pName }}</span>
                 @if(!empty($pPhone))
                     <a href="tel:{{ $pPhone }}" class="font-monospace text-decoration-none text-muted d-inline-block text-truncate mt-0.5" style="max-width: 100%; font-size: 11px; letter-spacing: 0.2px;" title="{{ $pPhone }}">
                         <i class="bi bi-telephone text-muted me-1" style="font-size: 9.5px;"></i>{{ $pPhone }}
@@ -306,7 +254,7 @@
                 $hasFlight = !empty($booking['flight_no']) && $booking['flight_no'] !== '-' && $booking['flight_no'] !== 'undefined';
                 $fNo = $hasFlight ? trim($booking['flight_no']) : '';
             @endphp
-            <div class="d-flex flex-column align-items-center gap-1">
+            <div class="d-flex flex-column align-items-start gap-1">
                 <span class="badge bg-{{ $badgeClass }} px-2 py-0.5" style="font-size: 10.5px; font-weight: 600;" title="{{ $type }}">{{ $type }}</span>
                 @if($hasFlight)
                     <a href="https://www.google.com/search?q={{ urlencode('flight ' . $fNo) }}" 

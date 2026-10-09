@@ -766,6 +766,14 @@
       font-weight: 800 !important;
       color: #1e293b;
     }
+    .fc .fc-button-group {
+      gap: 5px !important;
+      display: inline-flex !important;
+    }
+    .fc .fc-button-group > .fc-button {
+      border-radius: 8px !important;
+      margin: 0 !important;
+    }
     .fc .fc-button-primary {
       background: #ffffff !important;
       border: 1px solid #cbd5e1 !important;
@@ -773,8 +781,10 @@
       font-weight: 600 !important;
       font-size: 12px !important;
       border-radius: 8px !important;
-      padding: 4px 10px !important;
+      padding: 5px 12px !important;
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      text-transform: capitalize !important;
+      transition: all 0.15s ease-in-out !important;
     }
     .fc .fc-button-primary:hover,
     .fc .fc-button-primary.fc-button-active {

@@ -530,7 +530,7 @@ td{
 .custom-dashboard-table .col-vehicle,
 .custom-dashboard-table th.th-vehicle {
     min-width: 95px;
-    text-align: center;
+    text-align: left;
 }
 </style>
 
@@ -859,7 +859,7 @@ td{
                             <th class="py-2.5 px-2 th-route">Pickup &amp; Dropoff</th>
                             <th class="py-2.5 px-2 text-center th-vias">Vias</th>
                             <th class="py-2.5 px-2 th-datetime">Date &amp; Time</th>
-                            <th class="py-2.5 px-2 text-center th-vehicle">Vehicle / Flight</th>
+                            <th class="py-2.5 px-2 th-vehicle">Vehicle / Flight</th>
                             <th class="py-2.5 px-2 th-price">Price</th>
                             <th class="py-2.5 px-2 th-comments">Comments</th>
                             <th class="py-2.5 px-2 th-status">Status</th>
@@ -1677,6 +1677,13 @@ function initDashboardCalendar() {
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
+        buttonText: {
+            today: 'Today',
+            month: 'Month',
+            week: 'Week',
+            day: 'Day',
+            list: 'List'
+        },
         height: 'auto',
         navLinks: true,
         nowIndicator: true,
@@ -2135,7 +2142,7 @@ function buildBookingRowHtml(booking, isNew = false) {
         <td class="col-payment">${getPaymentBadgeHtml(booking.payment_type, accName)}</td>
         <td class="col-passenger">
             <div class="d-flex flex-column align-items-start" style="max-width: 145px;">
-                <span class="two-line-clamp fw-semibold text-dark" style="font-size: 11.5px; line-height: 1.25;" title="${escapeHtml(passengerName)}">${escapeHtml(passengerName)}</span>
+                <span class="text-truncate fw-semibold text-dark w-100" style="font-size: 11.5px; line-height: 1.25;" title="${escapeHtml(passengerName)}">${escapeHtml(passengerName)}</span>
                 ${passengerPhoneHtml}
             </div>
         </td>
@@ -2164,7 +2171,7 @@ function buildBookingRowHtml(booking, isNew = false) {
             </div>
         </td>
         <td class="col-vehicle">
-            <div class="d-flex flex-column align-items-center gap-1">
+            <div class="d-flex flex-column align-items-start gap-1">
                 ${getVehicleBadgeHtml(booking.vehicle_make)}
                 ${flightHtml}
             </div>
