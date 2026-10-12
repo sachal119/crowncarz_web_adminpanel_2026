@@ -663,6 +663,38 @@ td{
     color: #38bdf8 !important;
     border-color: rgba(56, 189, 248, 0.4) !important;
 }
+
+/* 🚗 Vehicle Category Pills (Saloon: Blue, Executive: Black, MPV: Yellow, 8 Seater: Red, Estate: Sea Green) */
+.veh-pill-saloon, [data-bs-theme="dark"] .veh-pill-saloon {
+  background-color: #0d6efd !important;
+  color: #ffffff !important;
+  border: 1px solid #0b5ed7 !important;
+}
+.veh-pill-executive, [data-bs-theme="dark"] .veh-pill-executive {
+  background-color: #09090b !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+.veh-pill-mpv, [data-bs-theme="dark"] .veh-pill-mpv {
+  background-color: #ffc107 !important;
+  color: #000000 !important;
+  border: 1px solid #d39e00 !important;
+}
+.veh-pill-8seater, [data-bs-theme="dark"] .veh-pill-8seater {
+  background-color: #dc3545 !important;
+  color: #ffffff !important;
+  border: 1px solid #b02a37 !important;
+}
+.veh-pill-estate, [data-bs-theme="dark"] .veh-pill-estate {
+  background-color: #2e8b57 !important;
+  color: #ffffff !important;
+  border: 1px solid #246e45 !important;
+}
+.veh-pill-default, [data-bs-theme="dark"] .veh-pill-default {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+  border: 1px solid #475569 !important;
+}
 </style>
 
 <!-- 🌟 Fullscreen Screen-Level Search & Filter Loader -->
@@ -2101,11 +2133,46 @@ function getPlatformBadgeHtml(platformVal, partnerVal) {
     }
 }
 
+// 🎨 Helper to get vehicle pill styling
+function getVehiclePillInfo(vStr) {
+    const v = String(vStr || '').toLowerCase().trim();
+    if (v.includes('saloon')) {
+        return {
+            className: 'veh-pill-saloon',
+            style: 'background-color: #0d6efd !important; color: #ffffff !important; border: 1px solid #0b5ed7 !important;'
+        };
+    } else if (v.includes('executive')) {
+        return {
+            className: 'veh-pill-executive',
+            style: 'background-color: #09090b !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.35) !important;'
+        };
+    } else if (v.includes('mpv') || v.includes('6 seater') || v.includes('6seater')) {
+        return {
+            className: 'veh-pill-mpv',
+            style: 'background-color: #ffc107 !important; color: #000000 !important; border: 1px solid #d39e00 !important;'
+        };
+    } else if (v.includes('estate')) {
+        return {
+            className: 'veh-pill-estate',
+            style: 'background-color: #2e8b57 !important; color: #ffffff !important; border: 1px solid #246e45 !important;'
+        };
+    } else if (v.includes('8 seater') || v.includes('8seater') || v.includes('8-seater') || (v.includes('8') && v.includes('seat')) || v.includes('seater') || v === '8') {
+        return {
+            className: 'veh-pill-8seater',
+            style: 'background-color: #dc3545 !important; color: #ffffff !important; border: 1px solid #b02a37 !important;'
+        };
+    }
+    return {
+        className: 'veh-pill-default',
+        style: 'background-color: #334155 !important; color: #ffffff !important; border: 1px solid #475569 !important;'
+    };
+}
+
 // 🎨 Helper to format vehicle badge
 function getVehicleBadgeHtml(vehicleMake) {
     const make = vehicleMake || '-';
-    const badgeClass = VEHICLE_BADGES[make] || 'secondary';
-    return `<span class="badge bg-${badgeClass}" style="font-size: 0.85rem;">${make}</span>`;
+    const vInfo = getVehiclePillInfo(make);
+    return `<span class="badge ${vInfo.className} font-monospace" style="font-size: 0.85rem; ${vInfo.style}">${escapeHtml(make)}</span>`;
 }
 
 const STATUS_STYLES_MAP = {
@@ -2133,6 +2200,7 @@ function getDriverBadgeHtml(booking) {
     const dId = String(booking.driver_id || booking.driverId || booking.driver || '').trim();
     const dName = String(booking.driver_name || '').trim();
     const dCall = String(booking.driver_call_sign || booking.call_sign || '').trim();
+    const vMake = String(booking.vehicle_make || booking.vehicle_type || '').trim();
 
     let driver = null;
     if (dId && DRIVERS_MAP[dId]) {
@@ -2171,12 +2239,13 @@ function getDriverBadgeHtml(booking) {
         } else if (vMake) {
             subText = vMake;
         }
+        const vInfo = getVehiclePillInfo(vMake || subText);
         return `
         <div class="d-flex flex-column align-items-start gap-1">
             <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(name)}">
                 ${escapeHtml(name)}
             </span>
-            ${subText ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="${escapeHtml(subText)}">${escapeHtml(subText)}</span>` : ''}
+            ${subText ? `<span class="badge ${vInfo.className} font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px; ${vInfo.style}" title="${escapeHtml(subText)}">${escapeHtml(subText)}</span>` : ''}
         </div>`;
     } else if (dName || dCall || (booking.driver && typeof booking.driver === 'string' && booking.driver.trim() !== '')) {
         const name = dName || booking.driver || 'Driver';
@@ -2189,19 +2258,21 @@ function getDriverBadgeHtml(booking) {
         } else if (vMake) {
             subText = vMake;
         }
+        const vInfo = getVehiclePillInfo(vMake || subText);
         return `
         <div class="d-flex flex-column align-items-start gap-1">
             <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(name)}">
                 ${escapeHtml(name)}
             </span>
-            ${subText ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="${escapeHtml(subText)}">${escapeHtml(subText)}</span>` : ''}
+            ${subText ? `<span class="badge ${vInfo.className} font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px; ${vInfo.style}" title="${escapeHtml(subText)}">${escapeHtml(subText)}</span>` : ''}
         </div>`;
     }
 
+    const vInfo = getVehiclePillInfo(vMake);
     return `
     <div class="d-flex flex-column align-items-start gap-1">
         <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>
-        ${vMake ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="${escapeHtml(vMake)}">${escapeHtml(vMake)}</span>` : ''}
+        ${vMake ? `<span class="badge ${vInfo.className} font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px; ${vInfo.style}" title="${escapeHtml(vMake)}">${escapeHtml(vMake)}</span>` : ''}
     </div>`;
 }
 
@@ -2372,7 +2443,7 @@ function buildBookingRowHtml(booking, isNew = false) {
     const fullDateTimeTitle = `${pickupDate} - ${pickupTime}`;
 
     return `
-    <tr id="booking-row-${id}" data-booking-id="${id}" class="booking-table-row align-middle ${highlightClass} ${highValueClass}">
+    <tr id="booking-row-${id}" data-booking-id="${id}" data-vehicle="${escapeHtml(booking.vehicle_make || booking.vehicle_type || '')}" class="booking-table-row align-middle ${highlightClass} ${highValueClass}">
         <td class="col-ref fw-bold text-nowrap">
             <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">${booking.ref_no || 'N/A'}</span>
         </td>
@@ -2768,7 +2839,15 @@ function bindRowEvents(context = document) {
                     showDashboardToast('Job Recalled', 'Driver unassigned from booking.', 'success');
                     if (row) {
                         const driverCell = row.querySelector('.driver-cell');
-                        if (driverCell) driverCell.innerHTML = `<span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>`;
+                        const vMake = row.getAttribute('data-vehicle') || row.querySelector('[data-vehicle]')?.getAttribute('data-vehicle') || '';
+                        const vInfo = getVehiclePillInfo(vMake);
+                        if (driverCell) {
+                            driverCell.innerHTML = `
+                            <div class="d-flex flex-column align-items-start gap-1">
+                                <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;">Not Assigned</span>
+                                ${vMake ? `<span class="badge ${vInfo.className} font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px; ${vInfo.style}" title="${escapeHtml(vMake)}">${escapeHtml(vMake)}</span>` : ''}
+                            </div>`;
+                        }
                         const dispatchItem = row.querySelector('.action-dispatch-item');
                         const changeItem = row.querySelector('.action-change-driver-item');
                         const trackItem = row.querySelector('.action-track-item');
@@ -3535,6 +3614,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         );
                         const dNumber = driver ? (driver.call_sign || driver.phone || driver.phone_no || '') : '';
                         const dName = driver ? (driver.name || 'Driver') : 'Assigned';
+                        const vMake = row.getAttribute('data-vehicle') || row.querySelector('[data-vehicle]')?.getAttribute('data-vehicle') || '';
+                        let subText = '';
+                        if (dNumber && vMake) {
+                            subText = `${dNumber}/${vMake}`;
+                        } else if (dNumber) {
+                            subText = dNumber;
+                        } else if (vMake) {
+                            subText = vMake;
+                        }
+                        const vInfo = getVehiclePillInfo(vMake || subText);
                         const driverCell = row.querySelector('.driver-cell');
                         if (driverCell) {
                             driverCell.innerHTML = `
@@ -3542,7 +3631,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <span class="badge rounded-pill bg-danger bg-opacity-90 px-2.5 py-1 driver-badge text-truncate" style="font-size: 11px; max-width: 130px; line-height: 1.2;" title="${escapeHtml(dName)}">
                                     ${escapeHtml(dName)}
                                 </span>
-                                ${dNumber ? `<span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 120px;" title="${escapeHtml(dNumber)}">${escapeHtml(dNumber)}</span>` : ''}
+                                ${subText ? `<span class="badge ${vInfo.className} font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px; ${vInfo.style}" title="${escapeHtml(subText)}">${escapeHtml(subText)}</span>` : ''}
                             </div>`;
                         }
 

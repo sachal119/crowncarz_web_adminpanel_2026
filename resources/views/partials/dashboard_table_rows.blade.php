@@ -1,3 +1,40 @@
+@php
+    if (!function_exists('getVehiclePillInfo')) {
+        function getVehiclePillInfo($vStr) {
+            $v = strtolower(trim((string)$vStr));
+            if (str_contains($v, 'saloon')) {
+                return [
+                    'class' => 'veh-pill-saloon',
+                    'style' => 'background-color: #0d6efd !important; color: #ffffff !important; border: 1px solid #0b5ed7 !important;',
+                ];
+            } elseif (str_contains($v, 'executive')) {
+                return [
+                    'class' => 'veh-pill-executive',
+                    'style' => 'background-color: #09090b !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.35) !important;',
+                ];
+            } elseif (str_contains($v, 'mpv') || str_contains($v, '6 seater') || str_contains($v, '6seater')) {
+                return [
+                    'class' => 'veh-pill-mpv',
+                    'style' => 'background-color: #ffc107 !important; color: #000000 !important; border: 1px solid #d39e00 !important;',
+                ];
+            } elseif (str_contains($v, 'estate')) {
+                return [
+                    'class' => 'veh-pill-estate',
+                    'style' => 'background-color: #2e8b57 !important; color: #ffffff !important; border: 1px solid #246e45 !important;',
+                ];
+            } elseif (str_contains($v, '8 seater') || str_contains($v, '8seater') || str_contains($v, '8-seater') || (str_contains($v, '8') && str_contains($v, 'seat')) || str_contains($v, 'seater') || $v === '8') {
+                return [
+                    'class' => 'veh-pill-8seater',
+                    'style' => 'background-color: #dc3545 !important; color: #ffffff !important; border: 1px solid #b02a37 !important;',
+                ];
+            }
+            return [
+                'class' => 'veh-pill-default',
+                'style' => 'background-color: #334155 !important; color: #ffffff !important; border: 1px solid #475569 !important;',
+            ];
+        }
+    }
+@endphp
 @forelse($bookings as $booking)
     @php
         $rowStyle = '';
@@ -78,7 +115,7 @@
         $bPrice = is_numeric($booking['price'] ?? null) ? (float)$booking['price'] : 0;
         $isHighPrice = $bPrice > 50;
     @endphp
-    <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" class="booking-table-row align-middle {{ $isHighPrice ? 'high-value-row' : '' }}">
+    <tr id="booking-row-{{ $booking['id'] }}" data-booking-id="{{ $booking['id'] }}" data-vehicle="{{ $booking['vehicle_make'] ?? '' }}" class="booking-table-row align-middle {{ $isHighPrice ? 'high-value-row' : '' }}">
         <td class="col-ref fw-bold text-nowrap">
             <span class="font-monospace text-dark" style="font-size: 11.5px; letter-spacing: 0.3px;">{{ $booking['ref_no'] ?? 'N/A' }}</span>
         </td>
@@ -169,7 +206,10 @@
                         {{ $dName }}
                     </span>
                     @if(!empty($driverCallSignVehicle))
-                        <span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="{{ $driverCallSignVehicle }}">
+                        @php
+                            $vInfo = getVehiclePillInfo(!empty($cleanVMake) ? $cleanVMake : $driverCallSignVehicle);
+                        @endphp
+                        <span class="badge {{ $vInfo['class'] }} font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px; {{ $vInfo['style'] }}" title="{{ $driverCallSignVehicle }}">
                             {{ $driverCallSignVehicle }}
                         </span>
                     @endif
@@ -192,7 +232,10 @@
                         {{ $dName }}
                     </span>
                     @if(!empty($driverCallSignVehicle))
-                        <span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="{{ $driverCallSignVehicle }}">
+                        @php
+                            $vInfo = getVehiclePillInfo(!empty($cleanVMake) ? $cleanVMake : $driverCallSignVehicle);
+                        @endphp
+                        <span class="badge {{ $vInfo['class'] }} font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px; {{ $vInfo['style'] }}" title="{{ $driverCallSignVehicle }}">
                             {{ $driverCallSignVehicle }}
                         </span>
                     @endif
@@ -201,7 +244,10 @@
                 <div class="d-flex flex-column align-items-start gap-1">
                     <span class="badge bg-light text-muted border px-2 py-1 unassigned-driver" style="font-size: 11px; font-weight: 500;" title="No driver assigned yet">Not Assigned</span>
                     @if(!empty($cleanVMake))
-                        <span class="badge bg-light text-dark border font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px;" title="{{ $cleanVMake }}">
+                        @php
+                            $vInfo = getVehiclePillInfo($cleanVMake);
+                        @endphp
+                        <span class="badge {{ $vInfo['class'] }} font-monospace px-1.5 py-0.5 text-truncate" style="font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; max-width: 130px; {{ $vInfo['style'] }}" title="{{ $cleanVMake }}">
                             {{ $cleanVMake }}
                         </span>
                     @endif

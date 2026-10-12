@@ -674,6 +674,38 @@
       border-color: rgba(255, 255, 255, 0.15) !important;
     }
 
+    /* 🚗 Vehicle Category Pills (Saloon: Blue, Executive: Black, MPV: Yellow, 8 Seater: Red, Estate: Sea Green) */
+    .veh-pill-saloon, [data-bs-theme="dark"] .veh-pill-saloon {
+      background-color: #0d6efd !important;
+      color: #ffffff !important;
+      border: 1px solid #0b5ed7 !important;
+    }
+    .veh-pill-executive, [data-bs-theme="dark"] .veh-pill-executive {
+      background-color: #09090b !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    }
+    .veh-pill-mpv, [data-bs-theme="dark"] .veh-pill-mpv {
+      background-color: #ffc107 !important;
+      color: #000000 !important;
+      border: 1px solid #d39e00 !important;
+    }
+    .veh-pill-8seater, [data-bs-theme="dark"] .veh-pill-8seater {
+      background-color: #dc3545 !important;
+      color: #ffffff !important;
+      border: 1px solid #b02a37 !important;
+    }
+    .veh-pill-estate, [data-bs-theme="dark"] .veh-pill-estate {
+      background-color: #2e8b57 !important;
+      color: #ffffff !important;
+      border: 1px solid #246e45 !important;
+    }
+    .veh-pill-default, [data-bs-theme="dark"] .veh-pill-default {
+      background-color: #334155 !important;
+      color: #ffffff !important;
+      border: 1px solid #475569 !important;
+    }
+
     [data-bs-theme="dark"] .statusSelect {
       border-radius: 6px !important;
       font-weight: 700 !important;
