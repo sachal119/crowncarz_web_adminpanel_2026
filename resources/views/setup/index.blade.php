@@ -85,18 +85,25 @@
         padding: 22px;
         box-shadow: 0 8px 24px rgba(83, 50, 24, 0.06);
         margin-bottom: 20px;
+        overflow: hidden;
     }
 
     .form-card-title {
         color: var(--gold-dark);
         font-weight: 700;
         font-size: 1.15rem;
-        border-bottom: 2px solid #f6ede3;
-        padding-bottom: 12px;
-        margin-bottom: 16px;
+        background: linear-gradient(135deg, #fffaf3, #ffffff);
+        border-bottom: 1px solid #eadfd5;
+        padding: 16px 22px;
+        margin: -22px -22px 20px -22px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
+    }
+
+    .form-card-title i {
+        font-size: 1.25rem;
+        flex-shrink: 0;
     }
 
     .setup-directory {
@@ -384,6 +391,7 @@
     [data-bs-theme="dark"] .staff-directory-header {
         background: #1e293b !important;
         border-bottom: 1px solid #334155 !important;
+        padding: 16px 22px !important;
     }
 
     [data-bs-theme="dark"] .setup-table thead th,
@@ -933,7 +941,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="col-lg-4">
                     <div class="form-card">
                         <div class="form-card-title">
-                            <i class="bi bi-person-plus-fill text-warning"></i> Add Staff Member
+                            <i class="bi bi-person-plus-fill text-warning me-2"></i> Add Staff Member
                         </div>
                         <form method="POST" action="{{ route('setup.staff.store') }}">
                             @csrf
@@ -1605,9 +1613,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="col-lg-4">
                     <div class="form-card">
                         <div class="form-card-title">
-                            <i class="bi bi-plus-circle-fill text-warning"></i> Add Vehicle
+                            <i class="bi bi-plus-circle-fill text-warning me-2"></i> Add Vehicle
                         </div>
-                        <form method="POST" action="{{ route('setup.vehicle.store') }}">
+                        <form method="POST" action="{{ route('setup.vehicle.store') }}" id="addVehicleForm">
                             @csrf
                             <div class="mb-3">
                                 <label>Make / Category</label>
@@ -1644,8 +1652,14 @@ document.addEventListener('DOMContentLoaded', function () {
                                     @endforeach
                                 </select>
                             </div>
-                            <button type="submit" class="btn btn-custom w-100 py-2.5">
-                                <i class="bi bi-plus-circle me-1"></i> Add Vehicle
+                            <button type="submit" class="btn btn-custom w-100 py-2.5 d-inline-flex align-items-center justify-content-center" id="addVehicleSubmitBtn">
+                                <span class="btn-text d-inline-flex align-items-center">
+                                    <i class="bi bi-plus-circle me-1.5"></i> Add Vehicle
+                                </span>
+                                <span class="btn-spinner d-none align-items-center">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <span>Adding Vehicle...</span>
+                                </span>
                             </button>
                         </form>
                     </div>
@@ -1720,9 +1734,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
 
                         <div class="modal-footer bg-white border-0">
-                            <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary px-4 fw-semibold">
-                                <i class="bi bi-check2-circle me-1"></i> Update Vehicle
+                            <button type="button" class="btn btn-light px-4" id="editVehicleCancelBtn" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold d-inline-flex align-items-center justify-content-center" id="editVehicleSubmitBtn" style="min-width: 165px;">
+                                <span class="btn-text d-inline-flex align-items-center">
+                                    <i class="bi bi-check2-circle me-1.5"></i> Update Vehicle
+                                </span>
+                                <span class="btn-spinner d-none align-items-center">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <span>Updating...</span>
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -1793,7 +1813,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="col-lg-4">
                     <div class="form-card">
                         <div class="form-card-title">
-                            <i class="bi bi-plus-circle-fill text-warning"></i> Add Customer Account
+                            <i class="bi bi-plus-circle-fill text-warning me-2"></i> Add Customer Account
                         </div>
                         <form method="POST" action="{{ route('setup.customer.store') }}">
                             @csrf
@@ -1918,8 +1938,98 @@ document.addEventListener('DOMContentLoaded', function () {
             if (driverSelect) {
                 driverSelect.value = driverIdVal;
             }
+
+            // Reset submit button state
+            const submitBtn = document.getElementById('editVehicleSubmitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.pointerEvents = '';
+                submitBtn.classList.remove('is-submitting');
+                const btnText = submitBtn.querySelector('.btn-text');
+                const btnSpinner = submitBtn.querySelector('.btn-spinner');
+                if (btnText && btnSpinner) {
+                    btnText.classList.remove('d-none');
+                    btnSpinner.classList.add('d-none');
+                    btnSpinner.classList.remove('d-inline-flex');
+                }
+            }
+            const cancelBtn = document.getElementById('editVehicleCancelBtn');
+            if (cancelBtn) {
+                cancelBtn.classList.remove('disabled');
+                cancelBtn.style.pointerEvents = '';
+            }
         });
     });
+
+    // Edit Vehicle Submit Loader
+    const editVehicleForm = document.getElementById('editVehicleForm');
+    const editVehicleSubmitBtn = document.getElementById('editVehicleSubmitBtn');
+
+    if (editVehicleForm && editVehicleSubmitBtn) {
+        editVehicleForm.addEventListener('submit', function (e) {
+            if (editVehicleSubmitBtn.classList.contains('is-submitting')) {
+                e.preventDefault();
+                return false;
+            }
+
+            if (!this.checkValidity()) {
+                return;
+            }
+
+            editVehicleSubmitBtn.classList.add('is-submitting');
+            editVehicleSubmitBtn.style.pointerEvents = 'none';
+
+            const btnText = editVehicleSubmitBtn.querySelector('.btn-text');
+            const btnSpinner = editVehicleSubmitBtn.querySelector('.btn-spinner');
+            if (btnText && btnSpinner) {
+                btnText.classList.add('d-none');
+                btnSpinner.classList.remove('d-none');
+                btnSpinner.classList.add('d-inline-flex');
+            }
+
+            const cancelBtn = document.getElementById('editVehicleCancelBtn');
+            if (cancelBtn) {
+                cancelBtn.classList.add('disabled');
+                cancelBtn.style.pointerEvents = 'none';
+            }
+
+            setTimeout(function () {
+                editVehicleSubmitBtn.disabled = true;
+            }, 20);
+        });
+    }
+
+    // Add Vehicle Submit Loader
+    const addVehicleForm = document.getElementById('addVehicleForm');
+    const addVehicleSubmitBtn = document.getElementById('addVehicleSubmitBtn');
+
+    if (addVehicleForm && addVehicleSubmitBtn) {
+        addVehicleForm.addEventListener('submit', function (e) {
+            if (addVehicleSubmitBtn.classList.contains('is-submitting')) {
+                e.preventDefault();
+                return false;
+            }
+
+            if (!this.checkValidity()) {
+                return;
+            }
+
+            addVehicleSubmitBtn.classList.add('is-submitting');
+            addVehicleSubmitBtn.style.pointerEvents = 'none';
+
+            const btnText = addVehicleSubmitBtn.querySelector('.btn-text');
+            const btnSpinner = addVehicleSubmitBtn.querySelector('.btn-spinner');
+            if (btnText && btnSpinner) {
+                btnText.classList.add('d-none');
+                btnSpinner.classList.remove('d-none');
+                btnSpinner.classList.add('d-inline-flex');
+            }
+
+            setTimeout(function () {
+                addVehicleSubmitBtn.disabled = true;
+            }, 20);
+        });
+    }
 
     // Vehicle Directory Search Filter Logic
     const vehicleSearchInput = document.getElementById('vehicleSearchInput');
