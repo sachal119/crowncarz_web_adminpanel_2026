@@ -170,6 +170,9 @@
         box-shadow: 0 2px 6px rgba(181, 101, 29, 0.25);
     }
 
+    .gap-1\.5 { gap: 0.375rem !important; }
+    .gap-2\.5 { gap: 0.85rem !important; }
+
     .callsign-badge {
         display: inline-flex;
         align-items: center;
@@ -1480,7 +1483,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <h3 class="mb-1"><i class="bi bi-car-front-fill text-warning me-2"></i>Existing Vehicles</h3>
                                 <p class="text-muted small mb-0">Fleet categories, registration plates, colors, and assigned drivers.</p>
                             </div>
-                            <span class="badge rounded-pill text-bg-dark px-3 py-2"><i class="bi bi-car-front me-1"></i>{{ $vehicles->count() }} Vehicles</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="input-group input-group-sm" style="width: 220px;">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="vehicleSearchInput" class="form-control" placeholder="Search vehicles...">
+                                </div>
+                                <span class="badge rounded-pill text-bg-dark px-3 py-2"><i class="bi bi-car-front me-1"></i><span id="vehicleCountBadge">{{ $vehicles->count() }}</span> Vehicles</span>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table setup-table align-middle">
@@ -1491,20 +1500,22 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <th>Registration</th>
                                         <th>Color</th>
                                         <th>Assigned Driver</th>
+                                        <th class="text-end" style="padding-right: 20px;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($vehicles as $vehicle)
+                                    @forelse($vehicles as $vKey => $vehicle)
                                         @php
                                             $vDriverId = (string)($vehicle['driver_id'] ?? '');
                                             $assignedDriverName = $driverLookup[$vDriverId] ?? null;
                                             $assignedDriverCallSign = $driverCallSignLookup[$vDriverId] ?? null;
+                                            $vId = $vehicle['id'] ?? $vKey;
                                         @endphp
-                                        <tr>
+                                        <tr class="vehicle-row">
                                             <td><span class="text-muted fw-bold">{{ $loop->iteration }}</span></td>
                                             <td>
-                                                <div class="d-flex align-items-center gap-2.5">
-                                                    <div class="driver-avatar" style="background: linear-gradient(135deg, #334155, #64748b);">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="driver-avatar me-2" style="background: linear-gradient(135deg, #334155, #64748b);">
                                                         <i class="bi bi-car-front-fill text-warning fs-5"></i>
                                                     </div>
                                                     <div>
@@ -1543,10 +1554,44 @@ document.addEventListener('DOMContentLoaded', function () {
                                                     </span>
                                                 @endif
                                             </td>
+                                            <td class="text-end" style="padding-right: 20px;">
+                                                <div class="d-inline-flex align-items-center gap-1.5">
+                                                    <button 
+                                                        type="button"
+                                                        class="btn btn-sm btn-outline-primary fw-semibold shadow-sm edit-vehicle-btn d-inline-flex align-items-center gap-1"
+                                                        style="font-size: 11.5px; border-radius: 7px; padding: 5px 9px;"
+                                                        data-id="{{ $vId }}"
+                                                        data-firebase-key="{{ $vKey }}"
+                                                        data-make="{{ $vehicle['make'] ?? '' }}"
+                                                        data-model="{{ $vehicle['model'] ?? '' }}"
+                                                        data-color="{{ $vehicle['color'] ?? '' }}"
+                                                        data-registration="{{ $vehicle['registration'] ?? '' }}"
+                                                        data-driver-id="{{ $vDriverId }}"
+                                                        data-action="{{ route('setup.vehicle.update', $vId) }}"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editVehicleModal"
+                                                        title="Edit Vehicle Details"
+                                                    >
+                                                        <i class="bi bi-pencil-square"></i> Edit
+                                                    </button>
+                                                    <form method="POST" action="{{ route('setup.vehicle.destroy', $vId) }}" class="d-inline"
+                                                          onsubmit="return confirm('Are you sure you want to delete vehicle {{ $vehicle['registration'] ?? '' }}? This action cannot be undone.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <input type="hidden" name="firebase_key" value="{{ $vKey }}">
+                                                        <input type="hidden" name="registration" value="{{ $vehicle['registration'] ?? '' }}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold shadow-sm d-inline-flex align-items-center gap-1"
+                                                                style="font-size: 11.5px; border-radius: 7px; padding: 5px 9px;"
+                                                                title="Delete Vehicle">
+                                                            <i class="bi bi-trash3"></i> Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center py-5 text-muted">
+                                            <td colspan="6" class="text-center py-5 text-muted">
                                                 <i class="bi bi-car-front fs-2 d-block mb-2"></i>No vehicles added yet.
                                             </td>
                                         </tr>
@@ -1608,6 +1653,83 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         </div>
 
+        {{-- Edit Vehicle Modal --}}
+        <div class="modal fade" id="editVehicleModal" tabindex="-1" aria-labelledby="editVehicleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <form method="POST" id="editVehicleForm" action="">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+                        <div class="modal-header bg-dark text-white py-3">
+                            <div>
+                                <h5 class="modal-title fw-bold" id="editVehicleModalLabel">
+                                    <i class="bi bi-pencil-square text-warning me-2"></i>Update Vehicle Details
+                                </h5>
+                                <p class="text-muted small mb-0" id="editVehicleSubtitle">Modify fleet category, model, plate, or driver assignment.</p>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body p-4 bg-light">
+                            <input type="hidden" id="edit_vehicle_id" name="vehicle_id">
+                            <input type="hidden" id="edit_vehicle_firebase_key" name="firebase_key">
+                            <input type="hidden" id="edit_vehicle_old_registration" name="old_registration">
+
+                            <div class="row g-3 bg-white p-3 rounded-3 border">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Make / Category <span class="text-danger">*</span></label>
+                                    <select name="make" id="edit_vehicle_make" class="form-select" required>
+                                        <option value="" disabled>-- Select Make --</option>
+                                        <option value="Saloon">Saloon</option>
+                                        <option value="Estate">Estate</option>
+                                        <option value="MPV">MPV</option>
+                                        <option value="8 Seater">8 Seater</option>
+                                        <option value="Executive">Executive</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Model <span class="text-danger">*</span></label>
+                                    <input type="text" name="model" id="edit_vehicle_model" class="form-control" placeholder="e.g. Mercedes E-Class, Toyota Prius" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Color <span class="text-danger">*</span></label>
+                                    <input type="text" name="color" id="edit_vehicle_color" class="form-control" placeholder="e.g. Black, Silver, White" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Registration Number <span class="text-danger">*</span></label>
+                                    <input type="text" name="registration" id="edit_vehicle_registration" class="form-control font-monospace fw-bold" placeholder="e.g. LEN-2302" required style="text-transform: uppercase;">
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Assign to Driver</label>
+                                    <select name="driver_id" id="edit_vehicle_driver_id" class="form-select">
+                                        <option value="">-- Unassigned / No Driver --</option>
+                                        @foreach($drivers as $dKey => $driver)
+                                            @php $driverVal = (string)($driver['id'] ?? $dKey); @endphp
+                                            <option value="{{ $driverVal }}">
+                                                {{ !empty($driver['call_sign']) ? '[' . $driver['call_sign'] . '] ' : '' }}{{ $driver['name'] ?? 'Unknown Driver' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer bg-white border-0">
+                            <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                                <i class="bi bi-check2-circle me-1"></i> Update Vehicle
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         {{-- 4. Customer Accounts Tab --}}
         <div class="tab-pane fade @if(session('active_tab') == 'customer') show active @endif" id="customer" role="tabpanel">
             <div class="row">
@@ -1635,8 +1757,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <tr>
                                             <td><span class="text-muted fw-bold">{{ $loop->iteration }}</span></td>
                                             <td>
-                                                <div class="d-flex align-items-center gap-2.5">
-                                                    <div class="driver-avatar" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="driver-avatar me-2" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
                                                         <i class="bi bi-building fs-5 text-white"></i>
                                                     </div>
                                                     <div>
@@ -1747,6 +1869,81 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    document.querySelectorAll('.edit-vehicle-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const form = document.getElementById('editVehicleForm');
+            if (form && this.dataset.action) {
+                form.action = this.dataset.action;
+            }
+
+            const id = this.dataset.id || '';
+            const key = this.dataset.firebaseKey || '';
+            const makeVal = this.dataset.make || '';
+            const modelVal = this.dataset.model || '';
+            const colorVal = this.dataset.color || '';
+            const regVal = this.dataset.registration || '';
+            const driverIdVal = this.dataset.driverId || '';
+
+            const idInput = document.getElementById('edit_vehicle_id');
+            const keyInput = document.getElementById('edit_vehicle_firebase_key');
+            const oldRegInput = document.getElementById('edit_vehicle_old_registration');
+            const makeSelect = document.getElementById('edit_vehicle_make');
+            const modelInput = document.getElementById('edit_vehicle_model');
+            const colorInput = document.getElementById('edit_vehicle_color');
+            const regInput = document.getElementById('edit_vehicle_registration');
+            const driverSelect = document.getElementById('edit_vehicle_driver_id');
+            const subtitle = document.getElementById('editVehicleSubtitle');
+
+            if (idInput) idInput.value = id;
+            if (keyInput) keyInput.value = key;
+            if (oldRegInput) oldRegInput.value = regVal;
+            if (modelInput) modelInput.value = modelVal;
+            if (colorInput) colorInput.value = colorVal;
+            if (regInput) regInput.value = regVal;
+
+            if (subtitle) {
+                subtitle.textContent = regVal ? `Plate: ${regVal} (${makeVal || 'Vehicle'})` : 'Modify fleet category, model, plate, or driver assignment.';
+            }
+
+            if (makeSelect) {
+                let exists = Array.from(makeSelect.options).some(opt => opt.value.toLowerCase() === makeVal.toLowerCase());
+                if (!exists && makeVal.trim() !== '') {
+                    const newOpt = new Option(makeVal, makeVal, true, true);
+                    makeSelect.add(newOpt);
+                }
+                makeSelect.value = makeVal;
+            }
+
+            if (driverSelect) {
+                driverSelect.value = driverIdVal;
+            }
+        });
+    });
+
+    // Vehicle Directory Search Filter Logic
+    const vehicleSearchInput = document.getElementById('vehicleSearchInput');
+    const vehicleRows = document.querySelectorAll('.vehicle-row');
+    const vehicleCountBadge = document.getElementById('vehicleCountBadge');
+
+    if (vehicleSearchInput) {
+        vehicleSearchInput.addEventListener('input', function() {
+            const q = this.value.toLowerCase().trim();
+            let count = 0;
+            vehicleRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (!q || text.includes(q)) {
+                    row.style.display = '';
+                    count++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            if (vehicleCountBadge) {
+                vehicleCountBadge.textContent = count;
+            }
+        });
+    }
 
     // Driver Directory Real-time Search and Filter Logic
     const driverSearchInput = document.getElementById('driverSearchInput');

@@ -296,12 +296,22 @@ Route::prefix('setup')->group(function () {
     Route::post('/vehicle/store', [SetupController::class, 'storeVehicle'])->name('setup.vehicle.store');
     Route::post('/customer/store', [SetupController::class, 'storeCustomer'])->name('setup.customer.store');
     Route::put('/driver/{id}', [SetupController::class, 'update'])->name('setup.driver.update');
+    Route::match(['put', 'post', 'patch'], '/vehicle/{id}', [SetupController::class, 'updateVehicle'])
+        ->name('setup.vehicle.update');
+    Route::delete('/vehicle/{id}', [SetupController::class, 'destroyVehicle'])
+        ->name('setup.vehicle.destroy');
     Route::post('/super-admin/password', [SetupController::class, 'updateSuperAdminPassword'])
         ->name('setup.super-admin.password');
     Route::post('/delete-job-by-ref', [SetupController::class, 'deleteJobByRef'])
         ->name('setup.job.delete-by-ref');
     Route::post('/find-job-by-ref', [SetupController::class, 'findJobByRef'])
         ->name('setup.job.find-by-ref');
+});
+
+Route::prefix('admin/setup')->group(function () {
+    Route::match(['put', 'post', 'patch'], '/driver/{id}', [SetupController::class, 'update']);
+    Route::match(['put', 'post', 'patch'], '/vehicle/{id}', [SetupController::class, 'updateVehicle']);
+    Route::delete('/vehicle/{id}', [SetupController::class, 'destroyVehicle']);
 });
 
 Route::prefix('messages')->group(function () {

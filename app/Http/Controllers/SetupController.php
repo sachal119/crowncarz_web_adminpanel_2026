@@ -498,6 +498,194 @@ public function updateSuperAdminPassword(Request $request)
         return redirect()->route('setup')->with('success', 'Vehicle added successfully.')->with('active_tab', 'vehicle');
     }
 
+    // Find Firebase vehicle key by internal ID or registration
+    private function findFirebaseVehicleKey($id, $registration = null): ?string
+    {
+        $vehicleRecords = $this->firebase->getData('vehicles') ?? [];
+
+        // 1. Direct match by key
+        if (isset($vehicleRecords[$id])) {
+            return (string) $id;
+        }
+
+        // 2. Match by internal 'id'
+        foreach ($vehicleRecords as $firebaseKey => $record) {
+            if (!is_array($record)) {
+                continue;
+            }
+            if ((string) ($record['id'] ?? '') === (string) $id) {
+                return (string) $firebaseKey;
+            }
+        }
+
+        // 3. Match by registration plate if provided
+        if ($registration) {
+            $normReg = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)$registration));
+            foreach ($vehicleRecords as $firebaseKey => $record) {
+                if (!is_array($record)) {
+                    continue;
+                }
+                $recReg = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)($record['registration'] ?? '')));
+                if ($recReg !== '' && $recReg === $normReg) {
+                    return (string) $firebaseKey;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // Update Vehicle
+    public function updateVehicle(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'make'         => 'required|string|max:100',
+            'model'        => 'required|string|max:100',
+            'color'        => 'required|string|max:50',
+            'registration' => 'required|string|max:50',
+            'driver_id'    => 'nullable',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors($validator)
+                ->with('active_tab', 'vehicle');
+        }
+
+        $firebaseKey = $this->findFirebaseVehicleKey($id, $request->input('old_registration') ?? $request->input('registration'));
+
+        if ($firebaseKey === null && $request->filled('firebase_key')) {
+            $candidateKey = (string)$request->input('firebase_key');
+            $record = $this->firebase->getData('vehicles/' . $candidateKey);
+            if ($record !== null) {
+                $firebaseKey = $candidateKey;
+            }
+        }
+
+        $existingRecord = $firebaseKey ? ($this->firebase->getData('vehicles/' . $firebaseKey) ?? []) : [];
+
+        // Check if registration plate is in use by another vehicle
+        $newRegClean = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)$request->registration));
+        $allVehicles = $this->firebase->getData('vehicles') ?? [];
+        foreach ($allVehicles as $vKey => $v) {
+            if ((string)$vKey !== (string)$firebaseKey && is_array($v) && !empty($v['registration'])) {
+                $otherRegClean = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)$v['registration']));
+                if ($otherRegClean === $newRegClean) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['registration' => 'Registration plate ' . $request->registration . ' is already assigned to another vehicle.'])
+                        ->with('active_tab', 'vehicle');
+                }
+            }
+        }
+
+        // 1️⃣ Update Firebase
+        $updateData = [
+            'make'         => $request->make,
+            'model'        => $request->model,
+            'color'        => $request->color,
+            'registration' => $request->registration,
+            'driver_id'    => $request->driver_id ?: null,
+            'updated_at'   => now()->toDateTimeString(),
+        ];
+
+        if (isset($existingRecord['id'])) {
+            $updateData['id'] = $existingRecord['id'];
+        }
+
+        if ($firebaseKey !== null) {
+            $this->firebase->updateData('vehicles/' . $firebaseKey, $updateData);
+        } else {
+            $this->firebase->pushData('vehicles', $updateData);
+        }
+
+        // 2️⃣ Update SQL
+        try {
+            $sqlDriverId = null;
+            if (!empty($request->driver_id) && is_numeric($request->driver_id)) {
+                if (Driver::where('id', $request->driver_id)->exists()) {
+                    $sqlDriverId = (int)$request->driver_id;
+                }
+            }
+
+            $sqlVehicle = is_numeric($id) ? Vehicle::find($id) : null;
+
+            if (!$sqlVehicle && isset($existingRecord['id']) && is_numeric($existingRecord['id'])) {
+                $sqlVehicle = Vehicle::find($existingRecord['id']);
+            }
+
+            if (!$sqlVehicle && !empty($existingRecord['registration'])) {
+                $sqlVehicle = Vehicle::where('registration', $existingRecord['registration'])->first();
+            }
+
+            if (!$sqlVehicle) {
+                $sqlVehicle = Vehicle::where('registration', $request->registration)->first();
+            }
+
+            if ($sqlVehicle) {
+                $sqlVehicle->update([
+                    'make'         => $request->make,
+                    'model'        => $request->model,
+                    'color'        => $request->color,
+                    'registration' => $request->registration,
+                    'driver_id'    => $sqlDriverId,
+                ]);
+            } else {
+                Vehicle::create([
+                    'make'         => $request->make,
+                    'model'        => $request->model,
+                    'color'        => $request->color,
+                    'registration' => $request->registration,
+                    'driver_id'    => $sqlDriverId,
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::warning('SQL Vehicle update note: ' . $e->getMessage());
+        }
+
+        return redirect()->route('setup')->with('success', 'Vehicle updated successfully.')->with('active_tab', 'vehicle');
+    }
+
+    // Destroy Vehicle
+    public function destroyVehicle(Request $request, $id)
+    {
+        $firebaseKey = $this->findFirebaseVehicleKey($id, $request->input('registration'));
+
+        if ($firebaseKey === null && $request->filled('firebase_key')) {
+            $candidateKey = (string)$request->input('firebase_key');
+            $record = $this->firebase->getData('vehicles/' . $candidateKey);
+            if ($record !== null) {
+                $firebaseKey = $candidateKey;
+            }
+        }
+
+        $existingRecord = $firebaseKey ? ($this->firebase->getData('vehicles/' . $firebaseKey) ?? []) : [];
+
+        // Delete from Firebase
+        if ($firebaseKey !== null) {
+            $this->firebase->deleteData('vehicles/' . $firebaseKey);
+        }
+
+        // Delete from SQL
+        try {
+            $sqlVehicle = is_numeric($id) ? Vehicle::find($id) : null;
+            if (!$sqlVehicle && isset($existingRecord['id']) && is_numeric($existingRecord['id'])) {
+                $sqlVehicle = Vehicle::find($existingRecord['id']);
+            }
+            if (!$sqlVehicle && !empty($existingRecord['registration'])) {
+                $sqlVehicle = Vehicle::where('registration', $existingRecord['registration'])->first();
+            }
+            if ($sqlVehicle) {
+                $sqlVehicle->delete();
+            }
+        } catch (\Exception $e) {
+            \Log::warning('SQL Vehicle delete note: ' . $e->getMessage());
+        }
+
+        return redirect()->route('setup')->with('success', 'Vehicle deleted successfully.')->with('active_tab', 'vehicle');
+    }
+
     // Store Customer Account
     public function storeCustomer(Request $request)
     {
