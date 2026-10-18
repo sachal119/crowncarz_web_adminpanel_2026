@@ -695,6 +695,73 @@ td{
   color: #ffffff !important;
   border: 1px solid #475569 !important;
 }
+
+/* 🔍 Header Inline Search & Date Filter */
+#dashboardSearchForm .form-control:focus {
+    border-color: #B87333 !important;
+    box-shadow: 0 0 0 2px rgba(184, 115, 51, 0.15) !important;
+}
+#calendarWrapper input.flatpickr-input {
+    height: 30px !important;
+    font-size: 11.5px !important;
+    border-radius: 0 8px 8px 0 !important;
+    border-color: #cbd5e1 !important;
+    cursor: pointer !important;
+}
+[data-bs-theme="dark"] #universalSearchInput,
+[data-bs-theme="dark"] #calendarWrapper input.flatpickr-input,
+[data-bs-theme="dark"] #calendarWrapper .input-group-text,
+[data-bs-theme="dark"] #dashboardSearchForm .input-group-text {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+[data-bs-theme="dark"] #dashboardSearchForm input::placeholder {
+    color: #94a3b8 !important;
+}
+[data-bs-theme="dark"] #bookingViewSwitcher {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* 📍 Live Driver Radar Pulse Dot */
+.radar-dot-mini {
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: radarPulseMini 1.6s infinite;
+    vertical-align: middle;
+}
+@keyframes radarPulseMini {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+[data-bs-theme="dark"] #dashLiveDriverMap {
+    background: #111827 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+[data-bs-theme="dark"] #dashLiveDriverAvailableBadge {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #34d399 !important;
+    border-color: rgba(52, 211, 153, 0.3) !important;
+}
+[data-bs-theme="dark"] #dashMapLoadingPlaceholder {
+    background-color: rgba(17, 24, 39, 0.85) !important;
+    color: #cbd5e1 !important;
+}
 </style>
 
 <!-- 🌟 Fullscreen Screen-Level Search & Filter Loader -->
@@ -714,109 +781,35 @@ td{
 <div class="container-fluid dashboard-section">
    <div class="row g-3 mb-2">
 
-    <!-- 🔍 1/3 Left Card: Search & Filter Bookings -->
+    <!-- 🗺️ 1/3 Left Card: Live Available Drivers Map -->
     <div class="col-12 col-xl-4 col-lg-4">
         <div class="card shadow-sm border-0 h-100" style="border-radius: 14px; background: #ffffff; border: 1px solid #eaedf1;">
-            <div class="card-header bg-transparent border-0 pb-1 pt-3 px-3">
-                <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 13.5px;">
-                    <i class="bi bi-search text-warning"></i> Search & Filter Bookings
+            <div class="card-header bg-transparent border-0 pb-1 pt-3 px-3 d-flex justify-content-between align-items-center flex-wrap gap-1">
+                <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-1.5" style="font-size: 13.5px;">
+                    <i class="bi bi-geo-alt-fill text-success"></i> Live Drivers
                 </h6>
+                <div class="d-flex align-items-center gap-1 flex-wrap">
+                    <span class="badge px-2 py-1 shadow-sm d-inline-flex align-items-center gap-1" id="dashLiveDriverAvailableBadge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 11px; border-radius: 7px;">
+                        <span class="radar-dot-mini me-0.5"></span> <strong id="dashLiveAvailableCount">0</strong> Available
+                    </span>
+                    <a href="{{ route('live.map') }}" target="_blank" class="badge text-decoration-none px-2 py-1 shadow-sm d-inline-flex align-items-center gap-1" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-size: 11px; border-radius: 7px;" title="Open Fullscreen Driver Radar">
+                        <i class="bi bi-arrows-fullscreen"></i> Full Map
+                    </a>
+                </div>
             </div>
-            <div class="card-body p-3 pt-2 d-flex flex-column justify-content-between">
-                <form action="{{ route('bookings.search.main') }}" method="GET" id="dashboardSearchForm">
-                    <div class="row g-2 mb-2">
-                        <!-- Universal Keyword Search Input -->
-                        <div class="col-12">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius: 10px 0 0 10px;">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" 
-                                       name="search" 
-                                       id="universalSearchInput" 
-                                       class="form-control border-start-0 ps-0" 
-                                       placeholder="Search passenger, phone, pickup, driver..." 
-                                       value="{{ request('search') }}" 
-                                       style="border-radius: 0 10px 10px 0; font-size: 12px;">
-                            </div>
-                        </div>
-
-                        <!-- Date Range Picker with Calendar Trigger -->
-                        <div class="col-12">
-                            <div class="input-group" id="calendarWrapper" title="Click to filter by Date Range" style="cursor: pointer;">
-                                <span class="input-group-text bg-white border-end-0 text-warning" id="calendarIconBtn" style="border-radius: 10px 0 0 10px; cursor: pointer;">
-                                    <i class="bi bi-calendar-event fs-6 text-warning"></i>
-                                </span>
-                                <input type="text" 
-                                       name="date_range" 
-                                       id="dateRangePicker" 
-                                       class="form-control border-start-0 ps-0 bg-white" 
-                                       placeholder="Select Dates" 
-                                       value="{{ request('date_range') ?: (request('from_date') && request('to_date') ? request('from_date').' to '.request('to_date') : (request('from_date') ?: '')) }}" 
-                                       style="border-radius: 0 10px 10px 0; font-size: 12px; cursor: pointer;">
-                                <input type="hidden" name="from_date" id="fromDateInput" value="{{ request('from_date') }}">
-                                <input type="hidden" name="to_date" id="toDateInput" value="{{ request('to_date') }}">
-                            </div>
-                        </div>
+            <div class="card-body p-3 pt-1 d-flex flex-column justify-content-between">
+                <div id="dashLiveDriverMap" style="width: 100%; height: 185px; border-radius: 10px; background: #e5e3df; position: relative; overflow: hidden; border: 1px solid #eaedf1;">
+                    <div id="dashMapLoadingPlaceholder" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white bg-opacity-75" style="z-index: 5;">
+                        <div class="spinner-border spinner-border-sm text-success mb-1" role="status"></div>
+                        <span class="text-muted" style="font-size: 11px;">Scanning available drivers...</span>
                     </div>
-
-                    <div class="row g-2 mb-2">
-                        <!-- Driver Select -->
-                        <div class="col-7">
-                            <select name="driver_id" class="form-select text-dark" style="border-radius: 10px; font-size: 12px;">
-                                <option value="">All Drivers</option>
-                                @foreach($drivers as $driver)
-                                    @php
-                                        $callSign = $driver['call_sign'] ?? 'D';
-                                        $dName = $driver['name'] ?? 'Driver';
-                                        $vehParts = [];
-                                        if (!empty($driver['vehicle_type'])) $vehParts[] = $driver['vehicle_type'];
-                                        $makeModel = trim(($driver['vehicle_make'] ?? '') . ' ' . ($driver['vehicle_model'] ?? ''));
-                                        if (!empty($makeModel)) $vehParts[] = $makeModel;
-                                        if (!empty($driver['vehicle_reg'])) $vehParts[] = $driver['vehicle_reg'];
-                                        $vehStr = !empty($vehParts) ? ' (' . implode(' • ', $vehParts) . ')' : '';
-                                    @endphp
-                                    <option value="{{ $driver['id'] }}" {{ (string)request('driver_id') === (string)$driver['id'] ? 'selected' : '' }}>
-                                        {{ $callSign }} • {{ $dName }}{{ $vehStr }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <!-- Payment Select -->
-                        <div class="col-5">
-                            <select name="payment_type" class="form-select" style="border-radius: 10px; font-size: 12px;">
-                                <option value="">All Payments</option>
-                                <option value="Cash" {{ request('payment_type') == 'Cash' ? 'selected' : '' }}>Cash</option>
-                                <option value="Card" {{ request('payment_type') == 'Card' ? 'selected' : '' }}>Card</option>
-                                <option value="Account" {{ request('payment_type') == 'Account' ? 'selected' : '' }}>Account</option>
-                            </select>
-                        </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between pt-2 px-0.5 flex-wrap gap-1" style="font-size: 11px;">
+                    <div id="dashAvailableDriversList" class="d-flex align-items-center gap-1 flex-wrap text-muted small" style="max-height: 24px; overflow: hidden;">
+                        <span class="text-muted" style="font-size: 11px;"><i class="bi bi-broadcast text-success me-1"></i> Live radar active</span>
                     </div>
-
-                    <div class="d-flex gap-1 mb-2" id="filterButtonsGroup">
-                        <button type="submit" id="filterSubmitBtn" class="btn text-white fw-bold w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="background: linear-gradient(135deg, #0284c7, #0369a1); border-radius: 10px; border: none; font-size: 12px; height: 34px;">
-                            <i class="bi bi-search"></i>
-                            <span>Filter</span>
-                        </button>
-                        <div id="filterResetWrapper" class="d-flex">
-                            @if(request('search') || request('date_range') || request('from_date') || request('to_date') || request('driver_id') || request('payment_type'))
-                            <button type="button" id="resetFiltersBtn" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Reset All Filters" style="border-radius: 10px; width: 34px; height: 34px; flex-shrink: 0;">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- Quick Date Presets -->
-                    <div class="d-flex align-items-center gap-1 pt-1 border-top flex-wrap" style="border-color: #f1f5f9 !important;">
-                        <span class="text-muted small me-1" style="font-size: 10.5px;"><i class="bi bi-lightning-charge-fill text-warning"></i> Quick:</span>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="today" style="border-radius: 12px; font-size: 10.5px; border: 1px solid #e2e8f0;">Today</button>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="tomorrow" style="border-radius: 12px; font-size: 10.5px; border: 1px solid #e2e8f0;">Tomorrow</button>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="week" style="border-radius: 12px; font-size: 10.5px; border: 1px solid #e2e8f0;">7 Days</button>
-                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-semibold quick-date-btn" data-preset="clear" style="border-radius: 12px; font-size: 10.5px; border: 1px solid #e2e8f0;">All</button>
-                    </div>
-                </form>
+                    <span class="text-muted" style="font-size: 10.5px;" id="dashLiveDriversTotalText">Live GPS Sync</span>
+                </div>
             </div>
         </div>
     </div>
@@ -977,25 +970,67 @@ td{
 
   <div class="col-lg-12 mt-3">
         <div class="card shadow-sm border-0" style="border-radius: 14px; border: 1px solid #eaedf1 !important;">
-            <div class="card-header bg-white py-2.5 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom" style="border-top-left-radius: 13px; border-top-right-radius: 13px; border-color: #f1f5f9 !important;">
+            <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom" style="border-top-left-radius: 13px; border-top-right-radius: 13px; border-color: #f1f5f9 !important;">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="badge d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(184, 115, 51, 0.12); color: #B87333;">
-                        <i class="bi bi-calendar2-range-fill fs-6"></i>
+                    <!-- 🔢 Total Bookings Count shown in place of old calendar icon -->
+                    <span class="badge fw-bold d-flex align-items-center justify-content-center px-2 shadow-xs" id="bookingsTotalCount" title="Total Future Bookings" style="min-width: 32px; height: 30px; border-radius: 8px; background: rgba(184, 115, 51, 0.14); color: #B87333; font-size: 13px; border: 1px solid rgba(184, 115, 51, 0.28);">
+                        {{ $bookings->total() }}
                     </span>
-                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 14px; letter-spacing: -0.2px;">
+                    <h6 class="mb-0 fw-bold text-dark text-nowrap" style="font-size: 14px; letter-spacing: -0.2px;">
                         Future Bookings
                     </h6>
-                    <span class="badge bg-dark text-white rounded-pill px-2.5 py-1 me-1" id="bookingsTotalCount" style="font-size: 11px;">{{ $bookings->total() }}</span>
 
-                    <!-- 🔀 Modern View Switcher (Table vs Calendar) -->
+                    <!-- 🔀 Modern View Switcher (Table vs Calendar) - Icons Only -->
                     <div class="btn-group btn-group-sm p-0.5 rounded-3 border bg-light ms-1" role="group" id="bookingViewSwitcher">
-                        <button type="button" class="btn btn-sm px-2.5 py-1 fw-bold active rounded-2" id="switchTableViewBtn" onclick="switchBookingDashboardView('table')">
-                            <i class="bi bi-list-ul me-1"></i> Table View
+                        <button type="button" class="btn btn-sm px-2 py-1 fw-bold active rounded-2 d-flex align-items-center justify-content-center" id="switchTableViewBtn" onclick="switchBookingDashboardView('table')" title="Table View" style="width: 32px; height: 30px;">
+                            <i class="bi bi-list-ul fs-6"></i>
                         </button>
-                        <button type="button" class="btn btn-sm px-2.5 py-1 fw-bold rounded-2 text-muted" id="switchCalendarViewBtn" onclick="switchBookingDashboardView('calendar')">
-                            <i class="bi bi-calendar3 me-1"></i> Calendar View
+                        <button type="button" class="btn btn-sm px-2 py-1 fw-bold rounded-2 text-muted d-flex align-items-center justify-content-center" id="switchCalendarViewBtn" onclick="switchBookingDashboardView('calendar')" title="Calendar View" style="width: 32px; height: 30px;">
+                            <i class="bi bi-calendar3 fs-6"></i>
                         </button>
                     </div>
+
+                    <!-- 🔍 Search & Date Range Picker Form (Moved here from top container) -->
+                    <form action="{{ route('bookings.search.main') }}" method="GET" id="dashboardSearchForm" class="d-flex align-items-center gap-1.5 flex-wrap ms-1 my-0">
+                        <!-- Universal Keyword Search Input -->
+                        <div class="input-group input-group-sm" style="width: 240px; max-width: 100%;">
+                            <span class="input-group-text bg-white border-end-0 text-muted ps-2.5 pe-1.5" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1;">
+                                <i class="bi bi-search text-muted" style="font-size: 11px;"></i>
+                            </span>
+                            <input type="text" 
+                                   name="search" 
+                                   id="universalSearchInput" 
+                                   class="form-control form-control-sm border-start-0 ps-1 bg-white" 
+                                   placeholder="Search passenger, driver, ref..." 
+                                   value="{{ request('search') }}" 
+                                   style="border-radius: 0 8px 8px 0; font-size: 11.5px; height: 30px; border-color: #cbd5e1;">
+                        </div>
+
+                        <!-- Date Range Picker with Calendar Trigger (From - To) -->
+                        <div class="input-group input-group-sm" id="calendarWrapper" title="Click to filter by Date Range (From - To)" style="width: 215px; max-width: 100%; cursor: pointer;">
+                            <span class="input-group-text bg-white border-end-0 text-warning ps-2 pe-1.5" id="calendarIconBtn" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1; cursor: pointer;">
+                                <i class="bi bi-calendar-range text-warning" style="font-size: 11.5px;"></i>
+                            </span>
+                            <input type="text" 
+                                   name="date_range" 
+                                   id="dateRangePicker" 
+                                   class="form-control form-control-sm border-start-0 ps-1 bg-white" 
+                                   placeholder="From - To Date" 
+                                   value="{{ request('date_range') ?: (request('from_date') && request('to_date') ? request('from_date').' to '.request('to_date') : (request('from_date') ?: '')) }}" 
+                                   style="border-radius: 0 8px 8px 0; font-size: 11.5px; height: 30px; border-color: #cbd5e1; cursor: pointer;">
+                            <input type="hidden" name="from_date" id="fromDateInput" value="{{ request('from_date') }}">
+                            <input type="hidden" name="to_date" id="toDateInput" value="{{ request('to_date') }}">
+                        </div>
+
+                        <!-- Reset / Clear Button -->
+                        <div id="filterResetWrapper" class="d-flex align-items-center">
+                            @if(request('search') || request('date_range') || request('from_date') || request('to_date'))
+                            <button type="button" id="resetFiltersBtn" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center shadow-xs" title="Reset Filters" style="border-radius: 8px; width: 28px; height: 30px; flex-shrink: 0; padding: 0;">
+                                <i class="bi bi-x-lg" style="font-size: 11px;"></i>
+                            </button>
+                            @endif
+                        </div>
+                    </form>
                 </div>
 
                 <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
@@ -4076,7 +4111,7 @@ document.addEventListener('DOMContentLoaded', function () {
         dateFormat: "Y-m-d",
         altInput: true,
         altFormat: "d M Y",
-        altInputClass: "form-control border-start-0 ps-0 bg-white",
+        altInputClass: "form-control form-control-sm border-start-0 ps-1 bg-white",
         defaultDate: defaultDates.length > 0 ? defaultDates : null,
         onChange: function (selectedDates, dateStr, instance) {
             if (selectedDates.length === 2) {
@@ -4097,6 +4132,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (calendarIconBtn) {
         calendarIconBtn.addEventListener('click', function () {
             fp.open();
+        });
+    }
+
+    const calendarWrapperEl = document.getElementById('calendarWrapper');
+    if (calendarWrapperEl) {
+        calendarWrapperEl.addEventListener('click', function (e) {
+            if (e.target !== fp.altInput) {
+                fp.open();
+            }
         });
     }
 
@@ -4223,20 +4267,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const dRangeVal = document.getElementById('dateRangePicker')?.value.trim() || '';
         const fDateVal = fromInput?.value.trim() || '';
         const tDateVal = toInput?.value.trim() || '';
-        const driverVal = searchForm.querySelector('select[name="driver_id"]')?.value || '';
-        const payVal = searchForm.querySelector('select[name="payment_type"]')?.value || '';
 
-        const hasFilter = sVal || dRangeVal || fDateVal || tDateVal || driverVal || payVal;
+        const hasFilter = sVal || dRangeVal || fDateVal || tDateVal;
         let resetBtn = document.getElementById('resetFiltersBtn');
         if (hasFilter) {
             if (!resetBtn && filterResetWrapper) {
                 resetBtn = document.createElement('button');
                 resetBtn.type = 'button';
                 resetBtn.id = 'resetFiltersBtn';
-                resetBtn.className = 'btn btn-outline-secondary d-flex align-items-center justify-content-center';
+                resetBtn.className = 'btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center shadow-xs';
                 resetBtn.title = 'Reset All Filters';
-                resetBtn.style.cssText = 'border-radius: 10px; width: 36px; height: 36px; flex-shrink: 0;';
-                resetBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                resetBtn.style.cssText = 'border-radius: 8px; width: 28px; height: 30px; flex-shrink: 0; padding: 0;';
+                resetBtn.innerHTML = '<i class="bi bi-x-lg" style="font-size: 11px;"></i>';
                 filterResetWrapper.appendChild(resetBtn);
                 attachResetListener(resetBtn);
             }
@@ -4249,16 +4291,17 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!btn) return;
         btn.addEventListener('click', function (e) {
             e.preventDefault();
-            searchForm.reset();
+            if (searchForm) searchForm.reset();
             if (fp) fp.clear();
-            fromInput.value = '';
-            toInput.value = '';
+            if (fromInput) fromInput.value = '';
+            if (toInput) toInput.value = '';
             const drp = document.getElementById('dateRangePicker');
             if (drp) drp.value = '';
             const usi = document.getElementById('universalSearchInput');
             if (usi) usi.value = '';
-            searchForm.querySelectorAll('select').forEach(sel => sel.value = '');
-            showDashboardToast('Filters Cleared', 'Resetting and loading all future bookings...', 'info');
+            if (typeof showDashboardToast === 'function') {
+                showDashboardToast('Filters Cleared', 'Resetting and loading all future bookings...', 'info');
+            }
             applyDashboardFilter("{{ route('dashboard') }}");
         });
     }
@@ -5064,5 +5107,274 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+
+<!-- 🗺️ Dashboard Live Available Drivers Map Script -->
+<script>
+let dashGoogleMap = null;
+let dashDriverMarkers = {};
+let dashDriverInfoWindow = null;
+let dashDriversState = {};
+let dashDriverLocations = {};
+
+// Initial SSR Drivers and Locations
+const rawInitialDrivers = @json($drivers ?? []);
+const rawInitialLocations = @json($driverLocations ?? []);
+
+if (Array.isArray(rawInitialDrivers)) {
+    rawInitialDrivers.forEach(d => {
+        if (d && d.id) dashDriversState[String(d.id)] = d;
+    });
+} else if (typeof rawInitialDrivers === 'object' && rawInitialDrivers !== null) {
+    for (const k in rawInitialDrivers) {
+        const d = rawInitialDrivers[k];
+        if (d && (d.id || k)) dashDriversState[String(d.id || k)] = { ...d, id: String(d.id || k) };
+    }
+}
+
+if (Array.isArray(rawInitialLocations)) {
+    rawInitialLocations.forEach(loc => {
+        if (loc && loc.id) dashDriverLocations[String(loc.id)] = loc;
+    });
+} else if (typeof rawInitialLocations === 'object' && rawInitialLocations !== null) {
+    for (const k in rawInitialLocations) {
+        const loc = rawInitialLocations[k];
+        if (loc) dashDriverLocations[String(loc.id || k)] = loc;
+    }
+}
+
+window.initDashboardLiveDriverMap = function() {
+    initDashMapInstance();
+};
+
+window.gm_authFailure = function() {
+    console.warn("Google Maps Auth Issue: Showing available drivers in list mode.");
+    const ph = document.getElementById('dashMapLoadingPlaceholder');
+    if (ph) {
+        ph.innerHTML = `<div class="p-2 text-center text-muted" style="font-size: 11px;"><i class="bi bi-geo-alt text-success fs-5 d-block mb-1"></i>Map key inactive. Drivers tracked via live radar.</div>`;
+    }
+};
+
+function initDashMapInstance() {
+    if (dashGoogleMap) return;
+    const mapEl = document.getElementById("dashLiveDriverMap");
+    if (!mapEl || !window.google || !window.google.maps) return;
+
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    const darkStyle = [
+        { elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+        { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+        { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+        { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#cbd5e1" }] },
+        { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+        { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#16233b" }] },
+        { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
+        { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
+        { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+        { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#475569" }] },
+        { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
+        { featureType: "transit", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+        { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+        { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#38bdf8" }] }
+    ];
+
+    dashGoogleMap = new google.maps.Map(mapEl, {
+        center: { lat: 51.4543, lng: -0.9781 }, // Reading, UK
+        zoom: 12,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        zoomControl: true,
+        styles: isDark ? darkStyle : []
+    });
+
+    dashDriverInfoWindow = new google.maps.InfoWindow();
+
+    // Listen to theme switch to adjust dark/light map styles
+    const themeObs = new MutationObserver(() => {
+        if (!dashGoogleMap) return;
+        const darkNow = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        dashGoogleMap.setOptions({ styles: darkNow ? darkStyle : [] });
+    });
+    themeObs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+
+    renderDashLiveDrivers();
+}
+
+function renderDashLiveDrivers() {
+    const countBadge = document.getElementById('dashLiveAvailableCount');
+    const listEl = document.getElementById('dashAvailableDriversList');
+    const placeholder = document.getElementById('dashMapLoadingPlaceholder');
+
+    const availableDrivers = [];
+
+    for (const id in dashDriversState) {
+        const d = dashDriversState[id];
+        const loc = dashDriverLocations[id] || {};
+        const rawStatus = (d.status || loc.status || '').toLowerCase().trim();
+        const isOnline = loc.isOnline === true || loc.isOnline === 'true' || d.isOnline === true;
+        
+        // Available drivers (status available, or online waiting)
+        const isAvailable = (rawStatus === 'available') || 
+                            (!['busy', 'engaged', 'on_job', 'on_trip', 'on_break', 'offline'].includes(rawStatus) && (rawStatus === 'waiting' || isOnline));
+
+        if (isAvailable) {
+            const lat = parseFloat(loc.lat || loc.latitude || d.lat || d.latitude);
+            const lng = parseFloat(loc.lng || loc.longitude || d.lng || d.longitude);
+            availableDrivers.push({
+                ...d,
+                id: String(id),
+                name: d.name || 'Driver',
+                call_sign: d.call_sign || ('D-' + String(id).slice(-3)),
+                lat: (!isNaN(lat) && lat !== 0) ? lat : null,
+                lng: (!isNaN(lng) && lng !== 0) ? lng : null,
+                speed: loc.speed || d.speed || 0,
+                vehicle_reg: d.vehicle_reg || '',
+                vehicle_model: d.vehicle_model || d.vehicle_make || ''
+            });
+        }
+    }
+
+    if (countBadge) countBadge.textContent = availableDrivers.length;
+
+    // Render driver pills below map
+    if (listEl) {
+        if (availableDrivers.length === 0) {
+            listEl.innerHTML = `<span class="text-muted" style="font-size: 11px;"><i class="bi bi-clock me-1"></i>No drivers currently available</span>`;
+        } else {
+            let pillsHtml = '';
+            availableDrivers.slice(0, 5).forEach(drv => {
+                pillsHtml += `<span class="badge cursor-pointer fw-semibold text-truncate" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.28); font-size: 10px; cursor: pointer; max-width: 90px;" onclick="window.dashFocusDriver('${drv.id}')" title="Click to focus on map: ${drv.name}">${drv.call_sign || drv.name}</span>`;
+            });
+            if (availableDrivers.length > 5) {
+                pillsHtml += `<span class="badge text-muted border bg-light" style="font-size: 10px;">+${availableDrivers.length - 5} more</span>`;
+            }
+            listEl.innerHTML = pillsHtml;
+        }
+    }
+
+    // Hide loader placeholder
+    if (placeholder && availableDrivers.length >= 0) {
+        placeholder.style.display = 'none';
+    }
+
+    // Update Google Map Markers
+    if (!dashGoogleMap || !window.google || !window.google.maps) return;
+
+    const currentIds = new Set(availableDrivers.map(d => d.id));
+
+    // Remove markers of drivers no longer available
+    for (const mId in dashDriverMarkers) {
+        if (!currentIds.has(mId)) {
+            dashDriverMarkers[mId].setMap(null);
+            delete dashDriverMarkers[mId];
+        }
+    }
+
+    const bounds = new google.maps.LatLngBounds();
+    let hasGpsPoints = false;
+
+    // Green Car SVG Marker Icon
+    const carSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34">
+            <circle cx="17" cy="17" r="14" fill="#10b981" stroke="#ffffff" stroke-width="2.5" />
+            <path d="M11 20l2-6h8l2 6v3h-1.5a1.5 1.5 0 0 1-3 0h-3a1.5 1.5 0 0 1-3 0H11v-3z" fill="#ffffff"/>
+            <circle cx="14" cy="20" r="1.2" fill="#10b981"/>
+            <circle cx="20" cy="20" r="1.2" fill="#10b981"/>
+        </svg>
+    `);
+
+    availableDrivers.forEach(drv => {
+        if (drv.lat && drv.lng) {
+            const pos = new google.maps.LatLng(drv.lat, drv.lng);
+            bounds.extend(pos);
+            hasGpsPoints = true;
+
+            if (dashDriverMarkers[drv.id]) {
+                dashDriverMarkers[drv.id].setPosition(pos);
+            } else {
+                const marker = new google.maps.Marker({
+                    position: pos,
+                    map: dashGoogleMap,
+                    title: `${drv.call_sign} • ${drv.name}`,
+                    icon: {
+                        url: carSvg,
+                        scaledSize: new google.maps.Size(28, 28),
+                        anchor: new google.maps.Point(14, 14)
+                    }
+                });
+
+                marker.addListener('click', () => {
+                    const infoHtml = `
+                        <div style="font-family: inherit; font-size: 12px; padding: 3px; min-width: 150px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+                                <strong style="color: #111827; font-size: 12px;">${drv.call_sign} • ${drv.name}</strong>
+                                <span style="background: #10b981; color: #fff; font-size: 9px; font-weight: bold; padding: 1px 5px; border-radius: 4px;">Available</span>
+                            </div>
+                            <div style="color: #64748b; font-size: 11px;">
+                                ${drv.vehicle_model ? drv.vehicle_model + (drv.vehicle_reg ? ' • ' + drv.vehicle_reg : '') : 'Active Driver'}
+                            </div>
+                            ${drv.phone ? `<div style="margin-top: 3px; font-size: 11px; color: #0284c7;"><i class="bi bi-telephone"></i> ${drv.phone}</div>` : ''}
+                        </div>
+                    `;
+                    dashDriverInfoWindow.setContent(infoHtml);
+                    dashDriverInfoWindow.open(dashGoogleMap, marker);
+                });
+
+                dashDriverMarkers[drv.id] = marker;
+            }
+        }
+    });
+
+    if (hasGpsPoints && availableDrivers.length > 1) {
+        dashGoogleMap.fitBounds(bounds);
+    } else if (hasGpsPoints && availableDrivers.length === 1) {
+        dashGoogleMap.setCenter(bounds.getCenter());
+        dashGoogleMap.setZoom(13);
+    }
+}
+
+window.dashFocusDriver = function(driverId) {
+    const marker = dashDriverMarkers[driverId];
+    if (marker && dashGoogleMap) {
+        dashGoogleMap.panTo(marker.getPosition());
+        dashGoogleMap.setZoom(15);
+        google.maps.event.trigger(marker, 'click');
+    }
+};
+
+// Start Firebase listener for drivers and live locations on ready
+document.addEventListener('DOMContentLoaded', function() {
+    renderDashLiveDrivers();
+
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) {
+        const db = firebase.database();
+        db.ref("drivers").on("value", snap => {
+            const val = snap.val();
+            if (val) {
+                for (const k in val) {
+                    dashDriversState[String(k)] = { ...(dashDriversState[String(k)] || {}), ...val[k], id: String(k) };
+                }
+                renderDashLiveDrivers();
+            }
+        });
+        db.ref("drivers_live_locations").on("value", snap => {
+            const val = snap.val();
+            if (val) {
+                for (const k in val) {
+                    dashDriverLocations[String(k)] = val[k];
+                }
+                renderDashLiveDrivers();
+            }
+        });
+    }
+
+    if (window.google && window.google.maps) {
+        initDashMapInstance();
+    }
+});
+</script>
+
+<!-- Google Maps JS API -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&callback=initDashboardLiveDriverMap&loading=async"></script>
 
 @endpush
