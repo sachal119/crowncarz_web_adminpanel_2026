@@ -50,21 +50,12 @@ class OtpAuthController extends Controller
     }
 
     public function showLogin() {
-        
-        if(session('blog_logged_in'))
-        {
-            return redirect()->route('pages.index')
-            ->with('success', 'Welcome back!');
-        }
-        
         if(session('admin_logged_in'))
         {
             return redirect()->route('dashboard')
             ->with('success', 'Welcome back!');
         }
-            
-        
-        
+
         return view('auth.login');
     }
     
@@ -105,15 +96,6 @@ public function login(Request $request)
         ]);
 
         return redirect()->route('dashboard')
-            ->with('success', 'Welcome back!');
-    }
-    
-    if ($email === "blog@crowncarz.com" && $password === "Blog123") {
-        // Store session if needed
-        $request->session()->regenerate();
-        session(['blog_logged_in' => true]);
-
-        return redirect()->route('pages.index')
             ->with('success', 'Welcome back!');
     }
 

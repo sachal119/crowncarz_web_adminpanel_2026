@@ -32,10 +32,6 @@ class AdminAuth
             return $next($request);
         }
 
-        if (session('blog_logged_in') && $controller === AdminPageController::class) {
-            return $next($request);
-        }
-
         if (!session('admin_logged_in')) {
             return redirect()->route('login')->with('error', 'Please login first.');
         }
@@ -68,10 +64,11 @@ class AdminAuth
 
         if ($role === 'collaborator') {
             $isBookingRoute = $controller === BookingController::class;
+            $isBlogRoute = $controller === AdminPageController::class;
             $isBookingSms = $request->is('sms/send');
             $isLogout = $routeName === 'logout';
 
-            if (! $isBookingRoute && ! $isBookingSms && ! $isLogout) {
+            if (! $isBookingRoute && ! $isBlogRoute && ! $isBookingSms && ! $isLogout) {
                 abort(403, 'You do not have permission to access this section.');
             }
         }

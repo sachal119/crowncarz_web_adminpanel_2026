@@ -184,7 +184,8 @@ Route::post('/otp/verify', [OtpAuthController::class, 'verifyOtp'])->name('otp.v
 
 
 Route::post('/logout', function () {
-    session()->forget('admin_logged_in');
+    session()->forget(['admin_logged_in', 'staff_role', 'staff_name', 'staff_id', 'staff_email', 'blog_logged_in']);
+    session()->regenerateToken();
     return redirect()->route('login')->with('success', 'Logged out successfully.');
 })->name('logout');
 
@@ -385,24 +386,28 @@ Route::resource('quick-links', QuickLinkController::class);
 Route::get('quick-links',[QuickLinkController::class, 'index'])->name('quick.links');
 
 
+// Blogs Management Routes
 Route::prefix('admin')->group(function () {
-    // Route::get('/pages', [AdminPageController::class, 'index'])->name('admin.pages.index');
-    
+    Route::get('/blogs/pages', [AdminPageController::class, 'index']);
+    Route::get('/pages', [AdminPageController::class, 'index']);
+    Route::get('/pages/create', [AdminPageController::class, 'create']);
+    Route::post('/pages/store', [AdminPageController::class, 'store']);
+    Route::match(['get', 'delete', 'post'], '/blogs/pages/delete/{id}', [AdminPageController::class, 'delete']);
+    Route::get('/blogs/pages/edit/{id}', [AdminPageController::class, 'edit']);
+    Route::post('/blogs/pages/update/{id}', [AdminPageController::class, 'update']);
+    Route::match(['get', 'patch', 'post'], '/pages/{id}/toggle-status', [AdminPageController::class, 'toggleStatus']);
 });
 
-Route::get('{slug}', [PageController::class, 'show']);
 Route::get('blogs/pages', [AdminPageController::class, 'index'])->name('pages.index');
+Route::get('admin/pages', [AdminPageController::class, 'index'])->name('admin.pages.index');
 Route::get('/pages/create', [AdminPageController::class, 'create'])->name('admin.pages.create');
 Route::post('/pages/store', [AdminPageController::class, 'store'])->name('admin.pages.store');
-Route::patch('/pages/{id}/toggle-status', [AdminPageController::class, 'toggleStatus'])->name('admin.pages.toggleStatus');
-Route::get('/blogs/pages/delete/{id}', [AdminPageController::class, 'delete'])
-    ->name('admin.pages.delete');
+Route::match(['get', 'patch', 'post'], '/pages/{id}/toggle-status', [AdminPageController::class, 'toggleStatus'])->name('admin.pages.toggleStatus');
+Route::match(['get', 'delete', 'post'], '/blogs/pages/delete/{id}', [AdminPageController::class, 'delete'])->name('admin.pages.delete');
+Route::get('/blogs/pages/edit/{id}', [AdminPageController::class, 'edit'])->name('admin.pages.edit');
+Route::post('/blogs/pages/update/{id}', [AdminPageController::class, 'update'])->name('admin.pages.update');
 
-Route::get('/blogs/pages/edit/{id}', [AdminPageController::class, 'edit'])
-    ->name('admin.pages.edit');
-
-Route::post('/blogs/pages/update/{id}', [AdminPageController::class, 'update'])
-    ->name('admin.pages.update');
+Route::get('{slug}', [PageController::class, 'show']);
 
 // Route::get('admin/pages', function () {
 //         return 'hi';
