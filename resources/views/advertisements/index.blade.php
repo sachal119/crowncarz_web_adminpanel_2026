@@ -11,32 +11,14 @@
                     <i class="bi bi-megaphone-fill me-1"></i> MARKETING & CAMPAIGNS
                 </span>
                 <span class="badge rounded-pill px-2.5 py-1" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-weight: 600; font-size: 11px;">
-                    <i class="bi bi-phone me-1"></i> PASSENGER & DRIVER APPS
+                    <i class="bi bi-phone me-1"></i> CUSTOMER APP
                 </span>
             </div>
             <h3 class="fw-bold mb-1" style="letter-spacing: -0.5px;">Mobile App Advertisements</h3>
-            <p class="text-muted mb-0" style="font-size: 13px;">Manage in-app promotional banners, pop-up announcements, discounts, and campaigns displayed in the Crown Carz mobile apps.</p>
+            <p class="text-muted mb-0" style="font-size: 13px;">Manage in-app promotional banners, pop-up announcements, discounts, and campaigns displayed in the Crown Carz Customer app.</p>
         </div>
 
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            {{-- App Integration & API Docs Modal Trigger --}}
-            <button type="button" class="btn btn-outline-info btn-sm px-3 py-2 d-flex align-items-center shadow-sm" style="border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#appIntegrationModal">
-                <i class="bi bi-code-slash me-1.5"></i> App API & Flutter Docs
-            </button>
-
-            {{-- Live Phone Simulator Trigger --}}
-            <button type="button" class="btn btn-outline-secondary btn-sm px-3 py-2 d-flex align-items-center shadow-sm" style="border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#phoneSimulatorModal">
-                <i class="bi bi-phone-fill me-1.5"></i> Live App Preview
-            </button>
-
-            {{-- Quick Seed Samples (if empty or admin wants demo) --}}
-            <form action="{{ route('advertisements.seedSamples') }}" method="POST" class="d-inline" onsubmit="return confirm('Load Crown Carz sample advertisements into Firebase?');">
-                @csrf
-                <button type="submit" class="btn btn-outline-warning btn-sm px-3 py-2 d-flex align-items-center shadow-sm" style="border-radius: 8px;" title="Load ready-made luxury car ads">
-                    <i class="bi bi-magic me-1.5"></i> Load Sample Ads
-                </button>
-            </form>
-
+        <div class="d-flex align-items-center gap-2">
             {{-- Add New Ad --}}
             <a href="{{ route('advertisements.create') }}" class="btn btn-sm px-3.5 py-2 d-flex align-items-center shadow-sm fw-semibold" style="background: #E6B04A; color: #111827; border: none; border-radius: 8px;">
                 <i class="bi bi-plus-circle-fill me-1.5 fs-6"></i> Add Advertisement
@@ -94,16 +76,12 @@
             <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: var(--cc-bg-card);">
                 <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="text-muted text-uppercase fw-semibold" style="font-size: 11px; letter-spacing: 0.5px;">Audience Scope</div>
-                        <div class="d-flex align-items-center gap-1 mt-1">
-                            <span class="badge bg-primary" title="Customer App">{{ $stats['customer'] }} User</span>
-                            <span class="badge bg-secondary" title="Driver App">{{ $stats['driver'] }} Driver</span>
-                            <span class="badge bg-info" title="All Apps">{{ $stats['all'] }} All</span>
-                        </div>
-                        <small class="text-muted mt-1 d-block" style="font-size: 11px;">Audience target</small>
+                        <div class="text-muted text-uppercase fw-semibold" style="font-size: 11px; letter-spacing: 0.5px;">Target App</div>
+                        <h4 class="fw-bold mb-0 mt-1" style="color: #3b82f6; font-size: 18px;">Customer App</h4>
+                        <small class="text-muted mt-1 d-block" style="font-size: 11px;">Exclusively for Passengers</small>
                     </div>
                     <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: rgba(59, 130, 246, 0.15); color: #3b82f6;">
-                        <i class="bi bi-people-fill fs-4"></i>
+                        <i class="bi bi-person-check-fill fs-4"></i>
                     </div>
                 </div>
             </div>
@@ -129,7 +107,7 @@
         <div class="card-body p-3">
             <div class="row g-2 align-items-center">
                 {{-- Search Bar --}}
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-5">
                     <div class="input-group">
                         <span class="input-group-text border-end-0" style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-text-secondary);">
                             <i class="bi bi-search"></i>
@@ -138,24 +116,13 @@
                     </div>
                 </div>
 
-                {{-- Audience Filter --}}
-                <div class="col-6 col-md-2">
-                    <select id="audienceFilter" class="form-select" style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); font-size: 13px;">
-                        <option value="all">All Audiences</option>
-                        <option value="customer">Customer App Only</option>
-                        <option value="driver">Driver App Only</option>
-                        <option value="all_users">Both (All Users)</option>
-                    </select>
-                </div>
-
                 {{-- Placement Filter --}}
-                <div class="col-6 col-md-2">
+                <div class="col-6 col-md-3">
                     <select id="placementFilter" class="form-select" style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); font-size: 13px;">
                         <option value="all">All Placements</option>
-                        <option value="home_banner">Home Banner</option>
-                        <option value="popup_modal">Pop-up Dialog</option>
-                        <option value="booking_screen">Booking Screen</option>
-                        <option value="driver_feed">Driver Feed</option>
+                        <option value="home_banner">Home Screen Banner</option>
+                        <option value="popup_modal">App Launch Pop-up</option>
+                        <option value="booking_screen">Booking Screen Banner</option>
                     </select>
                 </div>
 
@@ -169,7 +136,7 @@
                 </div>
 
                 {{-- View Toggle (Table / Grid) --}}
-                <div class="col-6 col-md-2 text-md-end">
+                <div class="col-12 col-md-2 text-md-end">
                     <div class="btn-group shadow-sm" role="group">
                         <button type="button" id="tableViewBtn" class="btn btn-sm btn-outline-secondary active" onclick="switchView('table')">
                             <i class="bi bi-table"></i>
@@ -192,18 +159,12 @@
                 </div>
                 <h4 class="fw-bold mb-2">No Advertisements Found</h4>
                 <p class="text-muted mx-auto mb-4" style="max-width: 480px; font-size: 13.5px;">
-                    You haven't created any mobile advertisements yet. Add an advertisement banner or click <strong>Load Sample Ads</strong> to start showcasing promotions in the passenger and driver mobile apps.
+                    You haven't created any mobile advertisements yet. Click below to add an advertisement banner for the passenger and driver mobile apps.
                 </p>
                 <div class="d-flex justify-content-center gap-2">
                     <a href="{{ route('advertisements.create') }}" class="btn px-4 py-2 fw-semibold" style="background: #E6B04A; color: #111827; border-radius: 8px;">
                         <i class="bi bi-plus-circle me-1.5"></i> Create First Ad
                     </a>
-                    <form action="{{ route('advertisements.seedSamples') }}" method="POST" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-secondary px-3 py-2" style="border-radius: 8px;">
-                            <i class="bi bi-magic me-1"></i> Load Sample Ads
-                        </button>
-                    </form>
                 </div>
             </div>
         </div>
@@ -218,7 +179,6 @@
                             <th style="width: 50px;" class="ps-3">#</th>
                             <th style="width: 110px;">Preview</th>
                             <th>Campaign / Title</th>
-                            <th>Target App</th>
                             <th>Placement</th>
                             <th>Action / CTA</th>
                             <th style="width: 90px;" class="text-center">Priority</th>
@@ -298,13 +258,6 @@
                                             <span class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ $ad['start_date'] ?? 'Now' }} ~ {{ $ad['end_date'] ?? 'Ongoing' }}</span>
                                         @endif
                                     </div>
-                                </td>
-
-                                {{-- Target App --}}
-                                <td>
-                                    <span class="badge {{ $audBadge['class'] }} px-2 py-1" style="font-size: 11px; font-weight: 500;">
-                                        <i class="bi {{ $audBadge['icon'] }} me-1"></i>{{ $audBadge['label'] }}
-                                    </span>
                                 </td>
 
                                 {{-- Placement --}}
@@ -396,9 +349,6 @@
                         {{-- Card Image Banner --}}
                         <div class="position-relative" style="height: 160px; overflow: hidden; background: #0b0f19;">
                             <img src="{{ $ad['image_url'] }}" alt="{{ $ad['title'] }}" class="w-100 h-100 object-fit-cover" onerror="this.src='{{ asset('public/images/Car.png') }}';">
-                            <div class="position-absolute top-0 end-0 p-2">
-                                <span class="badge {{ $audBadge['class'] }} shadow-sm">{{ $audBadge['label'] }}</span>
-                            </div>
                             @if(!empty($ad['badge_text']))
                                 <div class="position-absolute top-0 start-0 p-2">
                                     <span class="badge bg-danger shadow-sm">{{ $ad['badge_text'] }}</span>
@@ -473,29 +423,21 @@
                     <h5 class="modal-title fw-bold" id="phoneSimulatorLabel">
                         <i class="bi bi-phone-fill text-warning me-1.5"></i> Live Crown Carz Mobile App Preview
                     </h5>
-                    <p class="text-muted small mb-0">See exactly how your advertisements appear on the passenger and driver app screens in real-time.</p>
+                    <p class="text-muted small mb-0">See exactly how your advertisements appear on the passenger mobile app screen in real-time.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body py-4">
                 {{-- Simulator Controls --}}
+                <input type="hidden" id="simModeCustomer" value="1">
                 <div class="row g-2 mb-4 justify-content-center">
                     <div class="col-auto">
                         <div class="btn-group shadow-sm" role="group">
-                            <input type="radio" class="btn-check" name="simAppMode" id="simModeCustomer" autocomplete="off" checked onchange="updateSimulatorView()">
-                            <label class="btn btn-sm btn-outline-primary px-3" for="simModeCustomer"><i class="bi bi-person me-1"></i> Customer App</label>
-
-                            <input type="radio" class="btn-check" name="simAppMode" id="simModeDriver" autocomplete="off" onchange="updateSimulatorView()">
-                            <label class="btn btn-sm btn-outline-primary px-3" for="simModeDriver"><i class="bi bi-car-front me-1"></i> Driver App</label>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <div class="btn-group shadow-sm" role="group">
                             <input type="radio" class="btn-check" name="simPlacement" id="simPlaceBanner" autocomplete="off" checked onchange="updateSimulatorView()">
-                            <label class="btn btn-sm btn-outline-secondary px-3" for="simPlaceBanner"><i class="bi bi-layout-text-window-reverse me-1"></i> Home Banner</label>
+                            <label class="btn btn-sm btn-outline-secondary px-3" for="simPlaceBanner"><i class="bi bi-layout-text-window-reverse me-1"></i> Home Screen Banner</label>
 
                             <input type="radio" class="btn-check" name="simPlacement" id="simPlacePopup" autocomplete="off" onchange="updateSimulatorView()">
-                            <label class="btn btn-sm btn-outline-secondary px-3" for="simPlacePopup"><i class="bi bi-window me-1"></i> Launch Popup</label>
+                            <label class="btn btn-sm btn-outline-secondary px-3" for="simPlacePopup"><i class="bi bi-window me-1"></i> Launch Popup Dialog</label>
                         </div>
                     </div>
                 </div>
@@ -832,13 +774,11 @@ Stream&lt;List&lt;Advertisement&gt;&gt; getActiveAdsStream({String audience = 'c
     // Filter functionality
     document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('adSearchInput');
-        const audienceFilter = document.getElementById('audienceFilter');
         const placementFilter = document.getElementById('placementFilter');
         const statusFilter = document.getElementById('statusFilter');
 
         function applyFilters() {
             const query = (searchInput.value || '').toLowerCase().trim();
-            const aud = audienceFilter.value;
             const place = placementFilter.value;
             const st = statusFilter.value;
 
@@ -846,16 +786,14 @@ Stream&lt;List&lt;Advertisement&gt;&gt; getActiveAdsStream({String audience = 'c
             rows.forEach(row => {
                 const title = row.getAttribute('data-title') || '';
                 const sub = row.getAttribute('data-subtitle') || '';
-                const rowAud = row.getAttribute('data-audience') || '';
                 const rowPlace = row.getAttribute('data-placement') || '';
                 const rowSt = row.getAttribute('data-status') || '';
 
                 const matchesQuery = !query || title.includes(query) || sub.includes(query);
-                const matchesAud = (aud === 'all') || (rowAud === aud);
                 const matchesPlace = (place === 'all') || (rowPlace === place);
                 const matchesSt = (st === 'all') || (rowSt === st);
 
-                if (matchesQuery && matchesAud && matchesPlace && matchesSt) {
+                if (matchesQuery && matchesPlace && matchesSt) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -866,16 +804,14 @@ Stream&lt;List&lt;Advertisement&gt;&gt; getActiveAdsStream({String audience = 'c
             cards.forEach(card => {
                 const title = card.getAttribute('data-title') || '';
                 const sub = card.getAttribute('data-subtitle') || '';
-                const cardAud = card.getAttribute('data-audience') || '';
                 const cardPlace = card.getAttribute('data-placement') || '';
                 const cardSt = card.getAttribute('data-status') || '';
 
                 const matchesQuery = !query || title.includes(query) || sub.includes(query);
-                const matchesAud = (aud === 'all') || (cardAud === aud);
                 const matchesPlace = (place === 'all') || (cardPlace === place);
                 const matchesSt = (st === 'all') || (cardSt === st);
 
-                if (matchesQuery && matchesAud && matchesPlace && matchesSt) {
+                if (matchesQuery && matchesPlace && matchesSt) {
                     card.style.display = '';
                 } else {
                     card.style.display = 'none';
@@ -884,7 +820,6 @@ Stream&lt;List&lt;Advertisement&gt;&gt; getActiveAdsStream({String audience = 'c
         }
 
         searchInput.addEventListener('input', applyFilters);
-        audienceFilter.addEventListener('change', applyFilters);
         placementFilter.addEventListener('change', applyFilters);
         statusFilter.addEventListener('change', applyFilters);
 
@@ -956,10 +891,9 @@ Stream&lt;List&lt;Advertisement&gt;&gt; getActiveAdsStream({String audience = 'c
 
     // Interactive Phone Simulator logic
     function updateSimulatorView(overrideAd = null) {
-        const isCustomer = document.getElementById('simModeCustomer').checked;
         const isBanner = document.getElementById('simPlaceBanner').checked;
 
-        document.getElementById('simAppTitle').innerText = isCustomer ? 'Crown Carz' : 'Crown Driver';
+        document.getElementById('simAppTitle').innerText = 'Crown Carz';
 
         const bannerContainer = document.getElementById('simBannerContainer');
         const popupContainer = document.getElementById('simPopupContainer');
@@ -973,14 +907,12 @@ Stream&lt;List&lt;Advertisement&gt;&gt; getActiveAdsStream({String audience = 'c
         }
 
         // Find relevant ad
-        let targetAudience = isCustomer ? ['customer', 'all'] : ['driver', 'all'];
         let targetPlacement = isBanner ? 'home_banner' : 'popup_modal';
 
         let selected = overrideAd;
         if (!selected) {
             selected = allAdsData.find(a => 
                 (a.status === 'Active') && 
-                targetAudience.includes(a.target_audience) && 
                 (a.placement === targetPlacement || a.placement === 'home_banner')
             ) || allAdsData[0];
         }
@@ -1027,12 +959,6 @@ Stream&lt;List&lt;Advertisement&gt;&gt; getActiveAdsStream({String audience = 'c
     }
 
     function openSingleAdPreview(ad) {
-        if (ad.target_audience === 'driver') {
-            document.getElementById('simModeDriver').checked = true;
-        } else {
-            document.getElementById('simModeCustomer').checked = true;
-        }
-
         if (ad.placement === 'popup_modal') {
             document.getElementById('simPlacePopup').checked = true;
         } else {

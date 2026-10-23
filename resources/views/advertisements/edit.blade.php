@@ -183,35 +183,24 @@
                             <span class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: rgba(16, 185, 129, 0.2); color: #10b981;">
                                 <i class="bi bi-bullseye"></i>
                             </span>
-                            <h6 class="fw-bold mb-0">3. Target App & Placement</h6>
+                            <h6 class="fw-bold mb-0">3. Customer App Screen Placement</h6>
                         </div>
                     </div>
                     <div class="card-body p-3">
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small" for="adAudience">
-                                    Target App Audience <span class="text-danger">*</span>
-                                </label>
-                                <select name="target_audience" id="adAudience" class="form-select" required
-                                        style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 8px;">
-                                    <option value="customer" {{ old('target_audience', $ad['target_audience'] ?? '') == 'customer' ? 'selected' : '' }}>Customer / Passenger App</option>
-                                    <option value="driver" {{ old('target_audience', $ad['target_audience'] ?? '') == 'driver' ? 'selected' : '' }}>Driver App Only</option>
-                                    <option value="all" {{ old('target_audience', $ad['target_audience'] ?? '') == 'all' ? 'selected' : '' }}>All Users (Both Apps)</option>
-                                </select>
-                            </div>
+                        {{-- Audience hidden - strictly for Customer App --}}
+                        <input type="hidden" name="target_audience" id="adAudience" value="{{ old('target_audience', $ad['target_audience'] ?? 'customer') }}">
 
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small" for="adPlacement">
-                                    Screen Placement <span class="text-danger">*</span>
-                                </label>
-                                <select name="placement" id="adPlacement" class="form-select" required
-                                        style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 8px;">
-                                    <option value="home_banner" {{ old('placement', $ad['placement'] ?? '') == 'home_banner' ? 'selected' : '' }}>Home Screen Top Banner (Slider)</option>
-                                    <option value="popup_modal" {{ old('placement', $ad['placement'] ?? '') == 'popup_modal' ? 'selected' : '' }}>Launch Pop-up Dialog (Modal)</option>
-                                    <option value="booking_screen" {{ old('placement', $ad['placement'] ?? '') == 'booking_screen' ? 'selected' : '' }}>Booking Screen Banner</option>
-                                    <option value="driver_feed" {{ old('placement', $ad['placement'] ?? '') == 'driver_feed' ? 'selected' : '' }}>Driver Announcement Feed</option>
-                                </select>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small" for="adPlacement">
+                                Screen Placement in Customer App <span class="text-danger">*</span>
+                            </label>
+                            <select name="placement" id="adPlacement" class="form-select" required
+                                    style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 8px;">
+                                <option value="home_banner" {{ old('placement', $ad['placement'] ?? '') == 'home_banner' ? 'selected' : '' }}>Home Screen Top Banner (Carousel / Slider)</option>
+                                <option value="popup_modal" {{ old('placement', $ad['placement'] ?? '') == 'popup_modal' ? 'selected' : '' }}>App Launch Pop-up Dialog (Modal)</option>
+                                <option value="booking_screen" {{ old('placement', $ad['placement'] ?? '') == 'booking_screen' ? 'selected' : '' }}>Booking & Ride Details Screen Banner</option>
+                            </select>
+                            <div class="form-text text-muted small">Choose where this promotion will appear inside the Crown Carz Customer app.</div>
                         </div>
 
                         <div class="row g-3">
