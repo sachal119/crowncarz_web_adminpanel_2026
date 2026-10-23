@@ -22,6 +22,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\SMSController;
 use App\Http\Controllers\WhatsAppConnectionController;
 use App\Http\Controllers\AdminPageController;
+use App\Http\Controllers\AdvertisementController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\CallSwitchWebhookController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -406,6 +407,26 @@ Route::match(['get', 'patch', 'post'], '/pages/{id}/toggle-status', [AdminPageCo
 Route::match(['get', 'delete', 'post'], '/blogs/pages/delete/{id}', [AdminPageController::class, 'delete'])->name('admin.pages.delete');
 Route::get('/blogs/pages/edit/{id}', [AdminPageController::class, 'edit'])->name('admin.pages.edit');
 Route::post('/blogs/pages/update/{id}', [AdminPageController::class, 'update'])->name('admin.pages.update');
+
+// Advertisements Management Routes
+Route::prefix('admin/advertisements')->name('advertisements.')->group(function () {
+    Route::get('/', [AdvertisementController::class, 'index'])->name('index');
+    Route::get('/create', [AdvertisementController::class, 'create'])->name('create');
+    Route::post('/store', [AdvertisementController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [AdvertisementController::class, 'edit'])->name('edit');
+    Route::post('/{id}/update', [AdvertisementController::class, 'update'])->name('update');
+    Route::match(['get', 'delete', 'post'], '/{id}/delete', [AdvertisementController::class, 'destroy'])->name('destroy');
+    Route::match(['get', 'patch', 'post'], '/{id}/toggle-status', [AdvertisementController::class, 'toggleStatus'])->name('toggleStatus');
+    Route::post('/seed-samples', [AdvertisementController::class, 'seedSamples'])->name('seedSamples');
+});
+
+Route::get('/advertisements', [AdvertisementController::class, 'index']);
+
+// Public API Endpoints for Mobile App (Flutter / iOS / Android) & Web
+Route::get('/api/advertisements', [AdvertisementController::class, 'apiIndex'])->name('api.advertisements.index');
+Route::get('/api/advertisements/active', [AdvertisementController::class, 'apiActive'])->name('api.advertisements.active');
+Route::post('/api/advertisements/{id}/click', [AdvertisementController::class, 'apiClick'])->name('api.advertisements.click');
+Route::post('/api/advertisements/{id}/view', [AdvertisementController::class, 'apiView'])->name('api.advertisements.view');
 
 Route::get('{slug}', [PageController::class, 'show']);
 

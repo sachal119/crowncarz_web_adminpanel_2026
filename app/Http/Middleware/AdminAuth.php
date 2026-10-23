@@ -27,6 +27,10 @@ class AdminAuth
             'logout',
         ];
 
+        if ($request->is('api/*') || str_starts_with((string)$routeName, 'api.')) {
+            return $next($request);
+        }
+
         if (in_array($routeName, $publicRoutes, true)
             || in_array($controller, [PageController::class, CallSwitchWebhookController::class], true)) {
             return $next($request);
@@ -65,10 +69,11 @@ class AdminAuth
         if ($role === 'collaborator') {
             $isBookingRoute = $controller === BookingController::class;
             $isBlogRoute = $controller === AdminPageController::class;
+            $isAdRoute = $controller === \App\Http\Controllers\AdvertisementController::class;
             $isBookingSms = $request->is('sms/send');
             $isLogout = $routeName === 'logout';
 
-            if (! $isBookingRoute && ! $isBlogRoute && ! $isBookingSms && ! $isLogout) {
+            if (! $isBookingRoute && ! $isBlogRoute && ! $isAdRoute && ! $isBookingSms && ! $isLogout) {
                 abort(403, 'You do not have permission to access this section.');
             }
         }

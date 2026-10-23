@@ -1208,6 +1208,9 @@
     // --- End Dummy Data ---
 
     // Pre-calculate driver counts
+    if (!isset($drivers) || !($drivers instanceof \Illuminate\Support\Collection)) {
+        $drivers = collect($drivers ?? []);
+    }
     $availableDrivers = $drivers->whereIn('status', ['Available', 'available'])->count();
     $waitingDrivers = $drivers->where('status', 'waiting')->count();
     $engagedDrivers = $drivers->where('status', 'engaged')->count();
@@ -1394,6 +1397,7 @@
     </li>
 @endif
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('pages.index', 'admin.pages.*') ? 'active' : '' }}" href="{{ route('pages.index') }}"><i class="bi bi-journal-richtext me-1"></i>Blogs</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('advertisements.*') ? 'active' : '' }}" href="{{ route('advertisements.index') }}"><i class="bi bi-megaphone-fill me-1"></i>Ads</a></li>
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('system.settings') ? 'active' : '' }}" href="{{ route('system.settings') }}"><i class="bi bi-gear-wide-connected me-1"></i>Settings</a></li>
         </ul>
       </div>
