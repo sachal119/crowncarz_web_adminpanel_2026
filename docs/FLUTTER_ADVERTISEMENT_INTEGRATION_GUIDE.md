@@ -296,7 +296,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/advertisement_model.dart';
 import '../services/advertisement_service.dart';
 
-void handleAdvertisementTap(BuildContext context, AdvertisementModel ad) {
+Future<void> handleAdvertisementTap(BuildContext context, AdvertisementModel ad) async {
   // 1. Report click analytics to backend
   AdvertisementService.trackClick(ad.id);
 
@@ -313,7 +313,16 @@ void handleAdvertisementTap(BuildContext context, AdvertisementModel ad) {
       if (ad.actionValue.isNotEmpty) {
         final uri = Uri.tryParse(ad.actionValue);
         if (uri != null) {
-          launchUrl(uri, mode: LaunchMode.externalApplication);
+          // Open inside internal app browser (SFSafariViewController on iOS / Chrome Custom Tabs on Android)
+          try {
+            await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+          } catch (_) {
+            try {
+              await launchUrl(uri, mode: LaunchMode.inAppWebView);
+            } catch (_) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          }
         }
       }
       break;
@@ -321,7 +330,7 @@ void handleAdvertisementTap(BuildContext context, AdvertisementModel ad) {
     case 'call_phone':
       if (ad.actionValue.isNotEmpty) {
         final phoneUri = Uri.parse('tel:${ad.actionValue.replaceAll(' ', '')}');
-        launchUrl(phoneUri);
+        await launchUrl(phoneUri);
       }
       break;
 

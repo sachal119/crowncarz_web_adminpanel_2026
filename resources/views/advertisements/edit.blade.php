@@ -99,13 +99,13 @@
                                       style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 8px;">{{ old('subtitle', $ad['subtitle'] ?? '') }}</textarea>
                         </div>
 
-                        <div class="row g-3">
+                        <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold small" for="adBadge">
                                     Highlight Badge Text
                                 </label>
                                 <input type="text" name="badge_text" id="adBadge" class="form-control"
-                                       placeholder="e.g. HOT OFFER, 20% OFF"
+                                       placeholder="e.g. SPECIAL, VIP, NEW"
                                        value="{{ old('badge_text', $ad['badge_text'] ?? '') }}"
                                        style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 8px;">
                             </div>
@@ -114,9 +114,41 @@
                                     Call To Action Button Label
                                 </label>
                                 <input type="text" name="button_text" id="adButtonText" class="form-control"
-                                       placeholder="e.g. Claim Offer, Book Now"
+                                       placeholder="e.g. Learn More, Book Now"
                                        value="{{ old('button_text', $ad['button_text'] ?? 'Learn More') }}"
                                        style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 8px;">
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold small" for="adActionType">
+                                    Button Click Action <span class="text-danger">*</span>
+                                </label>
+                                <select name="action_type" id="adActionType" class="form-select" required
+                                        style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 8px;">
+                                    <option value="external_url" {{ old('action_type', $ad['action_type'] ?? 'external_url') == 'external_url' ? 'selected' : '' }}>Open URL in Internal App Browser (Default)</option>
+                                    <option value="in_app_screen" {{ old('action_type', $ad['action_type'] ?? '') == 'in_app_screen' ? 'selected' : '' }}>Navigate to In-App Screen (e.g. Booking)</option>
+                                    <option value="call_phone" {{ old('action_type', $ad['action_type'] ?? '') == 'call_phone' ? 'selected' : '' }}>Dial Telephone Number</option>
+                                    <option value="none" {{ old('action_type', $ad['action_type'] ?? '') == 'none' ? 'selected' : '' }}>None (Display only)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold small" for="adActionValue" id="adActionValueLabel">
+                                    Webpage Link / Target URL <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: #E6B04A;">
+                                        <i class="bi bi-globe2"></i>
+                                    </span>
+                                    <input type="text" name="action_value" id="adActionValue" class="form-control"
+                                           placeholder="https://crowncarz.com/..."
+                                           value="{{ old('action_value', $ad['action_value'] ?? 'https://crowncarz.com') }}"
+                                           style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 0 8px 8px 0;">
+                                </div>
+                                <div class="form-text text-muted small" id="adActionValueHelp">
+                                    Jab user "Learn More" par tap karega, toh yeh link Crown Carz app ke internal browser me open ho jayega.
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -201,30 +233,7 @@
                             <div class="form-text text-muted small">Choose where this promotion will appear inside the Crown Carz Customer app.</div>
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small" for="adActionType">
-                                    Click Action Type <span class="text-danger">*</span>
-                                </label>
-                                <select name="action_type" id="adActionType" class="form-select" required
-                                        style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 8px;">
-                                    <option value="promo_code" {{ old('action_type', $ad['action_type'] ?? '') == 'promo_code' ? 'selected' : '' }}>Copy Promo Code to Clipboard</option>
-                                    <option value="external_url" {{ old('action_type', $ad['action_type'] ?? '') == 'external_url' ? 'selected' : '' }}>Open Webpage URL in Browser</option>
-                                    <option value="in_app_screen" {{ old('action_type', $ad['action_type'] ?? '') == 'in_app_screen' ? 'selected' : '' }}>Navigate to In-App Screen</option>
-                                    <option value="call_phone" {{ old('action_type', $ad['action_type'] ?? '') == 'call_phone' ? 'selected' : '' }}>Dial Telephone Number</option>
-                                    <option value="none" {{ old('action_type', $ad['action_type'] ?? '') == 'none' ? 'selected' : '' }}>None (Display only)</option>
-                                </select>
-                            </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small" for="adActionValue" id="adActionValueLabel">
-                                    Action Target Value / Promo Code
-                                </label>
-                                <input type="text" name="action_value" id="adActionValue" class="form-control"
-                                       value="{{ old('action_value', $ad['action_value'] ?? '') }}"
-                                       style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 8px;">
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -510,23 +519,26 @@
             }
         }
 
+        // Action type dynamic label helper
         function updateActionTypeLabel() {
             const type = actionTypeSelect.value;
-            if (type === 'promo_code') {
-                actionValueLabel.innerText = 'Promo Code to Copy';
-                actionValueInput.placeholder = 'e.g. AIRPORT20, SUMMER15';
-            } else if (type === 'external_url') {
-                actionValueLabel.innerText = 'Website URL to Open';
+            const helpEl = document.getElementById('adActionValueHelp');
+            if (type === 'external_url') {
+                actionValueLabel.innerHTML = 'Webpage Link / Target URL <span class="text-danger">*</span>';
                 actionValueInput.placeholder = 'https://crowncarz.com/...';
+                if (helpEl) helpEl.innerText = 'Jab user "Learn More" par tap karega, toh yeh link Crown Carz app ke internal browser me open ho jayega.';
             } else if (type === 'in_app_screen') {
-                actionValueLabel.innerText = 'Screen Route / Identifier';
+                actionValueLabel.innerHTML = 'Screen Route / Identifier <span class="text-danger">*</span>';
                 actionValueInput.placeholder = 'e.g. booking, fleet, wallet, profile';
+                if (helpEl) helpEl.innerText = 'Customer app ka screen route jaha user navigate hoga.';
             } else if (type === 'call_phone') {
-                actionValueLabel.innerText = 'Phone Number to Call';
+                actionValueLabel.innerHTML = 'Phone Number to Call <span class="text-danger">*</span>';
                 actionValueInput.placeholder = '+441189474747';
+                if (helpEl) helpEl.innerText = 'Phone dialer me yeh phone number auto-dial hoga.';
             } else {
                 actionValueLabel.innerText = 'Action Target (None)';
-                actionValueInput.placeholder = 'Display only';
+                actionValueInput.placeholder = 'Display only (no link)';
+                if (helpEl) helpEl.innerText = 'Koi action perform nahi hoga (sirf ad display hoga).';
             }
         }
 
