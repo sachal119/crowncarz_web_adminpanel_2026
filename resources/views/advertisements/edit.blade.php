@@ -147,7 +147,7 @@
                                            style="background: var(--cc-input-bg); border-color: var(--cc-input-border); color: var(--cc-input-color); border-radius: 0 8px 8px 0;">
                                 </div>
                                 <div class="form-text text-muted small" id="adActionValueHelp">
-                                    Jab user "Learn More" par tap karega, toh yeh link Crown Carz app ke internal browser me open ho jayega.
+                                    When the user taps "Learn More", this URL will open inside the Crown Carz app's internal browser.
                                 </div>
                             </div>
                         </div>
@@ -526,19 +526,19 @@
             if (type === 'external_url') {
                 actionValueLabel.innerHTML = 'Webpage Link / Target URL <span class="text-danger">*</span>';
                 actionValueInput.placeholder = 'https://crowncarz.com/...';
-                if (helpEl) helpEl.innerText = 'Jab user "Learn More" par tap karega, toh yeh link Crown Carz app ke internal browser me open ho jayega.';
+                if (helpEl) helpEl.innerText = "When the user taps 'Learn More', this URL will open inside the Crown Carz app's internal browser.";
             } else if (type === 'in_app_screen') {
                 actionValueLabel.innerHTML = 'Screen Route / Identifier <span class="text-danger">*</span>';
                 actionValueInput.placeholder = 'e.g. booking, fleet, wallet, profile';
-                if (helpEl) helpEl.innerText = 'Customer app ka screen route jaha user navigate hoga.';
+                if (helpEl) helpEl.innerText = 'In-app screen route the customer will be navigated to (e.g. booking, fleet).';
             } else if (type === 'call_phone') {
                 actionValueLabel.innerHTML = 'Phone Number to Call <span class="text-danger">*</span>';
                 actionValueInput.placeholder = '+441189474747';
-                if (helpEl) helpEl.innerText = 'Phone dialer me yeh phone number auto-dial hoga.';
+                if (helpEl) helpEl.innerText = 'Phone dialer will open pre-filled with this customer support / booking number.';
             } else {
                 actionValueLabel.innerText = 'Action Target (None)';
                 actionValueInput.placeholder = 'Display only (no link)';
-                if (helpEl) helpEl.innerText = 'Koi action perform nahi hoga (sirf ad display hoga).';
+                if (helpEl) helpEl.innerText = 'No tap action will be performed (display-only advertisement banner).';
             }
         }
 
