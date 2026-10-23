@@ -436,7 +436,7 @@ class AdvertisementController extends Controller
             $newKey = $this->pushAdToDb($adData);
 
             return redirect()->route('advertisements.index')
-                ->with('success', "Advertisement '{$request->title}' published successfully! (ID: {$newKey})");
+                ->with('success', "Advertisement '{$request->title}' published successfully!");
 
         } catch (\Exception $e) {
             \Log::error('Error creating advertisement: ' . $e->getMessage());

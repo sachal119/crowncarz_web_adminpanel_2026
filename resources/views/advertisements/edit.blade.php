@@ -10,8 +10,6 @@
                 <a href="{{ route('advertisements.index') }}" class="text-decoration-none text-muted small">
                     <i class="bi bi-arrow-left me-1"></i> Back to Advertisements
                 </a>
-                <span class="text-muted">•</span>
-                <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 11px;">ID: {{ $id }}</span>
             </div>
             <h3 class="fw-bold mb-1" style="letter-spacing: -0.5px;">Edit Mobile Advertisement</h3>
             <p class="text-muted mb-0" style="font-size: 13px;">Modify campaign details, creative media, targeting audience, and in-app action triggers.</p>
