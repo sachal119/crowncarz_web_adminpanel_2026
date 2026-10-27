@@ -391,15 +391,98 @@
     window._viewBookingDirectionsRenderer = null;
     window._googleMapsLoadingPromise = null;
 
+    window.extractExactBookingDateTime = window.extractExactBookingDateTime || function(rawDateOrCombined, rawTimeOnly = null) {
+        let dateStr = '-';
+        let timeStr = '-';
+        let raw = (rawDateOrCombined !== null && rawDateOrCombined !== undefined) ? String(rawDateOrCombined).trim() : '';
+        let rawT = (rawTimeOnly !== null && rawTimeOnly !== undefined) ? String(rawTimeOnly).trim() : '';
+
+        if (!raw && !rawT) {
+            return { date: '-', time: '-', full: '-' };
+        }
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        // 1) Match YYYY-MM-DD HH:mm(:ss)? or YYYY-MM-DDTHH:mm(:ss)?
+        const fullMatch = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})[T\s](\d{1,2}):(\d{2})(?::\d{2})?/);
+        if (fullMatch) {
+            const y = fullMatch[1];
+            const m = parseInt(fullMatch[2], 10);
+            const d = fullMatch[3].padStart(2, '0');
+            const hh = fullMatch[4].padStart(2, '0');
+            const mm = fullMatch[5];
+            const mName = (m >= 1 && m <= 12) ? months[m - 1] : fullMatch[2];
+            dateStr = `${d} ${mName} ${y}`;
+            timeStr = `${hh}:${mm}`;
+            return { date: dateStr, time: timeStr, full: `${dateStr} ${timeStr}` };
+        }
+
+        // 2) Match DD-MM-YYYY or DD/MM/YYYY with time
+        const ukMatch = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})[T\s](\d{1,2}):(\d{2})(?::\d{2})?/);
+        if (ukMatch) {
+            const d = ukMatch[1].padStart(2, '0');
+            const m = parseInt(ukMatch[2], 10);
+            const y = ukMatch[3];
+            const hh = ukMatch[4].padStart(2, '0');
+            const mm = ukMatch[5];
+            const mName = (m >= 1 && m <= 12) ? months[m - 1] : ukMatch[2];
+            dateStr = `${d} ${mName} ${y}`;
+            timeStr = `${hh}:${mm}`;
+            return { date: dateStr, time: timeStr, full: `${dateStr} ${timeStr}` };
+        }
+
+        // 3) Date only: YYYY-MM-DD
+        const dOnlyYmd = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+        if (dOnlyYmd) {
+            const y = dOnlyYmd[1];
+            const m = parseInt(dOnlyYmd[2], 10);
+            const d = dOnlyYmd[3].padStart(2, '0');
+            const mName = (m >= 1 && m <= 12) ? months[m - 1] : dOnlyYmd[2];
+            dateStr = `${d} ${mName} ${y}`;
+        } else {
+            const dOnlyDmy = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+            if (dOnlyDmy) {
+                const d = dOnlyDmy[1].padStart(2, '0');
+                const m = parseInt(dOnlyDmy[2], 10);
+                const y = dOnlyDmy[3];
+                const mName = (m >= 1 && m <= 12) ? months[m - 1] : dOnlyDmy[2];
+                dateStr = `${d} ${mName} ${y}`;
+            }
+        }
+
+        // 4) Time only (in rawT or in raw)
+        const checkTimeStr = rawT || (dateStr === '-' ? raw : '');
+        const tMatch = checkTimeStr.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
+        if (tMatch) {
+            const hh = tMatch[1].padStart(2, '0');
+            const mm = tMatch[2];
+            timeStr = `${hh}:${mm}`;
+        }
+
+        if (dateStr === '-' && timeStr !== '-' && raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)) {
+            return { date: '-', time: timeStr, full: timeStr };
+        }
+
+        if (dateStr !== '-' && timeStr !== '-') {
+            return { date: dateStr, time: timeStr, full: `${dateStr} ${timeStr}` };
+        }
+        if (dateStr !== '-') {
+            return { date: dateStr, time: '-', full: dateStr };
+        }
+        if (timeStr !== '-') {
+            return { date: '-', time: timeStr, full: timeStr };
+        }
+
+        return { date: raw || '-', time: rawT || '-', full: [raw, rawT].filter(Boolean).join(' ') || '-' };
+    };
+
     window.formatBookingDateTime = window.formatBookingDateTime || function(dtStr) {
         if (!dtStr) return '-';
-        try {
-            const dt = new Date(dtStr);
-            if (isNaN(dt.getTime())) return dtStr;
-            return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-        } catch(e) {
-            return dtStr;
-        }
+        const parsed = (typeof window.extractExactBookingDateTime === 'function')
+            ? window.extractExactBookingDateTime(dtStr)
+            : null;
+        if (parsed && parsed.full && parsed.full !== '-') return parsed.full;
+        return dtStr;
     };
 
     window.formatActivityDateTime = window.formatActivityDateTime || function(dtStr) {
@@ -407,7 +490,7 @@
         try {
             const dt = new Date(dtStr);
             if (isNaN(dt.getTime())) return dtStr;
-            return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            return dt.toLocaleDateString('en-GB', { timeZone: 'Europe/London', day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', second: '2-digit' });
         } catch(e) {
             return dtStr;
         }
@@ -733,7 +816,19 @@
         }
 
         // Top Stats Banner
-        const formattedPickupTime = window.formatBookingDateTime(booking.pickup_time || ((booking.pickup_date || '') + ' ' + (booking.pickup_time || '')));
+        const rawDatePart = booking.pickup_date || booking.job_date || '';
+        const rawTimePart = booking.pickup_time || booking.job_time || '';
+        let parsedModalPickup;
+        if (rawTimePart && (rawTimePart.includes(' ') || rawTimePart.includes('T'))) {
+            parsedModalPickup = window.extractExactBookingDateTime(rawTimePart);
+        } else if (rawDatePart && (rawDatePart.includes(' ') || rawDatePart.includes('T'))) {
+            parsedModalPickup = window.extractExactBookingDateTime(rawDatePart);
+        } else {
+            parsedModalPickup = window.extractExactBookingDateTime(rawDatePart, rawTimePart);
+        }
+        const formattedPickupTime = (parsedModalPickup && parsedModalPickup.full !== '-') 
+            ? parsedModalPickup.full 
+            : window.formatBookingDateTime(booking.pickup_time || ((booking.pickup_date || '') + ' ' + (booking.pickup_time || '')));
         const topPickupTime = document.getElementById('modal-top-pickup-time');
         if (topPickupTime) topPickupTime.textContent = formattedPickupTime;
 
@@ -828,16 +923,14 @@
         const rawCreated = booking.created_at || booking.createdAt || booking.created_date || '';
         let formattedCreated = '';
         if (rawCreated) {
-            try {
-                const cdt = new Date(rawCreated);
-                if (!isNaN(cdt.getTime())) {
-                    const cDate = cdt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                    const cTime = cdt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-                    formattedCreated = `${cDate}, ${cTime}`;
-                } else {
-                    formattedCreated = rawCreated;
-                }
-            } catch (e) {
+            const parsedCreated = (typeof window.extractExactBookingDateTime === 'function')
+                ? window.extractExactBookingDateTime(rawCreated)
+                : null;
+            if (parsedCreated && parsedCreated.date !== '-' && parsedCreated.time !== '-') {
+                formattedCreated = `${parsedCreated.date}, ${parsedCreated.time}`;
+            } else if (parsedCreated && parsedCreated.full !== '-') {
+                formattedCreated = parsedCreated.full;
+            } else {
                 formattedCreated = rawCreated;
             }
         }

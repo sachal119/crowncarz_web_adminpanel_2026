@@ -762,6 +762,23 @@ td{
     background-color: rgba(17, 24, 39, 0.85) !important;
     color: #cbd5e1 !important;
 }
+
+/* 🕒 Live London / Heathrow Clock Badge */
+.dash-live-clock-pill {
+    transition: all 0.2s ease;
+    user-select: none;
+}
+[data-bs-theme="dark"] .dash-live-clock-pill {
+    background: rgba(184, 115, 51, 0.16) !important;
+    border-color: rgba(184, 115, 51, 0.4) !important;
+}
+[data-bs-theme="dark"] #dashLiveClockTime {
+    color: #f1f5f9 !important;
+}
+[data-bs-theme="dark"] #dashLiveClockDate {
+    color: #94a3b8 !important;
+    border-left-color: rgba(255, 255, 255, 0.2) !important;
+}
 </style>
 
 <!-- 🌟 Fullscreen Screen-Level Search & Filter Loader -->
@@ -892,10 +909,10 @@ td{
                             </select>
                         </div>
                         <div class="col-4">
-                            <input type="date" id="calcDateInput" class="form-control" value="{{ date('Y-m-d') }}" style="border-radius: 10px; font-size: 12px;">
+                            <input type="date" id="calcDateInput" class="form-control" value="{{ now('Europe/London')->format('Y-m-d') }}" style="border-radius: 10px; font-size: 12px;">
                         </div>
                         <div class="col-3">
-                            <input type="time" id="calcTimeInput" class="form-control" value="{{ date('H:i') }}" style="border-radius: 10px; font-size: 12px;">
+                            <input type="time" id="calcTimeInput" class="form-control" value="{{ now('Europe/London')->format('H:i') }}" style="border-radius: 10px; font-size: 12px;">
                         </div>
                     </div>
                 </div>
@@ -1034,6 +1051,19 @@ td{
                 </div>
 
                 <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
+                    <!-- 🕒 Live UK Heathrow Clock Badge -->
+                    <div class="dash-live-clock-pill d-flex align-items-center gap-2 px-2.5 py-1 rounded-3 shadow-xs me-1" 
+                         title="Live London / Heathrow Time (Auto GMT/BST)"
+                         style="background: rgba(184, 115, 51, 0.08); border: 1px solid rgba(184, 115, 51, 0.25);">
+                        <span class="live-clock-pulse-dot"></span>
+                        <div class="d-flex align-items-center gap-1.5" style="line-height: 1;">
+                            <i class="bi bi-clock-fill text-warning" style="font-size: 13px;"></i>
+                            <span class="fw-bold font-monospace text-dark" id="dashLiveClockTime" style="font-size: 13px; letter-spacing: 0.3px;">--:--:-- --</span>
+                            <span class="badge bg-dark text-warning px-1.5 py-0.5 rounded-1 font-monospace" id="dashLiveClockTz" style="font-size: 9.5px; font-weight: 700;">GMT</span>
+                            <span class="text-muted small ps-1 d-none d-sm-inline" id="dashLiveClockDate" style="font-size: 10.5px; border-left: 1px solid #cbd5e1; padding-left: 6px;">Heathrow UK</span>
+                        </div>
+                    </div>
+
                     <!-- 📄 Per Page Selector -->
                     <div class="d-flex align-items-center gap-1" id="perPageSelectorWrapper">
                         <label for="perPageSelect" class="text-muted fw-semibold mb-0 text-nowrap" style="font-size: 11px;">Per Page:</label>
@@ -2331,6 +2361,94 @@ function getViasBadgeHtml(booking) {
     return `<span class="badge bg-light text-dark border px-2 py-1 two-line-clamp text-start" style="font-size: 10.5px; font-weight: 500; max-width: 130px;" title="${fullVias}">${fullVias}</span>`;
 }
 
+// 🕒 Exact DB Booking Date & Time Extractor (Never shifts or distorts database timestamp)
+function extractExactBookingDateTime(rawDateOrCombined, rawTimeOnly = null) {
+    let dateStr = '-';
+    let timeStr = '-';
+    let raw = (rawDateOrCombined !== null && rawDateOrCombined !== undefined) ? String(rawDateOrCombined).trim() : '';
+    let rawT = (rawTimeOnly !== null && rawTimeOnly !== undefined) ? String(rawTimeOnly).trim() : '';
+
+    if (!raw && !rawT) {
+        return { date: '-', time: '-', full: '-' };
+    }
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // 1) Match YYYY-MM-DD HH:mm(:ss)? or YYYY-MM-DDTHH:mm(:ss)?
+    const fullMatch = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})[T\s](\d{1,2}):(\d{2})(?::\d{2})?/);
+    if (fullMatch) {
+        const y = fullMatch[1];
+        const m = parseInt(fullMatch[2], 10);
+        const d = fullMatch[3].padStart(2, '0');
+        const hh = fullMatch[4].padStart(2, '0');
+        const mm = fullMatch[5];
+        const mName = (m >= 1 && m <= 12) ? months[m - 1] : fullMatch[2];
+        dateStr = `${d} ${mName} ${y}`;
+        timeStr = `${hh}:${mm}`;
+        return { date: dateStr, time: timeStr, full: `${dateStr} ${timeStr}` };
+    }
+
+    // 2) Match DD-MM-YYYY or DD/MM/YYYY with time
+    const ukMatch = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})[T\s](\d{1,2}):(\d{2})(?::\d{2})?/);
+    if (ukMatch) {
+        const d = ukMatch[1].padStart(2, '0');
+        const m = parseInt(ukMatch[2], 10);
+        const y = ukMatch[3];
+        const hh = ukMatch[4].padStart(2, '0');
+        const mm = ukMatch[5];
+        const mName = (m >= 1 && m <= 12) ? months[m - 1] : ukMatch[2];
+        dateStr = `${d} ${mName} ${y}`;
+        timeStr = `${hh}:${mm}`;
+        return { date: dateStr, time: timeStr, full: `${dateStr} ${timeStr}` };
+    }
+
+    // 3) Date only: YYYY-MM-DD
+    const dOnlyYmd = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+    if (dOnlyYmd) {
+        const y = dOnlyYmd[1];
+        const m = parseInt(dOnlyYmd[2], 10);
+        const d = dOnlyYmd[3].padStart(2, '0');
+        const mName = (m >= 1 && m <= 12) ? months[m - 1] : dOnlyYmd[2];
+        dateStr = `${d} ${mName} ${y}`;
+    } else {
+        const dOnlyDmy = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+        if (dOnlyDmy) {
+            const d = dOnlyDmy[1].padStart(2, '0');
+            const m = parseInt(dOnlyDmy[2], 10);
+            const y = dOnlyDmy[3];
+            const mName = (m >= 1 && m <= 12) ? months[m - 1] : dOnlyDmy[2];
+            dateStr = `${d} ${mName} ${y}`;
+        }
+    }
+
+    // 4) Time only (in rawT or in raw)
+    const checkTimeStr = rawT || (dateStr === '-' ? raw : '');
+    const tMatch = checkTimeStr.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
+    if (tMatch) {
+        const hh = tMatch[1].padStart(2, '0');
+        const mm = tMatch[2];
+        timeStr = `${hh}:${mm}`;
+    }
+
+    // If raw was only time (HH:mm)
+    if (dateStr === '-' && timeStr !== '-' && raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)) {
+        return { date: '-', time: timeStr, full: timeStr };
+    }
+
+    if (dateStr !== '-' && timeStr !== '-') {
+        return { date: dateStr, time: timeStr, full: `${dateStr} ${timeStr}` };
+    }
+    if (dateStr !== '-') {
+        return { date: dateStr, time: '-', full: dateStr };
+    }
+    if (timeStr !== '-') {
+        return { date: '-', time: timeStr, full: timeStr };
+    }
+
+    return { date: raw || '-', time: rawT || '-', full: [raw, rawT].filter(Boolean).join(' ') || '-' };
+}
+window.extractExactBookingDateTime = extractExactBookingDateTime;
+
 // 🛠️ Render a complete table row for a booking
 function buildBookingRowHtml(booking, isNew = false) {
     const id = booking.id;
@@ -2341,15 +2459,18 @@ function buildBookingRowHtml(booking, isNew = false) {
 
     let pickupDate = '-';
     let pickupTime = '-';
-    if (booking.pickup_time) {
-        try {
-            const dt = new Date(booking.pickup_time);
-            if (!isNaN(dt.getTime())) {
-                pickupDate = dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                pickupTime = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-            }
-        } catch (e) {}
+    const rawDatePart = booking.pickup_date || booking.job_date || '';
+    const rawTimePart = booking.pickup_time || booking.job_time || '';
+    let parsedPickup;
+    if (rawTimePart && (rawTimePart.includes(' ') || rawTimePart.includes('T'))) {
+        parsedPickup = extractExactBookingDateTime(rawTimePart);
+    } else if (rawDatePart && (rawDatePart.includes(' ') || rawDatePart.includes('T'))) {
+        parsedPickup = extractExactBookingDateTime(rawDatePart);
+    } else {
+        parsedPickup = extractExactBookingDateTime(rawDatePart, rawTimePart);
     }
+    pickupDate = parsedPickup.date;
+    pickupTime = parsedPickup.time;
 
     const driverHtml = getDriverBadgeHtml(booking);
     const viasText = getViasBadgeHtml(booking);
@@ -2403,18 +2524,10 @@ function buildBookingRowHtml(booking, isNew = false) {
     let createdAtFormatted = '';
     const rawCreated = booking.created_at || booking.createdAt || booking.created_date;
     if (rawCreated) {
-        try {
-            const cdt = new Date(rawCreated);
-            if (!isNaN(cdt.getTime())) {
-                const cDate = cdt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                const cTime = cdt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-                createdAtFormatted = `${cDate}, ${cTime}`;
-            } else {
-                createdAtFormatted = rawCreated;
-            }
-        } catch (e) {
-            createdAtFormatted = rawCreated;
-        }
+        const parsedCreated = extractExactBookingDateTime(rawCreated);
+        createdAtFormatted = (parsedCreated.date !== '-' && parsedCreated.time !== '-')
+            ? `${parsedCreated.date}, ${parsedCreated.time}`
+            : (parsedCreated.full !== '-' ? parsedCreated.full : rawCreated);
     }
 
     const priceNum = parseFloat(booking.price) || 0;
@@ -2950,13 +3063,8 @@ function bindRowEvents(context = document) {
 
     function formatBookingDateTime(dtStr) {
         if (!dtStr) return '-';
-        try {
-            const dt = new Date(dtStr);
-            if (isNaN(dt.getTime())) return dtStr;
-            return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-        } catch(e) {
-            return dtStr;
-        }
+        const parsed = extractExactBookingDateTime(dtStr);
+        return (parsed && parsed.full !== '-') ? parsed.full : dtStr;
     }
 
     function formatActivityDateTime(dtStr) {
@@ -2964,7 +3072,7 @@ function bindRowEvents(context = document) {
         try {
             const dt = new Date(dtStr);
             if (isNaN(dt.getTime())) return dtStr;
-            return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            return dt.toLocaleDateString('en-GB', { timeZone: 'Europe/London', day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', second: '2-digit' });
         } catch(e) {
             return dtStr;
         }

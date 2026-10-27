@@ -1192,6 +1192,40 @@
       background-color: #151d2c !important;
       color: #cbd5e1 !important;
     }
+
+    /* 🕒 Live UK Clock Styling */
+    .live-clock-pulse-dot {
+      width: 7px;
+      height: 7px;
+      background-color: #10b981;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulseDotLiveClock 2s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulseDotLiveClock {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .live-uk-clock-badge {
+      background: rgba(184, 115, 51, 0.1);
+      border: 1px solid rgba(184, 115, 51, 0.28);
+      color: #B87333;
+      transition: all 0.2s ease;
+    }
+    .live-uk-clock-badge:hover {
+      background: rgba(184, 115, 51, 0.16);
+      border-color: rgba(184, 115, 51, 0.4);
+    }
+    [data-bs-theme="dark"] .live-uk-clock-badge {
+      background: rgba(230, 176, 74, 0.12) !important;
+      border-color: rgba(230, 176, 74, 0.3) !important;
+    }
+    [data-bs-theme="dark"] #globalUkClockTime {
+      color: #f8fafc !important;
+    }
   </style>
 </head>
 
@@ -1411,6 +1445,16 @@
             <button type="submit" class="btn btn-sm btn-danger py-1 px-2.5 d-flex align-items-center" style="font-size: 12px; border-radius: 6px;"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
           </form>
         @endif
+
+        <!-- 🕒 Live UK (London / Heathrow) Time Widget -->
+        <div class="live-uk-clock-badge d-flex align-items-center gap-1.5 px-2.5 py-1 rounded-3 my-auto" 
+             title="UK London / Heathrow Live Time (Auto Daylight Saving GMT/BST)"
+             style="font-size: 11.5px;">
+          <span class="live-clock-pulse-dot me-1"></span>
+          <i class="bi bi-clock-fill text-warning me-1" style="font-size: 12px;"></i>
+          <span class="fw-bold font-monospace text-dark text-nowrap" id="globalUkClockTime" style="letter-spacing: 0.3px;">--:--:-- --</span>
+          <span class="badge bg-dark text-warning px-1.5 py-0.5 rounded-1 font-monospace ms-1" id="globalUkClockTz" style="font-size: 9.5px; font-weight: 700;">GMT</span>
+        </div>
 
         <!-- 🌓 Light/Dark Theme Switcher in Top Bar -->
         <div class="theme-switch-wrapper my-auto">
@@ -1668,6 +1712,54 @@
     if (!cleanFlight) return;
     window.open('https://www.google.com/search?q=' + encodeURIComponent('flight ' + cleanFlight), '_blank');
   };
+  </script>
+
+  <!-- 🕒 Live UK Heathrow Clock Real-Time Ticker -->
+  <script>
+  (function initLiveUKClock() {
+    function tick() {
+      try {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-GB', {
+          timeZone: 'Europe/London',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        });
+        const dateStr = now.toLocaleDateString('en-GB', {
+          timeZone: 'Europe/London',
+          weekday: 'short',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+
+        const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', timeZoneName: 'short' }).formatToParts(now);
+        const tzName = (parts.find(p => p.type === 'timeZoneName')?.value || 'GMT').toUpperCase();
+
+        const navTime = document.getElementById('globalUkClockTime');
+        const navTz = document.getElementById('globalUkClockTz');
+        const dashTime = document.getElementById('dashLiveClockTime');
+        const dashDate = document.getElementById('dashLiveClockDate');
+        const dashTz = document.getElementById('dashLiveClockTz');
+
+        if (navTime) navTime.textContent = timeStr;
+        if (navTz) navTz.textContent = tzName;
+        if (dashTime) dashTime.textContent = timeStr;
+        if (dashDate) dashDate.textContent = `${dateStr} • Heathrow UK`;
+        if (dashTz) dashTz.textContent = tzName;
+      } catch (e) {
+        console.error('UK Clock tick error:', e);
+      }
+    }
+    setInterval(tick, 1000);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', tick);
+    } else {
+      tick();
+    }
+  })();
   </script>
 
   @stack('scripts')

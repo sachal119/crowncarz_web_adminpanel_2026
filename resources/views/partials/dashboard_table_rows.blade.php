@@ -292,10 +292,29 @@
                 $fullDateTimeTitle = '-';
                 if (!empty($rawJobDate)) {
                     try {
-                        $dtCarbon = \Carbon\Carbon::parse($rawJobDate);
-                        $formattedDate = $dtCarbon->format('d M Y');
-                        $formattedTime = $dtCarbon->format('H:i');
-                        $fullDateTimeTitle = $dtCarbon->format('l, d M Y - H:i');
+                        $rawStr = trim((string)$rawJobDate);
+                        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{1,2}):(\d{2})/', $rawStr, $m)) {
+                            $months = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec'];
+                            $year = $m[1];
+                            $month = $months[(int)$m[2]] ?? $m[2];
+                            $day = str_pad($m[3], 2, '0', STR_PAD_LEFT);
+                            $formattedDate = "{$day} {$month} {$year}";
+                            $formattedTime = str_pad($m[4], 2, '0', STR_PAD_LEFT) . ":{$m[5]}";
+                            $fullDateTimeTitle = "{$day} {$month} {$year} - {$formattedTime}";
+                        } elseif (preg_match('/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[T\s](\d{1,2}):(\d{2}))?/', $rawStr, $m)) {
+                            $months = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec'];
+                            $day = str_pad($m[1], 2, '0', STR_PAD_LEFT);
+                            $month = $months[(int)$m[2]] ?? $m[2];
+                            $year = $m[3];
+                            $formattedDate = "{$day} {$month} {$year}";
+                            $formattedTime = isset($m[4]) ? str_pad($m[4], 2, '0', STR_PAD_LEFT) . ":{$m[5]}" : '-';
+                            $fullDateTimeTitle = "{$day} {$month} {$year} - {$formattedTime}";
+                        } else {
+                            $dtCarbon = \Carbon\Carbon::parse($rawJobDate);
+                            $formattedDate = $dtCarbon->format('d M Y');
+                            $formattedTime = $dtCarbon->format('H:i');
+                            $fullDateTimeTitle = $dtCarbon->format('l, d M Y - H:i');
+                        }
                     } catch (\Exception $e) {
                         $formattedDate = (string)$rawJobDate;
                         $fullDateTimeTitle = (string)$rawJobDate;

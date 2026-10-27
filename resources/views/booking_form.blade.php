@@ -422,12 +422,16 @@
 <!--  </div>-->
 <!--</div>-->
             @php
-              $defaultDate = now()->format('Y-m-d');
-              $defaultTime = now()->addHour()->format('H:00');
+              $defaultDate = now('Europe/London')->format('Y-m-d');
+              $defaultTime = now('Europe/London')->format('H:i');
             @endphp
             @php
-    $pickupDate = isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('Y-m-d') : now()->format('Y-m-d');
-    $pickupTime = isset($booking['pickup_time']) ? \Carbon\Carbon::parse($booking['pickup_time'])->format('H:i') : now()->addHour()->format('H:i');
+    $pickupDate = isset($booking['pickup_time']) 
+        ? \Carbon\Carbon::parse($booking['pickup_time'])->timezone('Europe/London')->format('Y-m-d') 
+        : now('Europe/London')->format('Y-m-d');
+    $pickupTime = isset($booking['pickup_time']) 
+        ? \Carbon\Carbon::parse($booking['pickup_time'])->timezone('Europe/London')->format('H:i') 
+        : now('Europe/London')->format('H:i');
 @endphp
             <div class="row g-2 g-md-3">
               <div class="col-12 col-md-2 mb-2 mb-md-3">
@@ -2663,16 +2667,16 @@ document.addEventListener('DOMContentLoaded', function() {
           <p><strong>Airport:</strong> ${dep.airport ?? 'N/A'} (${dep.iata ?? ''})</p>
           <p><strong>Terminal:</strong> ${dep.terminal ?? 'N/A'}</p>
           <p><strong>Gate:</strong> ${dep.gate ?? 'N/A'}</p>
-          <p><strong>Scheduled:</strong> ${dep.scheduled ? new Date(dep.scheduled).toLocaleString() : 'N/A'}</p>
-          <p><strong>Actual:</strong> ${dep.actual ? new Date(dep.actual).toLocaleString() : 'N/A'}</p>
+          <p><strong>Scheduled:</strong> ${dep.scheduled ? new Date(dep.scheduled).toLocaleString('en-GB', { timeZone: 'Europe/London' }) : 'N/A'}</p>
+          <p><strong>Actual:</strong> ${dep.actual ? new Date(dep.actual).toLocaleString('en-GB', { timeZone: 'Europe/London' }) : 'N/A'}</p>
 
           <hr>
           <h6 class="text-success">Arrival</h6>
           <p><strong>Airport:</strong> ${arr.airport ?? 'N/A'} (${arr.iata ?? ''})</p>
           <p><strong>Terminal:</strong> ${arr.terminal ?? 'N/A'}</p>
           <p><strong>Gate:</strong> ${arr.gate ?? 'N/A'}</p>
-          <p><strong>Scheduled:</strong> ${arr.scheduled ? new Date(arr.scheduled).toLocaleString() : 'N/A'}</p>
-          <p><strong>Actual:</strong> ${arr.actual ? new Date(arr.actual).toLocaleString() : 'N/A'}</p>
+          <p><strong>Scheduled:</strong> ${arr.scheduled ? new Date(arr.scheduled).toLocaleString('en-GB', { timeZone: 'Europe/London' }) : 'N/A'}</p>
+          <p><strong>Actual:</strong> ${arr.actual ? new Date(arr.actual).toLocaleString('en-GB', { timeZone: 'Europe/London' }) : 'N/A'}</p>
         `;
       } else {
         detailsDiv.innerHTML = `

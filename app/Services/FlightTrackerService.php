@@ -260,8 +260,8 @@ class FlightTrackerService
         }
 
         // 4. Calculate timing details
-        $formattedArrTime = $pickupTime ? date('h:i A', strtotime($pickupTime)) : 'Scheduled Today';
-        $formattedDepTime = $pickupTime ? date('h:i A', strtotime($pickupTime . ' -2 hours 30 mins')) : 'Earlier Departure';
+        $formattedArrTime = $pickupTime ? \Carbon\Carbon::parse($pickupTime)->timezone('Europe/London')->format('h:i A') : 'Scheduled Today';
+        $formattedDepTime = $pickupTime ? \Carbon\Carbon::parse($pickupTime . ' -2 hours 30 mins')->timezone('Europe/London')->format('h:i A') : 'Earlier Departure';
 
         // 5. Build official live links
         $icaoPrefix = $airlineInfo['icao'] ?? $airlinePrefix;
@@ -317,8 +317,8 @@ class FlightTrackerService
                     // Format scheduled and actual times
                     $depTimeRaw = $dep['actual'] ?? $dep['scheduled'] ?? null;
                     $arrTimeRaw = $arr['actual'] ?? $arr['scheduled'] ?? null;
-                    $depTime = $depTimeRaw ? date('h:i A', strtotime($depTimeRaw)) : 'Scheduled';
-                    $arrTime = $arrTimeRaw ? date('h:i A', strtotime($arrTimeRaw)) : 'Scheduled';
+                    $depTime = $depTimeRaw ? \Carbon\Carbon::parse($depTimeRaw)->timezone('Europe/London')->format('h:i A') : 'Scheduled';
+                    $arrTime = $arrTimeRaw ? \Carbon\Carbon::parse($arrTimeRaw)->timezone('Europe/London')->format('h:i A') : 'Scheduled';
 
                     // Duration calculation
                     $duration = 'Direct Flight';
@@ -410,8 +410,8 @@ class FlightTrackerService
                         'status_color'  => ($item['status'] ?? '') === 'en-route' ? 'success' : 'warning',
                         'status_badge'  => strtoupper($item['status'] ?? 'SCHEDULED'),
                         'duration'      => 'En Route',
-                        'dep_time'      => !empty($item['dep_time']) ? date('h:i A', strtotime($item['dep_time'])) : 'Scheduled',
-                        'arr_time'      => !empty($item['arr_time']) ? date('h:i A', strtotime($item['arr_time'])) : 'Scheduled',
+                        'dep_time'      => !empty($item['dep_time']) ? \Carbon\Carbon::parse($item['dep_time'])->timezone('Europe/London')->format('h:i A') : 'Scheduled',
+                        'arr_time'      => !empty($item['arr_time']) ? \Carbon\Carbon::parse($item['arr_time'])->timezone('Europe/London')->format('h:i A') : 'Scheduled',
                         'origin'        => [
                             'code'     => $item['dep_iata'] ?? 'DEP',
                             'name'     => 'Departure Airport (' . ($item['dep_iata'] ?? '') . ')',
