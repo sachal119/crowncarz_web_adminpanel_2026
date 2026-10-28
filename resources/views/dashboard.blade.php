@@ -4514,7 +4514,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Dropdown List Container
             this.listContainer = document.createElement('ul');
-            this.listContainer.style.cssText = 'position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; z-index: 1060; list-style: none; padding: 0; margin: 4px 0 0 0; display: none; max-height: 220px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.15);';
+            this.listContainer.style.cssText = 'position: absolute; top: 100%; left: 0; right: 0; background:var(--cc-bg-card); color:var(--cc-text-primary); border:1px solid var(--cc-input-border); border-radius: 8px; z-index: 1060; list-style: none; padding: 0; margin: 4px 0 0 0; display: none; max-height: 220px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.15);';
             this.wrapper.appendChild(this.listContainer);
 
             let debounceTimer;
@@ -4580,12 +4580,12 @@ document.addEventListener('DOMContentLoaded', function () {
         updateActiveItem(items) {
             items.forEach((item, index) => {
                 if (index === this.activeIndex) {
-                    item.style.backgroundColor = '#e0f2fe';
-                    item.style.color = '#0369a1';
+                    item.style.backgroundColor = 'var(--cc-autocomplete-hover)';
+                    item.style.color = 'var(--cc-text-primary)';
                     item.scrollIntoView({ block: 'nearest' });
                 } else {
                     item.style.backgroundColor = 'transparent';
-                    item.style.color = '#1e293b';
+                    item.style.color = 'var(--cc-text-primary)';
                 }
             });
         }
@@ -4608,7 +4608,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const item = document.createElement('li');
             item.textContent = message;
             item.setAttribute('role', 'status');
-            item.style.cssText = 'padding:10px; color:#b91c1c; font-size:13px;';
+            item.style.cssText = 'padding:10px; color:var(--cc-autocomplete-error); font-size:13px;';
             this.listContainer.appendChild(item);
             this.listContainer.style.display = 'block';
         }
@@ -4638,7 +4638,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const li = document.createElement('li');
                 li.setAttribute('data-index', idx);
-                li.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 11.5px; color: #1e293b; line-height: 1.4;';
+                li.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--cc-border); font-size: 11.5px; color:var(--cc-text-primary); line-height: 1.4;';
                 li.textContent = fullAddress;
 
                 li.addEventListener('mouseenter', () => {
@@ -4649,7 +4649,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 li.addEventListener('mouseleave', () => {
                     li.style.backgroundColor = 'transparent';
-                    li.style.color = '#1e293b';
+                    li.style.color = 'var(--cc-text-primary)';
                 });
 
                 li.addEventListener('mousedown', (e) => {

@@ -3467,7 +3467,7 @@ class AddressAutocomplete {
         this.wrapper.appendChild(this.field);
 
         this.listContainer = document.createElement('ul');
-        this.listContainer.style.cssText = 'position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #ced4da; border-radius:4px; z-index:1000; list-style:none; padding:0; margin:4px 0 0 0; display:none; max-height:250px; overflow-y:auto; box-shadow:0 4px 6px rgba(0,0,0,0.1);';
+        this.listContainer.style.cssText = 'position:absolute; top:100%; left:0; right:0; background:var(--cc-bg-card); color:var(--cc-text-primary); border:1px solid var(--cc-input-border); border-radius:4px; z-index:1000; list-style:none; padding:0; margin:4px 0 0 0; display:none; max-height:250px; overflow-y:auto; box-shadow:0 4px 6px rgba(0,0,0,0.1);';
         this.wrapper.appendChild(this.listContainer);
 
         let debounceTimer;
@@ -3527,7 +3527,7 @@ class AddressAutocomplete {
         const item = document.createElement('li');
         item.textContent = message;
         item.setAttribute('role', 'status');
-        item.style.cssText = 'padding:10px; color:#b91c1c; font-size:13px;';
+        item.style.cssText = 'padding:10px; color:var(--cc-autocomplete-error); font-size:13px;';
         this.listContainer.appendChild(item);
         this.listContainer.style.display = 'block';
     }
@@ -3556,10 +3556,10 @@ class AddressAutocomplete {
             const fullAddress = place.ADDRESS || addressParts.join(', ');
 
             const li = document.createElement('li');
-            li.style.cssText = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #f8f9fa; font-size: 14px;';
+            li.style.cssText = 'padding: 10px; cursor: pointer; border-bottom: 1px solid var(--cc-border); color:var(--cc-text-primary); font-size: 14px;';
             li.textContent = fullAddress;
 
-            li.addEventListener('mouseenter', () => li.style.backgroundColor = '#f1f3f5');
+            li.addEventListener('mouseenter', () => li.style.backgroundColor = 'var(--cc-autocomplete-hover)');
             li.addEventListener('mouseleave', () => li.style.backgroundColor = 'transparent');
 
             li.addEventListener('mousedown', (e) => {

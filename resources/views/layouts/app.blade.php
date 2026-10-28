@@ -53,6 +53,8 @@
       --cc-table-th-color: #475569;
       --cc-table-hover: #f1f5f9;
       --cc-modal-bg: #ffffff;
+      --cc-autocomplete-hover: #e0f2fe;
+      --cc-autocomplete-error: #b91c1c;
     }
 
     [data-bs-theme="dark"] {
@@ -73,6 +75,8 @@
       --cc-table-th-color: #94a3b8;
       --cc-table-hover: rgba(255, 255, 255, 0.04);
       --cc-modal-bg: #151d2c;
+      --cc-autocomplete-hover: #26364d;
+      --cc-autocomplete-error: #fca5a5;
     }
 
     *, *::before, *::after {
