@@ -379,40 +379,48 @@ $(document).ready(function() {
         });
     });
 
-    function formatTime12Hour(timeStr) {
+    function formatTime24Hour(timeStr) {
         if (!timeStr) return '';
         let str = String(timeStr).trim();
-        str = str.replace(/\s*\(\s*24\s*hour\s*clock\s*\)/gi, '').trim();
+        str = str.replace(/\s*\(\s*(12|24)\s*hour\s*clock\s*\)/gi, '').trim();
 
-        if (/(am|pm)$/i.test(str)) {
-            const m = str.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
-            if (m) {
-                const h = String(parseInt(m[1], 10)).padStart(2, '0');
-                return `${h}:${m[2]} ${m[3].toUpperCase()}`;
-            }
-            return str;
+        // Check if it has AM / PM (e.g. "03:50 pm" or "3:50 PM")
+        const ampmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)$/i);
+        if (ampmMatch) {
+            let hours = parseInt(ampmMatch[1], 10);
+            const minutes = ampmMatch[2];
+            const isPM = ampmMatch[3].toLowerCase() === 'pm';
+            if (isPM && hours < 12) hours += 12;
+            if (!isPM && hours === 12) hours = 0;
+            return `${String(hours).padStart(2, '0')}:${minutes}`;
         }
 
         if (str.includes('T') || str.includes(' ')) {
-            const parts = str.split(/[T ]/);
-            const lastPart = parts[parts.length - 1];
-            if (lastPart.includes(':')) {
-                str = lastPart;
+            const fullMatch = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?/i);
+            if (fullMatch) {
+                let hours = parseInt(fullMatch[1], 10);
+                const minutes = fullMatch[2];
+                if (fullMatch[3]) {
+                    const isPM = fullMatch[3].toLowerCase() === 'pm';
+                    if (isPM && hours < 12) hours += 12;
+                    if (!isPM && hours === 12) hours = 0;
+                }
+                return `${String(hours).padStart(2, '0')}:${minutes}`;
             }
         }
 
         const match = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
         if (match) {
-            let hours = parseInt(match[1], 10);
+            const hours = String(parseInt(match[1], 10)).padStart(2, '0');
             const minutes = match[2];
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12;
-            const paddedHours = String(hours).padStart(2, '0');
-            return `${paddedHours}:${minutes} ${ampm}`;
+            return `${hours}:${minutes}`;
         }
 
         return str;
+    }
+
+    function formatTime12Hour(timeStr) {
+        return formatTime24Hour(timeStr);
     }
 
 /* ----------------------
@@ -449,7 +457,7 @@ $(document).ready(function() {
                 }
             }
 
-            const formattedTime = formatTime12Hour(rawTime);
+            const formattedTime = formatTime24Hour(rawTime);
 
             let paymentDisplay = 'Pay in Car';
             if (rawPayment === 'cash' || rawPayment.includes('pay in car')) {

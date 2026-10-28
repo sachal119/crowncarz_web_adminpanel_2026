@@ -220,7 +220,7 @@ function openChat(driverId, driverName, isOnline) {
       msgDiv.classList.add("chat-bubble", msg.sender === "office" ? "chat-office ms-auto" : "chat-driver me-auto");
       msgDiv.innerHTML = `
         ${msg.text}
-        <span class="chat-time">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>
+        <span class="chat-time">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})}</span>
       `;
       chatBox.appendChild(msgDiv);
     });

@@ -1422,9 +1422,9 @@ if (pickupDateValue) {
       viaLines = viasArr.map((v, i) => `Via ${i + 1}: ${v}`).join('\n') + '\n';
   }
 
-  // Time format: 12 Hour Clock (AM/PM)
+  // Time format: 24 Hour Clock (HH:mm)
   let rawTime = (document.querySelector("input[name='pickup_time']")?.value || '').trim();
-  const formattedTime = formatTime12Hour(rawTime);
+  const formattedTime = formatTime24Hour(rawTime);
 
   const passName = document.querySelector("input[name='passenger_name']")?.value || "";
   const phoneNo = document.querySelector("input[name='phone_no']")?.value || "";
@@ -1483,42 +1483,51 @@ if (pickupDateValue) {
 }
 
 // ---------------------------
-// 12-HOUR TIME FORMATTER (AM/PM)
+// 24-HOUR TIME FORMATTER (HH:mm)
 // ---------------------------
-function formatTime12Hour(timeStr) {
+function formatTime24Hour(timeStr) {
     if (!timeStr) return '';
     let str = String(timeStr).trim();
-    str = str.replace(/\s*\(\s*24\s*hour\s*clock\s*\)/gi, '').trim();
+    str = str.replace(/\s*\(\s*(12|24)\s*hour\s*clock\s*\)/gi, '').trim();
 
-    if (/(am|pm)$/i.test(str)) {
-        const m = str.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
-        if (m) {
-            const h = String(parseInt(m[1], 10)).padStart(2, '0');
-            return `${h}:${m[2]} ${m[3].toUpperCase()}`;
-        }
-        return str;
+    // Check if it has AM / PM (e.g. "03:50 pm" or "3:50 PM")
+    const ampmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)$/i);
+    if (ampmMatch) {
+        let hours = parseInt(ampmMatch[1], 10);
+        const minutes = ampmMatch[2];
+        const isPM = ampmMatch[3].toLowerCase() === 'pm';
+        if (isPM && hours < 12) hours += 12;
+        if (!isPM && hours === 12) hours = 0;
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
     }
 
     if (str.includes('T') || str.includes(' ')) {
-        const parts = str.split(/[T ]/);
-        const lastPart = parts[parts.length - 1];
-        if (lastPart.includes(':')) {
-            str = lastPart;
+        const fullMatch = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?/i);
+        if (fullMatch) {
+            let hours = parseInt(fullMatch[1], 10);
+            const minutes = fullMatch[2];
+            if (fullMatch[3]) {
+                const isPM = fullMatch[3].toLowerCase() === 'pm';
+                if (isPM && hours < 12) hours += 12;
+                if (!isPM && hours === 12) hours = 0;
+            }
+            return `${String(hours).padStart(2, '0')}:${minutes}`;
         }
     }
 
     const match = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
     if (match) {
-        let hours = parseInt(match[1], 10);
+        const hours = String(parseInt(match[1], 10)).padStart(2, '0');
         const minutes = match[2];
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-        const paddedHours = String(hours).padStart(2, '0');
-        return `${paddedHours}:${minutes} ${ampm}`;
+        return `${hours}:${minutes}`;
     }
 
     return str;
+}
+
+// Backwards-compatible alias
+function formatTime12Hour(timeStr) {
+    return formatTime24Hour(timeStr);
 }
 
 // VIA HANDLER
@@ -1557,9 +1566,9 @@ function formatBookingConfirmationMessage(b) {
         }
     }
 
-    // Format Time: 12-Hour Clock (AM/PM)
+    // Format Time: 24-Hour Clock (HH:mm)
     let rawTime = (b.pickup_time || b.job_time || b.time || '').trim();
-    const formattedTime = formatTime12Hour(rawTime);
+    const formattedTime = formatTime24Hour(rawTime);
 
     const phone = b.phone_no || b.mobile || b.phone || '';
     const pickup = b.pickup_address || b.pickup || '';

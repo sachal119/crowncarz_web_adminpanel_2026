@@ -762,23 +762,6 @@ td{
     background-color: rgba(17, 24, 39, 0.85) !important;
     color: #cbd5e1 !important;
 }
-
-/* 🕒 Live London / Heathrow Clock Badge */
-.dash-live-clock-pill {
-    transition: all 0.2s ease;
-    user-select: none;
-}
-[data-bs-theme="dark"] .dash-live-clock-pill {
-    background: rgba(184, 115, 51, 0.16) !important;
-    border-color: rgba(184, 115, 51, 0.4) !important;
-}
-[data-bs-theme="dark"] #dashLiveClockTime {
-    color: #f1f5f9 !important;
-}
-[data-bs-theme="dark"] #dashLiveClockDate {
-    color: #94a3b8 !important;
-    border-left-color: rgba(255, 255, 255, 0.2) !important;
-}
 </style>
 
 <!-- 🌟 Fullscreen Screen-Level Search & Filter Loader -->
@@ -1051,19 +1034,6 @@ td{
                 </div>
 
                 <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
-                    <!-- 🕒 Live UK Heathrow Clock Badge -->
-                    <div class="dash-live-clock-pill d-flex align-items-center gap-2 px-2.5 py-1 rounded-3 shadow-xs me-1" 
-                         title="Live London / Heathrow Time (Auto GMT/BST)"
-                         style="background: rgba(184, 115, 51, 0.08); border: 1px solid rgba(184, 115, 51, 0.25);">
-                        <span class="live-clock-pulse-dot"></span>
-                        <div class="d-flex align-items-center gap-1.5" style="line-height: 1;">
-                            <i class="bi bi-clock-fill text-warning" style="font-size: 13px;"></i>
-                            <span class="fw-bold font-monospace text-dark" id="dashLiveClockTime" style="font-size: 13px; letter-spacing: 0.3px;">--:--:-- --</span>
-                            <span class="badge bg-dark text-warning px-1.5 py-0.5 rounded-1 font-monospace" id="dashLiveClockTz" style="font-size: 9.5px; font-weight: 700;">GMT</span>
-                            <span class="text-muted small ps-1 d-none d-sm-inline" id="dashLiveClockDate" style="font-size: 10.5px; border-left: 1px solid #cbd5e1; padding-left: 6px;">Heathrow UK</span>
-                        </div>
-                    </div>
-
                     <!-- 📄 Per Page Selector -->
                     <div class="d-flex align-items-center gap-1" id="perPageSelectorWrapper">
                         <label for="perPageSelect" class="text-muted fw-semibold mb-0 text-nowrap" style="font-size: 11px;">Per Page:</label>
@@ -3158,41 +3128,48 @@ function bindRowEvents(context = document) {
         });
     }
 
-    // 12-Hour Time Formatter (AM/PM)
-    function formatTime12Hour(timeStr) {
+    // 24-Hour Time Formatter (HH:mm)
+    function formatTime24Hour(timeStr) {
         if (!timeStr) return '';
         let str = String(timeStr).trim();
-        str = str.replace(/\s*\(\s*24\s*hour\s*clock\s*\)/gi, '').trim();
+        str = str.replace(/\s*\(\s*(12|24)\s*hour\s*clock\s*\)/gi, '').trim();
 
-        if (/(am|pm)$/i.test(str)) {
-            const m = str.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
-            if (m) {
-                const h = String(parseInt(m[1], 10)).padStart(2, '0');
-                return `${h}:${m[2]} ${m[3].toUpperCase()}`;
-            }
-            return str;
+        // Check if it has AM / PM (e.g. "03:50 pm" or "3:50 PM")
+        const ampmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)$/i);
+        if (ampmMatch) {
+            let hours = parseInt(ampmMatch[1], 10);
+            const minutes = ampmMatch[2];
+            const isPM = ampmMatch[3].toLowerCase() === 'pm';
+            if (isPM && hours < 12) hours += 12;
+            if (!isPM && hours === 12) hours = 0;
+            return `${String(hours).padStart(2, '0')}:${minutes}`;
         }
 
         if (str.includes('T') || str.includes(' ')) {
-            const parts = str.split(/[T ]/);
-            const lastPart = parts[parts.length - 1];
-            if (lastPart.includes(':')) {
-                str = lastPart;
+            const fullMatch = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?/i);
+            if (fullMatch) {
+                let hours = parseInt(fullMatch[1], 10);
+                const minutes = fullMatch[2];
+                if (fullMatch[3]) {
+                    const isPM = fullMatch[3].toLowerCase() === 'pm';
+                    if (isPM && hours < 12) hours += 12;
+                    if (!isPM && hours === 12) hours = 0;
+                }
+                return `${String(hours).padStart(2, '0')}:${minutes}`;
             }
         }
 
         const match = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
         if (match) {
-            let hours = parseInt(match[1], 10);
+            const hours = String(parseInt(match[1], 10)).padStart(2, '0');
             const minutes = match[2];
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12;
-            const paddedHours = String(hours).padStart(2, '0');
-            return `${paddedHours}:${minutes} ${ampm}`;
+            return `${hours}:${minutes}`;
         }
 
         return str;
+    }
+    function formatTime12Hour(timeStr) {
+        return formatTime24Hour(timeStr);
     }
 
     // Unified Confirmation Message Formatter
@@ -3222,9 +3199,9 @@ function bindRowEvents(context = document) {
             }
         }
 
-        // Format Time: 12-Hour Clock (AM/PM)
+        // Format Time: 24-Hour Clock (HH:mm)
         let rawTime = (b.pickup_time || b.job_time || b.time || '').trim();
-        const formattedTime = formatTime12Hour(rawTime);
+        const formattedTime = formatTime24Hour(rawTime);
 
         const phone = b.phone_no || b.mobile || b.phone || '';
         const pickup = b.pickup_address || b.pickup || '';

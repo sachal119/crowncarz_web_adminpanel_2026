@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sampleData = {
     "{driver_name}": "David Wilson",
     "{job_date}": "15 Nov 2025",
-    "{job_time}": "09:30 AM",
+    "{job_time}": "09:30",
     "{name}": "John Doe",
     "{pickup}": "Heathrow Terminal 3",
     "{via_address}": "Oxford Street",

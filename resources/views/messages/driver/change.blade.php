@@ -48,7 +48,7 @@
           <label class="form-label fw-semibold">Live Preview</label>
           <div class="card border-0 shadow-sm rounded-4 p-3 bg-light" style="font-family: monospace;">
             <div id="smsPreview" class="text-dark">
-              Hello Ali Khan, job #1024 has been updated. Pickup from Heathrow Airport at 09:30 AM. Please review the new details in your CrownCarz driver app.
+              Hello Ali Khan, job #1024 has been updated. Pickup from Heathrow Airport at 09:30. Please review the new details in your CrownCarz driver app.
             </div>
           </div>
         </div>
@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "{driver_name}": "Ali Khan",
     "{job_id}": "1024",
     "{pickup_address}": "Heathrow Airport",
-    "{pickup_time}": "09:30 AM"
+    "{pickup_time}": "09:30"
   };
 
   const updatePreview = () => {

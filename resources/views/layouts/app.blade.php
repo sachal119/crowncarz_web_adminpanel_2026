@@ -1210,20 +1210,20 @@
       100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
     .live-uk-clock-badge {
-      background: rgba(184, 115, 51, 0.1);
-      border: 1px solid rgba(184, 115, 51, 0.28);
-      color: #B87333;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #f8fafc;
       transition: all 0.2s ease;
     }
     .live-uk-clock-badge:hover {
-      background: rgba(184, 115, 51, 0.16);
-      border-color: rgba(184, 115, 51, 0.4);
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(230, 176, 74, 0.45);
     }
     [data-bs-theme="dark"] .live-uk-clock-badge {
       background: rgba(230, 176, 74, 0.12) !important;
       border-color: rgba(230, 176, 74, 0.3) !important;
     }
-    [data-bs-theme="dark"] #globalUkClockTime {
+    #globalUkClockTime {
       color: #f8fafc !important;
     }
   </style>
@@ -1447,12 +1447,12 @@
         @endif
 
         <!-- 🕒 Live UK (London / Heathrow) Time Widget -->
-        <div class="live-uk-clock-badge d-flex align-items-center gap-1.5 px-2.5 py-1 rounded-3 my-auto" 
+        <div class="live-uk-clock-badge d-flex align-items-center gap-1.5 px-2.5 py-1 rounded-3 my-auto shadow-xs" 
              title="UK London / Heathrow Live Time (Auto Daylight Saving GMT/BST)"
              style="font-size: 11.5px;">
           <span class="live-clock-pulse-dot me-1"></span>
           <i class="bi bi-clock-fill text-warning me-1" style="font-size: 12px;"></i>
-          <span class="fw-bold font-monospace text-dark text-nowrap" id="globalUkClockTime" style="letter-spacing: 0.3px;">--:--:-- --</span>
+          <span class="fw-bold font-monospace text-nowrap" id="globalUkClockTime" style="letter-spacing: 0.3px; color: #f8fafc;">--:--:-- --</span>
           <span class="badge bg-dark text-warning px-1.5 py-0.5 rounded-1 font-monospace ms-1" id="globalUkClockTz" style="font-size: 9.5px; font-weight: 700;">GMT</span>
         </div>
 
@@ -1740,15 +1740,9 @@
 
         const navTime = document.getElementById('globalUkClockTime');
         const navTz = document.getElementById('globalUkClockTz');
-        const dashTime = document.getElementById('dashLiveClockTime');
-        const dashDate = document.getElementById('dashLiveClockDate');
-        const dashTz = document.getElementById('dashLiveClockTz');
 
         if (navTime) navTime.textContent = timeStr;
         if (navTz) navTz.textContent = tzName;
-        if (dashTime) dashTime.textContent = timeStr;
-        if (dashDate) dashDate.textContent = `${dateStr} • Heathrow UK`;
-        if (dashTz) dashTz.textContent = tzName;
       } catch (e) {
         console.error('UK Clock tick error:', e);
       }

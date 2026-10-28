@@ -1147,7 +1147,7 @@ public function updateStatusManual(Request $request, $id)
         // $pickupTime = $booking['pickup_time'] ?? '';
 
 $pickupTime = !empty($booking['pickup_time'])
-    ? Carbon::parse($booking['pickup_time'])->format('d-M-Y h:i:s a')
+    ? Carbon::parse($booking['pickup_time'])->format('d-M-Y H:i')
     : '';
 
         /*
