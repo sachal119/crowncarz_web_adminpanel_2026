@@ -195,10 +195,10 @@ public function cancelledBookings()
 
 
     try {
-        $database = app('App\Services\FirebaseService')->getDatabase();
-        $bookingsRef = $database->getReference('bookings')->getValue();
-        $driversRef  = $database->getReference('drivers')->getValue() ?? [];
-        $accountsRef = $database->getReference('customers')->getValue() ?? [];
+        $firebaseService = app('App\Services\FirebaseService');
+        $bookingsRef = $firebaseService->getCachedData('bookings', 60) ?? [];
+        $driversRef  = $firebaseService->getCachedData('drivers', 120) ?? [];
+        $accountsRef = $firebaseService->getCachedData('customers', 300) ?? [];
 
         $cancelledBookings = collect();
         
@@ -262,36 +262,46 @@ public function cancelledBookings()
 public function getHistoryCounts()
 {
     try {
-        $bookingsRef = $this->database->getReference('bookings')->getValue() ?? [];
+        $counts = \Illuminate\Support\Facades\Cache::remember('firebase_nav_history_counts', 300, function () {
+            $bookingsRef = $this->firebase->getCachedData('bookings', 300) ?? [];
+            $today = Carbon::today();
+            $completedCount = 0;
+            $previousCount = 0;
+            $cancelledCount = 0;
 
-        $today = Carbon::today();
-        $completedCount = 0;
-        $previousCount = 0;
-        $cancelledCount = 0;
-
-        foreach ($bookingsRef as $booking) {
-            $status = isset($booking['status']) ? strtolower(trim($booking['status'])) : '';
-            if ($status === 'completed') {
-                $completedCount++;
-            }
-            if ($status === 'job_cancelled' || $status === 'cancelled') {
-                $cancelledCount++;
-            }
-            if (!empty($booking['pickup_time'])) {
-                try {
-                    $pickupTime = Carbon::parse($booking['pickup_time']);
-                    if ($pickupTime->lt($today)) {
-                        $previousCount++;
+            if (is_array($bookingsRef)) {
+                foreach ($bookingsRef as $booking) {
+                    if (!is_array($booking)) continue;
+                    $status = isset($booking['status']) ? strtolower(trim($booking['status'])) : '';
+                    if ($status === 'completed') {
+                        $completedCount++;
                     }
-                } catch (\Throwable $e) {}
+                    if ($status === 'job_cancelled' || $status === 'cancelled') {
+                        $cancelledCount++;
+                    }
+                    if (!empty($booking['pickup_time'])) {
+                        try {
+                            $pickupTime = Carbon::parse($booking['pickup_time']);
+                            if ($pickupTime->lt($today)) {
+                                $previousCount++;
+                            }
+                        } catch (\Throwable $e) {}
+                    }
+                }
             }
-        }
+
+            return [
+                'completed' => $completedCount,
+                'previous' => $previousCount,
+                'cancelled' => $cancelledCount,
+            ];
+        });
 
         return response()->json([
             'status' => true,
-            'completed' => $completedCount,
-            'previous' => $previousCount,
-            'cancelled' => $cancelledCount,
+            'completed' => $counts['completed'] ?? 0,
+            'previous' => $counts['previous'] ?? 0,
+            'cancelled' => $counts['cancelled'] ?? 0,
         ]);
     } catch (\Throwable $e) {
         return response()->json([
@@ -305,10 +315,8 @@ public function getHistoryCounts()
 
 public function searchCancelledBookings(Request $request)
 {
-    $bookingsRef = $this->database->getReference('bookings');
-    $bookingsData = $bookingsRef->getValue();
-    
-    $drivers = $this->database->getReference('drivers')->getValue() ?? [];    
+    $bookingsData = $this->firebase->getCachedData('bookings', 60) ?? [];
+    $drivers = $this->firebase->getCachedData('drivers', 120) ?? [];    
 
         $driversMap = collect($drivers)->mapWithKeys(function ($driver, $id) {
         return [$id => $driver['name'] ?? 'Unknown'];
@@ -433,8 +441,8 @@ public function searchCancelledBookings(Request $request)
         ->sortByDesc(fn($b) => isset($b['pickup_time']) ? Carbon::parse($b['pickup_time'])->timestamp : now()->timestamp)
         ->values();
 
-    $drivers = $this->database->getReference('drivers')->getValue() ?? [];
-    $accounts = $this->database->getReference('customers')->getValue() ?? [];
+    $drivers = $this->firebase->getCachedData('drivers', 120) ?? [];
+    $accounts = $this->firebase->getCachedData('customers', 300) ?? [];
 
     return view('bookings.cancelled', [
         'cancelledBookings' => $cancelledBookings,
@@ -445,12 +453,9 @@ public function searchCancelledBookings(Request $request)
 
 public function searchPreviousBookings(Request $request)
 {
-    $bookingsData = $this->database
-        ->getReference('bookings')
-        ->getValue() ?? [];
-
-    $drivers = $this->database->getReference('drivers')->getValue() ?? [];
-    $accounts = $this->database->getReference('customers')->getValue() ?? [];
+    $bookingsData = $this->firebase->getCachedData('bookings', 60) ?? [];
+    $drivers = $this->firebase->getCachedData('drivers', 120) ?? [];
+    $accounts = $this->firebase->getCachedData('customers', 300) ?? [];
 
     $driversMap = collect($drivers)->mapWithKeys(function ($driver, $id) {
         return [$id => $driver['name'] ?? 'Unknown'];
@@ -1777,10 +1782,14 @@ public function sendEmail(Request $request)
         ]);
     }
     
-    // Get all bookings from Firebase
-    $allBookings = $this->firebase->getData("bookings");
+    // Get specific booking directly by ID (few KB), with cached fallback
+    $bookingData = $this->firebase->getData("bookings/{$bookingId}");
+    if (!$bookingData) {
+        $allBookings = $this->firebase->getCachedData("bookings", 60) ?? [];
+        $bookingData = $allBookings[$bookingId] ?? null;
+    }
 
-    if (!$allBookings || !isset($allBookings[$bookingId])) {
+    if (!$bookingData) {
         return response()->json([
             'success' => false,
             'message' => 'Booking not found in database.'
@@ -1788,7 +1797,7 @@ public function sendEmail(Request $request)
     }
 
     // Extract the specific booking only
-    $booking = (object) $allBookings[$bookingId];
+    $booking = (object) $bookingData;
     
     // Build receipt link
     $receiptLink = route('receipt.download', $bookingId);
@@ -1892,11 +1901,12 @@ public function index()
     if (!session('admin_logged_in')) {
         return redirect()->route('login')->with('error', 'Please login first.');
     }
-    // 1️⃣ Fetch customers / accounts
-    $accounts = $this->firebase->getData('customers') ?? [];
+    // 1️⃣ Fetch customers / accounts (Cached 5 minutes)
+    $firebaseAccounts = $this->firebase->getCachedData('customers', 300) ?? [];
+    $accounts = is_array($firebaseAccounts) ? $firebaseAccounts : [];
 
-    // 2️⃣ Fetch bookings from Firebase
-    $bookingsSnapshot = $this->firebase->getData('bookings');
+    // 2️⃣ Fetch bookings from Firebase (Cached 30 seconds to prevent hammering on refresh/search)
+    $bookingsSnapshot = $this->firebase->getCachedData('bookings', 30);
     $bookings = [];
     $today = \Carbon\Carbon::today();
 
@@ -1965,40 +1975,37 @@ public function index()
     //     }
     // }
     
-    // 1️⃣ Fetch drivers
-$driversSnapshot = $this->firebase->getData('drivers');
+    // 1️⃣ Fetch drivers (Cached 60s)
+    $driversSnapshot = $this->firebase->getCachedData('drivers', 60);
 
-// 2️⃣ Fetch driver live locations
-$locationsSnapshot = $this->firebase->getData('drivers_live_locations');
+    // 2️⃣ Fetch driver live locations (Realtime live coordinates)
+    $locationsSnapshot = $this->firebase->getData('drivers_live_locations');
 
-$driverLocations = [];
+    $driverLocations = [];
 
-if ($driversSnapshot) {
-    foreach ($driversSnapshot as $driverId => $driver) {
+    if ($driversSnapshot) {
+        foreach ($driversSnapshot as $driverId => $driver) {
 
-        // get location against same firebase key
-        $location = $locationsSnapshot[$driverId] ?? null;
+            // get location against same firebase key
+            $location = $locationsSnapshot[$driverId] ?? null;
 
-        if ($location && isset($location['lat']) && isset($location['lng'])) {
+            if ($location && isset($location['lat']) && isset($location['lng'])) {
 
-            $driverLocations[] = [
-                'id' => $driverId,
-                'name' => $driver['name'] ?? 'Unknown',
-                'lat' => (float) $location['lat'],
-                'lng' => (float) $location['lng'],
-                'heading' => $location['heading'] ?? 0,
-                'speed' => $location['speed'] ?? 0,
-                'isOnline' => $location['isOnline'] ?? false,
-                'status' => $driver['status'] ?? 'Unknown'
-            ];
+                $driverLocations[] = [
+                    'id' => $driverId,
+                    'name' => $driver['name'] ?? 'Unknown',
+                    'lat' => (float) $location['lat'],
+                    'lng' => (float) $location['lng'],
+                    'heading' => $location['heading'] ?? 0,
+                    'speed' => $location['speed'] ?? 0,
+                    'isOnline' => $location['isOnline'] ?? false,
+                    'status' => $driver['status'] ?? 'Unknown'
+                ];
+            }
         }
     }
-}
 
-
-
-    // 3️⃣ Fetch accounts (Firebase customers + MySQL fallback)
-    $firebaseAccounts = $this->firebase->getData('customers') ?? [];
+    // 3️⃣ Prepare accounts (Reusing already fetched Firebase customers + MySQL fallback)
     $mysqlAccounts = collect();
     try { $mysqlAccounts = \App\Models\Account::all(); } catch (\Exception $e) {}
 
@@ -2037,16 +2044,9 @@ if ($driversSnapshot) {
         }
     }
 
-        // ✅ Pass all data to the Blade
-        // return view('bookings.completed', [
-        //     'completedBookings' => $completedBookings,
-        //     'drivers' => collect($drivers)->map(fn($v, $k) => ['id' => $k] + $v),
-        //     'accounts' => collect($accounts)->map(fn($v, $k) => (object) (['id' => $k] + $v)),
-        // ]);
-
-    // 4️⃣ Prepare drivers collection with matched vehicles
-    $driversData = $this->firebase->getData('drivers') ?? [];
-    $vehiclesData = $this->firebase->getData('vehicles') ?? [];
+    // 4️⃣ Prepare drivers collection with matched vehicles (Reuse drivers, cache vehicles for 300s)
+    $driversData = $driversSnapshot ?? [];
+    $vehiclesData = $this->firebase->getCachedData('vehicles', 300) ?? [];
 
     $mysqlVehicles = collect();
     try { $mysqlVehicles = \App\Models\Vehicle::all(); } catch (\Exception $e) {}
@@ -2115,10 +2115,15 @@ if ($driversSnapshot) {
     // 5️⃣ NEW: Calculate Dashboard Metrics
     // ───────────────────────────────────────────────
     
-     $users = $this->firebase->getData('users') ?? [];
-
-    // Total Users
-    $totalUsers = is_array($users) ? count($users) : 0;
+    // Total Users (Cached 5 minutes to avoid downloading entire users collection)
+    $totalUsers = \Illuminate\Support\Facades\Cache::remember('dashboard_total_users_count', 300, function () {
+        try {
+            $count = \App\Models\User::count();
+            if ($count > 0) return $count;
+        } catch (\Throwable $e) {}
+        $users = $this->firebase->getCachedData('users', 600) ?? [];
+        return is_array($users) ? count($users) : 0;
+    });
 
     // Today's Revenue (Sum only bookings created today)
     // $todaysRevenue = 0;
@@ -2579,7 +2584,7 @@ public function getBookingDetailsJson(Request $request, $booking = null)
     try {
         $bookingData = $this->firebase->getData("bookings/{$id}");
         if (!$bookingData) {
-            $allBookings = $this->firebase->getData('bookings') ?? [];
+            $allBookings = $this->firebase->getCachedData('bookings', 60) ?? [];
             if (isset($allBookings[$id])) {
                 $bookingData = $allBookings[$id];
             } else {
@@ -2813,7 +2818,7 @@ public function changeDriver(Request $request)
         $bookingRef = $this->database->getReference("bookings/{$bookingId}");
         $existingBooking = $bookingRef->getValue();
         if (!$existingBooking) {
-            $allBookings = $this->database->getReference('bookings')->getValue() ?? [];
+            $allBookings = $this->firebase->getCachedData('bookings', 60) ?? [];
             if (is_array($allBookings)) {
                 foreach ($allBookings as $k => $b) {
                     if (!is_array($b)) continue;
@@ -2837,7 +2842,7 @@ public function changeDriver(Request $request)
         $driverRef = $this->database->getReference("drivers/{$driverId}");
         $existingDriver = $driverRef->getValue();
         if (!$existingDriver) {
-            $allDrivers = $this->database->getReference('drivers')->getValue() ?? [];
+            $allDrivers = $this->firebase->getCachedData('drivers', 120) ?? [];
             if (is_array($allDrivers)) {
                 foreach ($allDrivers as $k => $d) {
                     if (!is_array($d)) continue;
@@ -7086,10 +7091,10 @@ private function geocodeAddress($address)
 
 public function search(Request $request)
 {
-    // 1) Fetch bookings and drivers from Firebase
-    $firebaseBookings = $this->firebase->getData('bookings') ?? [];
-    $firebaseDrivers = $this->firebase->getData('drivers') ?? [];
-    $firebaseVehicles = $this->firebase->getData('vehicles') ?? [];
+    // 1) Fetch bookings and drivers from Firebase (Cached to eliminate repetitive 28MB downloads on debounced search keystrokes)
+    $firebaseBookings = $this->firebase->getCachedData('bookings', 30) ?? [];
+    $firebaseDrivers = $this->firebase->getCachedData('drivers', 60) ?? [];
+    $firebaseVehicles = $this->firebase->getCachedData('vehicles', 300) ?? [];
 
     $mysqlVehicles = collect();
     try { $mysqlVehicles = \App\Models\Vehicle::all(); } catch (\Exception $e) {}
@@ -7609,10 +7614,10 @@ public function previousBookings()
     }
 
     try {
-        $database = app('App\Services\FirebaseService')->getDatabase();
-        $bookingsRef = $database->getReference('bookings')->getValue();
-        $driversRef  = $database->getReference('drivers')->getValue() ?? [];
-        $accountsRef = $database->getReference('customers')->getValue() ?? [];
+        $firebaseService = app('App\Services\FirebaseService');
+        $bookingsRef = $firebaseService->getCachedData('bookings', 60) ?? [];
+        $driversRef  = $firebaseService->getCachedData('drivers', 120) ?? [];
+        $accountsRef = $firebaseService->getCachedData('customers', 300) ?? [];
 
         $today = \Carbon\Carbon::today();
 
@@ -7670,8 +7675,8 @@ public function previousBookings()
             )
             ->values();
 
-        $drivers = $database->getReference('drivers')->getValue() ?? [];
-        $accounts = $database->getReference('customers')->getValue() ?? [];
+        $drivers = $driversRef;
+        $accounts = $accountsRef;
 
         return view('bookings.previous', [
             'previousBookings' => $previousBookings,
@@ -7693,11 +7698,11 @@ public function previousBookings()
         return redirect()->route('login')->with('error', 'Please login first.');
     }
     try {
-        $database = app('App\Services\FirebaseService')->getDatabase();
+        $firebaseService = app('App\Services\FirebaseService');
 
-        // ✅ Fetch all bookings
-        $bookingsRef = $database->getReference('bookings')->getValue();
-        $driversRef  = $database->getReference('drivers')->getValue() ?? [];
+        // ✅ Fetch bookings and drivers (Cached 60s/120s)
+        $bookingsRef = $firebaseService->getCachedData('bookings', 60) ?? [];
+        $driversRef  = $firebaseService->getCachedData('drivers', 120) ?? [];
         $completedBookings = collect();
         
          // 🔹 Create driver map [driver_id => driver_name]
@@ -7737,9 +7742,9 @@ public function previousBookings()
             return isset($b['pickup_time']) ? \Carbon\Carbon::parse($b['pickup_time']) : now();
         })->values();
 
-        // ✅ Fetch driver and account lists for filters
-        $drivers = $database->getReference('drivers')->getValue() ?? [];
-        $accounts = $database->getReference('customers')->getValue() ?? [];
+        // ✅ Re-use driver and account lists for filters
+        $drivers = $driversRef;
+        $accounts = $firebaseService->getCachedData('customers', 300) ?? [];
 
         // ✅ Pass all data to the Blade
         return view('bookings.completed', [
@@ -7756,12 +7761,9 @@ public function previousBookings()
 
 public function searchBookings(Request $request)
 {
-    $bookingsData = $this->database
-        ->getReference('bookings')
-        ->getValue() ?? [];
-
-    $drivers = $this->database->getReference('drivers')->getValue() ?? [];
-    $accounts = $this->database->getReference('customers')->getValue() ?? [];
+    $bookingsData = $this->firebase->getCachedData('bookings', 60) ?? [];
+    $drivers = $this->firebase->getCachedData('drivers', 120) ?? [];
+    $accounts = $this->firebase->getCachedData('customers', 300) ?? [];
 
     // 🔹 Driver ID → Name Map
     $driversMap = collect($drivers)->mapWithKeys(function ($driver, $id) {

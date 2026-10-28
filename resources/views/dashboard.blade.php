@@ -3467,7 +3467,13 @@ function initFirebase() {
                     if (d.firebase_key) DRIVERS_MAP[String(d.firebase_key)] = dObj;
                     if (d.raw_id) DRIVERS_MAP[String(d.raw_id)] = dObj;
                     if (d.driver_id) DRIVERS_MAP[String(d.driver_id)] = dObj;
+                    if (typeof dashDriversState !== 'undefined') {
+                        dashDriversState[String(id)] = { ...(dashDriversState[String(id)] || {}), ...d, id: String(id) };
+                    }
                 }
+            }
+            if (typeof renderDashLiveDrivers === 'function') {
+                renderDashLiveDrivers();
             }
         }
     });
@@ -3481,18 +3487,20 @@ function initFirebase() {
         if (id) knownBookingIds.add(id);
     });
 
-    // Listen for initial value once to mark initial load complete
-    bookingsRef.once('value', () => {
-        isInitialFirebaseLoadDone = true;
-        const liveIndicator = document.getElementById('liveSyncStatus');
-        if (liveIndicator) {
-            liveIndicator.innerHTML = '<i class="bi bi-broadcast"></i> Live Sync Active';
-            liveIndicator.className = 'badge bg-success bg-opacity-75 text-white d-flex align-items-center gap-1';
+    // ✅ Zero-bandwidth connection state indicator (does NOT download the 28MB database tree!)
+    db.ref(".info/connected").on('value', (snap) => {
+        if (snap.val() === true) {
+            isInitialFirebaseLoadDone = true;
+            const liveIndicator = document.getElementById('liveSyncStatus');
+            if (liveIndicator) {
+                liveIndicator.innerHTML = '<i class="bi bi-broadcast"></i> Live Sync Active';
+                liveIndicator.className = 'badge bg-success bg-opacity-75 text-white d-flex align-items-center gap-1';
+            }
         }
     });
 
-    // 🌟 CHILD ADDED (New booking arrives)
-    bookingsRef.on('child_added', (snapshot) => {
+    // 🌟 CHILD ADDED (New booking arrives - scoped to limitToLast(25) to prevent downloading full historical DB)
+    bookingsRef.limitToLast(25).on('child_added', (snapshot) => {
         const booking = snapshot.val();
         const id = snapshot.key;
         if (!booking || !id) return;
@@ -5427,28 +5435,44 @@ window.dashFocusDriver = function(driverId) {
     }
 };
 
-// Start Firebase listener for drivers and live locations on ready
+// 📍 Live GPS Locations Stream with Visibility-Aware Throttling (saves idle bandwidth)
+let dashLocationsRef = null;
+let dashLocationsListener = null;
+
+function attachDashLiveLocations(db) {
+    if (dashLocationsListener || !db) return;
+    dashLocationsRef = db.ref("drivers_live_locations");
+    dashLocationsListener = dashLocationsRef.on("value", snap => {
+        const val = snap.val();
+        if (val) {
+            for (const k in val) {
+                dashDriverLocations[String(k)] = val[k];
+            }
+            renderDashLiveDrivers();
+        }
+    });
+}
+
+function detachDashLiveLocations() {
+    if (dashLocationsRef && dashLocationsListener) {
+        dashLocationsRef.off("value", dashLocationsListener);
+        dashLocationsListener = null;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     renderDashLiveDrivers();
 
     if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) {
         const db = firebase.database();
-        db.ref("drivers").on("value", snap => {
-            const val = snap.val();
-            if (val) {
-                for (const k in val) {
-                    dashDriversState[String(k)] = { ...(dashDriversState[String(k)] || {}), ...val[k], id: String(k) };
-                }
-                renderDashLiveDrivers();
-            }
-        });
-        db.ref("drivers_live_locations").on("value", snap => {
-            const val = snap.val();
-            if (val) {
-                for (const k in val) {
-                    dashDriverLocations[String(k)] = val[k];
-                }
-                renderDashLiveDrivers();
+        attachDashLiveLocations(db);
+
+        // Pause GPS downloads when browser tab is inactive/minimized
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                detachDashLiveLocations();
+            } else {
+                attachDashLiveLocations(db);
             }
         });
     }

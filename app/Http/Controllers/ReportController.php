@@ -42,8 +42,8 @@ public function index()
     if (!session('admin_logged_in')) {
         return redirect()->route('login')->with('error', 'Please login first.');
     }
-    // ✅ Fetch drivers
-    $drivers = $this->firebase->getData("drivers");
+    // ✅ Fetch drivers (Cached 120s)
+    $drivers = $this->firebase->getCachedData("drivers", 120);
     $driversList = [];
 
     if ($drivers) {
@@ -59,7 +59,7 @@ public function index()
     }
 
     // ✅ Fetch customers
-    $customers = $this->firebase->getData("customers");
+    $customers = $this->firebase->getCachedData("customers", 300);
     $customersList = [];
     if ($customers) {
         foreach ($customers as $key => $customer) {
@@ -406,7 +406,7 @@ public function downloadDriverCommission(Request $request)
 
 private function getDriverCommissionData($driverId, $from, $to, $status = 'completed')
 {
-    $firebaseBookings = $this->firebase->getData('bookings') ?? [];
+    $firebaseBookings = $this->firebase->getCachedData('bookings', 60) ?? [];
     $driverData = $this->firebase->getData("drivers/$driverId") ?? [];
 
     $accountBookings = [];
@@ -679,7 +679,7 @@ $totalJobs = count($accountBookings) + count($cashBookings);
 
 public function getTurnoverData($from, $to, $status = 'all')
 {
-    $firebaseBookings = $this->firebase->getData('bookings') ?? [];
+    $firebaseBookings = $this->firebase->getCachedData('bookings', 60) ?? [];
     $totals = [
         'fare_total' => 0,
         'fare_after_commission' => 0,
@@ -833,8 +833,8 @@ public function sendTurnoverEmail(Request $request)
 
     private function getCustomerReportDataInternal($from, $to, $type = null, $customerId = null, $status = 'completed')
     {
-        $firebaseBookings = $this->firebase->getData('bookings') ?? [];
-        $customersData    = $this->firebase->getData('customers') ?? [];
+        $firebaseBookings = $this->firebase->getCachedData('bookings', 60) ?? [];
+        $customersData    = $this->firebase->getCachedData('customers', 300) ?? [];
 
         $selectedCustomerEmail = null;
         $selectedCustomerName  = null;

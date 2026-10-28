@@ -1,0 +1,59 @@
+{
+  "rules": {
+    "bookings": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["ref_no", "pickup_time", "status", "driver_id", "created_at"]
+    },
+    "drivers": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["id", "raw_id", "status"]
+    },
+    "drivers_live_locations": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "vehicles": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["driver_id"]
+    },
+    "customers": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "users": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "staff": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "sms_templates": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "system_settings": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "payments": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "airports": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "stations": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "ports": {
+      ".read": true,
+      ".write": "auth != null"
+    }
+  }
+}

@@ -1664,10 +1664,16 @@
   <script>
   (function() {
       function updateNavHistoryCounts() {
+          const now = Date.now();
+          const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes client cache across page transitions
           try {
               const cached = JSON.parse(sessionStorage.getItem('nav_history_counts') || '{}');
               if (cached && typeof cached.completed !== 'undefined') {
                   setNavBadges(cached.completed, cached.previous, cached.cancelled);
+                  if (cached._ts && (now - cached._ts < CACHE_TTL_MS)) {
+                      // Recent data exists, skip network request entirely
+                      return;
+                  }
               }
           } catch (e) {}
 
@@ -1677,6 +1683,7 @@
                   if (data && data.status) {
                       setNavBadges(data.completed, data.previous, data.cancelled);
                       try {
+                          data._ts = Date.now();
                           sessionStorage.setItem('nav_history_counts', JSON.stringify(data));
                       } catch (e) {}
                   }

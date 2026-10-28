@@ -1139,74 +1139,109 @@ function initFirebaseLiveStream() {
 
     const db = firebase.database();
 
-    // 1️⃣ Listen for Vehicles in Real-time
-    db.ref("vehicles").on("value", (snapshot) => {
-        const vehicles = snapshot.val();
-        if (vehicles) {
-            for (const vKey in vehicles) {
-                const v = vehicles[vKey];
-                if (v && v.driver_id) {
-                    const dId = String(v.driver_id);
-                    vehiclesState[dId] = v;
-                    for (const id in driversState) {
-                        const drv = driversState[id];
-                        if (String(id) === dId || (drv.id && String(drv.id) === dId) || (v.driver_name && drv.name === v.driver_name)) {
-                            drv.vehicle_make = v.make || drv.vehicle_make;
-                            drv.vehicle_model = v.model || drv.vehicle_model;
-                            drv.vehicle_reg = v.registration || v.plate || drv.vehicle_reg;
-                            drv.vehicle_color = v.color || drv.vehicle_color;
-                            drv.vehicle_type = v.type || drv.vehicle_type;
-                        }
+    function processVehicles(vehicles) {
+        if (!vehicles) return;
+        for (const vKey in vehicles) {
+            const v = vehicles[vKey];
+            if (v && v.driver_id) {
+                const dId = String(v.driver_id);
+                vehiclesState[dId] = v;
+                for (const id in driversState) {
+                    const drv = driversState[id];
+                    if (String(id) === dId || (drv.id && String(drv.id) === dId) || (v.driver_name && drv.name === v.driver_name)) {
+                        drv.vehicle_make = v.make || drv.vehicle_make;
+                        drv.vehicle_model = v.model || drv.vehicle_model;
+                        drv.vehicle_reg = v.registration || v.plate || drv.vehicle_reg;
+                        drv.vehicle_color = v.color || drv.vehicle_color;
+                        drv.vehicle_type = v.type || drv.vehicle_type;
                     }
                 }
             }
-            if (selectedDriverId && driversState[selectedDriverId]) {
-                updateDrawerData(driversState[selectedDriverId]);
-            }
-            renderSidebarList();
+        }
+        if (selectedDriverId && driversState[selectedDriverId]) {
+            updateDrawerData(driversState[selectedDriverId]);
+        }
+        renderSidebarList();
+    }
+
+    // 1️⃣ Fetch Vehicles once on load, then only listen to individual child changes
+    db.ref("vehicles").once("value", (snapshot) => {
+        processVehicles(snapshot.val());
+    });
+    db.ref("vehicles").on("child_changed", (snapshot) => {
+        const val = snapshot.val();
+        if (val) {
+            const vObj = {};
+            vObj[snapshot.key] = val;
+            processVehicles(vObj);
         }
     });
 
-    // 2️⃣ Listen for Live Drivers (Coordinates, status, bearing, speed) in Real-time
-    db.ref("drivers").on("value", (snapshot) => {
-        const drivers = snapshot.val();
-        if (!drivers) return;
+    // 2️⃣ Visibility-aware Live Drivers Listener (Coordinates, status, bearing, speed)
+    let liveDriversRef = null;
+    let liveDriversListener = null;
 
-        for (const id in drivers) {
-            const d = drivers[id];
-            const existing = driversState[id] || {};
-            driversState[id] = {
-                ...existing,
-                ...d,
-                id: (d.id ? String(d.id) : String(id))
-            };
+    function attachDriversStream() {
+        if (liveDriversListener) return;
+        liveDriversRef = db.ref("drivers");
+        liveDriversListener = liveDriversRef.on("value", (snapshot) => {
+            const drivers = snapshot.val();
+            if (!drivers) return;
 
-            // Merge vehicle if cached
-            const dId = driversState[id].id || id;
-            const v = vehiclesState[dId] || vehiclesState[id];
-            if (v) {
-                driversState[id].vehicle_make = v.make || driversState[id].vehicle_make;
-                driversState[id].vehicle_model = v.model || driversState[id].vehicle_model;
-                driversState[id].vehicle_reg = v.registration || v.plate || driversState[id].vehicle_reg;
-                driversState[id].vehicle_color = v.color || driversState[id].vehicle_color;
-                driversState[id].vehicle_type = v.type || driversState[id].vehicle_type;
+            for (const id in drivers) {
+                const d = drivers[id];
+                const existing = driversState[id] || {};
+                driversState[id] = {
+                    ...existing,
+                    ...d,
+                    id: (d.id ? String(d.id) : String(id))
+                };
+
+                // Merge vehicle if cached
+                const dId = driversState[id].id || id;
+                const v = vehiclesState[dId] || vehiclesState[id];
+                if (v) {
+                    driversState[id].vehicle_make = v.make || driversState[id].vehicle_make;
+                    driversState[id].vehicle_model = v.model || driversState[id].vehicle_model;
+                    driversState[id].vehicle_reg = v.registration || v.plate || driversState[id].vehicle_reg;
+                    driversState[id].vehicle_color = v.color || driversState[id].vehicle_color;
+                    driversState[id].vehicle_type = v.type || driversState[id].vehicle_type;
+                }
             }
+
+            renderAllDrivers();
+
+            // If a driver is currently selected and we are in "follow" mode, follow smoothly
+            if (selectedDriverId && driversState[selectedDriverId]) {
+                const currentSelected = driversState[selectedDriverId];
+                updateDrawerData(currentSelected);
+
+                if (isFollowingDriver && currentSelected.latitude && currentSelected.longitude && map) {
+                    const pos = new google.maps.LatLng(
+                        parseFloat(currentSelected.latitude),
+                        parseFloat(currentSelected.longitude)
+                    );
+                    map.panTo(pos);
+                }
+            }
+        });
+    }
+
+    function detachDriversStream() {
+        if (liveDriversRef && liveDriversListener) {
+            liveDriversRef.off("value", liveDriversListener);
+            liveDriversListener = null;
         }
+    }
 
-        renderAllDrivers();
+    attachDriversStream();
 
-        // If a driver is currently selected and we are in "follow" mode, follow smoothly
-        if (selectedDriverId && driversState[selectedDriverId]) {
-            const currentSelected = driversState[selectedDriverId];
-            updateDrawerData(currentSelected);
-
-            if (isFollowingDriver && currentSelected.latitude && currentSelected.longitude && map) {
-                const pos = new google.maps.LatLng(
-                    parseFloat(currentSelected.latitude),
-                    parseFloat(currentSelected.longitude)
-                );
-                map.panTo(pos);
-            }
+    // Disconnect when live map tab is hidden/minimized to stop streaming data
+    document.addEventListener("visibilitychange", function() {
+        if (document.hidden) {
+            detachDriversStream();
+        } else {
+            attachDriversStream();
         }
     });
 }

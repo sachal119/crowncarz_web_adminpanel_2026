@@ -9,6 +9,7 @@ use Kreait\Firebase\Messaging;
 use Kreait\Firebase\Auth;
 use Kreait\Firebase\Firestore;
 use Kreait\Firebase\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class FirebaseService
 {
@@ -76,25 +77,63 @@ class FirebaseService
 
     public function pushData($path, $data)
     {
-        return $this->database->getReference($path)->push($data);
+        $res = $this->database->getReference($path)->push($data);
+        $this->forgetCachedData($path);
+        return $res;
     }
 
-     // ✅ New method to fetch data
+    // ✅ New method to fetch data
     public function getData($path)
     {
         return $this->database->getReference($path)->getValue();
     }
-    
-    // ✅ Update existing data
-    public function updateData($path, $data)
+
+    /**
+     * ✅ High-performance cached fetch: prevents repeated downloads of large nodes (e.g., bookings, drivers)
+     */
+    public function getCachedData(string $path, int $seconds = 60, bool $forceRefresh = false)
     {
-        return $this->database->getReference($path)->update($data);
+        $cleanPath = trim($path, '/');
+        $cacheKey = 'firebase_data_' . str_replace(['/', '\\', ' '], '_', $cleanPath);
+
+        if ($forceRefresh) {
+            Cache::forget($cacheKey);
+        }
+
+        return Cache::remember($cacheKey, $seconds, function () use ($path) {
+            return $this->getData($path);
+        });
+    }
+
+    /**
+     * ✅ Invalidate cached node and root collection
+     */
+    public function forgetCachedData(string $path): void
+    {
+        $cleanPath = trim($path, '/');
+        $cacheKey = 'firebase_data_' . str_replace(['/', '\\', ' '], '_', $cleanPath);
+        Cache::forget($cacheKey);
+
+        $root = explode('/', $cleanPath)[0] ?? '';
+        if ($root && $root !== $cleanPath) {
+            Cache::forget('firebase_data_' . $root);
+        }
     }
     
-    // ✅ Delete data
+    // ✅ Update existing data with cache busting
+    public function updateData($path, $data)
+    {
+        $res = $this->database->getReference($path)->update($data);
+        $this->forgetCachedData($path);
+        return $res;
+    }
+    
+    // ✅ Delete data with cache busting
     public function deleteData($path)
     {
-        return $this->database->getReference($path)->remove();
+        $res = $this->database->getReference($path)->remove();
+        $this->forgetCachedData($path);
+        return $res;
     }
 
     public function getFirestore()

@@ -107,12 +107,12 @@ public function index()
     }
     try {
         // Fetch all data from Firebase
-        // NOTE: The Firebase service must handle deserialization (JSON to PHP Array/Object)
-        $staffData = $this->firebase->getData('staff') ?? [];
-        $driversData = $this->firebase->getData('drivers') ?? [];
-        $vehiclesData = $this->firebase->getData('vehicles') ?? [];
-        $customersData = $this->firebase->getData('customers') ?? [];
-        $bookingsData = $this->firebase->getData('bookings') ?? [];
+        // NOTE: Use cached Firebase queries for setup pages to prevent redundant full-database downloads
+        $staffData = $this->firebase->getCachedData('staff', 300) ?? [];
+        $driversData = $this->firebase->getCachedData('drivers', 120) ?? [];
+        $vehiclesData = $this->firebase->getCachedData('vehicles', 300) ?? [];
+        $customersData = $this->firebase->getCachedData('customers', 300) ?? [];
+        $bookingsData = $this->firebase->getCachedData('bookings', 60) ?? [];
 
         // Attach dealt bookings to each staff member
         $staff = collect($staffData)->map(function ($member, $key) use ($bookingsData) {
@@ -910,8 +910,7 @@ public function deleteBalanceHistory($driverId, $transactionId)
         $cleanRef = strtoupper(ltrim($ref, '#'));
         $rawRef = $ref;
 
-        $database = $this->firebase->getDatabase();
-        $bookings = $database->getReference('bookings')->getValue() ?? [];
+        $bookings = $this->firebase->getCachedData('bookings', 60) ?? [];
 
         $matched = [];
         foreach ($bookings as $key => $b) {
@@ -995,8 +994,7 @@ public function deleteBalanceHistory($driverId, $transactionId)
         $cleanRef = strtoupper(ltrim($ref, '#'));
         $rawRef = $ref;
 
-        $database = $this->firebase->getDatabase();
-        $bookings = $database->getReference('bookings')->getValue() ?? [];
+        $bookings = $this->firebase->getCachedData('bookings', 60) ?? [];
 
         $deletedCount = 0;
         $deletedDetails = [];
