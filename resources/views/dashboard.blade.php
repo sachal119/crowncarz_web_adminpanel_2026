@@ -3487,24 +3487,19 @@ function initFirebase() {
         if (id) knownBookingIds.add(id);
     });
 
-    // ✅ Zero-bandwidth connection state indicator (does NOT download the 28MB database tree!)
-    db.ref(".info/connected").on('value', (snap) => {
-        if (snap.val() === true) {
-            isInitialFirebaseLoadDone = true;
-            const liveIndicator = document.getElementById('liveSyncStatus');
-            if (liveIndicator) {
-                liveIndicator.innerHTML = '<i class="bi bi-broadcast"></i> Live Sync Active';
-                liveIndicator.className = 'badge bg-success bg-opacity-75 text-white d-flex align-items-center gap-1';
-            }
-        }
-    });
+    const bookingsQuery = bookingsRef.limitToLast(25);
 
-    // 🌟 CHILD ADDED (New booking arrives - scoped to limitToLast(25) to prevent downloading full historical DB)
-    bookingsRef.limitToLast(25).on('child_added', (snapshot) => {
+    // 🌟 CHILD ADDED (New booking arrives)
+    bookingsQuery.on('child_added', (snapshot) => {
         const booking = snapshot.val();
         const id = snapshot.key;
         if (!booking || !id) return;
         booking.id = id;
+
+        // Ignore blank or corrupted test records without basic details
+        if (!booking.ref_no && !booking.passenger_name && !booking.pickup_address) {
+            return;
+        }
 
         // If booking is completed/cancelled/no-show, ignore for future bookings table
         if (['completed', 'job_cancelled', 'no_show'].includes(booking.status)) {
@@ -3516,53 +3511,67 @@ function initFirebase() {
             return;
         }
 
+        // If initial load of the last 25 records hasn't completed yet, just record the ID as known
+        if (!isInitialFirebaseLoadDone) {
+            knownBookingIds.add(id);
+            return;
+        }
+
         knownBookingIds.add(id);
 
         // Only alert and animate if this is a newly arrived booking after initial load
-        if (isInitialFirebaseLoadDone) {
-            playNewBookingChime();
+        playNewBookingChime();
 
-            // Show Toast Alert with "View" action
-            showDashboardToast(
-                '🚗 New Booking Received!',
-                `Ref: <strong>${booking.ref_no || id}</strong> &bull; ${booking.passenger_name || 'Passenger'}<br><small>${booking.pickup_address ? booking.pickup_address.substring(0, 30) : ''}</small>`,
-                'booking',
-                8000,
-                {
-                    text: 'View',
-                    onClick: () => {
-                        const targetRow = document.getElementById('booking-row-' + id);
-                        if (targetRow) {
-                            targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            targetRow.classList.remove('new-booking-highlight');
-                            void targetRow.offsetWidth;
-                            targetRow.classList.add('new-booking-highlight');
-                        }
+        // Show Toast Alert with "View" action
+        showDashboardToast(
+            '🚗 New Booking Received!',
+            `Ref: <strong>${booking.ref_no || id}</strong> &bull; ${booking.passenger_name || 'Passenger'}<br><small>${booking.pickup_address ? booking.pickup_address.substring(0, 30) : ''}</small>`,
+            'booking',
+            8000,
+            {
+                text: 'View',
+                onClick: () => {
+                    const targetRow = document.getElementById('booking-row-' + id);
+                    if (targetRow) {
+                        targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetRow.classList.remove('new-booking-highlight');
+                        void targetRow.offsetWidth;
+                        targetRow.classList.add('new-booking-highlight');
                     }
                 }
-            );
-
-            // Prepend new row to table
-            const tbody = document.getElementById('bookingsTableBody');
-            if (tbody) {
-                const emptyRow = document.getElementById('emptyBookingsRow');
-                if (emptyRow) emptyRow.remove();
-
-                const newRowHtml = buildBookingRowHtml(booking, true);
-                tbody.insertAdjacentHTML('afterbegin', newRowHtml);
-
-                const newRowEl = document.getElementById('booking-row-' + id);
-                if (newRowEl) {
-                    bindRowEvents(newRowEl);
-                }
-
-                updateBookingsCountBadge(1);
             }
+        );
+
+        // Prepend new row to table
+        const tbody = document.getElementById('bookingsTableBody');
+        if (tbody) {
+            const emptyRow = document.getElementById('emptyBookingsRow');
+            if (emptyRow) emptyRow.remove();
+
+            const newRowHtml = buildBookingRowHtml(booking, true);
+            tbody.insertAdjacentHTML('afterbegin', newRowHtml);
+
+            const newRowEl = document.getElementById('booking-row-' + id);
+            if (newRowEl) {
+                bindRowEvents(newRowEl);
+            }
+
+            updateBookingsCountBadge(1);
+        }
+    });
+
+    // Mark initial load complete ONLY after all initial 25 records have been silently indexed
+    bookingsQuery.once('value', () => {
+        isInitialFirebaseLoadDone = true;
+        const liveIndicator = document.getElementById('liveSyncStatus');
+        if (liveIndicator) {
+            liveIndicator.innerHTML = '<i class="bi bi-broadcast"></i> Live Sync Active';
+            liveIndicator.className = 'badge bg-success bg-opacity-75 text-white d-flex align-items-center gap-1';
         }
     });
 
     // 🌟 CHILD CHANGED (Live status or driver update)
-    bookingsRef.on('child_changed', (snapshot) => {
+    bookingsQuery.on('child_changed', (snapshot) => {
         const booking = snapshot.val();
         const id = snapshot.key;
         if (!booking || !id) return;
@@ -3574,31 +3583,20 @@ function initFirebase() {
             return;
         }
 
+        // Ignore invalid / empty test records
+        if (!booking.ref_no && !booking.passenger_name && !booking.pickup_address) {
+            return;
+        }
+
         // If exists in table, update in-place
         const existingRow = document.getElementById('booking-row-' + id);
         if (existingRow) {
             updateBookingRowData(booking);
-        } else if (!['completed', 'job_cancelled', 'no_show'].includes(booking.status)) {
-            // Re-add if it became active
-            const tbody = document.getElementById('bookingsTableBody');
-            if (tbody) {
-                const emptyRow = document.getElementById('emptyBookingsRow');
-                if (emptyRow) emptyRow.remove();
-
-                const newRowHtml = buildBookingRowHtml(booking, false);
-                tbody.insertAdjacentHTML('afterbegin', newRowHtml);
-
-                const newRowEl = document.getElementById('booking-row-' + id);
-                if (newRowEl) {
-                    bindRowEvents(newRowEl);
-                }
-                updateBookingsCountBadge(1);
-            }
         }
     });
 
     // 🌟 CHILD REMOVED
-    bookingsRef.on('child_removed', (snapshot) => {
+    bookingsQuery.on('child_removed', (snapshot) => {
         const id = snapshot.key;
         if (id) {
             removeBookingRowFromTable(id);

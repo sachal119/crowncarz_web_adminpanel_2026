@@ -1,5 +1,10 @@
 {
   "rules": {
+    "advertisements": {
+      ".read": true,
+      ".write": false,
+      ".indexOn": ["status", "placement", "start_at", "end_at"]
+    },
     "bookings": {
       ".read": "auth != null",
       ".write": "auth != null",
