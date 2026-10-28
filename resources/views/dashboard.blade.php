@@ -4497,7 +4497,7 @@ document.addEventListener('DOMContentLoaded', function () {
     class DashboardAddressAutocomplete {
         constructor(options) {
             this.field = document.getElementById(options.fieldId);
-            this.apiKey = options.apiKey;
+            this.searchUrl = @json(route('address.search'));
             this.onSelectCallback = options.onSelect;
             this.activeIndex = -1;
             if (this.field) {
@@ -4591,15 +4591,26 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         async fetchOSPlaces(query) {
-            if (!this.apiKey) return;
-            const url = `https://api.os.uk/search/places/v1/find?query=${encodeURIComponent(query)}&key=${this.apiKey}&output_srs=EPSG:4326&maxresults=10`;
+            const url = `${this.searchUrl}?query=${encodeURIComponent(query)}`;
             try {
-                const response = await fetch(url);
+                const response = await fetch(url, { headers: { Accept: 'application/json' } });
                 const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Address search is unavailable. Please try again.');
                 this.renderDropdown(data.results || []);
             } catch (error) {
-                console.error('OS Places API Error:', error);
+                console.error('Address search failed:', error);
+                this.showError(error.message || 'Address search is unavailable. Please try again.');
             }
+        }
+
+        showError(message) {
+            this.listContainer.innerHTML = '';
+            const item = document.createElement('li');
+            item.textContent = message;
+            item.setAttribute('role', 'status');
+            item.style.cssText = 'padding:10px; color:#b91c1c; font-size:13px;';
+            this.listContainer.appendChild(item);
+            this.listContainer.style.display = 'block';
         }
 
         renderDropdown(results) {
@@ -4623,7 +4634,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     place.POSTCODE
                 ].filter(Boolean);
 
-                const fullAddress = addressParts.join(', ');
+                const fullAddress = place.ADDRESS || addressParts.join(', ');
 
                 const li = document.createElement('li');
                 li.setAttribute('data-index', idx);
@@ -4823,25 +4834,11 @@ document.addEventListener('DOMContentLoaded', function () {
         calcTimeInput.addEventListener('change', fetchDashboardInstantPrice);
     }
 
-    // Fetch Firebase Ordnance Survey Key and initialize Address Autocomplete
+    // Initialize address search through the same-origin backend endpoint.
     (async function initDashboardAddressAutocomplete() {
-        let apiKey = '';
-        try {
-            const res = await fetch('https://crown-carz-default-rtdb.firebaseio.com/system_settings/autocomplete_key.json');
-            apiKey = await res.json();
-        } catch (e) {
-            console.error('Failed to fetch autocomplete key from Firebase:', e);
-        }
-
-        if (!apiKey) {
-            console.warn('AddressAutocomplete: No API key loaded from Firebase.');
-            return;
-        }
-
         if (calcPickupInput) {
             new DashboardAddressAutocomplete({
                 fieldId: 'calcPickupInput',
-                apiKey: apiKey,
                 onSelect: function () {
                     if (calcDropoffInput && calcDropoffInput.value.trim()) {
                         fetchDashboardInstantPrice();
@@ -4853,7 +4850,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (calcDropoffInput) {
             new DashboardAddressAutocomplete({
                 fieldId: 'calcDropoffInput',
-                apiKey: apiKey,
                 onSelect: function () {
                     if (calcPickupInput && calcPickupInput.value.trim()) {
                         fetchDashboardInstantPrice();
@@ -4865,7 +4861,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (calcViaInput) {
             new DashboardAddressAutocomplete({
                 fieldId: 'calcViaInput',
-                apiKey: apiKey,
                 onSelect: function () {
                     fetchDashboardInstantPrice();
                 }

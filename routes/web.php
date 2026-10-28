@@ -3,6 +3,10 @@
 
 use Illuminate\Support\Facades\Route;
 
+Route::get('/api/address-search', \App\Http\Controllers\AddressSearchController::class)
+    ->middleware('throttle:60,1')
+    ->name('address.search');
+
 if (app()->environment('local')) {
     Route::get('/public/{path}', fn (string $path) => redirect(asset($path)))
         ->where('path', '.*');

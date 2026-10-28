@@ -51,6 +51,11 @@ class SystemSettingsController extends Controller
             'receipt_note'
         ]);
 
+        if (array_key_exists('autocomplete_key', $data)) {
+            $request->validate(['autocomplete_key' => ['nullable', 'string', 'max:255']]);
+            $data['autocomplete_key'] = trim($data['autocomplete_key'] ?? '');
+        }
+
         $ref = $this->firebase->getDatabase()->getReference('system_settings');
 
         // Check if node exists

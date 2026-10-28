@@ -3410,11 +3410,10 @@ document.addEventListener("DOMContentLoaded", function () {
         window.attachViaEventListeners(newViaInput);
         if (newViaInput) newViaInput.focus();
 
-        if (window.globalAutocompleteApiKey) {
+        if (typeof AddressAutocomplete !== 'undefined') {
             new AddressAutocomplete({
                 fieldId: viaId,
-                apiKey: window.globalAutocompleteApiKey,
-                postcodeFieldId: `${viaId}_postcode`,
+            postcodeFieldId: `${viaId}_postcode`,
                 latFieldId: `${viaId}_lat`,
                 longFieldId: `${viaId}_long`,
                 onSelect: function () {
@@ -3449,7 +3448,7 @@ document.addEventListener("DOMContentLoaded", function () {
 class AddressAutocomplete {
     constructor(options) {
         this.field = document.getElementById(options.fieldId);
-        this.apiKey = options.apiKey;
+        this.searchUrl = @json(route('address.search'));
         this.postcodeField = document.getElementById(options.postcodeFieldId);
         this.latField = document.getElementById(options.latFieldId);
         this.longField = document.getElementById(options.longFieldId);
@@ -3508,17 +3507,29 @@ class AddressAutocomplete {
         }
         this.abortController = new AbortController();
 
-        const url = `https://api.os.uk/search/places/v1/find?query=${encodeURIComponent(query)}&key=${this.apiKey}&output_srs=EPSG:4326&maxresults=10`;
+        const url = `${this.searchUrl}?query=${encodeURIComponent(query)}`;
 
         try {
-            const response = await fetch(url, { signal: this.abortController.signal });
+            const response = await fetch(url, { signal: this.abortController.signal, headers: { Accept: 'application/json' } });
             const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Address search is unavailable. Please try again.');
             this.renderDropdown(data.results || []);
         } catch (error) {
             if (error.name !== 'AbortError') {
-                console.error('OS Places API Error:', error);
+                console.error('Address search failed:', error);
+                this.showError(error.message || 'Address search is unavailable. Please try again.');
             }
         }
+    }
+
+    showError(message) {
+        this.listContainer.innerHTML = '';
+        const item = document.createElement('li');
+        item.textContent = message;
+        item.setAttribute('role', 'status');
+        item.style.cssText = 'padding:10px; color:#b91c1c; font-size:13px;';
+        this.listContainer.appendChild(item);
+        this.listContainer.style.display = 'block';
     }
 
     renderDropdown(results) {
@@ -3542,7 +3553,7 @@ class AddressAutocomplete {
                 place.POSTCODE
             ].filter(Boolean);
 
-            const fullAddress = addressParts.join(', ');
+            const fullAddress = place.ADDRESS || addressParts.join(', ');
 
             const li = document.createElement('li');
             li.style.cssText = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #f8f9fa; font-size: 14px;';
@@ -3577,23 +3588,6 @@ class AddressAutocomplete {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
-    let API_KEY = '';
-    try {
-        const res = await fetch(
-            'https://crown-carz-default-rtdb.firebaseio.com/system_settings/autocomplete_key.json'
-        );
-        API_KEY = await res.json();
-    } catch (e) {
-        console.error('Failed to load autocomplete_key from Firebase:', e);
-    }
-
-    if (!API_KEY) {
-        console.warn('AddressAutocomplete: no API key, suggestions disabled.');
-        return;
-    }
-    
-    window.globalAutocompleteApiKey = API_KEY;
-
     function notifyAddressSelected(fieldId) {
         document.dispatchEvent(new CustomEvent('taxibase:select', { detail: { fieldId } }));
     }
@@ -3601,7 +3595,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Pickup autocomplete
     new AddressAutocomplete({
         fieldId: 'pickup_address',
-        apiKey: API_KEY,
         postcodeFieldId: 'pickup_postcode',
         latFieldId: 'pickup_lat',
         longFieldId: 'pickup_long',
@@ -3615,7 +3608,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Dropoff autocomplete
     new AddressAutocomplete({
         fieldId: 'dropoff_address',
-        apiKey: API_KEY,
         postcodeFieldId: 'dropoff_postcode',
         latFieldId: 'drop_lat',
         longFieldId: 'drop_long',
@@ -3631,7 +3623,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const viaId = input.id || `via_${index}`;
         new AddressAutocomplete({
             fieldId: viaId,
-            apiKey: API_KEY,
             postcodeFieldId: `${viaId}_postcode`,
             latFieldId: `${viaId}_lat`,
             longFieldId: `${viaId}_long`,
