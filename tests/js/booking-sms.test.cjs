@@ -84,3 +84,27 @@ for (const outcome of ['success', 'provider-error', 'validation', 'session', 'ne
         if (outcome === 'timeout') assert.match(ui.alerts[0], /timed out/);
     });
 }
+
+for (const outcome of ['success', 'missing', 'forbidden', 'session', 'timeout']) {
+    test(`backend preview reader handles ${outcome}`, async () => {
+        const ui = setup();
+        const start = source.indexOf('async function readSmsData(');
+        const reader = source.slice(start, source.indexOf('async function prepareSms(', start))
+            .replace("@json(route('sms.preview-data'))", "'/sms/preview-data'");
+        vm.runInContext(reader, ui.context);
+        ui.context.fetch = async (url, options) => {
+            assert.equal(url, '/sms/preview-data?path=drivers%2Fselected-driver');
+            assert.equal(options.credentials, 'same-origin');
+            if (outcome === 'timeout') throw Object.assign(new Error(), { name: 'AbortError' });
+            return { ok: outcome !== 'forbidden', redirected: outcome === 'session', status: outcome === 'forbidden' ? 403 : 200,
+                json: async () => outcome === 'forbidden' ? { message: 'Access denied' } : { data: outcome === 'missing' ? null : { name: 'Driver', phone: '123' } } };
+        };
+        if (['forbidden', 'session', 'timeout'].includes(outcome)) {
+            await assert.rejects(ui.context.readSmsData('drivers/selected-driver'), /Access denied|session has expired|timed out/);
+        } else {
+            const result = await ui.context.readSmsData('drivers/selected-driver');
+            assert.equal(result.exists(), outcome === 'success');
+            if (outcome === 'success') assert.equal(result.val().phone, '123');
+        }
+    });
+}

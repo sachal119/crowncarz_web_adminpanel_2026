@@ -70,7 +70,7 @@ class AdminAuth
             $isBookingRoute = $controller === BookingController::class;
             $isBlogRoute = $controller === AdminPageController::class;
             $isAdRoute = $controller === \App\Http\Controllers\AdvertisementController::class;
-            $isBookingSms = $request->is('sms/send');
+            $isBookingSms = in_array($routeName, ['sms.send', 'sms.preview-data'], true);
             $isLogout = $routeName === 'logout';
 
             if (! $isBookingRoute && ! $isBlogRoute && ! $isAdRoute && ! $isBookingSms && ! $isLogout) {

@@ -1352,30 +1352,29 @@ document.addEventListener('DOMContentLoaded', function() {
         vehicleMakeInput.value = selectedOption.dataset.make || "";
     }
 });
-// Load Firebase on demand so a CDN/setup failure cannot disable the SMS buttons.
-let smsDatabase;
+// Read protected SMS data through the authenticated admin backend.
 async function readSmsData(path) {
-    let timer;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     try {
-        return await Promise.race([
-            (async () => {
-                const [{ initializeApp, getApps }, { getDatabase, ref, get }] = await Promise.all([
-                    import("https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"),
-                    import("https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js")
-                ]);
-                if (!smsDatabase) {
-                    const app = getApps().find(app => app.name === 'booking-sms') || initializeApp({
-                        databaseURL: "https://crown-carz-default-rtdb.firebaseio.com",
-                        projectId: "crown-carz"
-                    }, 'booking-sms');
-                    smsDatabase = getDatabase(app);
-                }
-                return get(ref(smsDatabase, path));
-            })(),
-            new Promise((_, reject) => {
-                timer = setTimeout(() => reject(new Error('SMS preview timed out. Check your connection and try again.')), 15000);
-            })
-        ]);
+        const response = await fetch(@json(route('sms.preview-data')) + '?path=' + encodeURIComponent(path), {
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin',
+            signal: controller.signal
+        });
+        const result = await response.json().catch(() => null);
+        if (response.redirected || response.status === 401 || response.status === 419) {
+            throw new Error('Your session has expired. Refresh the page and log in again.');
+        }
+        if (!response.ok || !result || !Object.prototype.hasOwnProperty.call(result, 'data')) {
+            throw new Error(result?.message || 'Unable to load SMS data. Please try again.');
+        }
+        return { exists: () => result.data !== null, val: () => result.data };
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            throw new Error('SMS preview timed out. Check your connection and try again.');
+        }
+        throw error;
     } finally {
         clearTimeout(timer);
     }

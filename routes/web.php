@@ -127,6 +127,7 @@ Route::get('/payment/success', [BookingController::class, 'paymentSuccess'])->na
 Route::get('/payment/cancel', [BookingController::class, 'paymentCancel'])->name('payment.cancel');
 // web.php
 Route::post('/sms/login', [SmsController::class, 'login'])->name('sms.login');
+Route::get('/sms/preview-data', [SMSController::class, 'previewData'])->name('sms.preview-data');
 Route::post('/sms/send', [SmsController::class, 'sendSMS'])->name('sms.send');
 
 
