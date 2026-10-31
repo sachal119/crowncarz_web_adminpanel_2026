@@ -128,7 +128,7 @@
        value="{{ isset($booking) ? $booking['id'] : '' }}">
        
 <input type="hidden" id="currentDriverId"
-       value="{{ isset($booking) ? ($booking['driver_id'] ?? '') : '' }}">
+       value="{{ isset($booking) ? ($booking['driver_id'] ?? $booking['driverId'] ?? '') : '' }}">
        
 <input type="hidden" id="currentDriverName" value="">
 <input type="hidden" id="currentDriverPhone" value="">       
@@ -1352,18 +1352,49 @@ document.addEventListener('DOMContentLoaded', function() {
         vehicleMakeInput.value = selectedOption.dataset.make || "";
     }
 });
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+// Load Firebase on demand so a CDN/setup failure cannot disable the SMS buttons.
+let smsDatabase;
+async function readSmsData(path) {
+    let timer;
+    try {
+        return await Promise.race([
+            (async () => {
+                const [{ initializeApp, getApps }, { getDatabase, ref, get }] = await Promise.all([
+                    import("https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"),
+                    import("https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js")
+                ]);
+                if (!smsDatabase) {
+                    const app = getApps().find(app => app.name === 'booking-sms') || initializeApp({
+                        databaseURL: "https://crown-carz-default-rtdb.firebaseio.com",
+                        projectId: "crown-carz"
+                    }, 'booking-sms');
+                    smsDatabase = getDatabase(app);
+                }
+                return get(ref(smsDatabase, path));
+            })(),
+            new Promise((_, reject) => {
+                timer = setTimeout(() => reject(new Error('SMS preview timed out. Check your connection and try again.')), 15000);
+            })
+        ]);
+    } finally {
+        clearTimeout(timer);
+    }
+}
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDf9Ujb0fAaER",
-    authDomain: "crown-carz-default-rtdb.firebaseapp.com",
-    databaseURL: "https://crown-carz-default-rtdb.firebaseio.com",
-    projectId: "crown-carz",
-};
-
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
+async function prepareSms(button, prepare) {
+    if (button.disabled) return;
+    const label = button.innerHTML;
+    button.disabled = true;
+    button.textContent = 'Loading SMS...';
+    try {
+        await prepare();
+    } catch (error) {
+        alert('Unable to open SMS preview: ' + (error.message || 'Please try again.'));
+    } finally {
+        button.disabled = false;
+        button.innerHTML = label;
+    }
+}
 
 // ------------------------------------
 // READ ALL FORM DATA FOR SMS TEMPLATE
@@ -1755,36 +1786,47 @@ function showModal(message, phone_no) {
 // }
 
 async function sendSMS(mobile, message) {
+    const button = document.getElementById('btn-send-sms-modal');
+    if (button.disabled) return;
+    if (!mobile?.trim() || !message?.trim()) {
+        alert('Please enter a recipient number and SMS message.');
+        return;
+    }
+    const label = button.innerHTML;
+    button.disabled = true;
+    button.textContent = 'Sending...';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
     try {
         const response = await fetch(@json(route('sms.send')), {
-            method: "POST",
+            method: 'POST',
+            signal: controller.signal,
             headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             },
             body: JSON.stringify({ mobile, message })
         });
-
-        const result = await response.json();
-        console.log("SMS Result:", result);
-
-        // Extract errorCode safely
-        const errorCode = result?.details?.errorCode ?? result?.errorCode ?? null;
-
-        console.log("Error Code:", errorCode);
-
-        if (response.ok && (result?.success === true || errorCode === 0)) {
-            alert("✅ SMS Sent Successfully!");
+        const result = await response.json().catch(() => null);
+        if (response.ok && result?.success === true) {
+            alert(result.message || 'SMS sent successfully.');
+            bootstrap.Modal.getInstance(document.getElementById('smsModal'))?.hide();
             return;
         }
-
-        // Otherwise show message
-        const errorMessage = result?.message || "Failed to send SMS.";
-        alert(`❌ ${errorMessage} (Code: ${errorCode})`);
-
-    } catch (err) {
-        console.error("SMS Sending Failed:", err);
-        alert("Failed to send SMS");
+        const validation = result?.errors ? Object.values(result.errors).flat().join('\n') : '';
+        const fallback = response.status === 419 || response.status === 401 || response.redirected
+            ? 'Your session has expired. Refresh the page and log in again.'
+            : `SMS request failed (HTTP ${response.status}). Please try again.`;
+        throw new Error(validation || result?.message || fallback);
+    } catch (error) {
+        alert(error.name === 'AbortError'
+            ? 'SMS request timed out. Delivery could not be confirmed; check before retrying.'
+            : 'SMS failed: ' + (error.message || 'Unable to connect to the server.'));
+    } finally {
+        clearTimeout(timer);
+        button.disabled = false;
+        button.innerHTML = label;
     }
 }
 
@@ -1800,8 +1842,8 @@ async function loadSMS(templateName) {
     return;
   }
 
-  const snap = await get(ref(db, "sms_templates/" + templateName));
-  if (!snap.exists()) return alert("Template not found!");
+  const snap = await readSmsData("sms_templates/" + templateName);
+  if (!snap.exists() || !snap.val()?.message?.trim()) throw new Error("SMS template is missing or empty. Configure it in Messages first.");
 
   const template = snap.val().message;
   const data = getFormData();
@@ -1818,63 +1860,42 @@ async function loadSMS(templateName) {
 // BUTTON EVENT HANDLERS
 // ----------------------------------
 
-document.getElementById("btn-driver-sms").addEventListener("click", async () => {
-
+document.getElementById("btn-driver-sms").addEventListener("click", event => prepareSms(event.currentTarget, async () => {
     const bookingId = document.getElementById("currentBookingId")?.value;
-    const driverId  = document.getElementById("currentDriverId")?.value;
+    const driverId = document.getElementById("driver_id_select")?.value;
+    if (!bookingId) throw new Error('Save the booking before sending a driver SMS.');
+    if (!driverId) throw new Error('Please assign a driver before sending a driver SMS.');
 
-    if (!bookingId) {
-        console.error("Booking ID not found");
-        return;
+    // Clear previous details so a failed lookup cannot send to an old driver.
+    document.getElementById("currentDriverName").value = '';
+    document.getElementById("currentDriverPhone").value = '';
+    const driverSnap = await readSmsData("drivers/" + driverId);
+    if (!driverSnap.exists()) throw new Error('The selected driver could not be found.');
+    const driver = driverSnap.val();
+    const driverPhone = String(driver.phone || '').trim();
+    if (!driverPhone) throw new Error('The selected driver has no phone number. Update the driver details first.');
+    document.getElementById("currentDriverName").value = driver.name || '';
+    document.getElementById("currentDriverPhone").value = driverPhone;
+
+    const snap = await readSmsData("sms_templates/driver_details");
+    if (!snap.exists() || !snap.val()?.message?.trim()) {
+        throw new Error('Driver SMS template is missing or empty. Configure it in Messages first.');
     }
-
-    if (!driverId) {
-        const modal = new bootstrap.Modal(document.getElementById("noDriverModal"));
-        modal.show();
-        return;
-    }
-
-    // ✅ Fetch driver data FIRST, then load SMS
-    try {
-        const driverSnap = await get(ref(db, "drivers/" + driverId));
-
-        if (driverSnap.exists()) {
-            const driver = driverSnap.val();
-
-            // ✅ Set hidden fields so getFormData() picks them up
-            document.getElementById("currentDriverName").value = driver.name  || "";
-            document.getElementById("currentDriverPhone").value = driver.phone || "";
-        }
-    } catch (e) {
-        console.error("Failed to fetch driver:", e);
-    }
-
-    // ✅ Now load SMS (driver_name will be resolved correctly)
-    const snap = await get(ref(db, "sms_templates/driver_details"));
-    if (!snap.exists()) return alert("Template not found!");
-
-    const template = snap.val().message;
-    const data = getFormData();
-    const finalText = replacePlaceholders(template, data);
-
-    // ✅ Show modal with DRIVER phone, not passenger phone
-    const driverPhone = document.getElementById("currentDriverPhone").value || "";
-    document.querySelector("#smsMessage").value = finalText;
-    document.querySelector("#sms_recipient").value = driverPhone;
-    document.querySelector("#sms_recipient_error").style.display = "none";
-
-    new bootstrap.Modal(document.getElementById("smsModal")).show();
-});
+    document.getElementById("smsMessage").value = replacePlaceholders(snap.val().message, getFormData());
+    document.getElementById("sms_recipient").value = driverPhone;
+    document.getElementById("sms_recipient_error").style.display = "none";
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("smsModal")).show();
+}));
 
 // redirect on OK
 document.getElementById("goDashboardBtn").addEventListener("click", () => {
     //window.location.href = "/dashboard";
     window.location.href = "/admin/dashboard";
 });
-document.getElementById("btn-confirm-sms").addEventListener("click", () => loadSMS("booking_confirmation"));
-document.getElementById("btn-onroute-sms").addEventListener("click", () => loadSMS("onroute"));
-document.getElementById("btn-arrived-sms").addEventListener("click", () => loadSMS("arrival"));
-document.getElementById("btn-complete-sms").addEventListener("click", () => loadSMS("complete"));
+document.getElementById("btn-confirm-sms").addEventListener("click", event => prepareSms(event.currentTarget, () => loadSMS("booking_confirmation")));
+document.getElementById("btn-onroute-sms").addEventListener("click", event => prepareSms(event.currentTarget, () => loadSMS("onroute")));
+document.getElementById("btn-arrived-sms").addEventListener("click", event => prepareSms(event.currentTarget, () => loadSMS("arrival")));
+document.getElementById("btn-complete-sms").addEventListener("click", event => prepareSms(event.currentTarget, () => loadSMS("complete")));
 
 async function sendWhatsAppMessage(mobile, message) {
     const btn = document.getElementById("btn-send-whatsapp-modal");
@@ -1947,7 +1968,10 @@ document.getElementById("btn-send-whatsapp-modal")?.addEventListener("click", ()
 document.getElementById("btn-send-sms-modal").addEventListener("click", () => {
     const message = document.querySelector("#smsMessage").value;
     const recipient = getRecipientNumber();
-    if (!recipient) return;
+    if (!recipient) {
+        alert('Please enter a recipient number.');
+        return;
+    }
     sendSMS(recipient, message);
 });
 
