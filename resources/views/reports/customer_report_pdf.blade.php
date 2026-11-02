@@ -370,9 +370,9 @@
             <tr>
                 <th style="width: 9%;">Ref#</th>
                 <th style="width: 12%;">Date / Time</th>
-                <th style="width: 21%;">Pickup Location</th>
-                <th style="width: 6%;">Via</th>
-                <th style="width: 21%;">Dropoff Location</th>
+                <th style="width: 17%;">Pickup Location</th>
+                <th style="width: 14%;">Via</th>
+                <th style="width: 17%;">Dropoff Location</th>
                 <th style="width: 8%;">Veh Type</th>
                 <th style="width: 7%;" class="text-right">Fare (£)</th>
                 <th style="width: 6%;" class="text-right">Parking</th>
@@ -391,10 +391,6 @@
                     $fare = isset($booking->fare) ? (float) $booking->fare : max(0.00, $totalPrice - $parking);
                     $totalFare += $fare;
                     $totalParking += $parking;
-
-                    $viaList = !empty($booking->via_addresses) 
-                        ? (is_array($booking->via_addresses) ? implode(', ', $booking->via_addresses) : (string)$booking->via_addresses)
-                        : (!empty($booking->via) ? (is_array($booking->via) ? implode(', ', $booking->via) : (string)$booking->via) : '');
                 @endphp
                 <tr>
                     <td>
@@ -412,11 +408,7 @@
                         {{ $booking->pickup_address ?? '-' }}
                     </td>
                     <td class="text-center">
-                        @if(!empty($viaList) && $viaList !== '-')
-                            <span style="font-size: 6.5pt; font-weight: bold; color: #475569;">{{ \Illuminate\Support\Str::limit($viaList, 15) }}</span>
-                        @else
-                            <span style="color: #94a3b8;">&ndash;</span>
-                        @endif
+                        @include('reports.partials.via_addresses', ['booking' => $booking])
                     </td>
                     <td>
                         {{ $booking->dropoff_address ?? '-' }}

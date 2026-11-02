@@ -407,9 +407,9 @@
                     <tr>
                         <th style="width: 9%;">Ref#</th>
                         <th style="width: 12%;">Date &amp; Time</th>
-                        <th style="width: 21%;">Pickup Location</th>
-                        <th style="width: 7%;">Via</th>
-                        <th style="width: 21%;">Dropoff Location</th>
+                        <th style="width: 17%;">Pickup Location</th>
+                        <th style="width: 15%;">Via</th>
+                        <th style="width: 17%;">Dropoff Location</th>
                         <th style="width: 8%;">Vehicle</th>
                         <th style="width: 7%;" class="text-end">Fare</th>
                         <th style="width: 6%;" class="text-end">Parking</th>
@@ -428,10 +428,6 @@
                             $fare = isset($booking->fare) ? (float) $booking->fare : max(0.00, $totalPrice - $parking);
                             $totalFare += $fare;
                             $totalParking += $parking;
-
-                            $viaList = !empty($booking->via_addresses) 
-                                ? (is_array($booking->via_addresses) ? implode(', ', $booking->via_addresses) : (string)$booking->via_addresses)
-                                : '';
                         @endphp
                         <tr>
                             <td>
@@ -449,11 +445,7 @@
                                 <div class="address-text">{{ $booking->pickup_address ?? '-' }}</div>
                             </td>
                             <td>
-                                @if(!empty($viaList))
-                                    <span class="badge bg-light text-dark border" style="font-size: 9.5px;" title="{{ $viaList }}">Via</span>
-                                @else
-                                    <span class="text-muted">&ndash;</span>
-                                @endif
+                                @include('reports.partials.via_addresses', ['booking' => $booking])
                             </td>
                             <td>
                                 <div class="address-text">{{ $booking->dropoff_address ?? '-' }}</div>
