@@ -2512,12 +2512,8 @@ function buildBookingRowHtml(booking, isNew = false) {
     const passengerPhoneHtml = passengerPhone ? `
         <a href="tel:${escapeHtml(passengerPhone)}" class="font-monospace text-decoration-none text-muted d-inline-block text-truncate mt-0.5" style="max-width: 100%; font-size: 11px; letter-spacing: 0.2px;" title="${escapeHtml(passengerPhone)}">${escapeHtml(passengerPhone)}</a>` : '';
 
-    let displayComment = 'No comments added';
-    if (booking.job_comment !== null && booking.job_comment !== undefined && String(booking.job_comment).trim() !== '') {
-        displayComment = String(booking.job_comment);
-    } else if (booking.comments !== null && booking.comments !== undefined && String(booking.comments).trim() !== '') {
-        displayComment = String(booking.comments);
-    }
+    const rawComment = booking.job_comment ?? booking.comments ?? '';
+    const displayComment = String(rawComment).trim() !== '' ? String(rawComment) : 'No comments added';
 
     const hasFlight = booking.flight_no && !['-', 'none'].includes(String(booking.flight_no).toLowerCase().trim());
     const cleanFlight = hasFlight ? String(booking.flight_no).trim() : '';
@@ -2751,6 +2747,15 @@ function buildBookingRowHtml(booking, isNew = false) {
 function updateBookingRowData(booking) {
     const row = document.getElementById('booking-row-' + booking.id);
     if (!row) return;
+
+    // Keep edited comments and their tooltip in sync without replacing the flight badge.
+    const comment = row.querySelector('.col-comment .truncate-cell');
+    if (comment) {
+        const rawComment = booking.job_comment ?? booking.comments ?? '';
+        const displayComment = String(rawComment).trim() !== '' ? String(rawComment) : 'No comments added';
+        comment.textContent = displayComment;
+        comment.title = displayComment;
+    }
 
     // Update status select
     const statusSelect = row.querySelector('.statusSelect');
