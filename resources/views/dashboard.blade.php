@@ -3614,6 +3614,32 @@ document.addEventListener('DOMContentLoaded', function () {
     // 🚀 Initialize Realtime Firebase Sync for bookings & drivers
     initFirebase();
 
+    // 🛰️ Synchronize with Global Live Queue Poller (Auto-insert new incoming rides into table)
+    window.addEventListener('crowncarz-new-ride', function (e) {
+        const ride = e.detail;
+        if (!ride || !ride.id) return;
+        const id = String(ride.id);
+
+        if (knownBookingIds.has(id)) return;
+        knownBookingIds.add(id);
+
+        const tbody = document.getElementById('bookingsTableBody');
+        if (tbody) {
+            const emptyRow = document.getElementById('emptyBookingsRow');
+            if (emptyRow) emptyRow.remove();
+
+            const newRowHtml = buildBookingRowHtml(ride, true);
+            tbody.insertAdjacentHTML('afterbegin', newRowHtml);
+
+            const newRowEl = document.getElementById('booking-row-' + id);
+            if (newRowEl) {
+                bindRowEvents(newRowEl);
+            }
+
+            updateBookingsCountBadge(1);
+        }
+    });
+
     // 🔀 Restore saved view mode (Table vs Calendar)
     const savedViewMode = localStorage.getItem('crowncarz_bookings_view');
     if (savedViewMode === 'calendar') {

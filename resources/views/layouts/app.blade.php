@@ -361,6 +361,90 @@
     }
 
     /* ==========================================================
+       🚗 LIVE QUEUE NOTIFICATIONS & DRAWER STYLING
+       ========================================================== */
+    .live-queue-nav-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: rgba(255, 255, 255, 0.9);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .live-queue-nav-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: #E6B04A;
+      color: #E6B04A;
+      box-shadow: 0 0 12px rgba(230, 176, 74, 0.25);
+    }
+    .live-queue-indicator-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #10b981;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: liveQueuePulse 1.8s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes liveQueuePulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .live-ride-card {
+      border: 1px solid var(--cc-border);
+      border-radius: 12px;
+      background: var(--cc-bg-card);
+      padding: 12px 14px;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .live-ride-card:hover {
+      border-color: #E6B04A;
+      box-shadow: 0 4px 14px rgba(230, 176, 74, 0.15);
+      transform: translateY(-2px);
+    }
+    .live-ride-card.new-arrival {
+      border-left: 4px solid #10b981;
+      background: rgba(16, 185, 129, 0.05);
+    }
+    .global-live-toast-container {
+      position: fixed;
+      top: 56px;
+      right: 18px;
+      z-index: 1099;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      max-width: 380px;
+      width: calc(100vw - 36px);
+    }
+    .global-live-toast {
+      pointer-events: auto;
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      animation: slideInRightToast 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    @keyframes slideInRightToast {
+      from { transform: translateX(110%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    [data-bs-theme="dark"] .global-live-toast {
+      background: #151d2c;
+      color: #f8fafc;
+      border: 1px solid rgba(230, 176, 74, 0.4);
+    }
+    [data-bs-theme="light"] .global-live-toast,
+    :root:not([data-bs-theme="dark"]) .global-live-toast {
+      background: #ffffff;
+      color: #1e293b;
+      border: 1px solid #E6B04A;
+    }
+
+    /* ==========================================================
        🌑 DARK MODE SYSTEM-WIDE OVERRIDES
        ========================================================== */
     [data-bs-theme="dark"] {
@@ -1452,6 +1536,20 @@
           </form>
         @endif
 
+        <!-- 🚗 Live Queue Pill Button -->
+        <button type="button" 
+                class="btn btn-sm live-queue-nav-btn d-flex align-items-center gap-1.5 px-2.5 py-1 rounded-3 my-auto shadow-xs text-decoration-none" 
+                id="btnOpenLiveQueue" 
+                data-bs-toggle="offcanvas" 
+                data-bs-target="#liveQueueOffcanvas" 
+                aria-controls="liveQueueOffcanvas" 
+                title="Live Incoming Rides Queue (Auto-syncs live)">
+          <span class="live-queue-indicator-dot me-1"></span>
+          <i class="bi bi-broadcast text-warning me-1" style="font-size: 13px;"></i>
+          <span class="fw-bold d-none d-sm-inline" style="font-size: 11.5px; color: #f8fafc;">Live Queue</span>
+          <span class="badge bg-danger rounded-pill ms-1 font-monospace" id="globalLiveQueueBadge" style="display:none; font-size: 10px; padding: 2px 6px;">0</span>
+        </button>
+
         <!-- 🕒 Live UK (London / Heathrow) Time Widget -->
         <div class="live-uk-clock-badge d-flex align-items-center gap-1.5 px-2.5 py-1 rounded-3 my-auto shadow-xs" 
              title="UK London / Heathrow Live Time (Auto Daylight Saving GMT/BST)"
@@ -1864,6 +1962,304 @@
       }
       _origAlert(msg);
     };
+  })();
+  </script>
+
+  <!-- 🚗 Floating Real-Time New Ride Toast Container -->
+  <div class="global-live-toast-container" id="globalLiveToastContainer"></div>
+
+  <!-- 🚗 Live Queue Offcanvas Drawer -->
+  <div class="offcanvas offcanvas-end border-0 shadow-lg" tabindex="-1" id="liveQueueOffcanvas" aria-labelledby="liveQueueOffcanvasLabel" style="width: 420px; max-width: 95vw; background-color: var(--cc-bg-card); color: var(--cc-text-primary);">
+    <div class="offcanvas-header border-bottom py-3" style="border-color: var(--cc-border) !important; background: rgba(0,0,0,0.03);">
+      <div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="live-queue-indicator-dot"></span>
+          <h6 class="offcanvas-title fw-bold mb-0" id="liveQueueOffcanvasLabel">Live Rides Queue</h6>
+          <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-0.5" style="font-size: 10px;">Live Feed</span>
+        </div>
+        <div class="text-muted small mt-1" style="font-size: 11px;">Real-time incoming rides without page refresh</div>
+      </div>
+      <div class="d-flex align-items-center gap-1.5">
+        <button type="button" id="btnToggleQueueSound" class="btn btn-sm btn-outline-warning py-1 px-2 d-flex align-items-center" title="Toggle Ride Notification Sound" style="font-size: 12px; border-radius: 6px;">
+          <i class="bi bi-volume-up-fill" id="queueSoundIcon"></i>
+        </button>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+    </div>
+    
+    <div class="offcanvas-body p-3" id="liveQueueOffcanvasBody">
+      <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom" style="border-color: var(--cc-border) !important;">
+        <span class="small fw-bold text-muted text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">Pending & Unassigned Rides</span>
+        <span class="badge bg-warning bg-opacity-20 text-warning fw-bold px-2 py-1 font-monospace" id="liveQueueCountBadge" style="font-size: 11px;">0 Pending</span>
+      </div>
+      
+      <div id="liveQueueListContainer" class="d-flex flex-column gap-2.5">
+        <div class="text-center py-5 text-muted" id="liveQueueEmptyState">
+          <i class="bi bi-check2-circle fs-1 text-success mb-2 d-block"></i>
+          <div class="fw-semibold">Queue is clear!</div>
+          <small class="text-secondary">Standing by for incoming customer rides...</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⚡ Real-Time Live Queue Engine -->
+  <script>
+  (function initGlobalLiveQueue() {
+    const knownLiveRideIds = new Set();
+    let isInitialSeeded = false;
+    let isAudioMuted = localStorage.getItem('crowncarz_queue_sound') === 'muted';
+
+    // 🔊 Melodious Web Audio API Sound Chime (No external mp3 file required)
+    function playGlobalRideChime() {
+      if (isAudioMuted) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const now = ctx.currentTime;
+        // High tone 1 (E5 - 659.25Hz)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(659.25, now);
+        gain1.gain.setValueAtTime(0, now);
+        gain1.gain.linearRampToValueAtTime(0.25, now + 0.03);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        // High tone 2 (A5 - 880Hz)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, now + 0.12);
+        gain2.gain.setValueAtTime(0, now + 0.12);
+        gain2.gain.linearRampToValueAtTime(0.35, now + 0.16);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.75);
+      } catch (e) {
+        console.warn('Audio chime notice:', e);
+      }
+    }
+
+    // Toggle sound button
+    const btnSound = document.getElementById('btnToggleQueueSound');
+    const iconSound = document.getElementById('queueSoundIcon');
+    if (btnSound && iconSound) {
+      if (isAudioMuted) {
+        iconSound.className = 'bi bi-volume-mute-fill';
+        btnSound.classList.replace('btn-outline-warning', 'btn-outline-secondary');
+      }
+      btnSound.addEventListener('click', () => {
+        isAudioMuted = !isAudioMuted;
+        localStorage.setItem('crowncarz_queue_sound', isAudioMuted ? 'muted' : 'active');
+        if (isAudioMuted) {
+          iconSound.className = 'bi bi-volume-mute-fill';
+          btnSound.classList.replace('btn-outline-warning', 'btn-outline-secondary');
+        } else {
+          iconSound.className = 'bi bi-volume-up-fill';
+          btnSound.classList.replace('btn-outline-secondary', 'btn-outline-warning');
+          playGlobalRideChime();
+        }
+      });
+    }
+
+    // 🔔 Floating Animated Notification Toast for New Incoming Ride
+    function showGlobalNewRideToast(ride) {
+      const container = document.getElementById('globalLiveToastContainer');
+      if (!container) return;
+
+      const toastId = 'toast-ride-' + (ride.id || Math.random().toString(36).substring(7));
+      const refNo = ride.ref_no || ride.id || 'N/A';
+      const passenger = ride.passenger_name || 'Customer';
+      const phone = ride.phone_no ? `<small class="text-muted ms-1">(${ride.phone_no})</small>` : '';
+      const pickup = ride.pickup_address ? (ride.pickup_address.length > 40 ? ride.pickup_address.substring(0, 40) + '...' : ride.pickup_address) : 'N/A';
+      const dropoff = ride.dropoff_address ? (ride.dropoff_address.length > 40 ? ride.dropoff_address.substring(0, 40) + '...' : ride.dropoff_address) : 'N/A';
+      const fare = ride.price ? `£${parseFloat(ride.price).toFixed(2)}` : '';
+      const vehicle = ride.vehicle_make ? `&bull; ${ride.vehicle_make}` : '';
+      const editUrl = `${window.location.origin}/admin/bookings/${encodeURIComponent(ride.id)}/edit`;
+
+      const toastHtml = `
+        <div class="global-live-toast" id="${toastId}">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="live-queue-indicator-dot"></span>
+              <strong style="color: #E6B04A; font-size: 13px;">🚗 New Ride Received!</strong>
+              <span class="badge bg-danger rounded-pill px-2 py-0.5 font-monospace" style="font-size: 10px;">${refNo}</span>
+            </div>
+            <button type="button" class="btn-close btn-close-sm text-reset ms-2" onclick="document.getElementById('${toastId}')?.remove()"></button>
+          </div>
+          
+          <div class="small mb-2">
+            <div class="fw-bold text-truncate">${passenger} ${phone}</div>
+            <div class="text-truncate text-secondary" style="font-size: 11.5px;"><i class="bi bi-geo-alt text-success me-1"></i>${pickup}</div>
+            <div class="text-truncate text-secondary" style="font-size: 11.5px;"><i class="bi bi-flag text-danger me-1"></i>${dropoff}</div>
+            ${fare ? `<div class="fw-bold mt-1" style="color: #10b981; font-size: 12px;">${fare} <span class="text-muted fw-normal">${vehicle}</span></div>` : ''}
+          </div>
+          
+          <div class="d-flex gap-2 mt-2">
+            <a href="${editUrl}" class="btn btn-sm btn-warning fw-bold flex-grow-1 py-1" style="font-size: 11.5px; background: #E6B04A; border: none; color: #111;">
+              <i class="bi bi-pencil-square me-1"></i> View & Dispatch
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5" style="font-size: 11.5px;" onclick="document.getElementById('${toastId}')?.remove()">
+              Dismiss
+            </button>
+          </div>
+        </div>
+      `;
+
+      container.insertAdjacentHTML('beforeend', toastHtml);
+
+      // Auto-remove after 12 seconds
+      setTimeout(() => {
+        const el = document.getElementById(toastId);
+        if (el) {
+          el.style.opacity = '0';
+          el.style.transform = 'translateX(110%)';
+          setTimeout(() => el.remove(), 350);
+        }
+      }, 12000);
+    }
+
+    // Render cards in Live Queue offcanvas
+    function renderLiveQueueCards(queue) {
+      const container = document.getElementById('liveQueueListContainer');
+      const emptyState = document.getElementById('liveQueueEmptyState');
+      if (!container) return;
+
+      if (!queue || queue.length === 0) {
+        if (emptyState) emptyState.classList.remove('d-none');
+        container.innerHTML = `
+          <div class="text-center py-5 text-muted" id="liveQueueEmptyState">
+            <i class="bi bi-check2-circle fs-1 text-success mb-2 d-block"></i>
+            <div class="fw-semibold">Queue is clear!</div>
+            <small class="text-secondary">Standing by for incoming customer rides...</small>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      queue.forEach(ride => {
+        const refNo = ride.ref_no || ride.id || 'N/A';
+        const passenger = ride.passenger_name || 'Customer';
+        const phone = ride.phone_no || '';
+        const pickup = ride.pickup_address || 'N/A';
+        const dropoff = ride.dropoff_address || 'N/A';
+        const fare = ride.price ? `£${parseFloat(ride.price).toFixed(2)}` : 'N/A';
+        const status = ride.status || 'Pending';
+        const time = [ride.pickup_date, ride.pickup_time].filter(Boolean).join(' ') || 'ASAP';
+        const isUnassigned = !ride.driver_id || ride.driver_id === '0';
+        const editUrl = `${window.location.origin}/admin/bookings/${encodeURIComponent(ride.id)}/edit`;
+
+        html += `
+          <div class="live-ride-card ${isUnassigned ? 'new-arrival' : ''}" id="queue-card-${ride.id}">
+            <div class="d-flex justify-content-between align-items-center mb-1.5">
+              <span class="badge bg-dark text-warning font-monospace px-2 py-0.5" style="font-size: 10.5px;">${refNo}</span>
+              <span class="badge ${isUnassigned ? 'bg-danger' : 'bg-info'} bg-opacity-75" style="font-size: 10px;">
+                ${isUnassigned ? 'Unassigned' : status}
+              </span>
+            </div>
+
+            <div class="fw-bold fs-6 mb-1 text-truncate">${passenger} ${phone ? `<small class="text-muted fw-normal ms-1">(${phone})</small>` : ''}</div>
+            
+            <div class="small text-secondary mb-1">
+              <div class="text-truncate mb-0.5"><i class="bi bi-geo-alt-fill text-success me-1"></i>${pickup}</div>
+              <div class="text-truncate"><i class="bi bi-flag-fill text-danger me-1"></i>${dropoff}</div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top" style="border-color: var(--cc-border-subtle) !important;">
+              <div>
+                <span class="fw-bold" style="color: #10b981; font-size: 13px;">${fare}</span>
+                <span class="text-muted small ms-1">&bull; <i class="bi bi-clock me-0.5"></i>${time}</span>
+              </div>
+              <a href="${editUrl}" class="btn btn-sm btn-outline-warning py-0.5 px-2" style="font-size: 11px;">
+                Dispatch <i class="bi bi-arrow-right-short"></i>
+              </a>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // ⚡ Poll Live Queue Endpoint (Pauses when tab is hidden to save bandwidth)
+    async function pollLiveQueue() {
+      if (document.hidden) return;
+      try {
+        const endpoint = `${window.location.origin}/admin/bookings/live-queue`;
+        const res = await fetch(endpoint, {
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data || !data.success) return;
+
+        const queue = data.queue || [];
+        const unassigned = data.unassigned_count ?? 0;
+        const pending = data.pending_count ?? 0;
+
+        // Update badge
+        const badge = document.getElementById('globalLiveQueueBadge');
+        if (badge) {
+          const count = unassigned > 0 ? unassigned : pending;
+          if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'inline-block';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+
+        const countBadge = document.getElementById('liveQueueCountBadge');
+        if (countBadge) {
+          countBadge.textContent = `${unassigned > 0 ? unassigned : queue.length} Pending`;
+        }
+
+        renderLiveQueueCards(queue);
+
+        // Check for new incoming rides
+        if (isInitialSeeded) {
+          for (const ride of queue) {
+            if (!knownLiveRideIds.has(ride.id)) {
+              knownLiveRideIds.add(ride.id);
+
+              // 🌟 Trigger New Ride Chime & Toast!
+              playGlobalRideChime();
+              showGlobalNewRideToast(ride);
+
+              // Dispatch event to page (e.g. Dashboard table)
+              window.dispatchEvent(new CustomEvent('crowncarz-new-ride', { detail: ride }));
+            }
+          }
+        } else {
+          // Initial seed without alert
+          queue.forEach(r => knownLiveRideIds.add(r.id));
+          isInitialSeeded = true;
+        }
+
+      } catch (err) {
+        console.warn('Live queue poll skipped:', err.message);
+      }
+    }
+
+    // Start Real-Time polling every 10 seconds (Throttled & paused on inactive tab)
+    setInterval(pollLiveQueue, 10000);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', pollLiveQueue);
+    } else {
+      pollLiveQueue();
+    }
   })();
   </script>
 

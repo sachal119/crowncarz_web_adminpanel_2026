@@ -82,10 +82,33 @@ class FirebaseService
         return $res;
     }
 
-    // ✅ New method to fetch data
-    public function getData($path)
+    // ✅ Direct uncached read from Firebase
+    public function getRawData($path)
     {
         return $this->database->getReference($path)->getValue();
+    }
+
+    // ✅ High-efficiency fetch: Automatically caches heavy root collections to prevent massive bandwidth bills
+    public function getData($path, bool $bypassCache = false)
+    {
+        $cleanPath = trim((string)$path, '/');
+
+        if (!$bypassCache) {
+            $heavyNodes = [
+                'drivers'         => 60,   // 1 minute
+                'vehicles'        => 120,  // 2 minutes
+                'customers'       => 180,  // 3 minutes
+                'system_settings' => 300,  // 5 minutes
+                'staff'           => 120,  // 2 minutes
+                'bookings'        => 20,   // 20 seconds (anti-hammer protection, writes auto-bust it)
+            ];
+
+            if (isset($heavyNodes[$cleanPath])) {
+                return $this->getCachedData($cleanPath, $heavyNodes[$cleanPath]);
+            }
+        }
+
+        return $this->getRawData($path);
     }
 
     /**
@@ -100,8 +123,8 @@ class FirebaseService
             Cache::forget($cacheKey);
         }
 
-        return Cache::remember($cacheKey, $seconds, function () use ($path) {
-            return $this->getData($path);
+        return Cache::remember($cacheKey, $seconds, function () use ($cleanPath) {
+            return $this->getRawData($cleanPath);
         });
     }
 
