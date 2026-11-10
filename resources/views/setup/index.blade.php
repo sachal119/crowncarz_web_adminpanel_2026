@@ -2280,15 +2280,77 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     if (deleteForm) {
-        deleteForm.addEventListener('submit', function(e) {
+        deleteForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
             const ref = lookupInput ? lookupInput.value.trim() : '';
             if (!ref) {
-                e.preventDefault();
-                showAlert('Please enter a Reference # to delete.');
+                if (window.ccAlert) {
+                    window.ccAlert.warning('Missing Ref #', 'Please enter a Reference # to delete.');
+                } else {
+                    showAlert('Please enter a Reference # to delete.');
+                }
                 return;
             }
-            if (!confirm(`Are you sure you want to PERMANENTLY DELETE job #${ref}? This action cannot be undone.`)) {
-                e.preventDefault();
+
+            const confirmResult = window.Swal 
+                ? await window.Swal.fire({
+                    title: 'Permanent Deletion',
+                    text: `Are you sure you want to PERMANENTLY DELETE job #${ref}? This action cannot be undone.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete permanently',
+                    cancelButtonText: 'Cancel',
+                    background: document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#151d2c' : '#ffffff',
+                    color: document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#f8fafc' : '#1e293b'
+                })
+                : { isConfirmed: confirm(`Are you sure you want to PERMANENTLY DELETE job #${ref}? This action cannot be undone.`) };
+
+            if (!confirmResult.isConfirmed) return;
+
+            if (window.ccAlert) {
+                window.ccAlert.loading('Deleting Job...', 'Removing booking from database...');
+            }
+
+            try {
+                const response = await fetch(deleteForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ ref_no: ref })
+                });
+
+                const data = await response.json().catch(() => null);
+
+                if (response.ok && data?.success) {
+                    if (window.ccAlert) {
+                        await window.ccAlert.success('Deleted Successfully', data.message || `Job #${ref} was permanently deleted.`);
+                    } else {
+                        alert(data?.message || 'Job deleted successfully.');
+                    }
+                    const modalEl = document.getElementById('deleteJobByRefModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                    window.location.reload();
+                } else {
+                    const errMsg = data?.message || `Server error (${response.status})`;
+                    if (window.ccAlert) {
+                        window.ccAlert.error('Delete Failed', errMsg);
+                    } else {
+                        showAlert(errMsg);
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                if (window.ccAlert) {
+                    window.ccAlert.error('Delete Failed', err.message || 'Unable to connect to server.');
+                } else {
+                    showAlert('Network error while deleting job.');
+                }
             }
         });
     }

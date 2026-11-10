@@ -983,6 +983,9 @@ public function deleteBalanceHistory($driverId, $transactionId)
     public function deleteJobByRef(Request $request)
     {
         if (!session('admin_logged_in')) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Please login first.'], 401);
+            }
             return redirect()->route('login')->with('error', 'Please login first.');
         }
 
@@ -994,7 +997,7 @@ public function deleteBalanceHistory($driverId, $transactionId)
         $cleanRef = strtoupper(ltrim($ref, '#'));
         $rawRef = $ref;
 
-        $bookings = $this->firebase->getCachedData('bookings', 60) ?? [];
+        $bookings = $this->firebase->getData('bookings') ?? [];
 
         $deletedCount = 0;
         $deletedDetails = [];
@@ -1014,9 +1017,16 @@ public function deleteBalanceHistory($driverId, $transactionId)
                 $pName = $b['passenger_name'] ?? 'N/A';
                 $rNo = $b['ref_no'] ?? $key;
                 $deletedDetails[] = "{$rNo} (Passenger: {$pName})";
-                $database->getReference('bookings/' . $key)->remove();
+                
+                // Delete node from Firebase database
+                $this->firebase->deleteData('bookings/' . $key);
                 $deletedCount++;
             }
+        }
+
+        // Bust Firebase cached data for bookings
+        if (method_exists($this->firebase, 'forgetCachedData')) {
+            $this->firebase->forgetCachedData('bookings');
         }
 
         try {

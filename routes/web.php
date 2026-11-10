@@ -325,6 +325,8 @@ Route::prefix('admin/setup')->group(function () {
     Route::match(['put', 'post', 'patch'], '/driver/{id}', [SetupController::class, 'update']);
     Route::match(['put', 'post', 'patch'], '/vehicle/{id}', [SetupController::class, 'updateVehicle']);
     Route::delete('/vehicle/{id}', [SetupController::class, 'destroyVehicle']);
+    Route::post('/delete-job-by-ref', [SetupController::class, 'deleteJobByRef']);
+    Route::post('/find-job-by-ref', [SetupController::class, 'findJobByRef']);
 });
 
 Route::prefix('messages')->group(function () {
