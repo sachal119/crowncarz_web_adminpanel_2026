@@ -6,21 +6,21 @@
       ".indexOn": ["status", "placement", "start_at", "end_at"]
     },
     "bookings": {
-      ".read": true,
+      ".read": "auth != null",
       ".write": "auth != null",
       ".indexOn": ["ref_no", "pickup_time", "status", "driver_id", "created_at"]
     },
     "drivers": {
-      ".read": true,
+      ".read": "auth != null",
       ".write": "auth != null",
       ".indexOn": ["id", "raw_id", "status"]
     },
     "drivers_live_locations": {
-      ".read": true,
+      ".read": "auth != null",
       ".write": "auth != null"
     },
     "vehicles": {
-      ".read": true,
+      ".read": "auth != null",
       ".write": "auth != null",
       ".indexOn": ["driver_id"]
     },

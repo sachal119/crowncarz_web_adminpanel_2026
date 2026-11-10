@@ -101,9 +101,6 @@ Route::prefix('bookings')->group(function () {
     // Route::put('/bookings/{id}', [BookingController::class, 'update'])->name('booking.update');
 });
 
-Route::get('/bookings/live-queue', [BookingController::class, 'getLiveQueue'])->name('bookings.liveQueue');
-Route::get('/admin/bookings/live-queue', [BookingController::class, 'getLiveQueue']);
-
 Route::get('/bookings/details-json', [BookingController::class, 'getBookingDetailsJson']);
 Route::get('/admin/bookings/details-json', [BookingController::class, 'getBookingDetailsJson']);
 Route::get('/admin/bookings/{booking}/details-json', [BookingController::class, 'getBookingDetailsJson']);
