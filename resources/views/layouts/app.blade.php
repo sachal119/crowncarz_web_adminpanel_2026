@@ -12,6 +12,8 @@
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+  <!-- SweetAlert2 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
 
   <!-- FullCalendar 6 for Calendar View -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
@@ -1764,6 +1766,104 @@
     } else {
       tick();
     }
+  })();
+  </script>
+
+  <!-- SweetAlert2 JS & Crown Carz Global Alert Helpers -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+  (function() {
+    function getSwalTheme() {
+      const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark' || document.documentElement.classList.contains('dark-mode');
+      return {
+        background: isDark ? '#151d2c' : '#ffffff',
+        color: isDark ? '#f8fafc' : '#1e293b',
+        confirmButtonColor: '#E6B04A',
+        cancelButtonColor: isDark ? '#334155' : '#64748b'
+      };
+    }
+
+    window.ccAlert = {
+      fire: function(opts) {
+        const theme = getSwalTheme();
+        return Swal.fire({
+          ...theme,
+          ...opts
+        });
+      },
+      success: function(title, text = '') {
+        return this.fire({
+          icon: 'success',
+          title: title,
+          text: text,
+          confirmButtonText: 'OK'
+        });
+      },
+      error: function(title, text = '') {
+        return this.fire({
+          icon: 'error',
+          title: title,
+          text: text,
+          confirmButtonText: 'OK'
+        });
+      },
+      warning: function(title, text = '') {
+        return this.fire({
+          icon: 'warning',
+          title: title,
+          text: text,
+          confirmButtonText: 'OK'
+        });
+      },
+      info: function(title, text = '') {
+        return this.fire({
+          icon: 'info',
+          title: title,
+          text: text,
+          confirmButtonText: 'OK'
+        });
+      },
+      loading: function(title = 'Please wait...', text = '') {
+        const theme = getSwalTheme();
+        return Swal.fire({
+          ...theme,
+          title: title,
+          text: text,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+      },
+      close: function() {
+        Swal.close();
+      }
+    };
+
+    // Polyfill window.alert to automatically upgrade all legacy alerts to SweetAlert2
+    const _origAlert = window.alert;
+    window.alert = function(msg) {
+      if (window.Swal) {
+        const str = String(msg || '');
+        const lower = str.toLowerCase();
+        const isErr = lower.includes('error') || lower.includes('failed') || lower.includes('invalid') || lower.includes('cannot');
+        const isSucc = lower.includes('success') || lower.includes('sent') || lower.includes('saved') || lower.includes('updated');
+        const isWarn = lower.includes('please') || lower.includes('select') || lower.includes('enter') || lower.includes('warning');
+
+        const icon = isErr ? 'error' : (isSucc ? 'success' : (isWarn ? 'warning' : 'info'));
+        const title = isErr ? 'Attention' : (isSucc ? 'Success' : 'Notice');
+
+        return window.ccAlert.fire({
+          icon: icon,
+          title: title,
+          text: str,
+          confirmButtonText: 'OK'
+        });
+      }
+      _origAlert(msg);
+    };
   })();
   </script>
 

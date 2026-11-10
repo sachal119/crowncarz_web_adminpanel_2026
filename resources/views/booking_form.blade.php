@@ -1788,12 +1788,21 @@ async function sendSMS(mobile, message) {
     const button = document.getElementById('btn-send-sms-modal');
     if (button.disabled) return;
     if (!mobile?.trim() || !message?.trim()) {
-        alert('Please enter a recipient number and SMS message.');
+        if (window.ccAlert) {
+            window.ccAlert.warning('Missing Details', 'Please enter a recipient number and SMS message.');
+        } else {
+            alert('Please enter a recipient number and SMS message.');
+        }
         return;
     }
     const label = button.innerHTML;
     button.disabled = true;
     button.textContent = 'Sending...';
+
+    if (window.ccAlert) {
+        window.ccAlert.loading('Sending SMS...', 'Please wait while your SMS is being dispatched...');
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30000);
     try {
@@ -1809,19 +1818,28 @@ async function sendSMS(mobile, message) {
         });
         const result = await response.json().catch(() => null);
         if (response.ok && result?.success === true) {
-            alert(result.message || 'SMS sent successfully.');
+            if (window.ccAlert) {
+                window.ccAlert.success('SMS Sent', result.message || 'SMS sent successfully.');
+            } else {
+                alert(result.message || 'SMS sent successfully.');
+            }
             bootstrap.Modal.getInstance(document.getElementById('smsModal'))?.hide();
             return;
         }
         const validation = result?.errors ? Object.values(result.errors).flat().join('\n') : '';
         const fallback = response.status === 419 || response.status === 401 || response.redirected
             ? 'Your session has expired. Refresh the page and log in again.'
-            : `SMS request failed (HTTP ${response.status}). Please try again.`;
+            : `SMS request failed (HTTP ${response.status}). ${result?.message || 'Please check MySMS configuration.'}`;
         throw new Error(validation || result?.message || fallback);
     } catch (error) {
-        alert(error.name === 'AbortError'
+        const msg = error.name === 'AbortError'
             ? 'SMS request timed out. Delivery could not be confirmed; check before retrying.'
-            : 'SMS failed: ' + (error.message || 'Unable to connect to the server.'));
+            : 'SMS failed: ' + (error.message || 'Unable to connect to the server.');
+        if (window.ccAlert) {
+            window.ccAlert.error('SMS Delivery Failed', msg);
+        } else {
+            alert(msg);
+        }
     } finally {
         clearTimeout(timer);
         button.disabled = false;
@@ -1926,7 +1944,11 @@ async function sendWhatsAppMessage(mobile, message) {
         console.log("WhatsApp API Response:", response.status, result);
 
         if (response.ok && (result?.success === true || result?.status === 'success')) {
-            alert("✅ " + (result?.message || "WhatsApp Message Sent Successfully!"));
+            if (window.ccAlert) {
+                window.ccAlert.success('WhatsApp Sent', result?.message || 'WhatsApp Message Sent Successfully!');
+            } else {
+                alert("✅ " + (result?.message || "WhatsApp Message Sent Successfully!"));
+            }
             const modalEl = document.getElementById("smsModal");
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();
@@ -1943,10 +1965,19 @@ async function sendWhatsAppMessage(mobile, message) {
             errMsg += `\nValidation: ${validationErrors}`;
         }
 
-        alert(`❌ WhatsApp Error:\n${errMsg}`);
+        if (window.ccAlert) {
+            window.ccAlert.error('WhatsApp Error', errMsg);
+        } else {
+            alert(`❌ WhatsApp Error:\n${errMsg}`);
+        }
     } catch (err) {
         console.error("WhatsApp Sending Failed:", err);
-        alert(`❌ WhatsApp Network Error:\n${err.message || 'Unable to connect to server'}`);
+        const netErr = err.message || 'Unable to connect to server';
+        if (window.ccAlert) {
+            window.ccAlert.error('WhatsApp Network Error', netErr);
+        } else {
+            alert(`❌ WhatsApp Network Error:\n${netErr}`);
+        }
     } finally {
         if (btn) {
             btn.disabled = false;
@@ -2083,49 +2114,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.getElementById("btn-confirmation-email").addEventListener("click", async () => {
     const bookingId = getCurrentBookingId();
-    if (!bookingId) return alert("Booking ID not found.");
+    if (!bookingId) {
+        return window.ccAlert ? window.ccAlert.warning('Missing Booking', 'Booking ID not found.') : alert("Booking ID not found.");
+    }
     
     // ⬇️ Get ALL form values automatically
     const form = document.getElementById("booking-form");
     const formData = new FormData(form);
     
-    console.log(FormData);
-    
     // Convert FormData → JSON
     const bookingData = {};
     formData.forEach((value, key) => {
         if (bookingData[key]) {
-            // If field exists already, convert to array (handles via[])
             if (!Array.isArray(bookingData[key])) bookingData[key] = [bookingData[key]];
             bookingData[key].push(value);
         } else {
             bookingData[key] = value;
         }
     });
+
+    if (window.ccAlert) {
+        window.ccAlert.loading('Sending Confirmation Email...', 'Please wait while email is being sent...');
+    }
     
     try {
-        const res = await fetch(`https://crowncarz.com/admin/booking/${bookingId}/send-confirmation-email`, {
+        const endpoint = `${window.location.origin}/admin/booking/${encodeURIComponent(bookingId)}/send-confirmation-email`;
+        const res = await fetch(endpoint, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "Accept": "application/json",
                 "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
             },
             body: JSON.stringify(bookingData)
         });
         
+        const responseData = await res.json().catch(() => null);
+
         if (!res.ok) {
-            // Log the raw error response for debugging (HTML or plain text)
-            const errorText = await res.text();
-            console.error('Server Error Response:', errorText);
-            alert(`Server error (${res.status}): Check console for details.`);
+            const errMsg = responseData?.message || `Server error (${res.status}).`;
+            if (window.ccAlert) {
+                window.ccAlert.error('Email Failed', errMsg);
+            } else {
+                alert(`Server error (${res.status}): ${errMsg}`);
+            }
             return;
         }
         
-        const responseData = await res.json();
-        alert(responseData.message || "Confirmation email sent!");
+        if (window.ccAlert) {
+            window.ccAlert.success('Email Sent', responseData?.message || "Confirmation email sent!");
+        } else {
+            alert(responseData?.message || "Confirmation email sent!");
+        }
     } catch (err) {
         console.error(err);
-        alert("Failed to send confirmation email.");
+        if (window.ccAlert) {
+            window.ccAlert.error('Email Failed', err.message || "Failed to send confirmation email.");
+        } else {
+            alert("Failed to send confirmation email.");
+        }
     }
 });
 
@@ -2204,157 +2251,197 @@ document.getElementById("btn-confirmation-email").addEventListener("click", asyn
     // 3. Return Job
     // -----------------------------
     document.getElementById("btn-return-job").addEventListener("click", async () => {
-    const bookingId = getCurrentBookingId();
-    if (!bookingId) return alert("Booking ID not found.");
+        const bookingId = getCurrentBookingId();
+        if (!bookingId) {
+            return window.ccAlert ? window.ccAlert.warning('Missing Booking', 'Booking ID not found.') : alert("Booking ID not found.");
+        }
 
-    // Get all form values
-    const form = document.querySelector("#booking-form"); // Replace with your form ID
-    const formData = new FormData(form);
-    const jsonData = Object.fromEntries(formData.entries());
+        // Get all form values
+        const form = document.querySelector("#booking-form");
+        const formData = new FormData(form);
+        const jsonData = Object.fromEntries(formData.entries());
 
-    try {
-        const res = await fetch(`https://crowncarz.com/admin/bookings/${bookingId}/return-job`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify(jsonData)
-        });
+        if (window.ccAlert) {
+            window.ccAlert.loading('Creating Return Job...', 'Generating return job...');
+        }
 
-        // const data = await res.json();
-        alert("Return job created!");
-    } catch (err) {
-        console.error(err);
-        alert("Failed to create return job.");
-    }
-});
+        try {
+            const endpoint = `${window.location.origin}/admin/booking/${encodeURIComponent(bookingId)}/return-job`;
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(jsonData)
+            });
 
-   document.getElementById("btn-recurring-job").addEventListener("click", () => {
-    new bootstrap.Modal(document.getElementById("recurringModal")).show();
-});
+            const data = await res.json().catch(() => null);
 
-document.getElementById("btn-create-recurring").addEventListener("click", async () => {
+            if (!res.ok) {
+                const errMsg = data?.message || `Server error (${res.status})`;
+                if (window.ccAlert) {
+                    window.ccAlert.error('Return Job Failed', errMsg);
+                } else {
+                    alert(errMsg);
+                }
+                return;
+            }
 
-    const bookingId = getCurrentBookingId();
+            if (window.ccAlert) {
+                window.ccAlert.success('Return Job Created', data?.message || "Return job created successfully!");
+            } else {
+                alert(data?.message || "Return job created!");
+            }
+        } catch (err) {
+            console.error(err);
+            if (window.ccAlert) {
+                window.ccAlert.error('Return Job Failed', err.message || "Failed to create return job.");
+            } else {
+                alert("Failed to create return job.");
+            }
+        }
+    });
 
-    // Get recurring date range
-    const fromDate = document.getElementById("recurring_from").value;
-    const toDate = document.getElementById("recurring_to").value;
+    document.getElementById("btn-recurring-job").addEventListener("click", () => {
+        new bootstrap.Modal(document.getElementById("recurringModal")).show();
+    });
 
-    if (!fromDate || !toDate) return alert("Please select dates.");
+    document.getElementById("btn-create-recurring").addEventListener("click", async () => {
+        const bookingId = getCurrentBookingId();
+        if (!bookingId) {
+            return window.ccAlert ? window.ccAlert.warning('Missing Booking', 'Booking ID not found.') : alert("Booking ID not found.");
+        }
 
-    // ⬇️ Get ALL fields from form automatically
-    const form = document.getElementById("booking-form");
-    const formData = new FormData(form);
+        // Get recurring date range
+        const fromDate = document.getElementById("recurring_from").value;
+        const toDate = document.getElementById("recurring_to").value;
 
-    const formValues = {};
-    formData.forEach((value, key) => formValues[key] = value);
+        if (!fromDate || !toDate) {
+            return window.ccAlert ? window.ccAlert.warning('Missing Dates', 'Please select both start and end dates.') : alert("Please select dates.");
+        }
 
-    // Add recurring dates
-    formValues.from_date = fromDate;
-    formValues.to_date   = toDate;
-    
-    
-    console.log("sachal");
-    console.log(formValues.from_date);
-    console.log(formValues.to_date);
+        // Get ALL fields from form automatically
+        const form = document.getElementById("booking-form");
+        const formData = new FormData(form);
 
-    const res = await fetch(`https://crowncarz.com/admin/booking/${bookingId}/recurring`, {
-    method: 'POST',
-    headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-    },
-    body: JSON.stringify(formValues)
-});
+        const formValues = {};
+        formData.forEach((value, key) => formValues[key] = value);
 
-console.log("Status:", res.status);
+        formValues.from_date = fromDate;
+        formValues.to_date   = toDate;
 
-const data = await res.json();
-    
-    console.log(res);
-    alert(data.message || "Recurring bookings created!");
+        if (window.ccAlert) {
+            window.ccAlert.loading('Creating Recurring Bookings...', 'Please wait while recurring jobs are generated...');
+        }
 
-    bootstrap.Modal.getInstance(document.getElementById("recurringModal")).hide();
-});
+        try {
+            const endpoint = `${window.location.origin}/admin/booking/${encodeURIComponent(bookingId)}/recurring`;
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(formValues)
+            });
 
+            const data = await res.json().catch(() => null);
 
+            if (!res.ok) {
+                const errMsg = data?.message || `Server error (${res.status})`;
+                if (window.ccAlert) {
+                    window.ccAlert.error('Recurring Bookings Failed', errMsg);
+                } else {
+                    alert(errMsg);
+                }
+                return;
+            }
 
-//     // -----------------------------
-//     // 3. Return Job
-//     // -----------------------------
-//     document.getElementById("btn-return-job").addEventListener("click", async () => {
-//     const bookingId = getCurrentBookingId();
-//     if (!bookingId) return alert("Booking ID not found.");
+            bootstrap.Modal.getInstance(document.getElementById("recurringModal"))?.hide();
 
-//     // Get all form values
-//     const form = document.querySelector("#booking-form"); // Replace with your form ID
-//     const formData = new FormData(form);
-//     const jsonData = Object.fromEntries(formData.entries());
-
-//     try {
-//         const res = await fetch(`https://crowncarz.com/admin/booking/${bookingId}/return-job`, {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json",
-//                 "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-//             },
-//             body: JSON.stringify(jsonData)
-//         });
-
-//         const data = await res.json();
-//         alert(data.message || "Return job created!");
-//     } catch (err) {
-//         console.error(err);
-//         alert("Failed to create return job.");
-//     }
-// });
-
+            if (window.ccAlert) {
+                window.ccAlert.success('Recurring Bookings Created', data?.message || "Recurring bookings created!");
+            } else {
+                alert(data?.message || "Recurring bookings created!");
+            }
+        } catch (err) {
+            console.error(err);
+            if (window.ccAlert) {
+                window.ccAlert.error('Recurring Bookings Failed', err.message || "Something went wrong.");
+            } else {
+                alert("Something went wrong.");
+            }
+        }
+    });
 
     // -----------------------------
     // 4. Send Receipt Email
     // -----------------------------
     document.getElementById("btn-send-receipt").addEventListener("click", async () => {
-
-    const bookingId = getCurrentBookingId();
-    if (!bookingId) return alert("Booking ID not found.");
-
-    // ✅ Get all form fields
-    const form = document.getElementById("booking-form");
-    const formData = new FormData(form);
-
-    // Convert FormData → JSON
-    let data = {};
-    formData.forEach((value, key) => {
-        if (data[key]) {
-            // If field exists already, convert to array (handles via[])
-            if (!Array.isArray(data[key])) data[key] = [data[key]];
-            data[key].push(value);
-        } else {
-            data[key] = value;
+        const bookingId = getCurrentBookingId();
+        if (!bookingId) {
+            return window.ccAlert ? window.ccAlert.warning('Missing Booking', 'Booking ID not found.') : alert("Booking ID not found.");
         }
-    });
 
-    try {
-        const res = await fetch(`https://crowncarz.com/admin/booking/${bookingId}/send-receipt-email`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify(data)  // ✅ Send full form data
+        const form = document.getElementById("booking-form");
+        const formData = new FormData(form);
+
+        let data = {};
+        formData.forEach((value, key) => {
+            if (data[key]) {
+                if (!Array.isArray(data[key])) data[key] = [data[key]];
+                data[key].push(value);
+            } else {
+                data[key] = value;
+            }
         });
 
-        const response = await res.json();
-        alert(response.message || "Receipt email sent!");
+        if (window.ccAlert) {
+            window.ccAlert.loading('Sending Receipt...', 'Preparing receipt email...');
+        }
 
-    } catch (err) {
-        console.error(err);
-        alert("Failed to send receipt email.");
-    }
-});
+        try {
+            const endpoint = `${window.location.origin}/admin/booking/${encodeURIComponent(bookingId)}/send-receipt-email`;
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(data)
+            });
+
+            const response = await res.json().catch(() => null);
+
+            if (!res.ok) {
+                const errMsg = response?.message || `Server error (${res.status})`;
+                if (window.ccAlert) {
+                    window.ccAlert.error('Receipt Failed', errMsg);
+                } else {
+                    alert(errMsg);
+                }
+                return;
+            }
+
+            if (window.ccAlert) {
+                window.ccAlert.success('Receipt Sent', response?.message || "Receipt email sent!");
+            } else {
+                alert(response?.message || "Receipt email sent!");
+            }
+
+        } catch (err) {
+            console.error(err);
+            if (window.ccAlert) {
+                window.ccAlert.error('Receipt Failed', err.message || "Failed to send receipt email.");
+            } else {
+                alert("Failed to send receipt email.");
+            }
+        }
+    });
 
     
     
@@ -2427,26 +2514,33 @@ document.getElementById("btn-send-sms-link").addEventListener("click", () => {
     makePayment("sms");
 });
 
-// let modal = bootstrap.Modal.getInstance(document.getElementById("paymentModal"));
-
-
 async function makePayment(mode = false) {
-    
-    
-    // mode:
-    // false = pay now
-    // true = email only
-    // "sms" = send sms onl
-
     const bookingId = getCurrentBookingId();
-    if (!bookingId) return alert("Booking ID not found.");
+    if (!bookingId) {
+        return window.ccAlert ? window.ccAlert.warning('Missing Booking', 'Booking ID not found.') : alert("Booking ID not found.");
+    }
 
-    const amount = parseFloat(document.getElementById("payment_amount").value);
-    if (!amount || amount <= 0) return alert("Enter a valid amount.");
+    const amountInput = document.getElementById("payment_amount");
+    const amount = parseFloat(amountInput ? amountInput.value : 0);
+    if (!amount || amount <= 0) {
+        return window.ccAlert ? window.ccAlert.warning('Invalid Amount', 'Please enter a valid amount greater than 0.') : alert("Enter a valid amount.");
+    }
+
+    const modalEl = document.getElementById("paymentModal");
+    const modalInstance = bootstrap.Modal.getInstance(modalEl) ?? new bootstrap.Modal(modalEl);
+
+    // Show SweetAlert Loading
+    const loadingTitle = mode === 'sms' 
+        ? 'Sending Payment Link via SMS...' 
+        : (mode === true ? 'Sending Payment Link via Email...' : 'Initializing Stripe Checkout...');
+    
+    if (window.ccAlert) {
+        window.ccAlert.loading(loadingTitle, 'Connecting to payment provider, please wait...');
+    }
 
     try {
-        // Call backend
-        const res = await fetch(`https://crowncarz.com/admin/booking/${bookingId}/payment`, {
+        const paymentEndpoint = `${window.location.origin}/admin/booking/${encodeURIComponent(bookingId)}/payment`;
+        const res = await fetch(paymentEndpoint, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -2458,59 +2552,74 @@ async function makePayment(mode = false) {
                 method: mode
             })
         });
-        
-        // Get modal instance safely
-    const modalInstance = bootstrap.Modal.getInstance(document.getElementById("paymentModal"))
-                        ?? new bootstrap.Modal(document.getElementById("paymentModal"));
 
-        // Get raw response first
         const rawText = await res.text();
-
-        if (!res.ok) {
-            console.error("Server Error:", rawText);
-
-            alert(
-                "Server Error " + res.status + ": " +
-                (rawText.includes("<!DOCTYPE") ? "Server returned HTML. Check logs." : rawText)
-            );
-            return;
-        }
-
-        let data;
+        let data = null;
         try {
             data = JSON.parse(rawText);
         } catch (e) {
-            console.error("JSON Parse Error:", rawText);
-            alert("Invalid JSON returned from server.");
+            console.error("Non-JSON Server Response:", rawText);
+        }
+
+        if (!res.ok || (data && data.status === 'error')) {
+            console.error("Server Error:", res.status, rawText);
+            const errMsg = data?.message || (rawText.includes("<!DOCTYPE") ? `Server error (${res.status}). Please check server logs.` : rawText);
+            if (window.ccAlert) {
+                window.ccAlert.error('Payment Error', errMsg);
+            } else {
+                alert("Payment Error: " + errMsg);
+            }
             return;
         }
 
-        if (data.status === "success") {
+        if (data && data.status === "success") {
+            // Mode: EMAIL ONLY
+            if (mode === true) {
+                modalInstance.hide();
+                if (window.ccAlert) {
+                    window.ccAlert.success('Email Sent', data.message || 'Payment link emailed successfully to the customer.');
+                } else {
+                    alert('Payment link emailed successfully.');
+                }
+                return;
+            }
 
-            // If SEND EMAIL ONLY
-    if (mode === true) {
-        alert("Payment link emailed successfully.");
-        modalInstance.hide();
-        return;
-    }
+            // Mode: SMS ONLY
+            if (mode === "sms") {
+                modalInstance.hide();
+                if (window.ccAlert) {
+                    window.ccAlert.success('SMS Sent', data.message || 'Payment link sent via SMS to customer.');
+                } else {
+                    alert('Payment link sent to customer mobile number.');
+                }
+                return;
+            }
 
-    // If SEND SMS ONLY
-    if (mode === "sms") {
-        alert("Payment link sent to customer mobile number.");
-        modalInstance.hide();
-        return;
-    }
-
-            // If Pay Now → redirect to Stripe
-            window.location.href = data.payment_url;
-            return;
+            // Mode: PAY NOW (Redirect to Stripe checkout)
+            if (data.payment_url) {
+                if (window.ccAlert) {
+                    window.ccAlert.loading('Redirecting to Stripe...', 'Please complete payment on the Stripe page.');
+                }
+                window.location.href = data.payment_url;
+                return;
+            }
         }
 
-        alert("Payment initialization failed.");
+        const failMsg = data?.message || "Payment initialization failed.";
+        if (window.ccAlert) {
+            window.ccAlert.error('Payment Failed', failMsg);
+        } else {
+            alert(failMsg);
+        }
 
     } catch (error) {
-        console.error(error);
-        alert("Error creating payment session.");
+        console.error('Payment exception:', error);
+        const errText = error?.message || "Error creating payment session.";
+        if (window.ccAlert) {
+            window.ccAlert.error('Connection Error', errText);
+        } else {
+            alert(errText);
+        }
     }
 }
 

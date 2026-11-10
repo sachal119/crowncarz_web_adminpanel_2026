@@ -127,18 +127,24 @@ Route::get('/payment/success', [BookingController::class, 'paymentSuccess'])->na
 Route::get('/payment/cancel', [BookingController::class, 'paymentCancel'])->name('payment.cancel');
 // web.php
 Route::post('/sms/login', [SmsController::class, 'login'])->name('sms.login');
+Route::post('/admin/sms/login', [SmsController::class, 'login']);
 Route::get('/sms/preview-data', [SMSController::class, 'previewData'])->name('sms.preview-data');
 Route::post('/sms/send', [SmsController::class, 'sendSMS'])->name('sms.send');
+Route::post('/admin/sms/send', [SmsController::class, 'sendSMS']);
 
 
 Route::post('/booking/{booking}/send-confirmation-email', [BookingController::class, 'sendConfirmationEmail']);
 Route::post('/booking/{booking}/send-confirmation-whatsapp', [BookingController::class, 'sendConfirmationWhatsApp']);
 Route::post('/booking/{bookingId}/recurring', [BookingController::class, 'createRecurring']);
+Route::post('/admin/booking/{bookingId}/recurring', [BookingController::class, 'createRecurring']);
 Route::post('/booking/{booking}/return-job', [BookingController::class, 'createReturnJob']);
+Route::post('/admin/booking/{booking}/return-job', [BookingController::class, 'createReturnJob']);
 Route::post('/booking/{booking}/send-receipt-email', [BookingController::class, 'sendReceiptEmail']);
+Route::post('/admin/booking/{booking}/send-receipt-email', [BookingController::class, 'sendReceiptEmail']);
 Route::post('/booking/{booking}/send-receipt-whatsapp', [BookingController::class, 'sendReceiptWhatsApp'])->name('booking.sendReceiptWhatsApp');
 // web.php
-Route::post('/booking/{booking}/payment', [BookingController::class, 'createStripePayment']);
+Route::post('/booking/{booking}/payment', [BookingController::class, 'createStripePayment'])->name('booking.payment');
+Route::post('/admin/booking/{booking}/payment', [BookingController::class, 'createStripePayment']);
 
 
 

@@ -58,4 +58,13 @@ return [
         'api_key'  => env('WHATSAPP_API_KEY', ''),
     ],
 
+    'stripe' => [
+        'secret' => env('STRIPE_SECRET'),
+        'key'    => env('STRIPE_KEY'),
+    ],
+
+    'admin' => [
+        'url' => env('ADMIN_URL', env('APP_URL', 'https://crowncarz.com/admin')),
+    ],
+
 ];

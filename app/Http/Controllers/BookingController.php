@@ -4456,158 +4456,191 @@ Ref No: {$booking['ref_no']}
 
 public function createStripePayment(Request $request, $bookingId)
 {
-    Log::info('Method entered', ['bookingId' => $bookingId]);
+    Log::info('createStripePayment entered', ['bookingId' => $bookingId, 'input' => $request->all()]);
     
     try {
-        Log::info('Starting validation', ['amount' => $request->amount ?? 'missing']);
         $request->validate([
-            'amount' => 'required|numeric|min:1']);
-        Log::info('Validation passed');
+            'amount' => 'required|numeric|min:1'
+        ]);
 
-        Log::info('Fetching booking from Firebase');
         $booking = $this->firebase->getData("bookings/{$bookingId}");
         if (!$booking) {
-            Log::warning('Booking not found');
-            return response()->json(['status' => 'error', 'message' => 'Booking not found'], 404);
-        }
-        Log::info('Booking fetched', ['ref_no' => $booking['ref_no'] ?? 'missing', 'email' => $booking['email'] ?? 'missing']);
-        
-        
-        $method = $request->method ?? 'pay';
-
-        
-        if ($method === "sms") {
-
-    // your SMS code here...
-    // --- NEW: Send SMS with payment link (MySMS API) ---
-    try {
-
-        $userPhone = $booking['phone_no'] ?? null;
-
-        if ($userPhone) {
-
-            $cleanPhone = preg_replace('/\D/', '', $userPhone);
-
-            if (str_starts_with($cleanPhone, '0')) {
-                $cleanPhone = '+44' . substr($cleanPhone, 1);
-            } elseif (str_starts_with($cleanPhone, '44')) {
-                $cleanPhone = '+' . $cleanPhone;
-            } elseif (!str_starts_with($cleanPhone, '+')) {
-                $cleanPhone = '+' . $cleanPhone;
-            }
-
-            $messageText =
-                "Payment Link for Booking REF: " . ($booking['ref_no'] ?? $bookingId) .
-                "\nAmount: {$formattedAmount}" .
-                "\nPay securely: {$session->url}";
-
-            $response = Http::post(rtrim(config('services.admin.url'), '/') . '/sms/send', [
-                'mobile' => $cleanPhone,
-                'message' => $messageText
-            ]);
-
-            $smsResponse = $response->json();
-
-            Log::info("SMS Result", $smsResponse);
-
-        } else {
-            Log::warning("No phone number in booking.");
+            Log::warning('Booking not found for payment', ['bookingId' => $bookingId]);
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Booking not found in database.'
+            ], 404);
         }
 
-    } catch (\Exception $smsEx) {
-        Log::error("SMS error", ['error' => $smsEx->getMessage()]);
-    }
-
-    // return early for SMS-only mode
-    return response()->json([
-        'status' => 'success',
-        'mode' => 'sms'
-    ]);
-}
-
-
-        // Extract user email – adjust key if needed
-        $userEmail = $booking['email'] ?? null;
-        if (!$userEmail) {
-            Log::warning('No email in booking data');
-            // Still proceed, but email will skip
+        $stripeSecret = config('services.stripe.secret') ?: env('STRIPE_SECRET');
+        if (empty($stripeSecret)) {
+            Log::error('Stripe secret key is not configured.');
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Stripe secret key is not configured. Please set STRIPE_SECRET in your server .env file.'
+            ], 500);
         }
 
-        Log::info('Setting Stripe API key');
-        Stripe::setApiKey(config('services.stripe.secret'));  // ← REVERTED: Use env, not hardcoded
-        Log::info('API key set (length check)', ['key_len' => strlen(config('services.stripe.secret'))]);
+        Stripe::setApiKey($stripeSecret);
 
-        // Format amount for logs/email (e.g., "£100.00")
-        $formattedAmount = '£' . number_format($request->amount, 2);
+        $amount = (float) $request->amount;
+        $formattedAmount = '£' . number_format($amount, 2);
+        $unitAmount = (int) round($amount * 100);
+        $refNo = $booking['ref_no'] ?? $bookingId;
 
-        Log::info('Creating Stripe session');
+        // Create Stripe checkout session
+        Log::info('Creating Stripe checkout session', ['amount' => $amount, 'bookingId' => $bookingId]);
         $session = StripeSession::create([
             'payment_method_types' => ['card'],
             'line_items' => [[
                 'price_data' => [
-                    'currency' => 'gbp',  // Confirmed: GBP (pounds)
-                    'product_data' => ['name' => 'Booking Payment (REF: ' . ($booking['ref_no'] ?? 'N/A') . ')'],
-                    'unit_amount' => $request->amount * 100, // Pence (e.g., 100.00 GBP = 10000)
+                    'currency' => 'gbp',
+                    'product_data' => [
+                        'name' => 'Booking Payment (REF: ' . $refNo . ')'
+                    ],
+                    'unit_amount' => $unitAmount,
                 ],
                 'quantity' => 1
             ]],
             'mode' => 'payment',
             'success_url' => route('payment.success', ['booking_id' => $bookingId]),
-            'cancel_url' => route('dashboard'),
-            'metadata' => ['booking_id' => $bookingId]
+            'cancel_url'  => route('dashboard'),
+            'metadata'    => ['booking_id' => $bookingId]
         ]);
-        Log::info('Session created successfully', ['url' => $session->url, 'formatted_amount' => $formattedAmount]);
 
-        Log::info('Updating Firebase with payment link');
+        // Save payment link in Firebase
         $this->firebase->updateData("bookings/{$bookingId}", ['payment_link' => $session->url]);
-        Log::info('Firebase updated');
 
-        // NEW: Send email with payment link
-        if ($userEmail) {
-            try {
-                Mail::send('emails.payment-link', [  // Blade view name (no .php)
-                    'paymentUrl' => $session->url,
-                    'bookingRef' => $booking['ref_no'] ?? 'N/A',
-                    'amount' => $formattedAmount,
-                    'bookingId' => $bookingId
-                ], function ($message) use ($userEmail, $booking) {
-                    $message->to($userEmail, $booking['customer_name'] ?? 'Customer')  // Optional: Name from booking
-                            ->subject('Your Payment Link for Booking ' . ($booking['ref_no'] ?? $bookingId));
-                });
-                Log::info('Payment email sent successfully', ['email' => $userEmail]);
-            } catch (Exception $mailException) {
-                Log::error('Failed to send payment email', [
-                    'bookingId' => $bookingId,
-                    'email' => $userEmail,
-                    'error' => $mailException->getMessage()
-                ]);
-                // Don't fail the whole request – just log
+        $method = $request->input('method');
+
+        // Mode 1: Send via SMS / Phone
+        if ($method === 'sms' || $method === 'phone') {
+            $userPhone = $booking['phone_no'] ?? null;
+            if (empty($userPhone)) {
+                return response()->json([
+                    'status'      => 'error',
+                    'message'     => 'No customer phone number found in this booking to send SMS.',
+                    'payment_url' => $session->url
+                ], 422);
             }
-        } else {
-            Log::warning('Skipped email: No user email available', ['bookingId' => $bookingId]);
+
+            // Normalize phone number (handling UK 07... and international numbers)
+            $digitsOnly = preg_replace('/\D/', '', (string) $userPhone);
+            if (str_starts_with((string) $userPhone, '+')) {
+                $cleanPhone = '+' . $digitsOnly;
+            } elseif (str_starts_with($digitsOnly, '00')) {
+                $cleanPhone = '+' . substr($digitsOnly, 2);
+            } elseif (str_starts_with($digitsOnly, '07') && strlen($digitsOnly) === 11) {
+                $cleanPhone = '+44' . substr($digitsOnly, 1);
+            } elseif (str_starts_with($digitsOnly, '44')) {
+                $cleanPhone = '+' . $digitsOnly;
+            } elseif (str_starts_with($digitsOnly, '03') && strlen($digitsOnly) === 11) {
+                // Pakistani mobile format fallback if tested with PK SIM
+                $cleanPhone = '+92' . substr($digitsOnly, 1);
+            } elseif (str_starts_with($digitsOnly, '0')) {
+                $cleanPhone = '+44' . substr($digitsOnly, 1);
+            } else {
+                $cleanPhone = '+' . $digitsOnly;
+            }
+
+            $messageText = "Crown Carz Payment Link\nREF: {$refNo}\nAmount: {$formattedAmount}\nPay securely: {$session->url}";
+
+            $smsResult = app(MySmsService::class)->send($cleanPhone, $messageText);
+
+            if (!($smsResult['success'] ?? false)) {
+                Log::warning('Payment link SMS delivery failed', [
+                    'phone'  => $cleanPhone,
+                    'result' => $smsResult
+                ]);
+                return response()->json([
+                    'status'      => 'error',
+                    'message'     => 'Payment session created, but SMS delivery failed: ' . ($smsResult['message'] ?? 'Unable to send SMS.'),
+                    'payment_url' => $session->url,
+                    'details'     => $smsResult
+                ], 502);
+            }
+
+            if (method_exists($this, 'recordBookingActivity')) {
+                $this->recordBookingActivity($bookingId, 'SMS Sent', 'Sent Payment Link SMS to ' . $cleanPhone);
+            }
+
+            return response()->json([
+                'status'      => 'success',
+                'mode'        => 'sms',
+                'message'     => 'Payment link sent via SMS successfully to ' . $cleanPhone,
+                'payment_url' => $session->url
+            ]);
         }
 
+        // Mode 2: Send via Email
+        if ($method === true || $method === 'true' || $method === 'email') {
+            $userEmail = $booking['email'] ?? null;
+            if (empty($userEmail)) {
+                return response()->json([
+                    'status'      => 'error',
+                    'message'     => 'No customer email address found in this booking to send payment link.',
+                    'payment_url' => $session->url
+                ], 422);
+            }
+
+            try {
+                Mail::send('emails.payment-link', [
+                    'paymentUrl' => $session->url,
+                    'bookingRef' => $refNo,
+                    'amount'     => $formattedAmount,
+                    'bookingId'  => $bookingId
+                ], function ($message) use ($userEmail, $booking, $refNo) {
+                    $recipientName = $booking['passenger_name'] ?? $booking['customer_name'] ?? 'Customer';
+                    $message->to($userEmail, $recipientName)
+                            ->subject('Payment Link for Booking REF: ' . $refNo);
+                });
+
+                if (method_exists($this, 'recordBookingActivity')) {
+                    $this->recordBookingActivity($bookingId, 'Email Sent', 'Payment link emailed to ' . $userEmail);
+                }
+
+                return response()->json([
+                    'status'      => 'success',
+                    'mode'        => 'email',
+                    'message'     => 'Payment link emailed successfully to ' . $userEmail,
+                    'payment_url' => $session->url
+                ]);
+            } catch (\Throwable $mailEx) {
+                Log::error('Failed to send payment email', [
+                    'bookingId' => $bookingId,
+                    'email'     => $userEmail,
+                    'error'     => $mailEx->getMessage()
+                ]);
+                return response()->json([
+                    'status'      => 'error',
+                    'message'     => 'Payment link created, but email could not be sent: ' . $mailEx->getMessage(),
+                    'payment_url' => $session->url
+                ], 502);
+            }
+        }
+
+        // Mode 3: Pay Now (Redirect to Stripe checkout)
         return response()->json([
-            'status' => 'success', 
-            'payment_url' => $session->url,
-            'email_sent' => $userEmail ? true : false  // Optional: Inform frontend
+            'status'      => 'success',
+            'mode'        => 'pay',
+            'payment_url' => $session->url
         ]);
 
-    } catch (ValidationException $e) {
-        Log::warning('Validation failed', ['errors' => $e->errors()]);
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        $flatErrors = implode(', ', array_map(fn($err) => implode(' ', $err), $e->errors()));
         return response()->json([
-            'status' => 'error', 
-            'message' => 'Invalid input: ' . implode(', ', $e->errors()['amount'] ?? ['Unknown'])
+            'status'  => 'error',
+            'message' => 'Validation error: ' . $flatErrors
         ], 422);
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
         Log::error('Payment error', [
             'bookingId' => $bookingId, 
-            'error' => $e->getMessage(), 
-            'trace' => $e->getTraceAsString()
+            'error'     => $e->getMessage(), 
+            'trace'     => $e->getTraceAsString()
         ]);
         return response()->json([
-            'status' => 'error', 
-            'message' => 'Server error: ' . $e->getMessage()
+            'status'  => 'error', 
+            'message' => 'Payment error: ' . $e->getMessage()
         ], 500);
     }
 }
