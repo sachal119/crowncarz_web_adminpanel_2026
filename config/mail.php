@@ -54,9 +54,9 @@ return [
             'host' => env('HOSTINGER_WEBMAIL_SMTP_HOST', 'smtp.hostinger.com'),
             'port' => (int) env('HOSTINGER_WEBMAIL_SMTP_PORT', 465),
             'encryption' => env('HOSTINGER_WEBMAIL_SMTP_ENCRYPTION', 'ssl'),
-            'username' => env('HOSTINGER_WEBMAIL_SMTP_USERNAME', env('MAIL_USERNAME', 'info@crowncarz.com')),
-            'password' => env('HOSTINGER_WEBMAIL_SMTP_PASSWORD', env('MAIL_PASSWORD', '')),
-            'timeout' => 15,
+            'username' => env('HOSTINGER_WEBMAIL_SMTP_USERNAME', env('HOSTINGER_WEBMAIL_IMAP_USERNAME', env('MAIL_USERNAME', 'info@crowncarz.com'))),
+            'password' => env('HOSTINGER_WEBMAIL_SMTP_PASSWORD', env('HOSTINGER_WEBMAIL_IMAP_PASSWORD', env('MAIL_PASSWORD', env('IMAP_PASSWORD', '')))),
+            'timeout' => 30,
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 

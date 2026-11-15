@@ -185,7 +185,7 @@ class WebmailController extends Controller
         ]);
 
         try {
-            $fromAddress = config('webmail.smtp.from_address', 'info@crowncarz.com');
+            $fromAddress = config('webmail.smtp.from_address') ?: config('webmail.smtp.username', 'info@crowncarz.com');
             $fromName = config('webmail.smtp.from_name', 'Crown Carz');
 
             // Parse recipient lists
@@ -259,7 +259,7 @@ class WebmailController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to send email: ' . $e->getMessage(),
-            ], 500);
+            ], 200);
         }
     }
 
