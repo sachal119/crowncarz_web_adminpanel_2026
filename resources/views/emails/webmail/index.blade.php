@@ -2,27 +2,28 @@
 
 @section('content')
 <div class="container-fluid py-3 px-md-4">
-  <!-- Page Header -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
-    <div class="d-flex align-items-center gap-2">
-      <div class="p-2 rounded-3 text-warning bg-warning bg-opacity-10">
+  
+  <!-- 🌟 Top Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3 pb-2 border-bottom" style="border-color: var(--cc-border) !important;">
+    <div class="d-flex align-items-center gap-2.5">
+      <div class="p-2.5 rounded-3" style="background: rgba(230, 176, 74, 0.15); color: #d97706;">
         <i class="bi bi-envelope-at-fill fs-4"></i>
       </div>
       <div>
-        <h4 class="fw-bold mb-0 text-white d-flex align-items-center gap-2">
+        <h4 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--cc-text-primary);">
           Hostinger Webmail
-          <span class="badge bg-warning text-dark font-monospace px-2 py-0.5" style="font-size: 11px;">{{ $mailboxUsername }}</span>
+          <span class="badge rounded-pill font-monospace px-2.5 py-1" style="font-size: 11px; background: #E6B04A; color: #1e293b;">{{ $mailboxUsername }}</span>
         </h4>
-        <small class="text-secondary">Official Crown Carz Business Mailbox &bull; IMAP/SMTP Synchronized</small>
+        <small style="color: var(--cc-text-secondary);">Official Crown Carz Business Mailbox &bull; Real-time IMAP/SMTP Synchronized</small>
       </div>
     </div>
 
     <div class="d-flex align-items-center gap-2">
-      <a href="{{ route('emails.index', ['folder' => $currentFolder, 'refresh' => 1]) }}" class="btn btn-outline-warning btn-sm d-flex align-items-center gap-1.5 px-3 py-1.5 rounded-3 shadow-xs" title="Force Sync with Hostinger IMAP">
+      <a href="{{ route('emails.index', ['folder' => $currentFolder, 'refresh' => 1]) }}" class="btn btn-sm d-flex align-items-center gap-1.5 px-3 py-1.5 rounded-3 shadow-xs webmail-btn-outline" title="Force Sync with Hostinger IMAP">
         <i class="bi bi-arrow-clockwise"></i>
         <span>Refresh Mailbox</span>
       </a>
-      <button type="button" class="btn btn-warning btn-sm d-flex align-items-center gap-1.5 px-3 py-1.5 rounded-3 shadow-xs fw-bold" onclick="openComposeModal()">
+      <button type="button" class="btn btn-warning btn-sm d-flex align-items-center gap-1.5 px-3 py-1.5 rounded-3 shadow-xs fw-bold" onclick="openComposeModal()" style="background-color: #E6B04A; border-color: #E6B04A; color: #1e293b;">
         <i class="bi bi-pencil-square"></i>
         <span>Compose Email</span>
       </button>
@@ -30,7 +31,7 @@
   </div>
 
   @if(!empty($errorMessage))
-    <div class="alert alert-danger d-flex align-items-start gap-3 rounded-3 shadow-sm border-0 mb-4" role="alert">
+    <div class="alert alert-danger d-flex align-items-start gap-3 rounded-3 shadow-sm border-0 mb-3" role="alert">
       <i class="bi bi-exclamation-triangle-fill fs-4 flex-shrink-0 text-danger"></i>
       <div>
         <h6 class="fw-bold mb-1">Hostinger Connection Notice</h6>
@@ -40,18 +41,21 @@
     </div>
   @endif
 
-  <!-- Main Webmail Application Container -->
-  <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background-color: var(--cc-bg-card, #151d2c); min-height: 720px;">
-    <div class="row g-0 flex-nowrap" style="min-height: 720px;">
+  <!-- 📬 Main Webmail Application Card -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden webmail-main-card" style="min-height: 750px;">
+    <div class="d-flex flex-row flex-nowrap" style="min-height: 750px;">
       
-      <!-- 📁 Left Sidebar: Mail Folders -->
-      <div class="col-auto col-md-3 col-xl-2 border-end border-secondary border-opacity-25 p-3 d-flex flex-column" style="background: rgba(0,0,0,0.12);">
-        <button type="button" class="btn btn-warning w-100 fw-bold py-2 mb-3 rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" onclick="openComposeModal()">
+      <!-- 📁 1. Left Sidebar: Mail Folders -->
+      <div class="webmail-folders-col p-3 d-flex flex-column">
+        <button type="button" class="btn btn-warning w-100 fw-bold py-2 mb-3 rounded-3 shadow-xs d-flex align-items-center justify-content-center gap-2" onclick="openComposeModal()" style="background-color: #E6B04A; border-color: #E6B04A; color: #1e293b;">
           <i class="bi bi-plus-circle-fill"></i>
-          <span class="d-none d-md-inline">New Message</span>
+          <span>New Message</span>
         </button>
 
-        <div class="text-uppercase text-secondary fw-bold small px-2 mb-2 d-none d-md-block" style="font-size: 11px; letter-spacing: 0.5px;">Folders</div>
+        <div class="text-uppercase fw-bold px-2 mb-2" style="font-size: 11px; letter-spacing: 0.6px; color: var(--cc-text-muted);">
+          Folders
+        </div>
+
         <ul class="nav nav-pills flex-column gap-1 mb-auto">
           @forelse($folders as $f)
             @php
@@ -59,14 +63,14 @@
             @endphp
             <li class="nav-item">
               <a href="{{ route('emails.index', ['folder' => $f['name']]) }}" 
-                 class="nav-link py-2 px-2.5 rounded-3 d-flex align-items-center justify-content-between {{ $isActive ? 'active bg-warning text-dark fw-bold shadow-xs' : 'text-light' }}"
-                 style="{{ !$isActive ? 'color: rgba(255,255,255,0.75);' : '' }}">
-                <span class="d-flex align-items-center gap-2 text-truncate">
+                 class="nav-link py-2 px-2.5 rounded-3 d-flex align-items-center justify-content-between webmail-folder-link {{ $isActive ? 'active' : '' }}"
+                 title="{{ $f['name'] }}">
+                <span class="d-flex align-items-center gap-2 text-truncate me-2">
                   <i class="bi {{ $f['icon'] }} fs-6"></i>
-                  <span class="d-none d-md-inline text-truncate">{{ $f['display_name'] }}</span>
+                  <span class="text-truncate" style="font-size: 12.5px;">{{ $f['display_name'] }}</span>
                 </span>
                 @if($f['unseen'] > 0)
-                  <span class="badge rounded-pill {{ $isActive ? 'bg-dark text-warning' : 'bg-warning text-dark' }} font-monospace" style="font-size: 10px;">
+                  <span class="badge rounded-pill font-monospace {{ $isActive ? 'bg-dark text-warning' : 'bg-warning text-dark' }}" style="font-size: 10px; padding: 2px 7px;">
                     {{ $f['unseen'] }}
                   </span>
                 @endif
@@ -74,104 +78,109 @@
             </li>
           @empty
             <li class="nav-item">
-              <a href="{{ route('emails.index', ['folder' => 'INBOX']) }}" class="nav-link active bg-warning text-dark fw-bold rounded-3">
-                <i class="bi bi-inbox-fill me-2"></i>Inbox
+              <a href="{{ route('emails.index', ['folder' => 'INBOX']) }}" class="nav-link active webmail-folder-link py-2 px-2.5 rounded-3 d-flex align-items-center gap-2">
+                <i class="bi bi-inbox-fill"></i>
+                <span>Inbox</span>
               </a>
             </li>
           @endforelse
         </ul>
 
-        <div class="pt-3 mt-3 border-top border-secondary border-opacity-25 small text-secondary d-none d-md-block" style="font-size: 11px;">
-          <div><i class="bi bi-shield-lock-fill text-success me-1"></i>SSL Encrypted</div>
-          <div class="text-truncate text-muted mt-0.5">imap.hostinger.com:993</div>
+        <div class="pt-3 mt-3 border-top small" style="border-color: var(--cc-border) !important; color: var(--cc-text-muted); font-size: 11px;">
+          <div class="d-flex align-items-center gap-1.5"><i class="bi bi-shield-lock-fill text-success"></i><span>SSL Encrypted</span></div>
+          <div class="text-truncate mt-0.5" style="color: var(--cc-text-secondary);">imap.hostinger.com:993</div>
         </div>
       </div>
 
-      <!-- 📨 Center / List View: Email Messages Table -->
-      <div class="col col-md-4 col-xl-4 border-end border-secondary border-opacity-25 d-flex flex-column" id="emailListColumn">
+      <!-- 📨 2. Center Column: Email Messages List -->
+      <div class="webmail-messages-col d-flex flex-column" id="emailListColumn">
+        
         <!-- Search & Control Header -->
-        <div class="p-3 border-bottom border-secondary border-opacity-25" style="background: rgba(0,0,0,0.06);">
+        <div class="p-3 border-bottom" style="border-color: var(--cc-border) !important; background: var(--cc-bg-card-subtle);">
           <form method="GET" action="{{ route('emails.index') }}" class="mb-2">
             <input type="hidden" name="folder" value="{{ $currentFolder }}">
             <div class="input-group input-group-sm">
-              <span class="input-group-text bg-dark border-secondary border-opacity-25 text-secondary"><i class="bi bi-search"></i></span>
-              <input type="text" name="q" value="{{ $searchQuery }}" class="form-control bg-dark text-white border-secondary border-opacity-25" placeholder="Search sender, subject...">
+              <span class="input-group-text border-end-0 webmail-input-addon"><i class="bi bi-search"></i></span>
+              <input type="text" name="q" value="{{ $searchQuery }}" class="form-control border-start-0 webmail-input" placeholder="Search sender, subject...">
               @if(!empty($searchQuery))
-                <a href="{{ route('emails.index', ['folder' => $currentFolder]) }}" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>
+                <a href="{{ route('emails.index', ['folder' => $currentFolder]) }}" class="btn btn-outline-secondary webmail-btn-outline"><i class="bi bi-x"></i></a>
               @endif
-              <button class="btn btn-outline-warning" type="submit">Search</button>
+              <button class="btn btn-warning fw-bold px-3" type="submit" style="background-color: #E6B04A; border-color: #E6B04A; color: #1e293b;">Search</button>
             </div>
           </form>
 
-          <div class="d-flex justify-content-between align-items-center small text-secondary">
-            <span class="fw-semibold text-capitalize text-warning">{{ $currentFolder }} &bull; {{ $total }} messages</span>
-            <span style="font-size: 11px;">Page {{ $currentPage }} of {{ $totalPages }}</span>
+          <div class="d-flex justify-content-between align-items-center small" style="color: var(--cc-text-secondary);">
+            <span class="fw-bold text-truncate" style="color: var(--cc-text-primary);">
+              <i class="bi bi-folder2-open me-1 text-warning"></i>{{ $currentFolder }} <span class="badge bg-secondary bg-opacity-25 text-body rounded-pill ms-1 font-monospace" style="font-size: 10px;">{{ $total }}</span>
+            </span>
+            <span class="font-monospace" style="font-size: 11px;">Page {{ $currentPage }} of {{ $totalPages }}</span>
           </div>
         </div>
 
         <!-- Emails Scrollable List -->
-        <div class="flex-grow-1 overflow-y-auto" style="max-height: calc(100vh - 280px);">
+        <div class="flex-grow-1 overflow-y-auto webmail-list-scroll" style="max-height: calc(100vh - 275px);">
           @forelse($messages as $msg)
-            <div class="email-item-row p-3 border-bottom border-secondary border-opacity-15 cursor-pointer transition-all {{ !$msg['is_seen'] ? 'bg-warning bg-opacity-10 fw-bold border-start border-warning border-3' : '' }}" 
+            <div class="email-item-row p-3 border-bottom transition-all {{ !$msg['is_seen'] ? 'email-item-unread' : '' }}" 
                  id="email-item-{{ $msg['id'] }}" 
-                 onclick="loadEmailDetails('{{ urlencode($currentFolder) }}', {{ $msg['id'] }})"
-                 style="cursor: pointer;">
-              <div class="d-flex justify-content-between align-items-start mb-1">
+                 onclick="loadEmailDetails('{{ urlencode($currentFolder) }}', {{ $msg['id'] }})">
+              
+              <div class="d-flex justify-content-between align-items-center mb-1">
                 <div class="d-flex align-items-center gap-1.5 text-truncate me-2">
                   @if(!$msg['is_seen'])
-                    <span class="badge bg-warning text-dark p-1 rounded-circle" style="width: 7px; height: 7px;"></span>
+                    <span class="email-unread-dot" title="Unread"></span>
                   @endif
-                  <span class="text-truncate text-white {{ !$msg['is_seen'] ? 'fw-bold' : 'fw-normal text-opacity-75' }}" style="font-size: 13px;">
+                  <span class="text-truncate email-sender-name {{ !$msg['is_seen'] ? 'fw-bold' : '' }}">
                     {{ $msg['from_name'] ?: $msg['from_email'] }}
                   </span>
                 </div>
-                <small class="text-secondary font-monospace text-nowrap" style="font-size: 11px;">
+                <small class="font-monospace text-nowrap email-date-badge">
                   {{ $msg['date_formatted'] }}
                 </small>
               </div>
 
-              <div class="text-truncate text-white small mb-1" style="font-size: 12.5px;">
+              <div class="text-truncate email-subject-text mb-1 {{ !$msg['is_seen'] ? 'fw-bold' : '' }}">
                 {{ $msg['subject'] }}
               </div>
 
               <div class="d-flex align-items-center justify-content-between">
-                <small class="text-secondary text-truncate" style="font-size: 11px; max-width: 80%;">
+                <small class="text-truncate email-sender-email" style="max-width: 80%;">
                   {{ $msg['from_email'] }}
                 </small>
-                <div class="d-flex align-items-center gap-1.5">
+                <div class="d-flex align-items-center gap-2">
                   @if($msg['has_attachments'])
-                    <i class="bi bi-paperclip text-warning small" title="Contains Attachment"></i>
+                    <i class="bi bi-paperclip text-warning" title="Contains Attachment" style="font-size: 13px;"></i>
                   @endif
                   <button type="button" class="btn btn-link p-0 text-secondary email-star-btn" onclick="toggleEmailStar(event, '{{ urlencode($currentFolder) }}', {{ $msg['id'] }}, this)" title="Star">
-                    <i class="bi {{ $msg['is_starred'] ? 'bi-star-fill text-warning' : 'bi-star' }}" style="font-size: 12px;"></i>
+                    <i class="bi {{ $msg['is_starred'] ? 'bi-star-fill text-warning' : 'bi-star' }}" style="font-size: 13px;"></i>
                   </button>
                 </div>
               </div>
+
             </div>
           @empty
-            <div class="text-center py-5 text-secondary">
-              <i class="bi bi-inbox fs-1 d-block mb-2 text-muted"></i>
+            <div class="text-center py-5" style="color: var(--cc-text-muted);">
+              <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
               <div class="fw-semibold">No emails found</div>
-              <small>This folder is currently empty.</small>
+              <small>This mailbox folder is currently empty.</small>
             </div>
           @endforelse
         </div>
 
         <!-- Pagination Footer -->
         @if($totalPages > 1)
-          <div class="p-2 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center bg-dark bg-opacity-25">
+          <div class="p-2 border-top d-flex justify-content-between align-items-center" style="border-color: var(--cc-border) !important; background: var(--cc-bg-card-subtle);">
             @if($currentPage > 1)
-              <a href="{{ route('emails.index', ['folder' => $currentFolder, 'page' => $currentPage - 1, 'q' => $searchQuery]) }}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 11px;">
+              <a href="{{ route('emails.index', ['folder' => $currentFolder, 'page' => $currentPage - 1, 'q' => $searchQuery]) }}" class="btn btn-sm py-1 px-2.5 webmail-btn-outline" style="font-size: 11px;">
                 <i class="bi bi-chevron-left me-1"></i>Prev
               </a>
             @else
               <div></div>
             @endif
 
-            <span class="text-secondary small font-monospace" style="font-size: 11px;">{{ $currentPage }} / {{ $totalPages }}</span>
+            <span class="small font-monospace" style="font-size: 11px; color: var(--cc-text-secondary);">{{ $currentPage }} / {{ $totalPages }}</span>
 
             @if($currentPage < $totalPages)
-              <a href="{{ route('emails.index', ['folder' => $currentFolder, 'page' => $currentPage + 1, 'q' => $searchQuery]) }}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 11px;">
+              <a href="{{ route('emails.index', ['folder' => $currentFolder, 'page' => $currentPage + 1, 'q' => $searchQuery]) }}" class="btn btn-sm py-1 px-2.5 webmail-btn-outline" style="font-size: 11px;">
                 Next<i class="bi bi-chevron-right ms-1"></i>
               </a>
             @else
@@ -179,96 +188,99 @@
             @endif
           </div>
         @endif
+
       </div>
 
-      <!-- 📖 Right Pane: Active Email Reader -->
-      <div class="col col-md-5 col-xl-6 d-flex flex-column position-relative" id="emailDetailPane" style="background: rgba(0,0,0,0.03);">
+      <!-- 📖 3. Right Column: Active Email Reader Pane -->
+      <div class="webmail-reader-col d-flex flex-column position-relative" id="emailDetailPane">
         
         <!-- Placeholder / Empty State -->
-        <div id="emailDetailPlaceholder" class="m-auto text-center py-5 text-secondary">
-          <div class="p-3 bg-dark bg-opacity-25 rounded-circle d-inline-block mb-3">
-            <i class="bi bi-envelope-open text-warning fs-1"></i>
+        <div id="emailDetailPlaceholder" class="m-auto text-center py-5 px-3">
+          <div class="p-4 rounded-circle d-inline-block mb-3" style="background: rgba(230, 176, 74, 0.12);">
+            <i class="bi bi-envelope-open fs-1" style="color: #d97706;"></i>
           </div>
-          <h5 class="fw-bold text-white mb-1">Select an email to read</h5>
-          <p class="text-secondary small">Click on any message from the list to view its complete content, sender details, and attachments.</p>
+          <h5 class="fw-bold mb-1" style="color: var(--cc-text-primary);">Select an email to read</h5>
+          <p class="small mb-0" style="color: var(--cc-text-secondary); max-width: 360px;">Click on any message from the list to view its complete content, sender details, and attachments.</p>
         </div>
 
         <!-- Loading Spinner -->
         <div id="emailDetailLoading" class="m-auto text-center py-5 d-none">
           <div class="spinner-border text-warning" role="status"></div>
-          <div class="small text-secondary mt-2">Loading email securely from Hostinger...</div>
+          <div class="small mt-2" style="color: var(--cc-text-secondary);">Loading email securely from Hostinger...</div>
         </div>
 
         <!-- Active Email View Container -->
         <div id="emailDetailContent" class="d-none d-flex flex-column h-100">
           
           <!-- Reader Action Toolbar -->
-          <div class="p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: rgba(0,0,0,0.08);">
-            <div class="d-flex align-items-center gap-1.5">
-              <button type="button" class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1" onclick="replyCurrentEmail(false)">
-                <i class="bi bi-reply-fill"></i><span class="d-none d-sm-inline">Reply</span>
+          <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-color: var(--cc-border) !important; background: var(--cc-bg-card-subtle);">
+            <div class="d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1.5 px-3 py-1.5 fw-semibold" onclick="replyCurrentEmail(false)">
+                <i class="bi bi-reply-fill"></i><span>Reply</span>
               </button>
-              <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" onclick="replyCurrentEmail(true)">
-                <i class="bi bi-reply-all-fill"></i><span class="d-none d-sm-inline">Reply All</span>
+              <button type="button" class="btn btn-sm webmail-btn-outline d-flex align-items-center gap-1.5 px-2.5 py-1.5" onclick="replyCurrentEmail(true)">
+                <i class="bi bi-reply-all-fill"></i><span>Reply All</span>
               </button>
-              <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" onclick="forwardCurrentEmail()">
-                <i class="bi bi-forward-fill"></i><span class="d-none d-sm-inline">Forward</span>
+              <button type="button" class="btn btn-sm webmail-btn-outline d-flex align-items-center gap-1.5 px-2.5 py-1.5" onclick="forwardCurrentEmail()">
+                <i class="bi bi-forward-fill"></i><span>Forward</span>
               </button>
             </div>
 
-            <div class="d-flex align-items-center gap-1.5">
-              <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleReadStatus" onclick="toggleCurrentReadStatus()" title="Mark as Unread">
+            <div class="d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-sm webmail-btn-outline py-1.5 px-2.5" id="btnToggleReadStatus" onclick="toggleCurrentReadStatus()" title="Mark as Unread">
                 <i class="bi bi-envelope"></i>
               </button>
-              <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteCurrentEmail()" title="Delete Email">
+              <button type="button" class="btn btn-sm btn-outline-danger py-1.5 px-2.5" onclick="deleteCurrentEmail()" title="Move to Trash">
                 <i class="bi bi-trash"></i>
               </button>
             </div>
           </div>
 
           <!-- Email Headers & Subject -->
-          <div class="p-4 border-bottom border-secondary border-opacity-25">
-            <h5 class="fw-bold text-white mb-3" id="viewEmailSubject">--</h5>
+          <div class="p-4 border-bottom" style="border-color: var(--cc-border) !important;">
+            <h5 class="fw-bold mb-3" id="viewEmailSubject" style="color: var(--cc-text-primary); line-height: 1.4;">--</h5>
             
             <div class="d-flex align-items-start justify-content-between gap-3">
               <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-warning text-dark fw-bold d-flex align-items-center justify-content-center flex-shrink-0" id="viewSenderAvatar" style="width: 44px; height: 44px; font-size: 16px;">
+                <div class="rounded-circle fw-bold d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" id="viewSenderAvatar" style="width: 44px; height: 44px; font-size: 16px; background: #E6B04A; color: #1e293b;">
                   CC
                 </div>
                 <div>
-                  <div class="fw-bold text-white" id="viewSenderName">--</div>
-                  <div class="text-secondary small">
-                    From: <span class="text-warning font-monospace" id="viewSenderEmail">--</span>
+                  <div class="fw-bold" id="viewSenderName" style="color: var(--cc-text-primary); font-size: 14px;">--</div>
+                  <div class="small" style="color: var(--cc-text-secondary); font-size: 12px;">
+                    From: <span class="font-monospace fw-semibold" id="viewSenderEmail" style="color: #d97706;">--</span>
                   </div>
-                  <div class="text-secondary small" style="font-size: 11px;">
-                    To: <span class="text-white-50" id="viewRecipientTo">--</span>
+                  <div class="small" style="color: var(--cc-text-muted); font-size: 11px;">
+                    To: <span id="viewRecipientTo">--</span>
                   </div>
                 </div>
               </div>
 
-              <div class="text-end text-secondary small font-monospace" id="viewEmailDate">
+              <div class="text-end small font-monospace" id="viewEmailDate" style="color: var(--cc-text-secondary); font-size: 11.5px;">
                 --
               </div>
             </div>
           </div>
 
           <!-- Attachments List (If Any) -->
-          <div id="viewAttachmentsContainer" class="p-3 border-bottom border-secondary border-opacity-25 bg-dark bg-opacity-25 d-none">
-            <div class="d-flex align-items-center gap-2 mb-2 text-warning small fw-bold">
+          <div id="viewAttachmentsContainer" class="p-3 border-bottom d-none" style="border-color: var(--cc-border) !important; background: var(--cc-bg-card-subtle);">
+            <div class="d-flex align-items-center gap-2 mb-2 small fw-bold" style="color: #d97706;">
               <i class="bi bi-paperclip"></i>
               <span>Attachments (<span id="viewAttachmentsCount">0</span>)</span>
             </div>
             <div class="d-flex flex-wrap gap-2" id="viewAttachmentsList">
-              <!-- Dynamically populated chips -->
+              <!-- Dynamically populated attachment chips -->
             </div>
           </div>
 
-          <!-- Email HTML Content (Sandboxed) -->
-          <div class="flex-grow-1 p-3 overflow-hidden d-flex flex-column">
-            <iframe id="viewEmailIframe" 
-                    class="w-100 flex-grow-1 border-0 rounded-3" 
-                    sandbox="allow-same-origin allow-popups" 
-                    style="background: #ffffff; min-height: 400px;"></iframe>
+          <!-- Email HTML Content Container -->
+          <div class="flex-grow-1 p-3 d-flex flex-column" style="background: var(--cc-bg-card);">
+            <div class="w-100 flex-grow-1 rounded-3 overflow-hidden shadow-xs border" style="border-color: var(--cc-border) !important; background: #ffffff;">
+              <iframe id="viewEmailIframe" 
+                      class="w-100 h-100 border-0" 
+                      sandbox="allow-same-origin allow-popups" 
+                      style="min-height: 480px; width: 100%; display: block;"></iframe>
+            </div>
           </div>
 
         </div>
@@ -284,13 +296,13 @@
      ========================================================================= -->
 <div class="modal fade" id="composeEmailModal" tabindex="-1" aria-labelledby="composeEmailModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 text-white" style="background-color: var(--cc-bg-card, #151d2c);">
-      <div class="modal-header border-bottom border-secondary border-opacity-25 py-3">
-        <h5 class="modal-title fw-bold text-white d-flex align-items-center gap-2" id="composeEmailModalLabel">
+    <div class="modal-content border-0 shadow-lg rounded-4 webmail-modal-content">
+      <div class="modal-header border-bottom py-3" style="border-color: var(--cc-border) !important;">
+        <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="composeEmailModalLabel" style="color: var(--cc-text-primary);">
           <i class="bi bi-pencil-square text-warning"></i>
           <span>New Message</span>
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
       <form id="composeEmailForm" onsubmit="handleSendEmail(event)" enctype="multipart/form-data">
@@ -301,58 +313,58 @@
         <div class="modal-body p-4 d-flex flex-column gap-3">
           
           <!-- From Badge -->
-          <div class="d-flex align-items-center justify-content-between p-2 rounded-2 bg-dark bg-opacity-50 small border border-secondary border-opacity-25">
-            <span class="text-secondary">Sending From:</span>
-            <span class="text-warning fw-bold font-monospace">{{ $mailboxUsername }} (Hostinger SMTP)</span>
+          <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 small border" style="background: var(--cc-bg-card-subtle); border-color: var(--cc-border) !important;">
+            <span style="color: var(--cc-text-secondary);">Sending From:</span>
+            <span class="fw-bold font-monospace" style="color: #d97706;">{{ $mailboxUsername }} &bull; Hostinger SMTP</span>
           </div>
 
           <!-- To Input -->
           <div>
-            <label class="form-label small fw-bold text-secondary mb-1">To <span class="text-danger">*</span></label>
-            <input type="text" name="to" id="composeTo" class="form-control bg-dark text-white border-secondary border-opacity-25" placeholder="recipient@example.com, another@example.com" required>
+            <label class="form-label small fw-bold mb-1" style="color: var(--cc-text-secondary);">To <span class="text-danger">*</span></label>
+            <input type="text" name="to" id="composeTo" class="form-control webmail-input" placeholder="recipient@example.com, another@example.com" required>
           </div>
 
           <!-- CC & BCC Toggles -->
-          <div class="d-flex justify-content-end gap-2" style="font-size: 11px;">
-            <a href="javascript:void(0)" class="text-secondary text-decoration-none" onclick="document.getElementById('composeCcWrapper').classList.toggle('d-none')">+ CC</a>
-            <a href="javascript:void(0)" class="text-secondary text-decoration-none" onclick="document.getElementById('composeBccWrapper').classList.toggle('d-none')">+ BCC</a>
+          <div class="d-flex justify-content-end gap-3" style="font-size: 11.5px;">
+            <a href="javascript:void(0)" class="text-decoration-none fw-semibold" style="color: var(--cc-text-secondary);" onclick="document.getElementById('composeCcWrapper').classList.toggle('d-none')">+ CC</a>
+            <a href="javascript:void(0)" class="text-decoration-none fw-semibold" style="color: var(--cc-text-secondary);" onclick="document.getElementById('composeBccWrapper').classList.toggle('d-none')">+ BCC</a>
           </div>
 
           <!-- CC Input (Hidden by default) -->
           <div id="composeCcWrapper" class="d-none">
-            <label class="form-label small fw-bold text-secondary mb-1">CC</label>
-            <input type="text" name="cc" id="composeCc" class="form-control form-control-sm bg-dark text-white border-secondary border-opacity-25" placeholder="cc@example.com">
+            <label class="form-label small fw-bold mb-1" style="color: var(--cc-text-secondary);">CC</label>
+            <input type="text" name="cc" id="composeCc" class="form-control form-control-sm webmail-input" placeholder="cc@example.com">
           </div>
 
           <!-- BCC Input (Hidden by default) -->
           <div id="composeBccWrapper" class="d-none">
-            <label class="form-label small fw-bold text-secondary mb-1">BCC</label>
-            <input type="text" name="bcc" id="composeBcc" class="form-control form-control-sm bg-dark text-white border-secondary border-opacity-25" placeholder="bcc@example.com">
+            <label class="form-label small fw-bold mb-1" style="color: var(--cc-text-secondary);">BCC</label>
+            <input type="text" name="bcc" id="composeBcc" class="form-control form-control-sm webmail-input" placeholder="bcc@example.com">
           </div>
 
           <!-- Subject -->
           <div>
-            <label class="form-label small fw-bold text-secondary mb-1">Subject <span class="text-danger">*</span></label>
-            <input type="text" name="subject" id="composeSubject" class="form-control bg-dark text-white border-secondary border-opacity-25" placeholder="Enter email subject" required>
+            <label class="form-label small fw-bold mb-1" style="color: var(--cc-text-secondary);">Subject <span class="text-danger">*</span></label>
+            <input type="text" name="subject" id="composeSubject" class="form-control webmail-input" placeholder="Enter email subject" required>
           </div>
 
           <!-- Message Body -->
           <div>
-            <label class="form-label small fw-bold text-secondary mb-1">Message Body <span class="text-danger">*</span></label>
-            <textarea name="body" id="composeBody" rows="9" class="form-control bg-dark text-white border-secondary border-opacity-25 font-monospace" placeholder="Type your message here..." style="font-size: 13px; line-height: 1.5;" required></textarea>
+            <label class="form-label small fw-bold mb-1" style="color: var(--cc-text-secondary);">Message Body <span class="text-danger">*</span></label>
+            <textarea name="body" id="composeBody" rows="9" class="form-control webmail-input font-monospace" placeholder="Type your message here..." style="font-size: 13px; line-height: 1.5;" required></textarea>
           </div>
 
           <!-- Attachments File Input -->
           <div>
-            <label class="form-label small fw-bold text-secondary mb-1"><i class="bi bi-paperclip me-1"></i>Attach Files (Max 20MB)</label>
-            <input type="file" name="attachments[]" id="composeAttachments" class="form-control form-control-sm bg-dark text-white border-secondary border-opacity-25" multiple>
+            <label class="form-label small fw-bold mb-1" style="color: var(--cc-text-secondary);"><i class="bi bi-paperclip me-1"></i>Attach Files (Max 20MB)</label>
+            <input type="file" name="attachments[]" id="composeAttachments" class="form-control form-control-sm webmail-input" multiple>
           </div>
 
         </div>
 
-        <div class="modal-footer border-top border-secondary border-opacity-25 py-3">
+        <div class="modal-footer border-top py-3" style="border-color: var(--cc-border) !important;">
           <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" id="btnSubmitSendEmail" class="btn btn-warning btn-sm px-4 fw-bold d-flex align-items-center gap-1.5">
+          <button type="submit" id="btnSubmitSendEmail" class="btn btn-warning btn-sm px-4 fw-bold d-flex align-items-center gap-1.5" style="background-color: #E6B04A; border-color: #E6B04A; color: #1e293b;">
             <i class="bi bi-send-fill"></i>
             <span>Send Email</span>
           </button>
@@ -364,6 +376,145 @@
 @endsection
 
 @push('scripts')
+<style>
+/* ==========================================================
+   🎨 THEME-AWARE WEBMAIL STYLES (LIGHT & DARK MODE)
+   ========================================================== */
+.webmail-main-card {
+  background-color: var(--cc-bg-card) !important;
+  border: 1px solid var(--cc-border) !important;
+}
+
+/* 📁 Folders Column */
+.webmail-folders-col {
+  width: 230px;
+  min-width: 200px;
+  max-width: 250px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--cc-border) !important;
+  background-color: var(--cc-bg-card-subtle) !important;
+}
+
+.webmail-folder-link {
+  color: var(--cc-text-primary) !important;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+.webmail-folder-link:hover {
+  background-color: var(--cc-table-hover) !important;
+  color: #d97706 !important;
+}
+.webmail-folder-link.active {
+  background-color: #E6B04A !important;
+  color: #1e293b !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px rgba(230, 176, 74, 0.25) !important;
+}
+
+/* 📨 Messages Column */
+.webmail-messages-col {
+  width: 380px;
+  min-width: 320px;
+  max-width: 420px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--cc-border) !important;
+  background-color: var(--cc-bg-card) !important;
+}
+
+.email-item-row {
+  cursor: pointer;
+  border-color: var(--cc-border-subtle) !important;
+  transition: background-color 0.15s ease;
+  position: relative;
+}
+.email-item-row:hover {
+  background-color: var(--cc-table-hover) !important;
+}
+.email-item-row.email-item-unread {
+  background-color: rgba(230, 176, 74, 0.08) !important;
+}
+.email-item-row.active-email-row {
+  background-color: rgba(230, 176, 74, 0.18) !important;
+  border-left: 4px solid #E6B04A !important;
+}
+
+.email-unread-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #E6B04A;
+  box-shadow: 0 0 4px rgba(230, 176, 74, 0.8);
+  flex-shrink: 0;
+}
+
+.email-sender-name {
+  color: var(--cc-text-primary);
+  font-size: 13px;
+}
+.email-subject-text {
+  color: var(--cc-text-primary);
+  font-size: 12.5px;
+}
+.email-sender-email {
+  color: var(--cc-text-secondary);
+  font-size: 11px;
+}
+.email-date-badge {
+  color: var(--cc-text-secondary);
+  font-size: 11px;
+}
+
+/* 📖 Reader Column */
+.webmail-reader-col {
+  flex-grow: 1;
+  min-width: 400px;
+  background-color: var(--cc-bg-card) !important;
+}
+
+/* 🛠️ Common Controls */
+.webmail-btn-outline {
+  border: 1px solid var(--cc-border) !important;
+  color: var(--cc-text-primary) !important;
+  background-color: var(--cc-bg-card-subtle) !important;
+}
+.webmail-btn-outline:hover {
+  background-color: var(--cc-table-hover) !important;
+  border-color: #E6B04A !important;
+  color: #d97706 !important;
+}
+
+.webmail-input {
+  background-color: var(--cc-input-bg) !important;
+  color: var(--cc-input-color) !important;
+  border: 1px solid var(--cc-input-border) !important;
+}
+.webmail-input:focus {
+  border-color: #E6B04A !important;
+  box-shadow: 0 0 0 0.2rem rgba(230, 176, 74, 0.25) !important;
+}
+.webmail-input-addon {
+  background-color: var(--cc-bg-card-subtle) !important;
+  border: 1px solid var(--cc-input-border) !important;
+  color: var(--cc-text-secondary) !important;
+}
+
+.webmail-modal-content {
+  background-color: var(--cc-modal-bg) !important;
+  color: var(--cc-text-primary) !important;
+}
+
+/* Custom Slim Scrollbars */
+.webmail-list-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.webmail-list-scroll::-webkit-scrollbar-thumb {
+  background: var(--cc-border);
+  border-radius: 4px;
+}
+</style>
+
 <script>
 let currentLoadedMessage = null;
 let currentFolderGlobal = '{{ $currentFolder }}';
@@ -391,13 +542,13 @@ async function loadEmailDetails(folder, id) {
   content.classList.add('d-none');
   loading.classList.remove('d-none');
 
-  // Highlight active row
+  // Highlight active row & remove unread dot
   document.querySelectorAll('.email-item-row').forEach(row => row.classList.remove('active-email-row'));
   const rowEl = document.getElementById(`email-item-${id}`);
   if (rowEl) {
     rowEl.classList.add('active-email-row');
-    rowEl.classList.remove('fw-bold');
-    const dot = rowEl.querySelector('.rounded-circle');
+    rowEl.classList.remove('email-item-unread');
+    const dot = rowEl.querySelector('.email-unread-dot');
     if (dot) dot.remove();
   }
 
@@ -442,11 +593,11 @@ async function loadEmailDetails(folder, id) {
       msg.attachments.forEach(att => {
         const chip = document.createElement('a');
         chip.href = `/admin/emails/${encodeURIComponent(folder)}/${id}/attachment/${att.index}`;
-        chip.className = 'btn btn-sm btn-dark border border-secondary border-opacity-25 d-flex align-items-center gap-1.5 text-white text-decoration-none py-1 px-2.5 rounded-2';
+        chip.className = 'btn btn-sm webmail-btn-outline d-flex align-items-center gap-1.5 text-decoration-none py-1 px-2.5 rounded-2';
         chip.innerHTML = `
           <i class="bi bi-file-earmark-arrow-down text-warning"></i>
           <span class="text-truncate" style="max-width: 180px;">${escapeHtml(att.filename)}</span>
-          <small class="text-secondary font-monospace">(${formatBytes(att.size)})</small>
+          <small class="text-muted font-monospace">(${formatBytes(att.size)})</small>
         `;
         attList.appendChild(chip);
       });
@@ -663,14 +814,4 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 </script>
-
-<style>
-.active-email-row {
-  background: rgba(230, 176, 74, 0.15) !important;
-  border-left: 4px solid #E6B04A !important;
-}
-.email-item-row:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-</style>
 @endpush
