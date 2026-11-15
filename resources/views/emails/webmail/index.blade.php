@@ -517,7 +517,16 @@
 
 <script>
 let currentLoadedMessage = null;
-let currentFolderGlobal = '{{ $currentFolder }}';
+let currentFolderGlobal = {{ Illuminate\Support\Js::from($currentFolder) }};
+
+// Named routes preserve the application's subdirectory and front-controller path.
+const webmailRoutes = {
+  view: {{ Illuminate\Support\Js::from(route('emails.view')) }},
+  send: {{ Illuminate\Support\Js::from(route('emails.send')) }},
+  delete: {{ Illuminate\Support\Js::from(route('emails.delete')) }},
+  star: {{ Illuminate\Support\Js::from(route('emails.star')) }},
+  attachment: {{ Illuminate\Support\Js::from(route('emails.attachment', ['id' => '__MESSAGE_ID__', 'index' => '__ATTACHMENT_INDEX__'])) }}
+};
 
 // 🚀 Open Compose Modal with blank fields
 function openComposeModal() {
@@ -553,33 +562,15 @@ async function loadEmailDetails(folder, id) {
   }
 
   try {
-    let url = `/admin/emails/view?id=${id}&folder=${encodeURIComponent(folder)}`;
-    let res = await fetch(url, {
+    const url = new URL(webmailRoutes.view, window.location.origin);
+    url.searchParams.set('id', id);
+    url.searchParams.set('folder', folder);
+    const res = await fetch(url, {
       headers: {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
       }
     });
-
-    if (res.status === 404) {
-      url = `/admin/emails/message/${id}?folder=${encodeURIComponent(folder)}`;
-      res = await fetch(url, {
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
-    }
-
-    if (res.status === 404) {
-      url = `/admin/emails/${encodeURIComponent(folder)}/${id}`;
-      res = await fetch(url, {
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
-    }
 
     let data;
     try {
@@ -620,7 +611,11 @@ async function loadEmailDetails(folder, id) {
 
       msg.attachments.forEach(att => {
         const chip = document.createElement('a');
-        chip.href = `/admin/emails/message/${id}/attachment/${att.index}?folder=${encodeURIComponent(folder)}`;
+        const attachmentUrl = new URL(webmailRoutes.attachment
+          .replace('__MESSAGE_ID__', encodeURIComponent(id))
+          .replace('__ATTACHMENT_INDEX__', encodeURIComponent(att.index)), window.location.origin);
+        attachmentUrl.searchParams.set('folder', folder);
+        chip.href = attachmentUrl.href;
         chip.className = 'btn btn-sm webmail-btn-outline d-flex align-items-center gap-1.5 text-decoration-none py-1 px-2.5 rounded-2';
         chip.innerHTML = `
           <i class="bi bi-file-earmark-arrow-down text-warning"></i>
@@ -727,10 +722,11 @@ async function deleteCurrentEmail() {
   if (!result.isConfirmed) return;
 
   try {
-    const res = await fetch('/admin/emails/delete', {
+    const res = await fetch(webmailRoutes.delete, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'X-CSRF-TOKEN': '{{ csrf_token() }}',
         'X-Requested-With': 'XMLHttpRequest'
       },
@@ -790,9 +786,10 @@ async function handleSendEmail(e) {
   const formData = new FormData(form);
 
   try {
-    const res = await fetch('/admin/emails/send', {
+    const res = await fetch(webmailRoutes.send, {
       method: 'POST',
       headers: {
+        'Accept': 'application/json',
         'X-CSRF-TOKEN': '{{ csrf_token() }}',
         'X-Requested-With': 'XMLHttpRequest'
       },
@@ -806,7 +803,7 @@ async function handleSendEmail(e) {
       data = null;
     }
 
-    if (data && data.success) {
+    if (res.ok && data && data.success) {
       bootstrap.Modal.getInstance(document.getElementById('composeEmailModal'))?.hide();
       form.reset();
 
@@ -817,7 +814,7 @@ async function handleSendEmail(e) {
         confirmButtonColor: '#E6B04A'
       });
     } else {
-      const errText = (data && data.error) ? data.error : `HTTP ${res.status}: Server could not send email.`;
+      const errText = (data && (data.error || data.message)) || `HTTP ${res.status}: Server could not send email.`;
       throw new Error(errText);
     }
   } catch (err) {
@@ -843,10 +840,11 @@ async function toggleEmailStar(event, folder, id, btnEl) {
   icon.className = nextStarred ? 'bi bi-star-fill text-warning' : 'bi bi-star text-secondary';
 
   try {
-    await fetch('/admin/emails/star', {
+    await fetch(webmailRoutes.star, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'X-CSRF-TOKEN': '{{ csrf_token() }}',
         'X-Requested-With': 'XMLHttpRequest'
       },
