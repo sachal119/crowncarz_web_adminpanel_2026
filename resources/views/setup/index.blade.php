@@ -331,6 +331,193 @@
         font-weight: 600;
     }
 
+    /* ----------------------------------------------------
+       ✨ Setup Top Header Toolbar Buttons
+       ---------------------------------------------------- */
+    .setup-header-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 8px 14px !important;
+        border-radius: 10px !important;
+        font-size: 0.83rem !important;
+        font-weight: 600 !important;
+        background: #ffffff !important;
+        color: #334155 !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .setup-header-btn:hover {
+        background: #f8fafc !important;
+        color: #0f172a !important;
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08) !important;
+        transform: translateY(-1px);
+    }
+
+    .setup-header-primary-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 8px 16px !important;
+        border-radius: 10px !important;
+        font-size: 0.83rem !important;
+        font-weight: 700 !important;
+        background: linear-gradient(135deg, #b5651d, #e49a52) !important;
+        color: #ffffff !important;
+        border: 1px solid #b5651d !important;
+        box-shadow: 0 2px 6px rgba(181, 101, 29, 0.25) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .setup-header-primary-btn:hover {
+        background: linear-gradient(135deg, #96480e, #d08237) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(181, 101, 29, 0.35) !important;
+        transform: translateY(-1px);
+    }
+
+    .setup-header-danger-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 8px 14px !important;
+        border-radius: 10px !important;
+        font-size: 0.83rem !important;
+        font-weight: 600 !important;
+        background: #fff5f5 !important;
+        color: #dc2626 !important;
+        border: 1px solid #fecaca !important;
+        box-shadow: 0 1px 3px rgba(220, 38, 38, 0.06) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .setup-header-danger-btn:hover {
+        background: #dc2626 !important;
+        color: #ffffff !important;
+        border-color: #dc2626 !important;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
+        transform: translateY(-1px);
+    }
+
+    /* ----------------------------------------------------
+       💼 Dealt Bookings Luxury Badges
+       ---------------------------------------------------- */
+    .staff-bookings-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+        gap: 6px !important;
+        padding: 6px 14px !important;
+        border-radius: 999px !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        background: #eff6ff !important;
+        color: #1d4ed8 !important;
+        border: 1px solid #bfdbfe !important;
+        box-shadow: 0 1px 3px rgba(29, 78, 216, 0.08) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .staff-bookings-btn:hover {
+        background: #1d4ed8 !important;
+        color: #ffffff !important;
+        border-color: #1d4ed8 !important;
+        box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25) !important;
+        transform: translateY(-1px);
+    }
+
+    .staff-bookings-zero {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+        gap: 5px !important;
+        padding: 5px 12px !important;
+        border-radius: 999px !important;
+        font-size: 0.78rem !important;
+        font-weight: 600 !important;
+        background: #f8fafc !important;
+        color: #94a3b8 !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    /* ----------------------------------------------------
+       ⚡ Staff Action Buttons (Manage & Delete)
+       ---------------------------------------------------- */
+    .btn-staff-manage {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 5px !important;
+        padding: 6px 14px !important;
+        border-radius: 8px !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        background: #f8fafc !important;
+        color: #334155 !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none;
+    }
+
+    .btn-staff-manage:hover {
+        background: #1e293b !important;
+        color: #ffffff !important;
+        border-color: #1e293b !important;
+        box-shadow: 0 4px 10px rgba(30, 41, 59, 0.18) !important;
+        transform: translateY(-1px);
+    }
+
+    .btn-staff-delete {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 5px !important;
+        padding: 6px 14px !important;
+        border-radius: 8px !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        background: #fff5f5 !important;
+        color: #dc2626 !important;
+        border: 1px solid #fecaca !important;
+        box-shadow: 0 1px 2px rgba(220, 38, 38, 0.05) !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none;
+    }
+
+    .btn-staff-delete:hover:not(:disabled) {
+        background: #dc2626 !important;
+        color: #ffffff !important;
+        border-color: #dc2626 !important;
+        box-shadow: 0 4px 10px rgba(220, 38, 38, 0.25) !important;
+        transform: translateY(-1px);
+    }
+
+    .btn-staff-delete:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        background: #f1f5f9 !important;
+        color: #94a3b8 !important;
+        border-color: #e2e8f0 !important;
+    }
+
     @media (max-width: 767.98px) {
         .staff-table th:nth-child(2),
         .staff-table td:nth-child(2) {
@@ -557,6 +744,86 @@
     [data-bs-theme="dark"] .modal-title {
         color: #f8fafc !important;
     }
+
+    /* Setup Top Header & Staff Badges Dark Mode */
+    [data-bs-theme="dark"] .setup-header-btn {
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
+        border-color: #334155 !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+    }
+
+    [data-bs-theme="dark"] .setup-header-btn:hover {
+        background: #334155 !important;
+        border-color: #475569 !important;
+        color: #ffffff !important;
+    }
+
+    [data-bs-theme="dark"] .setup-header-danger-btn {
+        background: rgba(220, 38, 38, 0.15) !important;
+        color: #f87171 !important;
+        border-color: rgba(239, 68, 68, 0.35) !important;
+    }
+
+    [data-bs-theme="dark"] .setup-header-danger-btn:hover {
+        background: #dc2626 !important;
+        color: #ffffff !important;
+        border-color: #dc2626 !important;
+    }
+
+    [data-bs-theme="dark"] .setup-header-primary-btn {
+        background: linear-gradient(135deg, #b5651d, #cf7925) !important;
+        border-color: #cf7925 !important;
+        color: #ffffff !important;
+    }
+
+    [data-bs-theme="dark"] .staff-bookings-btn {
+        background: rgba(37, 99, 235, 0.18) !important;
+        color: #93c5fd !important;
+        border-color: rgba(96, 165, 250, 0.35) !important;
+    }
+
+    [data-bs-theme="dark"] .staff-bookings-btn:hover {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        border-color: #2563eb !important;
+    }
+
+    [data-bs-theme="dark"] .staff-bookings-zero {
+        background: #1e293b !important;
+        color: #64748b !important;
+        border-color: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .btn-staff-manage {
+        background: #1e293b !important;
+        color: #e2e8f0 !important;
+        border-color: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .btn-staff-manage:hover {
+        background: #334155 !important;
+        color: #ffffff !important;
+        border-color: #475569 !important;
+    }
+
+    [data-bs-theme="dark"] .btn-staff-delete {
+        background: rgba(220, 38, 38, 0.12) !important;
+        color: #f87171 !important;
+        border-color: rgba(239, 68, 68, 0.3) !important;
+    }
+
+    [data-bs-theme="dark"] .btn-staff-delete:hover:not(:disabled) {
+        background: #dc2626 !important;
+        color: #ffffff !important;
+        border-color: #dc2626 !important;
+    }
+
+    [data-bs-theme="dark"] .btn-staff-delete:disabled {
+        background: #1e293b !important;
+        color: #475569 !important;
+        border-color: #334155 !important;
+    }
 </style>
 
 {{-- Driver & Vehicle Mapping Logic --}}
@@ -609,38 +876,35 @@
 @endphp
 
 <div class="container-fluid mt-4" >
-   <div class="row align-items-center mb-4">
-    <div class="col-md-6">
-        <h2 class="mb-0 fw-bold">
-            Setup Office Module
-        </h2>
-    </div>
-    <div class="col-md-6 text-md-end mt-3 mt-md-0">
-        
-        <a href="{{ route('quick.links') }}" class="btn btn-gradient fw-semibold shadow-sm">
-            <i class="bi bi-link me-1"></i> Quick Links 
-        </a>
-        
-        <a href="{{ route('system.settings') }}" class="btn btn-gradient fw-semibold shadow-sm me-2">
-            <i class="bi bi-gear-wide-connected me-1"></i> Settings
-        </a>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold">Setup Office Module</h2>
+            <p class="text-muted small mb-0">System configuration, directory access, and team management.</p>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <a href="{{ route('quick.links') }}" class="btn setup-header-btn">
+                <i class="bi bi-link-45deg"></i> Quick Links 
+            </a>
+            
+            <a href="{{ route('system.settings') }}" class="btn setup-header-btn">
+                <i class="bi bi-gear-wide-connected"></i> Settings
+            </a>
 
-        @if(in_array(session('staff_role'), ['super_admin', 'admin'], true))
-            <button type="button" class="btn btn-outline-dark fw-semibold shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#superAdminPasswordModal">
-                <i class="bi bi-shield-lock me-1"></i> Change Password
+            @if(in_array(session('staff_role'), ['super_admin', 'admin'], true))
+                <button type="button" class="btn setup-header-btn" data-bs-toggle="modal" data-bs-target="#superAdminPasswordModal">
+                    <i class="bi bi-shield-lock"></i> Change Password
+                </button>
+            @endif
+
+            <button type="button" class="btn setup-header-danger-btn" data-bs-toggle="modal" data-bs-target="#deleteJobByRefModal">
+                <i class="bi bi-trash3"></i> Delete Job by Ref#
             </button>
-        @endif
-
-        <button type="button" class="btn btn-outline-danger fw-semibold shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#deleteJobByRefModal">
-            <i class="bi bi-trash3 me-1"></i> Delete Job by Ref#
-        </button>
-        
-        <a href="{{ route('notifications.history') }}" class="btn btn-gradient fw-semibold shadow-sm">
-            <i class="bi bi-broadcast me-1"></i> Notification Broadcast
-        </a>
-        
+            
+            <a href="{{ route('notifications.history') }}" class="btn setup-header-primary-btn">
+                <i class="bi bi-broadcast"></i> Notification Broadcast
+            </a>
+        </div>
     </div>
-</div>
 
 @if(in_array(session('staff_role'), ['super_admin', 'admin'], true))
 <div class="modal fade" id="superAdminPasswordModal" tabindex="-1" aria-hidden="true">
@@ -856,8 +1120,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <th>Staff member</th>
                                     <th>Contact</th>
                                     <th>Role</th>
-                                    <th>Dealt Bookings</th>
-                                    <th class="text-end">Actions</th>
+                                    <th style="white-space: nowrap;">Dealt Bookings</th>
+                                    <th class="text-end" style="white-space: nowrap;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -883,46 +1147,52 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 {{ ucfirst($memberRole) }}
                                             </span>
                                         </td>
-                                        <td>
+                                        <td style="white-space: nowrap;">
                                             @php
                                                 $staffBookings = $member['bookings'] ?? [];
                                                 $bCount = count($staffBookings);
                                             @endphp
                                             @if($bCount > 0)
                                                 <button type="button" 
-                                                        class="btn btn-sm btn-outline-primary fw-semibold staff-bookings-btn shadow-sm"
+                                                        class="staff-bookings-btn"
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#staffBookingsModal"
                                                         data-staff-name="{{ $member['name'] }}"
                                                         data-staff-id="{{ $member['id'] }}"
-                                                        data-bookings='@json($staffBookings)'>
-                                                    <i class="bi bi-briefcase me-1"></i> {{ $bCount }} {{ Str::plural('Booking', $bCount) }}
+                                                        data-bookings='@json($staffBookings)'
+                                                        title="Click to view {{ $bCount }} dealt {{ Str::plural('booking', $bCount) }}">
+                                                    <i class="bi bi-briefcase-fill"></i>
+                                                    <span>{{ $bCount }} {{ Str::plural('Booking', $bCount) }}</span>
                                                 </button>
                                             @else
-                                                <span class="badge rounded-pill text-bg-light border text-muted px-3 py-2">
-                                                    0 Bookings
+                                                <span class="staff-bookings-zero">
+                                                    <i class="bi bi-briefcase"></i> 0 Bookings
                                                 </span>
                                             @endif
                                         </td>
-                                        <td class="text-end" style="min-width: 210px;">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-dark staff-action-btn manage-staff-btn"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#manageStaffModal"
-                                                    data-name="{{ $member['name'] }}"
-                                                    data-role="{{ $memberRole }}"
-                                                    data-action="{{ route('setup.staff.access', $member['id']) }}">
-                                                <i class="bi bi-sliders me-1"></i>Manage
-                                            </button>
-                                            <form method="POST" action="{{ route('setup.staff.destroy', $member['id']) }}" class="d-inline"
-                                                  onsubmit="return confirm('Delete this staff account? It will immediately lose access.');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger staff-action-btn"
-                                                        {{ (int) session('staff_id') === (int) $member['id'] ? 'disabled' : '' }}>
-                                                    <i class="bi bi-trash3 me-1"></i>Delete
+                                        <td class="text-end" style="white-space: nowrap;">
+                                            <div class="d-inline-flex align-items-center justify-content-end gap-2">
+                                                <button type="button"
+                                                        class="btn-staff-manage manage-staff-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#manageStaffModal"
+                                                        data-name="{{ $member['name'] }}"
+                                                        data-role="{{ $memberRole }}"
+                                                        data-action="{{ route('setup.staff.access', $member['id']) }}"
+                                                        title="Manage Staff Access">
+                                                    <i class="bi bi-sliders"></i> Manage
                                                 </button>
-                                            </form>
+                                                <form id="delete-staff-form-{{ $member['id'] }}" method="POST" action="{{ route('setup.staff.destroy', $member['id']) }}" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button" 
+                                                            class="btn-staff-delete"
+                                                            onclick="confirmDeleteStaffAccount({{ $member['id'] }}, '{{ addslashes($member['name'] ?? 'Staff') }}')"
+                                                            {{ (int) session('staff_id') === (int) $member['id'] ? 'disabled title="Cannot delete your own account"' : 'title="Delete Staff Member"' }}>
+                                                        <i class="bi bi-trash3"></i> Delete
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -2480,5 +2750,37 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+
+window.confirmDeleteStaffAccount = function(staffId, staffName) {
+    if (typeof Swal !== 'undefined') {
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        Swal.fire({
+            title: 'Delete Staff Account?',
+            html: `Are you sure you want to delete <b>${staffName}</b>?<br><small class="text-muted">They will immediately lose office access and cannot log into the admin panel.</small>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: isDark ? '#334155' : '#64748b',
+            confirmButtonText: '<i class="bi bi-trash3 me-1"></i> Yes, Delete Account',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
+            background: isDark ? '#111827' : '#ffffff',
+            color: isDark ? '#f8fafc' : '#1e293b',
+            customClass: {
+                popup: 'rounded-4 shadow-lg border border-secondary border-opacity-25'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.getElementById(`delete-staff-form-${staffId}`);
+                if (form) form.submit();
+            }
+        });
+    } else {
+        if (confirm(`Delete staff account for ${staffName}? They will immediately lose access.`)) {
+            const form = document.getElementById(`delete-staff-form-${staffId}`);
+            if (form) form.submit();
+        }
+    }
+};
 </script>
 @endpush

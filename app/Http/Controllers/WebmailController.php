@@ -50,8 +50,8 @@ class WebmailController extends Controller
             $folders = $imap->getFolders($forceRefresh);
             $messagesData = $imap->getMessages($folder, $page, 25, $search);
         } catch (\Throwable $e) {
-            $errorMessage = 'Unable to connect to your mailbox. Please contact your administrator.';
-            Log::error('Webmail connection error: ' . $e->getMessage());
+            $errorMessage = $e->getMessage();
+            Log::error('Hostinger Webmail Error: ' . $errorMessage);
         }
 
         return view('emails.webmail.index', [
@@ -89,10 +89,11 @@ class WebmailController extends Controller
         if (empty($folder) || $folder === 'message') {
             $folder = 'INBOX';
         }
-        $folder = urldecode((string)$folder);
+        $folder = urldecode((string) $folder);
         if (base64_encode(base64_decode($folder, true) ?: '') === $folder) {
             $decoded = base64_decode($folder, true);
-            if ($decoded !== false) $folder = $decoded;
+            if ($decoded !== false)
+                $folder = $decoded;
         }
 
         try {
@@ -134,14 +135,16 @@ class WebmailController extends Controller
         }
 
         $folder = $request->query('folder', 'INBOX');
-        $folder = urldecode((string)$folder);
+        $folder = urldecode((string) $folder);
         if (base64_encode(base64_decode($folder, true) ?: '') === $folder) {
             $decoded = base64_decode($folder, true);
-            if ($decoded !== false) $folder = $decoded;
+            if ($decoded !== false)
+                $folder = $decoded;
         }
         if (base64_encode(base64_decode($folder, true) ?: '') === $folder) {
             $decoded = base64_decode($folder, true);
-            if ($decoded !== false) $folder = $decoded;
+            if ($decoded !== false)
+                $folder = $decoded;
         }
 
         try {
@@ -208,7 +211,7 @@ class WebmailController extends Controller
             // Send via dedicated Hostinger Webmail SMTP mailer
             $sentMessage = Mail::mailer('hostinger_webmail')->html($htmlBody, function ($message) use ($fromAddress, $fromName, $validated, $toEmails, $ccEmails, $bccEmails, $request) {
                 $message->from($fromAddress, $fromName)
-                        ->subject($validated['subject']);
+                    ->subject($validated['subject']);
 
                 foreach ($toEmails as $to) {
                     if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
@@ -261,19 +264,14 @@ class WebmailController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Email sent successfully!',
+                'message' => 'Email sent successfully via Hostinger!',
             ]);
         } catch (\Throwable $e) {
             Log::error('Failed to send webmail: ' . $e->getMessage());
-            $authenticationFailed = str_contains($e->getMessage(), '535')
-                || str_contains(strtolower($e->getMessage()), 'failed to authenticate');
-
             return response()->json([
                 'success' => false,
-                'error' => $authenticationFailed
-                    ? 'Email server login failed. Please ask your administrator to verify the outgoing mailbox username and password.'
-                    : 'Unable to send email. Please contact your administrator to check the outgoing mail settings.',
-            ], 502);
+                'error' => 'Failed to send email: ' . $e->getMessage(),
+            ], 200);
         }
     }
 
