@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-3 px-md-4">
+<div class="container-fluid py-1 px-1 px-md-2">
   
   <!-- 🌟 Top Header -->
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3 pb-2 border-bottom" style="border-color: var(--cc-border) !important;">
@@ -380,16 +380,25 @@
 /* ==========================================================
    🎨 THEME-AWARE WEBMAIL STYLES (LIGHT & DARK MODE)
    ========================================================== */
+.main-content {
+  padding: 8px 12px !important;
+}
+.main-content > .container-fluid {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
 .webmail-main-card {
   background-color: var(--cc-bg-card) !important;
   border: 1px solid var(--cc-border) !important;
+  width: 100%;
 }
 
 /* 📁 Folders Column */
 .webmail-folders-col {
-  width: 230px;
-  min-width: 200px;
-  max-width: 250px;
+  width: 210px;
+  min-width: 190px;
+  max-width: 230px;
   flex-shrink: 0;
   border-right: 1px solid var(--cc-border) !important;
   background-color: var(--cc-bg-card-subtle) !important;
@@ -414,9 +423,9 @@
 
 /* 📨 Messages Column */
 .webmail-messages-col {
-  width: 380px;
-  min-width: 320px;
-  max-width: 420px;
+  width: 440px;
+  min-width: 380px;
+  max-width: 480px;
   flex-shrink: 0;
   border-right: 1px solid var(--cc-border) !important;
   background-color: var(--cc-bg-card) !important;
