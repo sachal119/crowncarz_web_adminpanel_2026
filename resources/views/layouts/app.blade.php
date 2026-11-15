@@ -1467,10 +1467,39 @@
       <!-- Fixed sidebar account and display controls -->
       <div class="sidebar-actions d-flex align-items-center gap-2">
         @if (session('admin_logged_in'))
-          <form class="d-flex my-auto" method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to log out of Crown Carz Admin Panel?');">
+          <form id="globalLogoutForm" class="d-flex my-auto" method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" title="Logout" aria-label="Logout" class="btn btn-sm btn-danger py-1 px-2.5 d-flex align-items-center" style="font-size: 12px; border-radius: 6px;"><i class="bi bi-box-arrow-right me-1"></i><span class="sidebar-link-label">Logout</span></button>
+            <button type="button" onclick="confirmAdminLogout(event)" title="Logout" aria-label="Logout" class="btn btn-sm btn-danger py-1 px-2.5 d-flex align-items-center" style="font-size: 12px; border-radius: 6px;"><i class="bi bi-box-arrow-right me-1"></i><span class="sidebar-link-label">Logout</span></button>
           </form>
+          <script>
+            function confirmAdminLogout(e) {
+              if (e) e.preventDefault();
+              const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark' || document.documentElement.classList.contains('dark-mode');
+              
+              if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                  title: 'Are you sure?',
+                  text: 'You will be logged out of Crown Carz Admin Panel.',
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonColor: '#dc3545',
+                  cancelButtonColor: isDark ? '#334155' : '#64748b',
+                  confirmButtonText: '<i class="bi bi-box-arrow-right me-1"></i> Yes, Logout',
+                  cancelButtonText: 'Cancel',
+                  background: isDark ? '#151d2c' : '#ffffff',
+                  color: isDark ? '#f8fafc' : '#1e293b',
+                  reverseButtons: true,
+                  focusCancel: true
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    document.getElementById('globalLogoutForm').submit();
+                  }
+                });
+              } else if (confirm('Are you sure you want to log out of Crown Carz Admin Panel?')) {
+                document.getElementById('globalLogoutForm').submit();
+              }
+            }
+          </script>
         @endif
 
         <!-- 🕒 Live UK (London / Heathrow) Time Widget -->
