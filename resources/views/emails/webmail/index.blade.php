@@ -553,7 +553,7 @@ async function loadEmailDetails(folder, id) {
   }
 
   try {
-    const url = `/admin/emails/${encodeURIComponent(folder)}/${id}`;
+    const url = `/admin/emails/message/${id}?folder=${encodeURIComponent(folder)}`;
     const res = await fetch(url, {
       headers: {
         'Accept': 'application/json',
@@ -561,9 +561,17 @@ async function loadEmailDetails(folder, id) {
       }
     });
 
-    if (!res.ok) throw new Error('Failed to load email from server');
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Unable to parse email');
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      data = null;
+    }
+
+    if (!res.ok || !data || !data.success) {
+      const errMsg = (data && data.error) ? data.error : `HTTP ${res.status}: Failed to load email from Hostinger`;
+      throw new Error(errMsg);
+    }
 
     const msg = data.message;
     currentLoadedMessage = msg;
@@ -592,7 +600,7 @@ async function loadEmailDetails(folder, id) {
 
       msg.attachments.forEach(att => {
         const chip = document.createElement('a');
-        chip.href = `/admin/emails/${encodeURIComponent(folder)}/${id}/attachment/${att.index}`;
+        chip.href = `/admin/emails/message/${id}/attachment/${att.index}?folder=${encodeURIComponent(folder)}`;
         chip.className = 'btn btn-sm webmail-btn-outline d-flex align-items-center gap-1.5 text-decoration-none py-1 px-2.5 rounded-2';
         chip.innerHTML = `
           <i class="bi bi-file-earmark-arrow-down text-warning"></i>

@@ -397,8 +397,9 @@ Route::prefix('admin/emails')->group(function () {
     Route::post('/read', [WebmailController::class, 'markRead'])->name('emails.read');
     Route::post('/star', [WebmailController::class, 'toggleStar'])->name('emails.star');
     Route::post('/delete', [WebmailController::class, 'destroy'])->name('emails.delete');
-    Route::get('/{folder}/{id}', [WebmailController::class, 'show'])->name('emails.show');
-    Route::get('/{folder}/{id}/attachment/{index}', [WebmailController::class, 'downloadAttachment'])->name('emails.attachment');
+    Route::get('/message/{id}', [WebmailController::class, 'show'])->name('emails.show');
+    Route::get('/message/{id}/attachment/{index}', [WebmailController::class, 'downloadAttachment'])->name('emails.attachment');
+    Route::get('/{folder}/{id}', [WebmailController::class, 'showLegacy'])->where('id', '[0-9]+');
 });
 
 

@@ -30,7 +30,7 @@ class HostingerImapClient
         $this->encryption = strtolower((string) ($cfg['encryption'] ?? 'ssl'));
         $this->username = (string) ($cfg['username'] ?? 'info@crowncarz.com');
         $this->password = (string) ($cfg['password'] ?? '');
-        $this->timeout = (int) ($cfg['timeout'] ?? 15);
+        $this->timeout = (int) ($cfg['timeout'] ?? 30);
         $this->validateCert = (bool) ($cfg['validate_cert'] ?? false);
     }
 
@@ -343,21 +343,43 @@ class HostingerImapClient
 
         // Fetch full raw message
         $fetchRes = $this->sendCommand("FETCH {$id} (FLAGS INTERNALDATE RFC822.SIZE BODY.PEEK[])");
-        $rawMessage = '';
-        $found = false;
+        if (($fetchRes['status'] ?? '') !== 'OK') {
+            throw new Exception("IMAP Fetch failed for message #{$id}: " . ($fetchRes['message'] ?? 'Unknown error'));
+        }
 
-        foreach ($fetchRes['lines'] as $line) {
-            if (preg_match('/^\*\s+' . $id . '\s+FETCH/i', $line)) {
-                $found = true;
-                continue;
+        $rawMessage = '';
+        $lines = $fetchRes['lines'] ?? [];
+
+        // Check if literal was captured
+        for ($i = 0; $i < count($lines); $i++) {
+            $line = $lines[$i];
+            if (preg_match('/^\*\s+' . $id . '\s+FETCH.*\{(\d+)\}$/i', $line)) {
+                if (isset($lines[$i + 1])) {
+                    $rawMessage = $lines[$i + 1];
+                    break;
+                }
             }
-            if ($found) {
-                $rawMessage .= $line . "\r\n";
+        }
+
+        // Fallback if not matched as single literal
+        if (empty($rawMessage)) {
+            $found = false;
+            foreach ($lines as $line) {
+                if (preg_match('/^\*\s+' . $id . '\s+FETCH/i', $line)) {
+                    $found = true;
+                    continue;
+                }
+                if ($found) {
+                    if (str_starts_with($line, 'TAG') || $line === ')') {
+                        break;
+                    }
+                    $rawMessage .= $line . "\r\n";
+                }
             }
         }
 
         if (empty($rawMessage)) {
-            throw new Exception("Message #{$id} not found in folder '{$folder}'.");
+            throw new Exception("Message #{$id} content could not be read from folder '{$folder}'.");
         }
 
         if ($autoMarkSeen) {
@@ -787,6 +809,25 @@ class HostingerImapClient
                 $status = strtoupper(trim($parts[0]));
                 $message = trim($parts[1] ?? '');
                 break;
+            }
+
+            // ⚡ Handle IMAP Literals: {1234} indicates the server is streaming exact bytes
+            if (preg_match('/\{(\d+)\}$/', $line, $litMatch)) {
+                $litLen = (int) $litMatch[1];
+                $literalData = '';
+                $remaining = $litLen;
+                while ($remaining > 0 && !feof($this->stream)) {
+                    $readSize = min($remaining, 65536);
+                    $chunk = fread($this->stream, $readSize);
+                    if ($chunk === false || $chunk === '') {
+                        break;
+                    }
+                    $literalData .= $chunk;
+                    $remaining -= strlen($chunk);
+                }
+                $lines[] = $line;
+                $lines[] = $literalData;
+                continue;
             }
 
             $lines[] = $line;

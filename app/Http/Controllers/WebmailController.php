@@ -70,13 +70,14 @@ class WebmailController extends Controller
     /**
      * Fetch single message details via AJAX or view
      */
-    public function show(Request $request, string $folder, int $id)
+    public function show(Request $request, int $id)
     {
         if (!session('admin_logged_in')) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $folder = urldecode($folder);
+        $folder = $request->query('folder', 'INBOX');
+        $folder = urldecode((string)$folder);
         if (base64_encode(base64_decode($folder, true) ?: '') === $folder) {
             $decoded = base64_decode($folder, true);
             if ($decoded !== false) $folder = $decoded;
@@ -86,14 +87,10 @@ class WebmailController extends Controller
             $imap = new HostingerImapClient();
             $message = $imap->getMessage($folder, $id, true);
 
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $message,
-                ]);
-            }
-
-            return view('emails.webmail.show', compact('message', 'folder'));
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ]);
         } catch (\Throwable $e) {
             Log::error("Failed to load email #{$id}: " . $e->getMessage());
             return response()->json([
@@ -104,15 +101,29 @@ class WebmailController extends Controller
     }
 
     /**
+     * Legacy route forwarder
+     */
+    public function showLegacy(Request $request, string $folder, int $id)
+    {
+        $request->merge(['folder' => $folder]);
+        return $this->show($request, $id);
+    }
+
+    /**
      * Download or view an attachment
      */
-    public function downloadAttachment(Request $request, string $folder, int $id, int $index)
+    public function downloadAttachment(Request $request, int $id, int $index)
     {
         if (!session('admin_logged_in')) {
             abort(403, 'Unauthorized');
         }
 
-        $folder = urldecode($folder);
+        $folder = $request->query('folder', 'INBOX');
+        $folder = urldecode((string)$folder);
+        if (base64_encode(base64_decode($folder, true) ?: '') === $folder) {
+            $decoded = base64_decode($folder, true);
+            if ($decoded !== false) $folder = $decoded;
+        }
         if (base64_encode(base64_decode($folder, true) ?: '') === $folder) {
             $decoded = base64_decode($folder, true);
             if ($decoded !== false) $folder = $decoded;
@@ -172,70 +183,65 @@ class WebmailController extends Controller
             $fromName = config('webmail.smtp.from_name', 'Crown Carz');
 
             // Parse recipient lists
-            $toEmails = array_map('trim', explode(',', $validated['to']));
-            $ccEmails = !empty($validated['cc']) ? array_map('trim', explode(',', $validated['cc'])) : [];
-            $bccEmails = !empty($validated['bcc']) ? array_map('trim', explode(',', $validated['bcc'])) : [];
+            $toEmails = array_filter(array_map('trim', explode(',', $validated['to'])));
+            $ccEmails = !empty($validated['cc']) ? array_filter(array_map('trim', explode(',', $validated['cc']))) : [];
+            $bccEmails = !empty($validated['bcc']) ? array_filter(array_map('trim', explode(',', $validated['bcc']))) : [];
 
-            // Build Symfony Email object
-            $email = (new Email())
-                ->from(new Address($fromAddress, $fromName))
-                ->subject($validated['subject'])
-                ->html($validated['body']);
-
-            foreach ($toEmails as $to) {
-                if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
-                    $email->addTo($to);
-                }
-            }
-            foreach ($ccEmails as $cc) {
-                if (filter_var($cc, FILTER_VALIDATE_EMAIL)) {
-                    $email->addCc($cc);
-                }
-            }
-            foreach ($bccEmails as $bcc) {
-                if (filter_var($bcc, FILTER_VALIDATE_EMAIL)) {
-                    $email->addBcc($bcc);
-                }
-            }
-
-            // Headers for threading (Reply / Forward)
-            if (!empty($validated['in_reply_to'])) {
-                $email->getHeaders()->addTextHeader('In-Reply-To', $validated['in_reply_to']);
-            }
-            if (!empty($validated['references'])) {
-                $email->getHeaders()->addTextHeader('References', $validated['references']);
-            }
-
-            // Handle uploaded file attachments
-            if ($request->hasFile('attachments')) {
-                foreach ($request->file('attachments') as $file) {
-                    if ($file->isValid()) {
-                        $email->attachFromPath(
-                            $file->getRealPath(),
-                            $file->getClientOriginalName(),
-                            $file->getMimeType()
-                        );
-                    }
-                }
-            }
+            // Convert plain text body newlines into clean HTML
+            $htmlBody = nl2br(e($validated['body']));
 
             // Send via dedicated Hostinger Webmail SMTP mailer
-            Mail::mailer('hostinger_webmail')->send(new \Illuminate\Mail\Mailable(), [], function ($message) use ($email) {
-                // Transfer Symfony Email settings to Swift/Symfony Message
-                $symfonyMessage = $message->getSymfonyMessage();
-                if ($symfonyMessage instanceof \Symfony\Component\Mime\Email) {
-                    $symfonyMessage->setHeaders($email->getHeaders());
-                    $symfonyMessage->setBody($email->getBody());
+            $sentMessage = Mail::mailer('hostinger_webmail')->html($htmlBody, function ($message) use ($fromAddress, $fromName, $validated, $toEmails, $ccEmails, $bccEmails, $request) {
+                $message->from($fromAddress, $fromName)
+                        ->subject($validated['subject']);
+
+                foreach ($toEmails as $to) {
+                    if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                        $message->to($to);
+                    }
+                }
+                foreach ($ccEmails as $cc) {
+                    if (filter_var($cc, FILTER_VALIDATE_EMAIL)) {
+                        $message->cc($cc);
+                    }
+                }
+                foreach ($bccEmails as $bcc) {
+                    if (filter_var($bcc, FILTER_VALIDATE_EMAIL)) {
+                        $message->bcc($bcc);
+                    }
+                }
+
+                // Headers for threading (Reply / Forward)
+                if (!empty($validated['in_reply_to'])) {
+                    $message->getHeaders()->addTextHeader('In-Reply-To', $validated['in_reply_to']);
+                }
+                if (!empty($validated['references'])) {
+                    $message->getHeaders()->addTextHeader('References', $validated['references']);
+                }
+
+                // Handle uploaded file attachments
+                if ($request->hasFile('attachments')) {
+                    foreach ($request->file('attachments') as $file) {
+                        if ($file->isValid()) {
+                            $message->attach($file->getRealPath(), [
+                                'as' => $file->getClientOriginalName(),
+                                'mime' => $file->getMimeType(),
+                            ]);
+                        }
+                    }
                 }
             });
 
             // Synchronize with Hostinger IMAP Sent Folder
-            try {
-                $imap = new HostingerImapClient();
-                $imap->appendToSent($email->toString());
-                Cache::forget('hostinger_webmail_folders_' . md5(config('webmail.imap.username', 'info@crowncarz.com')));
-            } catch (\Throwable $imapEx) {
-                Log::warning('Sent mail IMAP sync notice: ' . $imapEx->getMessage());
+            if ($sentMessage) {
+                try {
+                    $rawMime = $sentMessage->toString();
+                    $imap = new HostingerImapClient();
+                    $imap->appendToSent($rawMime);
+                    Cache::forget('hostinger_webmail_folders_' . md5(config('webmail.imap.username', 'info@crowncarz.com')));
+                } catch (\Throwable $imapEx) {
+                    Log::warning('Sent mail IMAP sync notice: ' . $imapEx->getMessage());
+                }
             }
 
             return response()->json([
