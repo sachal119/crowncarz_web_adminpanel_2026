@@ -29,6 +29,7 @@ use App\Http\Controllers\AdminPageController;
 use App\Http\Controllers\AdvertisementController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\CallSwitchWebhookController;
+use App\Http\Controllers\WebmailController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 
 Route::post(
@@ -383,14 +384,21 @@ Route::post('/pricing/mileage/save', [PricingController::class, 'saveMileage'])
 Route::get('/admin/system-settings', [SystemSettingsController::class, 'index'])->name('system.settings');
 Route::post('/admin/system-settings/update', [SystemSettingsController::class, 'update'])->name('system.settings.update');
 
-
-
-
 Route::get('/notifications/create', [NotificationController::class, 'create'])->name('notifications.create');
 Route::post('/notifications/send', [NotificationController::class, 'store'])->name('notifications.send');
 Route::get('/notifications/history', [NotificationController::class, 'history'])->name('notifications.history');
 
+});
 
+// ✉️ Hostinger Business Webmail (info@crowncarz.com)
+Route::prefix('admin/emails')->group(function () {
+    Route::get('/', [WebmailController::class, 'index'])->name('emails.index');
+    Route::post('/send', [WebmailController::class, 'send'])->name('emails.send');
+    Route::post('/read', [WebmailController::class, 'markRead'])->name('emails.read');
+    Route::post('/star', [WebmailController::class, 'toggleStar'])->name('emails.star');
+    Route::post('/delete', [WebmailController::class, 'destroy'])->name('emails.delete');
+    Route::get('/{folder}/{id}', [WebmailController::class, 'show'])->name('emails.show');
+    Route::get('/{folder}/{id}/attachment/{index}', [WebmailController::class, 'downloadAttachment'])->name('emails.attachment');
 });
 
 
