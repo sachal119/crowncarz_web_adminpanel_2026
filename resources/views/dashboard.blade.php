@@ -5285,6 +5285,21 @@ window.gm_authFailure = function() {
     }
 };
 
+const UK_GEO_BOUNDS = {
+    north: 61.2,
+    south: 49.6,
+    west: -9.5,
+    east: 2.5
+};
+const UK_DEFAULT_CENTER = { lat: 51.4543, lng: -0.9781 }; // Reading, UK
+
+function isPointInUK(lat, lng) {
+    return typeof lat === 'number' && typeof lng === 'number' &&
+           !isNaN(lat) && !isNaN(lng) &&
+           lat >= UK_GEO_BOUNDS.south && lat <= UK_GEO_BOUNDS.north &&
+           lng >= UK_GEO_BOUNDS.west && lng <= UK_GEO_BOUNDS.east;
+}
+
 function initDashMapInstance() {
     if (dashGoogleMap) return;
     const mapEl = document.getElementById("dashLiveDriverMap");
@@ -5309,8 +5324,14 @@ function initDashMapInstance() {
     ];
 
     dashGoogleMap = new google.maps.Map(mapEl, {
-        center: { lat: 51.4543, lng: -0.9781 }, // Reading, UK
-        zoom: 12,
+        center: UK_DEFAULT_CENTER, // Reading, Berkshire, UK
+        zoom: 11,
+        minZoom: 6, // Restricts view to UK only (never zooms out to entire world/continents)
+        maxZoom: 18,
+        restriction: {
+            latLngBounds: UK_GEO_BOUNDS,
+            strictBounds: false
+        },
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
@@ -5402,7 +5423,8 @@ function renderDashLiveDrivers() {
     }
 
     const bounds = new google.maps.LatLngBounds();
-    let hasGpsPoints = false;
+    let hasUkGpsPoints = false;
+    let ukGpsCount = 0;
 
     // Green Car SVG Marker Icon
     const carSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
@@ -5415,10 +5437,13 @@ function renderDashLiveDrivers() {
     `);
 
     availableDrivers.forEach(drv => {
-        if (drv.lat && drv.lng) {
+        const isUk = drv.lat && drv.lng && isPointInUK(drv.lat, drv.lng);
+
+        if (isUk) {
             const pos = new google.maps.LatLng(drv.lat, drv.lng);
             bounds.extend(pos);
-            hasGpsPoints = true;
+            hasUkGpsPoints = true;
+            ukGpsCount++;
 
             if (dashDriverMarkers[drv.id]) {
                 dashDriverMarkers[drv.id].setPosition(pos);
@@ -5453,14 +5478,31 @@ function renderDashLiveDrivers() {
 
                 dashDriverMarkers[drv.id] = marker;
             }
+        } else {
+            // Remove marker if driver coordinate is outside UK or not set
+            if (dashDriverMarkers[drv.id]) {
+                dashDriverMarkers[drv.id].setMap(null);
+                delete dashDriverMarkers[drv.id];
+            }
         }
     });
 
-    if (hasGpsPoints && availableDrivers.length > 1) {
+    if (hasUkGpsPoints && ukGpsCount > 1) {
         dashGoogleMap.fitBounds(bounds);
-    } else if (hasGpsPoints && availableDrivers.length === 1) {
+        // Ensure zoom is kept focused within UK (never zoom out to entire world)
+        google.maps.event.addListenerOnce(dashGoogleMap, 'idle', () => {
+            if (dashGoogleMap.getZoom() < 7) {
+                dashGoogleMap.setZoom(7);
+            } else if (dashGoogleMap.getZoom() > 14) {
+                dashGoogleMap.setZoom(14);
+            }
+        });
+    } else if (hasUkGpsPoints && ukGpsCount === 1) {
         dashGoogleMap.setCenter(bounds.getCenter());
         dashGoogleMap.setZoom(13);
+    } else {
+        dashGoogleMap.setCenter(UK_DEFAULT_CENTER);
+        dashGoogleMap.setZoom(11);
     }
 }
 
@@ -5470,6 +5512,9 @@ window.dashFocusDriver = function(driverId) {
         dashGoogleMap.panTo(marker.getPosition());
         dashGoogleMap.setZoom(15);
         google.maps.event.trigger(marker, 'click');
+    } else if (dashGoogleMap) {
+        dashGoogleMap.panTo(UK_DEFAULT_CENTER);
+        dashGoogleMap.setZoom(11);
     }
 };
 

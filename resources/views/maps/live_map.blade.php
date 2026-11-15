@@ -1086,6 +1086,15 @@ function initLiveMapPage() {
         zoom: 12,
         minZoom: 6,
         maxZoom: 20,
+        restriction: {
+            latLngBounds: {
+                north: 61.2,
+                south: 49.6,
+                west: -9.5,
+                east: 2.5
+            },
+            strictBounds: false
+        },
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         mapTypeControl: false,
         fullscreenControl: false,
@@ -1599,12 +1608,23 @@ function setupUIEventHandlers() {
             for (const id in overlayMarkers) {
                 const overlay = overlayMarkers[id];
                 if (overlay && overlay.div && overlay.div.style.display !== 'none') {
-                    bounds.extend(overlay.getPosition());
-                    count++;
+                    const pos = overlay.getPosition();
+                    if (pos) {
+                        const lat = pos.lat();
+                        const lng = pos.lng();
+                        // Only fit drivers within the UK
+                        if (lat >= 49.6 && lat <= 61.2 && lng >= -9.5 && lng <= 2.5) {
+                            bounds.extend(pos);
+                            count++;
+                        }
+                    }
                 }
             }
             if (count > 1) {
                 map.fitBounds(bounds);
+                google.maps.event.addListenerOnce(map, 'idle', () => {
+                    if (map.getZoom() < 7) map.setZoom(7);
+                });
             } else if (count === 1) {
                 map.setCenter(bounds.getCenter());
                 map.setZoom(15);
