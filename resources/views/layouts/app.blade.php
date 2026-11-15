@@ -160,7 +160,6 @@
       will-change: transform;
       z-index: 1070;
     }
-    .navbar-custom .nav-item.dropdown:hover > .dropdown-menu,
     .navbar-custom .dropdown-menu.show {
       display: block !important;
       margin-top: 0;
@@ -178,10 +177,10 @@
     }
     .main-content {
       padding: 0 !important;
-      margin: 0 !important;
-      height: calc(100vh - 48px) !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      height: 100dvh !important;
       overflow: hidden !important;
-      width: 100% !important;
       max-width: 100% !important;
     }
     .main-content > .container-fluid {
@@ -1232,6 +1231,117 @@
     #globalUkClockTime {
       color: #f8fafc !important;
     }
+
+    /* Fixed desktop navigation, with its own scroll area and inline submenus. */
+    :root { --cc-sidebar-width: 260px; }
+    .app-sidebar {
+      --bs-offcanvas-width: var(--cc-sidebar-width);
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: var(--cc-sidebar-width);
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      border-right: 1px solid rgba(255,255,255,.08);
+      border-bottom: 0;
+      background: #111827 !important;
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      padding: 20px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.09);
+    }
+    .sidebar-brand a { text-decoration: none; }
+    .sidebar-brand strong { font-size: 17px; letter-spacing: .3px; }
+    .sidebar-brand small { color: #94a3b8; font-size: 11px; margin-top: 3px; }
+    .app-sidebar .sidebar-scroll {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 14px 12px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior-y: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #64748b #111827;
+    }
+    .sidebar-scroll::-webkit-scrollbar { width: 6px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: #64748b; border-radius: 6px; }
+    .app-sidebar #navbarContent { flex-shrink: 0; }
+    .app-sidebar .navbar-nav { flex-direction: column; gap: 5px; }
+    .app-sidebar .nav-item { margin-right: 0 !important; }
+    .app-sidebar .nav-link {
+      display: flex;
+      width: 100%;
+      padding: 10px 12px !important;
+      font-size: 13px;
+      min-height: 42px;
+    }
+    .app-sidebar .nav-link > i { width: 22px; flex-shrink: 0; font-size: 16px; }
+    .app-sidebar .dropdown-toggle::after { margin-left: auto; }
+    .app-sidebar .dropdown-toggle[aria-expanded="true"]::after { transform: rotate(180deg); }
+    .app-sidebar .nav-link:focus-visible { outline: 2px solid #E6B04A; outline-offset: -2px; }
+    .app-sidebar .dropdown-menu {
+      position: static !important;
+      transform: none !important;
+      min-width: 0 !important;
+      width: 100%;
+      margin: 4px 0 8px !important;
+      box-shadow: none !important;
+      will-change: auto;
+    }
+    .app-sidebar .dropdown-item { white-space: normal; font-size: 12px; padding: 8px 10px; }
+    .app-sidebar .dropdown-item > span:first-child { min-width: 0; }
+    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] { padding: 10px !important; }
+    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] > .row > div { width: 100%; }
+    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] .row .row > div { width: 50%; }
+    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] .card-body { padding: 10px 5px !important; }
+    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] h1 { font-size: 20px; }
+    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] h4 { font-size: 16px; }
+    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] p { font-size: 11px; margin-bottom: 0; }
+    .app-sidebar #revenuePieChart { max-width: 100%; height: auto !important; }
+    .sidebar-actions {
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      margin-top: auto;
+      padding: 18px 4px 6px;
+      border-top: 1px solid rgba(255,255,255,.09);
+    }
+    .sidebar-actions .live-uk-clock-badge { order: -1; width: 100%; justify-content: center; margin-bottom: 8px !important; }
+    .sidebar-actions .theme-switch-wrapper { margin-left: auto; }
+    .sidebar-actions .theme-toggle-label { display: inline !important; }
+    .sidebar-mobile-header {
+      position: sticky;
+      top: 0;
+      z-index: 1020;
+      min-height: 56px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #111827;
+    }
+    @media (min-width: 992px) {
+      .app-sidebar.offcanvas-lg { position: fixed; }
+      .main-content { margin-left: var(--cc-sidebar-width); width: calc(100% - var(--cc-sidebar-width)); min-width: 0; }
+    }
+    @media (max-width: 991.98px) {
+      .app-sidebar { z-index: 1045 !important; width: min(var(--cc-sidebar-width), 90vw); }
+      .main-content { margin-left: 0; width: 100%; padding: 14px 8px; }
+      @if(request()->routeIs('live.map'))
+      .main-content { height: calc(100dvh - 56px) !important; }
+      @endif
+    }
+    @media print {
+      .app-sidebar, .sidebar-mobile-header { display: none !important; }
+      .main-content { margin-left: 0 !important; width: 100% !important; }
+    }
   </style>
 </head>
 
@@ -1258,27 +1368,31 @@
 @endphp
 
 <body>
-  <!-- Top Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-    <div class="container-fluid" style="
-    margin-left: 16px;
-    margin-right: 16px;
-">
-      <a class="navbar-brand mx-auto py-0" href="{{ route('dashboard') }}">
-        <img src="{{ asset('public/images/logo.png') }}" alt="Crown Carz Logo" style="height: 34px; width: auto;">
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+  <!-- Mobile navigation trigger -->
+  <header class="sidebar-mobile-header d-lg-none">
+    <a href="{{ route('dashboard') }}" class="text-white text-decoration-none fw-semibold">Crown Carz</a>
+    <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#adminSidebar" aria-controls="adminSidebar" aria-label="Open navigation menu">
+      <i class="bi bi-list me-1" aria-hidden="true"></i>Menu
+    </button>
+  </header>
 
-      <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
+  <nav class="offcanvas-lg offcanvas-start navbar-custom app-sidebar" tabindex="-1" id="adminSidebar" aria-labelledby="sidebarTitle">
+    <div class="sidebar-brand">
+      <a class="navbar-brand d-flex align-items-center gap-3" href="{{ route('dashboard') }}">
+        <img src="{{ asset('public/images/logo.png') }}" alt="" style="height: 38px; width: auto;">
+        <span><strong id="sidebarTitle">Crown Carz</strong><small class="d-block">Admin Panel</small></span>
+      </a>
+      <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#adminSidebar" aria-label="Close navigation menu"></button>
+    </div>
+    <div class="offcanvas-body sidebar-scroll">
+      <div id="navbarContent">
         <ul class="navbar-nav">
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-grid-fill me-1"></i>Dashboard</a></li>
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('live.map') ? 'active' : '' }}" href="{{ route('live.map') }}"><i class="bi bi-geo-alt-fill me-1"></i>Live Driver Map</a></li>
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('booking.create') ? 'active' : '' }}" href="{{ route('booking.create') }}" target="_blank"><i class="bi bi-calendar-plus me-1"></i>Create Booking</a></li>
           @if(session('staff_role', 'super_admin') !== 'collaborator')
           <li class="nav-item dropdown me-2">
-  <a class="nav-link dropdown-toggle" href="#" id="statsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+  <a class="nav-link dropdown-toggle" href="#" id="statsDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
     <i class="bi bi-bar-chart-fill me-1"></i>Stats
   </a>
 
@@ -1372,7 +1486,7 @@
           
           <!-- History Dropdown -->
           <li class="nav-item dropdown me-2">
-              <a class="nav-link dropdown-toggle {{ request()->routeIs('completed.jobs', 'bookings.search', 'previous.bookings', 'previous.bookings.search', 'bookings.cancelled', 'cancelled.bookings.search') ? 'active' : '' }}" href="#" id="historyDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <a class="nav-link dropdown-toggle {{ request()->routeIs('completed.jobs', 'bookings.search', 'previous.bookings', 'previous.bookings.search', 'bookings.cancelled', 'cancelled.bookings.search') ? 'active' : '' }}" href="#" id="historyDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                 <i class="bi bi-clock-history me-1"></i>History
               </a>
               <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="historyDropdown" style="border-radius: 12px; min-width: 250px;">
@@ -1400,7 +1514,7 @@
           <!-- Messages Dropdown -->
 @if(session('staff_role', 'super_admin') !== 'collaborator')
           <li class="nav-item dropdown me-2">
-              <a class="nav-link dropdown-toggle {{ request()->routeIs('messages.*', 'messages.all') ? 'active' : '' }}" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <a class="nav-link dropdown-toggle {{ request()->routeIs('messages.*', 'messages.all') ? 'active' : '' }}" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                 <i class="bi bi-chat-dots-fill me-1"></i>Messages
               </a>
               <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="messagesDropdown" style="border-radius: 12px;">
@@ -1415,7 +1529,7 @@
               </ul>
           </li>
           <li class="nav-item dropdown me-2">
-              <a class="nav-link dropdown-toggle {{ (request()->routeIs('pricing.*') || request()->routeIs('locations.*')) ? 'active' : '' }}" href="#" id="pricingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <a class="nav-link dropdown-toggle {{ (request()->routeIs('pricing.*') || request()->routeIs('locations.*')) ? 'active' : '' }}" href="#" id="pricingDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                 <i class="bi bi-currency-pound me-1"></i>Pricing
               </a>
               <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="pricingDropdown" style="border-radius: 12px;">
@@ -1444,8 +1558,8 @@
       </div>
       
 
-      <!-- Right Side Actions (Logout + Theme Switcher) -->
-      <div class="d-flex align-items-center ms-auto my-auto gap-2">
+      <!-- Sidebar account and display controls -->
+      <div class="sidebar-actions d-flex align-items-center gap-2">
         @if (session('admin_logged_in'))
           <form class="d-flex my-auto" method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to log out of Crown Carz Admin Panel?');">
             @csrf
@@ -1463,7 +1577,7 @@
           <span class="badge bg-dark text-warning px-1.5 py-0.5 rounded-1 font-monospace ms-1" id="globalUkClockTz" style="font-size: 9.5px; font-weight: 700;">GMT</span>
         </div>
 
-        <!-- 🌓 Light/Dark Theme Switcher in Top Bar -->
+        <!-- Light/Dark Theme Switcher -->
         <div class="theme-switch-wrapper my-auto">
           <button id="themeToggleBtn" type="button" class="theme-toggle-btn" onclick="toggleCrowncarzTheme()" title="Switch Light / Dark Theme" aria-label="Toggle Light / Dark Theme">
             <span class="theme-toggle-track">
