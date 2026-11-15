@@ -1456,7 +1456,7 @@
 @endif
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('pages.index', 'admin.pages.*') ? 'active' : '' }}" href="{{ route('pages.index') }}"><i class="bi bi-journal-richtext me-1"></i><span class="sidebar-link-label">Blogs</span></a></li>
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('advertisements.*') ? 'active' : '' }}" href="{{ route('advertisements.index') }}"><i class="bi bi-megaphone-fill me-1"></i><span class="sidebar-link-label">Ads</span></a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('emails.*') ? 'active' : '' }}" href="{{ route('emails.index') }}"><i class="bi bi-envelope-at-fill me-1 text-warning"></i><span class="sidebar-link-label">Emails</span></a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('emails.*') ? 'active' : '' }}" href="{{ route('emails.index') }}" title="Email (info@crowncarz.com)"><i class="bi bi-envelope-at-fill me-1 text-warning"></i><span class="sidebar-link-label d-inline-flex align-items-center flex-nowrap" style="white-space: nowrap; max-width: 160px;"><span>Email</span><span class="ms-1 opacity-75 fw-normal text-truncate" style="font-size: 9.5px; max-width: 118px; letter-spacing: -0.2px;">(info@crowncarz.com)</span></span></a></li>
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('system.settings') ? 'active' : '' }}" href="{{ route('system.settings') }}"><i class="bi bi-gear-wide-connected me-1"></i><span class="sidebar-link-label">Settings</span></a></li>
         </ul>
       </div>
