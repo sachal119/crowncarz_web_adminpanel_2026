@@ -50,8 +50,8 @@ class WebmailController extends Controller
             $folders = $imap->getFolders($forceRefresh);
             $messagesData = $imap->getMessages($folder, $page, 25, $search);
         } catch (\Throwable $e) {
-            $errorMessage = $e->getMessage();
-            Log::error('Hostinger Webmail Error: ' . $errorMessage);
+            $errorMessage = 'Unable to connect to your mailbox. Please contact your administrator.';
+            Log::error('Webmail connection error: ' . $e->getMessage());
         }
 
         return view('emails.webmail.index', [
@@ -261,14 +261,19 @@ class WebmailController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Email sent successfully via Hostinger!',
+                'message' => 'Email sent successfully!',
             ]);
         } catch (\Throwable $e) {
             Log::error('Failed to send webmail: ' . $e->getMessage());
+            $authenticationFailed = str_contains($e->getMessage(), '535')
+                || str_contains(strtolower($e->getMessage()), 'failed to authenticate');
+
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to send email: ' . $e->getMessage(),
-            ], 200);
+                'error' => $authenticationFailed
+                    ? 'Email server login failed. Please ask your administrator to verify the outgoing mailbox username and password.'
+                    : 'Unable to send email. Please contact your administrator to check the outgoing mail settings.',
+            ], 502);
         }
     }
 

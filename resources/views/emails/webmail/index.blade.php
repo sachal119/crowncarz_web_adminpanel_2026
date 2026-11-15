@@ -11,15 +11,15 @@
       </div>
       <div>
         <h4 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--cc-text-primary);">
-          Hostinger Webmail
+          Business Webmail
           <span class="badge rounded-pill font-monospace px-2.5 py-1" style="font-size: 11px; background: #E6B04A; color: #1e293b;">{{ $mailboxUsername }}</span>
         </h4>
-        <small style="color: var(--cc-text-secondary);">Official Crown Carz Business Mailbox &bull; Real-time IMAP/SMTP Synchronized</small>
+        <small style="color: var(--cc-text-secondary);">Official Crown Carz Business Mailbox</small>
       </div>
     </div>
 
     <div class="d-flex align-items-center gap-2">
-      <a href="{{ route('emails.index', ['folder' => $currentFolder, 'refresh' => 1]) }}" class="btn btn-sm d-flex align-items-center gap-1.5 px-3 py-1.5 rounded-3 shadow-xs webmail-btn-outline" title="Force Sync with Hostinger IMAP">
+      <a href="{{ route('emails.index', ['folder' => $currentFolder, 'refresh' => 1]) }}" class="btn btn-sm d-flex align-items-center gap-1.5 px-3 py-1.5 rounded-3 shadow-xs webmail-btn-outline" title="Refresh mailbox">
         <i class="bi bi-arrow-clockwise"></i>
         <span>Refresh Mailbox</span>
       </a>
@@ -34,9 +34,9 @@
     <div class="alert alert-danger d-flex align-items-start gap-3 rounded-3 shadow-sm border-0 mb-3" role="alert">
       <i class="bi bi-exclamation-triangle-fill fs-4 flex-shrink-0 text-danger"></i>
       <div>
-        <h6 class="fw-bold mb-1">Hostinger Connection Notice</h6>
+        <h6 class="fw-bold mb-1">Mailbox Connection Notice</h6>
         <p class="mb-1 small">{{ $errorMessage }}</p>
-        <small class="text-muted">Please check your <code>.env</code> file for <code>HOSTINGER_WEBMAIL_IMAP_PASSWORD</code> or contact your server administrator.</small>
+        <small class="text-muted">Please contact your administrator to check the mailbox connection settings.</small>
       </div>
     </div>
   @endif
@@ -88,7 +88,7 @@
 
         <div class="pt-3 mt-3 border-top small" style="border-color: var(--cc-border) !important; color: var(--cc-text-muted); font-size: 11px;">
           <div class="d-flex align-items-center gap-1.5"><i class="bi bi-shield-lock-fill text-success"></i><span>SSL Encrypted</span></div>
-          <div class="text-truncate mt-0.5" style="color: var(--cc-text-secondary);">imap.hostinger.com:993</div>
+          <div class="text-truncate mt-0.5" style="color: var(--cc-text-secondary);">Secure mailbox connection</div>
         </div>
       </div>
 
@@ -206,7 +206,7 @@
         <!-- Loading Spinner -->
         <div id="emailDetailLoading" class="m-auto text-center py-5 d-none">
           <div class="spinner-border text-warning" role="status"></div>
-          <div class="small mt-2" style="color: var(--cc-text-secondary);">Loading email securely from Hostinger...</div>
+          <div class="small mt-2" style="color: var(--cc-text-secondary);">Loading email...</div>
         </div>
 
         <!-- Active Email View Container -->
@@ -315,7 +315,7 @@
           <!-- From Badge -->
           <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 small border" style="background: var(--cc-bg-card-subtle); border-color: var(--cc-border) !important;">
             <span style="color: var(--cc-text-secondary);">Sending From:</span>
-            <span class="fw-bold font-monospace" style="color: #d97706;">{{ $mailboxUsername }} &bull; Hostinger SMTP</span>
+            <span class="fw-bold font-monospace" style="color: #d97706;">{{ $mailboxUsername }}</span>
           </div>
 
           <!-- To Input -->
@@ -580,7 +580,7 @@ async function loadEmailDetails(folder, id) {
     }
 
     if (!res.ok || !data || !data.success) {
-      const errMsg = (data && data.error) ? data.error : `HTTP ${res.status}: Failed to load email from Hostinger`;
+      const errMsg = (data && data.error) ? data.error : `HTTP ${res.status}: Failed to load email`;
       throw new Error(errMsg);
     }
 
@@ -711,7 +711,7 @@ async function deleteCurrentEmail() {
 
   const result = await Swal.fire({
     title: 'Delete this email?',
-    text: 'It will be moved to the Trash folder on Hostinger.',
+    text: 'It will be moved to the Trash folder.',
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#dc3545',
@@ -763,7 +763,7 @@ async function handleSendEmail(e) {
   const originalHtml = btn.innerHTML;
 
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Sending via Hostinger...';
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Sending...';
 
   // Validate attachment sizes before upload
   const fileInput = document.getElementById('composeAttachments');
@@ -810,7 +810,7 @@ async function handleSendEmail(e) {
       Swal.fire({
         icon: 'success',
         title: 'Sent!',
-        text: 'Your email was sent successfully through Hostinger SMTP.',
+        text: 'Your email was sent successfully.',
         confirmButtonColor: '#E6B04A'
       });
     } else {

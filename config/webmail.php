@@ -1,5 +1,9 @@
 <?php
 
+// Use the same mailbox credentials for reading and sending unless SMTP is explicitly overridden.
+$imapUsername = env('HOSTINGER_WEBMAIL_IMAP_USERNAME', env('IMAP_USERNAME', env('MAIL_USERNAME', 'info@crowncarz.com')));
+$imapPassword = env('HOSTINGER_WEBMAIL_IMAP_PASSWORD', env('IMAP_PASSWORD', env('MAIL_PASSWORD', '')));
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -16,8 +20,8 @@ return [
         'port' => (int) env('HOSTINGER_WEBMAIL_IMAP_PORT', env('IMAP_PORT', 993)),
         'encryption' => env('HOSTINGER_WEBMAIL_IMAP_ENCRYPTION', env('IMAP_ENCRYPTION', 'ssl')),
         'validate_cert' => env('HOSTINGER_WEBMAIL_IMAP_VALIDATE_CERT', false),
-        'username' => env('HOSTINGER_WEBMAIL_IMAP_USERNAME', env('IMAP_USERNAME', env('MAIL_USERNAME', 'info@crowncarz.com'))),
-        'password' => env('HOSTINGER_WEBMAIL_IMAP_PASSWORD', env('IMAP_PASSWORD', env('MAIL_PASSWORD', ''))),
+        'username' => $imapUsername,
+        'password' => $imapPassword,
         'timeout' => 15,
     ],
 
@@ -25,8 +29,8 @@ return [
         'host' => env('HOSTINGER_WEBMAIL_SMTP_HOST', 'smtp.hostinger.com'),
         'port' => (int) env('HOSTINGER_WEBMAIL_SMTP_PORT', 465),
         'encryption' => env('HOSTINGER_WEBMAIL_SMTP_ENCRYPTION', 'ssl'),
-        'username' => env('HOSTINGER_WEBMAIL_SMTP_USERNAME', env('HOSTINGER_WEBMAIL_IMAP_USERNAME', env('MAIL_USERNAME', 'info@crowncarz.com'))),
-        'password' => env('HOSTINGER_WEBMAIL_SMTP_PASSWORD', env('HOSTINGER_WEBMAIL_IMAP_PASSWORD', env('MAIL_PASSWORD', env('IMAP_PASSWORD', '')))),
+        'username' => env('HOSTINGER_WEBMAIL_SMTP_USERNAME', $imapUsername),
+        'password' => env('HOSTINGER_WEBMAIL_SMTP_PASSWORD', $imapPassword),
         'from_address' => env('HOSTINGER_WEBMAIL_FROM_ADDRESS', env('MAIL_FROM_ADDRESS', 'info@crowncarz.com')),
         'from_name' => env('HOSTINGER_WEBMAIL_FROM_NAME', env('MAIL_FROM_NAME', 'Crown Carz')),
         'timeout' => 15,
