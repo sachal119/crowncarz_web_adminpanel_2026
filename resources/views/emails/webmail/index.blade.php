@@ -553,13 +553,23 @@ async function loadEmailDetails(folder, id) {
   }
 
   try {
-    let url = `/admin/emails/message/${id}?folder=${encodeURIComponent(folder)}`;
+    let url = `/admin/emails/view?id=${id}&folder=${encodeURIComponent(folder)}`;
     let res = await fetch(url, {
       headers: {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
       }
     });
+
+    if (res.status === 404) {
+      url = `/admin/emails/message/${id}?folder=${encodeURIComponent(folder)}`;
+      res = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+    }
 
     if (res.status === 404) {
       url = `/admin/emails/${encodeURIComponent(folder)}/${id}`;
@@ -759,6 +769,24 @@ async function handleSendEmail(e) {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Sending via Hostinger...';
 
+  // Validate attachment sizes before upload
+  const fileInput = document.getElementById('composeAttachments');
+  if (fileInput && fileInput.files.length > 0) {
+    for (let f of fileInput.files) {
+      if (f.size > 20 * 1024 * 1024) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Attachment Too Large',
+          text: `File "${f.name}" is ${Math.round(f.size / (1024 * 1024))}MB. Maximum allowed is 20MB.`,
+          confirmButtonColor: '#E6B04A'
+        });
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        return;
+      }
+    }
+  }
+
   const formData = new FormData(form);
 
   try {
@@ -771,8 +799,14 @@ async function handleSendEmail(e) {
       body: formData
     });
 
-    const data = await res.json();
-    if (data.success) {
+    let data;
+    try {
+      data = await res.json();
+    } catch (parseErr) {
+      data = null;
+    }
+
+    if (data && data.success) {
       bootstrap.Modal.getInstance(document.getElementById('composeEmailModal'))?.hide();
       form.reset();
 
@@ -783,7 +817,8 @@ async function handleSendEmail(e) {
         confirmButtonColor: '#E6B04A'
       });
     } else {
-      throw new Error(data.error || 'Failed to send email');
+      const errText = (data && data.error) ? data.error : `HTTP ${res.status}: Server could not send email.`;
+      throw new Error(errText);
     }
   } catch (err) {
     Swal.fire({

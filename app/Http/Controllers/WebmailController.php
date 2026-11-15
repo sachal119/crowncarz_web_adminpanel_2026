@@ -68,6 +68,15 @@ class WebmailController extends Controller
     }
 
     /**
+     * Query-string based single message fetcher (bulletproof against server route rewrites)
+     */
+    public function showQuery(Request $request)
+    {
+        $id = (int) $request->query('id', 0);
+        return $this->show($request, $id);
+    }
+
+    /**
      * Fetch single message details via AJAX or view
      */
     public function show(Request $request, int $id)

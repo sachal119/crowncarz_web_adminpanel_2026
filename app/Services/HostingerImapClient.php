@@ -350,22 +350,36 @@ class HostingerImapClient
         $rawMessage = '';
         $lines = $fetchRes['lines'] ?? [];
 
-        // Check if literal was captured
+        // 1. Check if literal was captured in response
         for ($i = 0; $i < count($lines); $i++) {
             $line = $lines[$i];
-            if (preg_match('/^\*\s+' . $id . '\s+FETCH/i', $line) && preg_match('/\{(\d+)\}$/', $line)) {
-                if (isset($lines[$i + 1])) {
+            if (preg_match('/\{(\d+)\}$/', $line)) {
+                if (isset($lines[$i + 1]) && strlen($lines[$i + 1]) > 0) {
                     $rawMessage = $lines[$i + 1];
                     break;
                 }
             }
         }
 
-        // Fallback if not matched as single literal
+        // 2. Fallback: try standard RFC822 fetch if BODY.PEEK was empty
+        if (empty($rawMessage)) {
+            $rfcRes = $this->sendCommand("FETCH {$id} (RFC822)");
+            $rfcLines = $rfcRes['lines'] ?? [];
+            for ($j = 0; $j < count($rfcLines); $j++) {
+                if (preg_match('/\{(\d+)\}$/', $rfcLines[$j])) {
+                    if (isset($rfcLines[$j + 1]) && strlen($rfcLines[$j + 1]) > 0) {
+                        $rawMessage = $rfcLines[$j + 1];
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 3. Fallback: stream lines if not delivered as single literal
         if (empty($rawMessage)) {
             $found = false;
             foreach ($lines as $line) {
-                if (preg_match('/^\*\s+' . $id . '\s+FETCH/i', $line)) {
+                if (preg_match('/^\*\s+\d+\s+FETCH/i', $line)) {
                     $found = true;
                     continue;
                 }
