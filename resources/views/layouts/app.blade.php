@@ -22,6 +22,7 @@
   <script>
     (function() {
       try {
+        document.documentElement.dataset.sidebarCollapsed = localStorage.getItem('crowncarz_sidebar_collapsed') === '1' ? 'true' : 'false';
         const savedTheme = localStorage.getItem('crowncarz_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         document.documentElement.setAttribute('data-bs-theme', savedTheme);
         if (savedTheme === 'dark') {
@@ -230,7 +231,6 @@
     .dashboard-card h4 { font-size: 1.6rem; font-weight: 700; }
     .dashboard-card p { font-size: 0.9rem; opacity: 0.9; }
     .card-header { border-bottom: 1px solid #e3e6f0; font-weight: 600; }
-    #revenuePieChart { max-height: 240px; }
 
     /* Flight Tracker Badge Styling */
     .flight-track-badge {
@@ -1233,7 +1233,7 @@
     }
 
     /* Fixed desktop navigation, with its own scroll area and inline submenus. */
-    :root { --cc-sidebar-width: 260px; }
+    :root { --cc-sidebar-width: 220px; }
     .app-sidebar {
       --bs-offcanvas-width: var(--cc-sidebar-width);
       position: fixed;
@@ -1253,18 +1253,19 @@
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
-      padding: 20px 18px;
+      padding: 16px 12px;
       border-bottom: 1px solid rgba(255,255,255,.09);
     }
-    .sidebar-brand a { text-decoration: none; }
-    .sidebar-brand strong { font-size: 17px; letter-spacing: .3px; }
+    .sidebar-brand a { text-decoration: none; gap: 8px !important; }
+    .sidebar-brand img { height: 32px !important; }
+    .sidebar-brand strong { font-size: 14px; letter-spacing: .3px; }
     .sidebar-brand small { color: #94a3b8; font-size: 11px; margin-top: 3px; }
     .app-sidebar .sidebar-scroll {
       display: flex;
       flex-direction: column;
       flex: 1 1 auto;
       min-height: 0;
-      padding: 14px 12px;
+      padding: 10px 8px;
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior-y: contain;
@@ -1274,13 +1275,13 @@
     .sidebar-scroll::-webkit-scrollbar { width: 6px; }
     .sidebar-scroll::-webkit-scrollbar-thumb { background: #64748b; border-radius: 6px; }
     .app-sidebar #navbarContent { flex-shrink: 0; }
-    .app-sidebar .navbar-nav { flex-direction: column; gap: 5px; }
+    .app-sidebar .navbar-nav { flex-direction: column; gap: 3px; }
     .app-sidebar .nav-item { margin-right: 0 !important; }
     .app-sidebar .nav-link {
       display: flex;
       width: 100%;
-      padding: 10px 12px !important;
-      font-size: 13px;
+      padding: 9px 10px !important;
+      font-size: 12px;
       min-height: 42px;
     }
     .app-sidebar .nav-link > i { width: 22px; flex-shrink: 0; font-size: 16px; }
@@ -1298,19 +1299,12 @@
     }
     .app-sidebar .dropdown-item { white-space: normal; font-size: 12px; padding: 8px 10px; }
     .app-sidebar .dropdown-item > span:first-child { min-width: 0; }
-    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] { padding: 10px !important; }
-    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] > .row > div { width: 100%; }
-    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] .row .row > div { width: 50%; }
-    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] .card-body { padding: 10px 5px !important; }
-    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] h1 { font-size: 20px; }
-    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] h4 { font-size: 16px; }
-    .app-sidebar .dropdown-menu[aria-labelledby="statsDropdown"] p { font-size: 11px; margin-bottom: 0; }
-    .app-sidebar #revenuePieChart { max-width: 100%; height: auto !important; }
     .sidebar-actions {
       flex-wrap: wrap;
       flex-shrink: 0;
       margin-top: auto;
-      padding: 18px 4px 6px;
+      padding: 12px 10px max(12px, env(safe-area-inset-bottom));
+      background: #111827;
       border-top: 1px solid rgba(255,255,255,.09);
     }
     .sidebar-actions .live-uk-clock-badge { order: -1; width: 100%; justify-content: center; margin-bottom: 8px !important; }
@@ -1338,6 +1332,31 @@
       .main-content { height: calc(100dvh - 56px) !important; }
       @endif
     }
+    .sidebar-collapse-btn {
+      align-items: center; justify-content: center;
+      flex-shrink: 0; width: 28px; height: 28px;
+      border: 1px solid #475569; border-radius: 6px;
+      background: transparent; color: #e2e8f0;
+    }
+    .sidebar-collapse-btn:hover, .sidebar-collapse-btn:focus-visible { color: #E6B04A; border-color: #E6B04A; }
+    @media (min-width: 992px) {
+      html[data-sidebar-collapsed="true"] { --cc-sidebar-width: 80px; }
+      [data-sidebar-collapsed="true"] .sidebar-brand { flex-direction: column; gap: 10px; padding: 12px 6px; }
+      [data-sidebar-collapsed="true"] .sidebar-brand-label,
+      [data-sidebar-collapsed="true"] .sidebar-link-label,
+      [data-sidebar-collapsed="true"] .app-sidebar .dropdown-toggle::after,
+      [data-sidebar-collapsed="true"] .app-sidebar .dropdown-menu,
+      [data-sidebar-collapsed="true"] .sidebar-actions .theme-toggle-label { display: none !important; }
+      [data-sidebar-collapsed="true"] .sidebar-collapse-btn i { transform: rotate(180deg); }
+      [data-sidebar-collapsed="true"] .app-sidebar .nav-link { justify-content: center; }
+      [data-sidebar-collapsed="true"] .app-sidebar .nav-link > i { margin: 0 !important; width: auto; }
+      [data-sidebar-collapsed="true"] .sidebar-actions { flex-direction: column; padding: 10px 4px; gap: 10px !important; }
+      [data-sidebar-collapsed="true"] .sidebar-actions .theme-switch-wrapper { margin-left: 0; }
+      [data-sidebar-collapsed="true"] .sidebar-actions .theme-toggle-btn { padding: 4px; }
+      [data-sidebar-collapsed="true"] .sidebar-actions .live-uk-clock-badge { padding: 4px 1px !important; margin-bottom: 0 !important; }
+      [data-sidebar-collapsed="true"] .live-uk-clock-badge > :not(#globalUkClockTime) { display: none; }
+      [data-sidebar-collapsed="true"] #globalUkClockTime { font-size: 8px; letter-spacing: 0 !important; }
+    }
     @media print {
       .app-sidebar, .sidebar-mobile-header { display: none !important; }
       .main-content { margin-left: 0 !important; width: 100% !important; }
@@ -1345,27 +1364,7 @@
   </style>
 </head>
 
-@php
-    // --- Dummy Data for New Components ---
-    // (In your controller, you would pass these variables)
-    $totalUsers = $totalUsers ?? 120; // Example: Pass $totalUsers from controller
-    $todaysRevenue = $todaysRevenue ?? 450.75; // Example: Pass $todaysRevenue from controller
-    $revenueBreakdown = $revenueBreakdown ?? [
-        'Cash' => 150.25,
-        'Card' => 200.50,
-        'Account' => 100.00,
-    ];
-    // --- End Dummy Data ---
 
-    // Pre-calculate driver counts
-    if (!isset($drivers) || !($drivers instanceof \Illuminate\Support\Collection)) {
-        $drivers = collect($drivers ?? []);
-    }
-    $availableDrivers = $drivers->whereIn('status', ['Available', 'available'])->count();
-    $waitingDrivers = $drivers->where('status', 'waiting')->count();
-    $engagedDrivers = $drivers->where('status', 'engaged')->count();
-    $onBreakDrivers = $drivers->where('status', 'On Break')->count();
-@endphp
 
 <body>
   <!-- Mobile navigation trigger -->
@@ -1380,115 +1379,23 @@
     <div class="sidebar-brand">
       <a class="navbar-brand d-flex align-items-center gap-3" href="{{ route('dashboard') }}">
         <img src="{{ asset('public/images/logo.png') }}" alt="" style="height: 38px; width: auto;">
-        <span><strong id="sidebarTitle">Crown Carz</strong><small class="d-block">Admin Panel</small></span>
+        <span class="sidebar-brand-label"><strong id="sidebarTitle">Crown Carz</strong><small class="d-block">Admin Panel</small></span>
       </a>
+      <button type="button" id="sidebarCollapseBtn" class="sidebar-collapse-btn d-none d-lg-inline-flex" aria-controls="navbarContent" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar">
+        <i class="bi bi-chevron-bar-left" aria-hidden="true"></i>
+      </button>
       <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#adminSidebar" aria-label="Close navigation menu"></button>
     </div>
     <div class="offcanvas-body sidebar-scroll">
       <div id="navbarContent">
         <ul class="navbar-nav">
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-grid-fill me-1"></i>Dashboard</a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('live.map') ? 'active' : '' }}" href="{{ route('live.map') }}"><i class="bi bi-geo-alt-fill me-1"></i>Live Driver Map</a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('booking.create') ? 'active' : '' }}" href="{{ route('booking.create') }}" target="_blank"><i class="bi bi-calendar-plus me-1"></i>Create Booking</a></li>
-          @if(session('staff_role', 'super_admin') !== 'collaborator')
-          <li class="nav-item dropdown me-2">
-  <a class="nav-link dropdown-toggle" href="#" id="statsDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
-    <i class="bi bi-bar-chart-fill me-1"></i>Stats
-  </a>
-
-  <div class="dropdown-menu p-3 shadow-lg border-0" aria-labelledby="statsDropdown" style="min-width: 800px; border-radius: 16px;">
-    <div class="row g-3">
-      <!-- Left Section: Driver Stats -->
-      <div class="col-lg-8 col-md-7">
-        <div class="row g-3 mb-3">
-          <div class="col-6 col-md-4">
-            <div class="card dashboard-card bg-success text-white text-center">
-              <div class="card-body py-3">
-                <h1><i class="bi bi-check-circle"></i></h1>
-                <h4>{{ $availableDrivers }}</h4>
-                <p>Available</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-6 col-md-4">
-            <div class="card dashboard-card bg-info text-white text-center">
-              <div class="card-body py-3">
-                <h1><i class="bi bi-clock"></i></h1>
-                <h4>{{ $waitingDrivers }}</h4>
-                <p>Waiting</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-6 col-md-4">
-            <div class="card dashboard-card bg-danger text-white text-center">
-              <div class="card-body py-3">
-                <h1><i class="bi bi-car-front"></i></h1>
-                <h4>{{ $engagedDrivers }}</h4>
-                <p>Engaged</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="row g-3">
-          <div class="col-6 col-md-4">
-            <div class="card dashboard-card bg-secondary text-white text-center">
-              <div class="card-body py-3">
-                <h1><i class="bi bi-cup-hot"></i></h1>
-                <h4>{{ $onBreakDrivers }}</h4>
-                <p>On Break</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-6 col-md-4">
-            <div class="card dashboard-card bg-primary text-white text-center">
-              <div class="card-body py-3">
-                <h1><i class="bi bi-people"></i></h1>
-                <!--<h4>{{ $totalUsers }}</h4>-->
-                <h4 id="totalUsersDisplay">0</h4>
-                <p>Total Users</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-6 col-md-4">
-            <div class="card dashboard-card bg-dark text-white text-center">
-              <div class="card-body py-3">
-                <h1><i class="bi bi-cash-stack"></i></h1>
-                <!--<h4>£{{ number_format($todaysRevenue, 2) }}</h4>-->
-                <h4 id="todaysRevenueDisplay">£0.00</h4>
-                <p>Today's Revenue</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Section: Revenue Pie Chart -->
-      <div class="col-lg-4 col-md-5">
-        <div class="card shadow-sm border-0 h-100" style="border-radius: 16px;">
-          <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h6 class="mb-0 text-dark">📊 Revenue Breakdown</h6>
-            <i class="bi bi-pie-chart text-muted fs-5"></i>
-          </div>
-          <div class="card-body d-flex justify-content-center align-items-center">
-            <canvas id="revenuePieChart" width="200" height="200"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-          </div>
-</li>
-          @endif
-          
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-grid-fill me-1"></i><span class="sidebar-link-label">Dashboard</span></a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('live.map') ? 'active' : '' }}" href="{{ route('live.map') }}"><i class="bi bi-geo-alt-fill me-1"></i><span class="sidebar-link-label">Live Driver Map</span></a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('booking.create') ? 'active' : '' }}" href="{{ route('booking.create') }}" target="_blank"><i class="bi bi-calendar-plus me-1"></i><span class="sidebar-link-label">Create Booking</span></a></li>
           <!-- History Dropdown -->
           <li class="nav-item dropdown me-2">
               <a class="nav-link dropdown-toggle {{ request()->routeIs('completed.jobs', 'bookings.search', 'previous.bookings', 'previous.bookings.search', 'bookings.cancelled', 'cancelled.bookings.search') ? 'active' : '' }}" href="#" id="historyDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
-                <i class="bi bi-clock-history me-1"></i>History
-              </a>
+                <i class="bi bi-clock-history me-1"></i><span class="sidebar-link-label">History</span></a>
               <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="historyDropdown" style="border-radius: 12px; min-width: 250px;">
                 <li>
                   <a class="dropdown-item d-flex align-items-center justify-content-between py-2 {{ request()->routeIs('completed.jobs', 'bookings.search') ? 'active' : '' }}" href="{{ route('completed.jobs') }}">
@@ -1515,8 +1422,7 @@
 @if(session('staff_role', 'super_admin') !== 'collaborator')
           <li class="nav-item dropdown me-2">
               <a class="nav-link dropdown-toggle {{ request()->routeIs('messages.*', 'messages.all') ? 'active' : '' }}" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
-                <i class="bi bi-chat-dots-fill me-1"></i>Messages
-              </a>
+                <i class="bi bi-chat-dots-fill me-1"></i><span class="sidebar-link-label">Messages</span></a>
               <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="messagesDropdown" style="border-radius: 12px;">
                 <li><h6 class="dropdown-header">Customer</h6></li>
                 <li><a class="dropdown-item {{ request()->routeIs('messages.customer.booking') ? 'active' : '' }}" href="{{ route('messages.customer.booking') }}">Booking Confirmation SMS</a></li>
@@ -1530,8 +1436,7 @@
           </li>
           <li class="nav-item dropdown me-2">
               <a class="nav-link dropdown-toggle {{ (request()->routeIs('pricing.*') || request()->routeIs('locations.*')) ? 'active' : '' }}" href="#" id="pricingDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
-                <i class="bi bi-currency-pound me-1"></i>Pricing
-              </a>
+                <i class="bi bi-currency-pound me-1"></i><span class="sidebar-link-label">Pricing</span></a>
               <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="pricingDropdown" style="border-radius: 12px;">
                 <li><a class="dropdown-item {{ request()->routeIs('pricing.fixed') ? 'active' : '' }}" href="{{ route('pricing.fixed') }}">Fixed Pricing</a></li>
                 <li><a class="dropdown-item {{ request()->routeIs('pricing.mileage') ? 'active' : '' }}" href="{{ route('pricing.mileage') }}">Mileage Pricing</a></li>
@@ -1539,31 +1444,32 @@
               </ul>
           </li>
 
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('reports', 'reports.*') ? 'active' : '' }}" href="{{ route('reports') }}"><i class="bi bi-graph-up me-1"></i>Reports</a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('setup', 'setup.*') ? 'active' : '' }}" href="{{ route('setup') }}"><i class="bi bi-gear-fill me-1"></i>Setup</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('reports', 'reports.*') ? 'active' : '' }}" href="{{ route('reports') }}"><i class="bi bi-graph-up me-1"></i><span class="sidebar-link-label">Reports</span></a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('setup', 'setup.*') ? 'active' : '' }}" href="{{ route('setup') }}"><i class="bi bi-gear-fill me-1"></i><span class="sidebar-link-label">Setup</span></a></li>
 @endif
           @if (!session('admin_logged_in'))
     <!-- Show Login -->
     <li class="nav-item me-3">
         <a class="nav-link" href="{{ route('login') }}">
-            <i class="bi bi-people-fill me-1"></i>Login
-        </a>
+            <i class="bi bi-people-fill me-1"></i><span class="sidebar-link-label">Login</span></a>
     </li>
 @endif
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('pages.index', 'admin.pages.*') ? 'active' : '' }}" href="{{ route('pages.index') }}"><i class="bi bi-journal-richtext me-1"></i>Blogs</a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('advertisements.*') ? 'active' : '' }}" href="{{ route('advertisements.index') }}"><i class="bi bi-megaphone-fill me-1"></i>Ads</a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('emails.*') ? 'active' : '' }}" href="{{ route('emails.index') }}"><i class="bi bi-envelope-at-fill me-1 text-warning"></i>Emails</a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('system.settings') ? 'active' : '' }}" href="{{ route('system.settings') }}"><i class="bi bi-gear-wide-connected me-1"></i>Settings</a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('pages.index', 'admin.pages.*') ? 'active' : '' }}" href="{{ route('pages.index') }}"><i class="bi bi-journal-richtext me-1"></i><span class="sidebar-link-label">Blogs</span></a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('advertisements.*') ? 'active' : '' }}" href="{{ route('advertisements.index') }}"><i class="bi bi-megaphone-fill me-1"></i><span class="sidebar-link-label">Ads</span></a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('emails.*') ? 'active' : '' }}" href="{{ route('emails.index') }}"><i class="bi bi-envelope-at-fill me-1 text-warning"></i><span class="sidebar-link-label">Emails</span></a></li>
+          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('system.settings') ? 'active' : '' }}" href="{{ route('system.settings') }}"><i class="bi bi-gear-wide-connected me-1"></i><span class="sidebar-link-label">Settings</span></a></li>
         </ul>
       </div>
       
 
-      <!-- Sidebar account and display controls -->
+    </div>
+
+      <!-- Fixed sidebar account and display controls -->
       <div class="sidebar-actions d-flex align-items-center gap-2">
         @if (session('admin_logged_in'))
           <form class="d-flex my-auto" method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to log out of Crown Carz Admin Panel?');">
             @csrf
-            <button type="submit" class="btn btn-sm btn-danger py-1 px-2.5 d-flex align-items-center" style="font-size: 12px; border-radius: 6px;"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
+            <button type="submit" title="Logout" aria-label="Logout" class="btn btn-sm btn-danger py-1 px-2.5 d-flex align-items-center" style="font-size: 12px; border-radius: 6px;"><i class="bi bi-box-arrow-right me-1"></i><span class="sidebar-link-label">Logout</span></button>
           </form>
         @endif
 
@@ -1589,7 +1495,6 @@
           </button>
         </div>
       </div>
-    </div>
   </nav>
 
   <!-- Main Content -->
@@ -1602,6 +1507,45 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Sidebar width preference applies only on desktop; mobile keeps its drawer. -->
+  <script>
+  (() => {
+    const sidebar = document.getElementById('adminSidebar');
+    const toggle = document.getElementById('sidebarCollapseBtn');
+    const desktop = window.matchMedia('(min-width: 992px)');
+    const isCollapsed = () => document.documentElement.dataset.sidebarCollapsed === 'true';
+    const updateToggle = () => {
+      const label = isCollapsed() ? 'Expand sidebar' : 'Collapse sidebar';
+      toggle.setAttribute('aria-expanded', String(!isCollapsed()));
+      toggle.setAttribute('aria-label', label);
+      toggle.title = label;
+    };
+    const setCollapsed = collapsed => {
+      // Close existing submenus before hiding their labels and content.
+      if (collapsed) {
+        sidebar.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(el => {
+          bootstrap.Dropdown.getInstance(el)?.hide();
+        });
+      }
+      document.documentElement.dataset.sidebarCollapsed = String(collapsed);
+      try { localStorage.setItem('crowncarz_sidebar_collapsed', collapsed ? '1' : '0'); } catch (e) {}
+      updateToggle();
+      window.dispatchEvent(new Event('resize'));
+    };
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      const label = link.textContent.trim();
+      link.title = label;
+      link.setAttribute('aria-label', label);
+    });
+    toggle.addEventListener('click', () => setCollapsed(!isCollapsed()));
+    // Expand before Bootstrap opens a submenu, including keyboard-triggered clicks.
+    sidebar.addEventListener('show.bs.dropdown', () => {
+      if (desktop.matches && isCollapsed()) setCollapsed(false);
+    });
+    updateToggle();
+  })();
+  </script>
 
   <!-- 🌓 Theme Switcher Logic -->
   <script>
@@ -1655,49 +1599,7 @@
       }
   })();
   </script>
-  <script>
-  document.addEventListener("DOMContentLoaded", function() {
-      try {
-          const totalUsers = parseInt(localStorage.getItem("totalUsers")) || 0;
-          const todaysRevenue = parseFloat(localStorage.getItem("todaysRevenue")) || 0.00;
-          const rawBreakdown = localStorage.getItem("revenueBreakdown");
-          const revenueBreakdown = rawBreakdown ? JSON.parse(rawBreakdown) : { Cash: 0, Card: 0, Account: 0 };
 
-          const totalUsersEl = document.getElementById("totalUsersDisplay");
-          if (totalUsersEl) totalUsersEl.textContent = totalUsers;
-
-          const todaysRevenueEl = document.getElementById("todaysRevenueDisplay");
-          if (todaysRevenueEl) todaysRevenueEl.textContent = `£${todaysRevenue.toFixed(2)}`;
-
-          const ctx = document.getElementById('revenuePieChart');
-          if (ctx && typeof Chart !== 'undefined') {
-              new Chart(ctx, {
-                  type: 'pie',
-                  data: {
-                      labels: Object.keys(revenueBreakdown),
-                      datasets: [{
-                          data: Object.values(revenueBreakdown),
-                          backgroundColor: ['#1abc9c', '#3498db', '#f39c12'],
-                          borderWidth: 1
-                      }]
-                  },
-                  options: {
-                      responsive: false,
-                      animation: false,
-                      plugins: {
-                          legend: {
-                              display: true,
-                              position: 'bottom'
-                          }
-                      }
-                  }
-              });
-          }
-      } catch(e) {
-          console.warn('Dashboard metrics init:', e);
-      }
-  });
-  </script>
 
   <!-- 🛡️ DevTools & Source Code Protection -->
   <script>

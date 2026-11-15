@@ -3,6 +3,33 @@
 @section('content')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
+  .dashboard-stats-strip {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 12px;
+    padding: 8px 4px;
+    border: 1px solid var(--cc-border);
+    border-radius: 10px;
+    background: var(--cc-bg-card);
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .dashboard-stat {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1 0 auto;
+    padding: 3px 14px;
+    white-space: nowrap;
+    font-size: 12px;
+    border-right: 1px solid var(--cc-border);
+  }
+  .dashboard-stat:last-child { border-right: 0; }
+  .dashboard-stat-label { color: var(--cc-text-secondary); }
+  .dashboard-stat strong { color: var(--cc-text-primary); font-size: 14px; font-variant-numeric: tabular-nums; }
+
   /* 🌟 Custom Modern Flatpickr Calendar Styling */
   .flatpickr-calendar {
     border-radius: 16px !important;
@@ -228,10 +255,6 @@ td{
   font-weight: 600;
 }
 
-/* === Pie Chart === */
-#revenuePieChart {
-  max-height: 240px;
-}
 
 /* === Responsive tweaks === */
 @media (max-width: 768px) {
@@ -779,6 +802,30 @@ td{
 </div>
 
 <div class="container-fluid dashboard-section">
+    @if(session('staff_role', 'super_admin') !== 'collaborator')
+    @php
+        $statsDrivers = collect($drivers ?? []);
+        $driverStatuses = $statsDrivers->countBy(fn ($driver) => strtolower(trim((string) data_get($driver, 'status', ''))));
+        $dashboardStats = [
+            ['Available', $driverStatuses->get('available', 0), 'bi-check-circle', 'text-success'],
+            ['Waiting', $driverStatuses->get('waiting', 0), 'bi-clock', 'text-info'],
+            ['Engaged', $driverStatuses->get('engaged', 0), 'bi-car-front', 'text-danger'],
+            ['On Break', $driverStatuses->get('on break', 0) + $driverStatuses->get('on_break', 0), 'bi-cup-hot', 'text-secondary'],
+            ['Total Users', number_format($totalUsers ?? 0), 'bi-people', 'text-primary'],
+            ["Today's Revenue", '£'.number_format($todaysRevenue ?? 0, 2), 'bi-cash-stack', 'text-warning'],
+        ];
+    @endphp
+    <section class="dashboard-stats-strip" aria-label="Dashboard statistics" tabindex="0">
+        @foreach($dashboardStats as [$label, $value, $icon, $color])
+        <div class="dashboard-stat">
+            <i class="bi {{ $icon }} {{ $color }}" aria-hidden="true"></i>
+            <span class="dashboard-stat-label">{{ $label }}</span>
+            <strong>{{ $value }}</strong>
+        </div>
+        @endforeach
+    </section>
+    @endif
+
    <div class="row g-3 mb-2">
 
     <!-- 🗺️ 1/3 Left Card: Live Available Drivers Map -->
@@ -3982,14 +4029,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Save Metrics to LocalStorage
-    localStorage.setItem("totalUsers", "{{ $totalUsers ?? 0 }}");
-    localStorage.setItem("todaysRevenue", "{{ $todaysRevenue ?? 0 }}");
-    localStorage.setItem("revenueBreakdown", JSON.stringify({
-        Cash: "{{ $revenueBreakdown['Cash'] ?? 0 }}",
-        Card: "{{ $revenueBreakdown['Card'] ?? 0 }}",
-        Account: "{{ $revenueBreakdown['Account'] ?? 0 }}"
-    }));
+
 });
 </script>
 
