@@ -553,13 +553,23 @@ async function loadEmailDetails(folder, id) {
   }
 
   try {
-    const url = `/admin/emails/message/${id}?folder=${encodeURIComponent(folder)}`;
-    const res = await fetch(url, {
+    let url = `/admin/emails/message/${id}?folder=${encodeURIComponent(folder)}`;
+    let res = await fetch(url, {
       headers: {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
       }
     });
+
+    if (res.status === 404) {
+      url = `/admin/emails/${encodeURIComponent(folder)}/${id}`;
+      res = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+    }
 
     let data;
     try {

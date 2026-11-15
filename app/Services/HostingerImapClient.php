@@ -353,7 +353,7 @@ class HostingerImapClient
         // Check if literal was captured
         for ($i = 0; $i < count($lines); $i++) {
             $line = $lines[$i];
-            if (preg_match('/^\*\s+' . $id . '\s+FETCH.*\{(\d+)\}$/i', $line)) {
+            if (preg_match('/^\*\s+' . $id . '\s+FETCH/i', $line) && preg_match('/\{(\d+)\}$/', $line)) {
                 if (isset($lines[$i + 1])) {
                     $rawMessage = $lines[$i + 1];
                     break;

@@ -73,10 +73,13 @@ class WebmailController extends Controller
     public function show(Request $request, int $id)
     {
         if (!session('admin_logged_in')) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'error' => 'Unauthorized session. Please login.'], 401);
         }
 
         $folder = $request->query('folder', 'INBOX');
+        if (empty($folder) || $folder === 'message') {
+            $folder = 'INBOX';
+        }
         $folder = urldecode((string)$folder);
         if (base64_encode(base64_decode($folder, true) ?: '') === $folder) {
             $decoded = base64_decode($folder, true);
@@ -92,11 +95,11 @@ class WebmailController extends Controller
                 'message' => $message,
             ]);
         } catch (\Throwable $e) {
-            Log::error("Failed to load email #{$id}: " . $e->getMessage());
+            Log::error("Failed to load email #{$id} from folder '{$folder}': " . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage(),
-            ], 500);
+            ], 200);
         }
     }
 
@@ -105,6 +108,9 @@ class WebmailController extends Controller
      */
     public function showLegacy(Request $request, string $folder, int $id)
     {
+        if ($folder === 'message') {
+            $folder = $request->query('folder', 'INBOX');
+        }
         $request->merge(['folder' => $folder]);
         return $this->show($request, $id);
     }
