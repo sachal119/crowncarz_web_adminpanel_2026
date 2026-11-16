@@ -660,6 +660,7 @@ async function loadEmailDetails(folder, id) {
 
     loading.classList.add('d-none');
     content.classList.remove('d-none');
+    window.dispatchEvent(new CustomEvent('cc-email-read-updated'));
 
   } catch (err) {
     loading.classList.add('d-none');
@@ -756,6 +757,7 @@ async function deleteCurrentEmail() {
         timer: 1500,
         showConfirmButton: false
       });
+      window.dispatchEvent(new CustomEvent('cc-email-read-updated'));
     } else {
       throw new Error(data.error || 'Failed to delete');
     }

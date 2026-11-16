@@ -1357,6 +1357,20 @@
       [data-sidebar-collapsed="true"] .live-uk-clock-badge > :not(#globalUkClockTime) { display: none; }
       [data-sidebar-collapsed="true"] #globalUkClockTime { font-size: 8px; letter-spacing: 0 !important; }
     }
+    .email-live-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #ef4444 !important;
+      border: 1.5px solid #111827;
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
+      animation: ccEmailDotPulse 1.8s infinite;
+      z-index: 3;
+    }
+    @keyframes ccEmailDotPulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); transform: translate(-50%, -50%) scale(0.95); }
+      70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); transform: translate(-50%, -50%) scale(1.15); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); transform: translate(-50%, -50%) scale(0.95); }
+    }
     @media print {
       .app-sidebar, .sidebar-mobile-header { display: none !important; }
       .main-content { margin-left: 0 !important; width: 100% !important; }
@@ -1456,8 +1470,37 @@
 @endif
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('pages.index', 'admin.pages.*') ? 'active' : '' }}" href="{{ route('pages.index') }}"><i class="bi bi-journal-richtext me-1"></i><span class="sidebar-link-label">Blogs</span></a></li>
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('advertisements.*') ? 'active' : '' }}" href="{{ route('advertisements.index') }}"><i class="bi bi-megaphone-fill me-1"></i><span class="sidebar-link-label">Ads</span></a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('emails.*') ? 'active' : '' }}" href="{{ route('emails.index') }}" title="Email (info@crowncarz.com)"><i class="bi bi-envelope-at-fill me-1 text-warning"></i><span class="sidebar-link-label d-inline-flex align-items-center flex-nowrap" style="white-space: nowrap; max-width: 160px;"><span>Email</span><span class="ms-1 opacity-75 fw-normal text-truncate" style="font-size: 9.5px; max-width: 118px; letter-spacing: -0.2px;">(info@crowncarz.com)</span></span></a></li>
-          <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('accounts_emails.*') ? 'active' : '' }}" href="{{ route('accounts_emails.index') }}" title="Email (accounts@crowncarz.com)"><i class="bi bi-envelope-check-fill me-1 text-info"></i><span class="sidebar-link-label d-inline-flex align-items-center flex-nowrap" style="white-space: nowrap; max-width: 160px;"><span>Email</span><span class="ms-1 opacity-75 fw-normal text-truncate" style="font-size: 9.5px; max-width: 118px; letter-spacing: -0.2px;">(accounts@crowncarz.com)</span></span></a></li>
+          <li class="nav-item me-2 position-relative">
+            <a class="nav-link d-flex align-items-center justify-content-between {{ request()->routeIs('emails.*') ? 'active' : '' }}" href="{{ route('emails.index') }}" title="Email (info@crowncarz.com)" id="sidebarEmailInfoLink">
+              <div class="d-flex align-items-center flex-nowrap text-truncate">
+                <span class="position-relative d-inline-block me-1">
+                  <i class="bi bi-envelope-at-fill text-warning"></i>
+                  <span class="email-live-dot d-none position-absolute top-0 start-100 translate-middle rounded-circle" id="sidebarEmailInfoDot" title="New unread email in info@crowncarz.com"></span>
+                </span>
+                <span class="sidebar-link-label d-inline-flex align-items-center flex-nowrap" style="white-space: nowrap; max-width: 145px;">
+                  <span>Email</span>
+                  <span class="ms-1 opacity-75 fw-normal text-truncate" style="font-size: 9.5px; max-width: 100px; letter-spacing: -0.2px;">(info@crowncarz.com)</span>
+                </span>
+              </div>
+              <span class="badge rounded-pill bg-danger d-none email-live-badge sidebar-link-label ms-1" id="sidebarEmailInfoBadge" style="font-size: 9.5px; padding: 2px 6px;">0</span>
+            </a>
+          </li>
+
+          <li class="nav-item me-2 position-relative">
+            <a class="nav-link d-flex align-items-center justify-content-between {{ request()->routeIs('accounts_emails.*') ? 'active' : '' }}" href="{{ route('accounts_emails.index') }}" title="Email (accounts@crowncarz.com)" id="sidebarEmailAccountsLink">
+              <div class="d-flex align-items-center flex-nowrap text-truncate">
+                <span class="position-relative d-inline-block me-1">
+                  <i class="bi bi-envelope-check-fill text-info"></i>
+                  <span class="email-live-dot d-none position-absolute top-0 start-100 translate-middle rounded-circle" id="sidebarEmailAccountsDot" title="New unread email in accounts@crowncarz.com"></span>
+                </span>
+                <span class="sidebar-link-label d-inline-flex align-items-center flex-nowrap" style="white-space: nowrap; max-width: 145px;">
+                  <span>Email</span>
+                  <span class="ms-1 opacity-75 fw-normal text-truncate" style="font-size: 9.5px; max-width: 100px; letter-spacing: -0.2px;">(accounts@crowncarz.com)</span>
+                </span>
+              </div>
+              <span class="badge rounded-pill bg-danger d-none email-live-badge sidebar-link-label ms-1" id="sidebarEmailAccountsBadge" style="font-size: 9.5px; padding: 2px 6px;">0</span>
+            </a>
+          </li>
           <li class="nav-item me-2"><a class="nav-link {{ request()->routeIs('system.settings') ? 'active' : '' }}" href="{{ route('system.settings') }}"><i class="bi bi-gear-wide-connected me-1"></i><span class="sidebar-link-label">Settings</span></a></li>
         </ul>
       </div>
@@ -1913,6 +1956,164 @@
     };
   })();
   </script>
+
+  @if(session('admin_logged_in'))
+  <!-- 🔔 Realtime Webmail Unread Status, Pulsing Dot & Alert Chime -->
+  <script>
+  (function() {
+    let audioUnlocked = false;
+    function unlockAudioContext() {
+      if (audioUnlocked) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const testCtx = new AudioCtx();
+          if (testCtx.state === 'suspended') {
+            testCtx.resume();
+          }
+          audioUnlocked = true;
+        }
+      } catch(e) {}
+    }
+    document.addEventListener('click', unlockAudioContext, { once: true, passive: true });
+    document.addEventListener('keydown', unlockAudioContext, { once: true, passive: true });
+
+    // 🎵 Crystal-clear luxury notification chime (E5 -> B5 pure synth)
+    function playEmailAlertSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+
+        // Tone 1: E5 (659.25Hz)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(659.25, now);
+        gain1.gain.setValueAtTime(0.18, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.32);
+
+        // Tone 2: B5 (987.77Hz)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(987.77, now + 0.12);
+        gain2.gain.setValueAtTime(0.24, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.58);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.58);
+      } catch(e) {
+        console.warn('Audio chime notice:', e);
+      }
+    }
+
+    // Unread count cache in memory
+    const unreadTracker = {
+      info: null,
+      accounts: null
+    };
+
+    function updateSidebarMailboxUI(accountKey, count, email) {
+      const isAccounts = (accountKey === 'accounts');
+      const dotEl = document.getElementById(isAccounts ? 'sidebarEmailAccountsDot' : 'sidebarEmailInfoDot');
+      const badgeEl = document.getElementById(isAccounts ? 'sidebarEmailAccountsBadge' : 'sidebarEmailInfoBadge');
+
+      if (count > 0) {
+        if (dotEl) dotEl.classList.remove('d-none');
+        if (badgeEl) {
+          badgeEl.textContent = count > 99 ? '99+' : count;
+          badgeEl.classList.remove('d-none');
+        }
+      } else {
+        if (dotEl) dotEl.classList.add('d-none');
+        if (badgeEl) badgeEl.classList.add('d-none');
+      }
+    }
+
+    let isFetchingUnread = false;
+    async function fetchEmailUnreadStatus() {
+      if (isFetchingUnread) return;
+      isFetchingUnread = true;
+
+      try {
+        const response = await fetch("{{ route('emails.unread.status') }}", {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!response.ok) return;
+        const result = await response.json();
+        if (!result.success || !result.accounts) return;
+
+        let chimePlayed = false;
+
+        for (const [key, data] of Object.entries(result.accounts)) {
+          const currentCount = parseInt(data.unread || 0, 10);
+          const previousCount = unreadTracker[key];
+
+          updateSidebarMailboxUI(key, currentCount, data.email);
+
+          // If count increased and not initial page load, trigger alert chime & toast
+          if (previousCount !== null && currentCount > previousCount && !chimePlayed) {
+            playEmailAlertSound();
+            chimePlayed = true;
+
+            if (typeof Swal !== 'undefined' && Swal.mixin) {
+              const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark' || document.documentElement.classList.contains('dark-mode');
+              Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 6000,
+                timerProgressBar: true,
+                background: isDark ? '#1e293b' : '#ffffff',
+                color: isDark ? '#f8fafc' : '#1e293b',
+                didOpen: (toast) => {
+                  toast.addEventListener('mouseenter', Swal.stopTimer);
+                  toast.addEventListener('mouseleave', Swal.resumeTimer);
+                  toast.style.cursor = 'pointer';
+                  toast.addEventListener('click', () => {
+                    window.location.href = (key === 'accounts') ? "{{ route('accounts_emails.index') }}" : "{{ route('emails.index') }}";
+                  });
+                }
+              }).fire({
+                icon: 'info',
+                title: 'New Email Received',
+                html: `New message received in <b>${data.email}</b>`
+              });
+            }
+          }
+
+          unreadTracker[key] = currentCount;
+        }
+      } catch (err) {
+        // Graceful fail on background hiccups
+      } finally {
+        isFetchingUnread = false;
+      }
+    }
+
+    // Initial check shortly after load
+    setTimeout(fetchEmailUnreadStatus, 1500);
+
+    // Polling interval (every 30 seconds)
+    setInterval(fetchEmailUnreadStatus, 30000);
+
+    // Fast local event when email is read or marked
+    window.addEventListener('cc-email-read-updated', () => {
+      setTimeout(fetchEmailUnreadStatus, 400);
+    });
+  })();
+  </script>
+  @endif
 
   @stack('scripts')
 </body>

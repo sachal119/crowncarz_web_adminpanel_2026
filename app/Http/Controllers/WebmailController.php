@@ -401,4 +401,45 @@ class WebmailController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Return live unread email status for all configured business mailboxes
+     */
+    public function unreadStatus(Request $request)
+    {
+        if (!session('admin_logged_in')) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $accounts = config('webmail.accounts', []);
+        $status = [];
+
+        foreach ($accounts as $key => $acc) {
+            $username = $acc['imap']['username'] ?? ($acc['email'] ?? $key);
+            $hasPassword = !empty($acc['imap']['password']);
+            $unread = 0;
+
+            if ($hasPassword) {
+                try {
+                    $client = new HostingerImapClient($acc['imap']);
+                    $unread = $client->getUnreadCount('INBOX');
+                } catch (\Throwable $e) {
+                    $unread = 0;
+                }
+            }
+
+            $status[$key] = [
+                'key' => $key,
+                'email' => $acc['email'] ?? $username,
+                'unread' => $unread,
+                'has_password' => $hasPassword,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'accounts' => $status,
+            'timestamp' => time(),
+        ]);
+    }
 }

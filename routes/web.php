@@ -394,6 +394,7 @@ Route::get('/notifications/history', [NotificationController::class, 'history'])
 // ✉️ Hostinger Business Webmail (info@crowncarz.com)
 Route::prefix('admin/emails')->group(function () {
     Route::get('/', [WebmailController::class, 'index'])->name('emails.index');
+    Route::get('/unread-status', [WebmailController::class, 'unreadStatus'])->name('emails.unread.status');
     Route::get('/view', [WebmailController::class, 'showQuery'])->name('emails.view');
     Route::post('/send', [WebmailController::class, 'send'])->name('emails.send');
     Route::post('/read', [WebmailController::class, 'markRead'])->name('emails.read');

@@ -192,6 +192,40 @@ class HostingerImapClient
     }
 
     /**
+     * Get unread (UNSEEN) message count for a folder (fast, cached)
+     */
+    public function getUnreadCount(string $folder = 'INBOX', bool $force = false): int
+    {
+        if (empty($this->username) || empty($this->password)) {
+            return 0;
+        }
+
+        $cacheKey = 'hostinger_unseen_' . md5($this->username . '_' . $folder);
+        if (!$force && Cache::has($cacheKey)) {
+            return (int) Cache::get($cacheKey);
+        }
+
+        try {
+            $this->connect();
+            $statusRes = $this->sendCommand('STATUS ' . $this->escape($folder) . ' (UNSEEN)');
+            $unseen = 0;
+            if (!empty($statusRes['lines'])) {
+                foreach ($statusRes['lines'] as $sLine) {
+                    if (preg_match('/UNSEEN\s+(\d+)/i', $sLine, $uMatch)) {
+                        $unseen = (int) $uMatch[1];
+                        break;
+                    }
+                }
+            }
+            Cache::put($cacheKey, $unseen, 25); // Cache for 25 seconds
+            return $unseen;
+        } catch (\Throwable $e) {
+            Log::warning("Could not check unread count for {$this->username}: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Select a mailbox folder
      */
     public function selectFolder(string $folder = 'INBOX'): array
