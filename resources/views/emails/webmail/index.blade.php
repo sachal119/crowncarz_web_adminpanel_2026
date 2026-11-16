@@ -11,7 +11,7 @@
       </div>
       <div>
         <h4 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--cc-text-primary);">
-          Business Webmail
+          {{ $mailboxTitle ?? 'Business Webmail' }}
           <span class="badge rounded-pill font-monospace px-2.5 py-1" style="font-size: 11px; background: #E6B04A; color: #1e293b;">{{ $mailboxUsername }}</span>
         </h4>
         <small style="color: var(--cc-text-secondary);">Official Crown Carz Business Mailbox</small>
@@ -19,7 +19,7 @@
     </div>
 
     <div class="d-flex align-items-center gap-2">
-      <a href="{{ route('emails.index', ['folder' => $currentFolder, 'refresh' => 1]) }}" class="btn btn-sm d-flex align-items-center gap-1.5 px-3 py-1.5 rounded-3 shadow-xs webmail-btn-outline" title="Refresh mailbox">
+      <a href="{{ route(($routePrefix ?? 'emails') . '.index', ['folder' => $currentFolder, 'refresh' => 1]) }}" class="btn btn-sm d-flex align-items-center gap-1.5 px-3 py-1.5 rounded-3 shadow-xs webmail-btn-outline" title="Refresh mailbox">
         <i class="bi bi-arrow-clockwise"></i>
         <span>Refresh Mailbox</span>
       </a>
@@ -62,7 +62,7 @@
               $isActive = (strtolower($f['name']) === strtolower($currentFolder));
             @endphp
             <li class="nav-item">
-              <a href="{{ route('emails.index', ['folder' => $f['name']]) }}" 
+              <a href="{{ route(($routePrefix ?? 'emails') . '.index', ['folder' => $f['name']]) }}" 
                  class="nav-link py-2 px-2.5 rounded-3 d-flex align-items-center justify-content-between webmail-folder-link {{ $isActive ? 'active' : '' }}"
                  title="{{ $f['name'] }}">
                 <span class="d-flex align-items-center gap-2 text-truncate me-2">
@@ -78,7 +78,7 @@
             </li>
           @empty
             <li class="nav-item">
-              <a href="{{ route('emails.index', ['folder' => 'INBOX']) }}" class="nav-link active webmail-folder-link py-2 px-2.5 rounded-3 d-flex align-items-center gap-2">
+              <a href="{{ route(($routePrefix ?? 'emails') . '.index', ['folder' => 'INBOX']) }}" class="nav-link active webmail-folder-link py-2 px-2.5 rounded-3 d-flex align-items-center gap-2">
                 <i class="bi bi-inbox-fill"></i>
                 <span>Inbox</span>
               </a>
@@ -97,13 +97,13 @@
         
         <!-- Search & Control Header -->
         <div class="p-3 border-bottom" style="border-color: var(--cc-border) !important; background: var(--cc-bg-card-subtle);">
-          <form method="GET" action="{{ route('emails.index') }}" class="mb-2">
+          <form method="GET" action="{{ route(($routePrefix ?? 'emails') . '.index') }}" class="mb-2">
             <input type="hidden" name="folder" value="{{ $currentFolder }}">
             <div class="input-group input-group-sm">
               <span class="input-group-text border-end-0 webmail-input-addon"><i class="bi bi-search"></i></span>
               <input type="text" name="q" value="{{ $searchQuery }}" class="form-control border-start-0 webmail-input" placeholder="Search sender, subject...">
               @if(!empty($searchQuery))
-                <a href="{{ route('emails.index', ['folder' => $currentFolder]) }}" class="btn btn-outline-secondary webmail-btn-outline"><i class="bi bi-x"></i></a>
+                <a href="{{ route(($routePrefix ?? 'emails') . '.index', ['folder' => $currentFolder]) }}" class="btn btn-outline-secondary webmail-btn-outline"><i class="bi bi-x"></i></a>
               @endif
               <button class="btn btn-warning fw-bold px-3" type="submit" style="background-color: #E6B04A; border-color: #E6B04A; color: #1e293b;">Search</button>
             </div>
@@ -170,7 +170,7 @@
         @if($totalPages > 1)
           <div class="p-2 border-top d-flex justify-content-between align-items-center" style="border-color: var(--cc-border) !important; background: var(--cc-bg-card-subtle);">
             @if($currentPage > 1)
-              <a href="{{ route('emails.index', ['folder' => $currentFolder, 'page' => $currentPage - 1, 'q' => $searchQuery]) }}" class="btn btn-sm py-1 px-2.5 webmail-btn-outline" style="font-size: 11px;">
+              <a href="{{ route(($routePrefix ?? 'emails') . '.index', ['folder' => $currentFolder, 'page' => $currentPage - 1, 'q' => $searchQuery]) }}" class="btn btn-sm py-1 px-2.5 webmail-btn-outline" style="font-size: 11px;">
                 <i class="bi bi-chevron-left me-1"></i>Prev
               </a>
             @else
@@ -180,7 +180,7 @@
             <span class="small font-monospace" style="font-size: 11px; color: var(--cc-text-secondary);">{{ $currentPage }} / {{ $totalPages }}</span>
 
             @if($currentPage < $totalPages)
-              <a href="{{ route('emails.index', ['folder' => $currentFolder, 'page' => $currentPage + 1, 'q' => $searchQuery]) }}" class="btn btn-sm py-1 px-2.5 webmail-btn-outline" style="font-size: 11px;">
+              <a href="{{ route(($routePrefix ?? 'emails') . '.index', ['folder' => $currentFolder, 'page' => $currentPage + 1, 'q' => $searchQuery]) }}" class="btn btn-sm py-1 px-2.5 webmail-btn-outline" style="font-size: 11px;">
                 Next<i class="bi bi-chevron-right ms-1"></i>
               </a>
             @else
@@ -530,11 +530,11 @@ let currentFolderGlobal = {{ Illuminate\Support\Js::from($currentFolder) }};
 
 // Named routes preserve the application's subdirectory and front-controller path.
 const webmailRoutes = {
-  view: {{ Illuminate\Support\Js::from(route('emails.view')) }},
-  send: {{ Illuminate\Support\Js::from(route('emails.send')) }},
-  delete: {{ Illuminate\Support\Js::from(route('emails.delete')) }},
-  star: {{ Illuminate\Support\Js::from(route('emails.star')) }},
-  attachment: {{ Illuminate\Support\Js::from(route('emails.attachment', ['id' => '__MESSAGE_ID__', 'index' => '__ATTACHMENT_INDEX__'])) }}
+  view: {{ Illuminate\Support\Js::from(route(($routePrefix ?? 'emails') . '.view')) }},
+  send: {{ Illuminate\Support\Js::from(route(($routePrefix ?? 'emails') . '.send')) }},
+  delete: {{ Illuminate\Support\Js::from(route(($routePrefix ?? 'emails') . '.delete')) }},
+  star: {{ Illuminate\Support\Js::from(route(($routePrefix ?? 'emails') . '.star')) }},
+  attachment: {{ Illuminate\Support\Js::from(route(($routePrefix ?? 'emails') . '.attachment', ['id' => '__MESSAGE_ID__', 'index' => '__ATTACHMENT_INDEX__'])) }}
 };
 
 // 🚀 Open Compose Modal with blank fields

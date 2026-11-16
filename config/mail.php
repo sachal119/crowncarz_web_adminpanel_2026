@@ -62,6 +62,17 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
+        'hostinger_accounts_webmail' => [
+            'transport' => 'smtp',
+            'host' => $webmail['accounts']['accounts']['smtp']['host'] ?? 'smtp.hostinger.com',
+            'port' => (int) ($webmail['accounts']['accounts']['smtp']['port'] ?? 465),
+            'encryption' => $webmail['accounts']['accounts']['smtp']['encryption'] ?? 'ssl',
+            'username' => $webmail['accounts']['accounts']['smtp']['username'] ?? 'accounts@crowncarz.com',
+            'password' => $webmail['accounts']['accounts']['smtp']['password'] ?? '',
+            'timeout' => 30,
+            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+
         'ses' => [
             'transport' => 'ses',
         ],

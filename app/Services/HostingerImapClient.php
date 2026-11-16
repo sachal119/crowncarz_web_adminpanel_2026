@@ -44,7 +44,8 @@ class HostingerImapClient
         }
 
         if (empty($this->username) || empty($this->password)) {
-            throw new Exception("Hostinger Webmail credentials are missing. Please verify HOSTINGER_WEBMAIL_IMAP_USERNAME and HOSTINGER_WEBMAIL_IMAP_PASSWORD in your .env file.");
+            $envKey = str_starts_with($this->username, 'accounts') ? 'HOSTINGER_ACCOUNTS_EMAIL_PASSWORD' : 'HOSTINGER_WEBMAIL_IMAP_PASSWORD';
+            throw new Exception("Hostinger Webmail credentials for {$this->username} are missing. Please configure {$envKey} in your .env file.");
         }
 
         $protocol = ($this->encryption === 'ssl' || $this->port === 993) ? 'ssl://' : '';

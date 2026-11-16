@@ -30,6 +30,7 @@ use App\Http\Controllers\AdvertisementController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\CallSwitchWebhookController;
 use App\Http\Controllers\WebmailController;
+use App\Http\Controllers\AccountsWebmailController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 
 Route::post(
@@ -401,6 +402,19 @@ Route::prefix('admin/emails')->group(function () {
     Route::get('/message/{id}', [WebmailController::class, 'show'])->name('emails.show')->where('id', '[0-9]+');
     Route::get('/message/{id}/attachment/{index}', [WebmailController::class, 'downloadAttachment'])->name('emails.attachment')->where(['id' => '[0-9]+', 'index' => '[0-9]+']);
     Route::get('/{folder}/{id}', [WebmailController::class, 'showLegacy'])->where('id', '[0-9]+');
+});
+
+// ✉️ Hostinger Accounts Webmail (accounts@crowncarz.com)
+Route::prefix('admin/accounts-email')->group(function () {
+    Route::get('/', [AccountsWebmailController::class, 'index'])->name('accounts_emails.index');
+    Route::get('/view', [AccountsWebmailController::class, 'showQuery'])->name('accounts_emails.view');
+    Route::post('/send', [AccountsWebmailController::class, 'send'])->name('accounts_emails.send');
+    Route::post('/read', [AccountsWebmailController::class, 'markRead'])->name('accounts_emails.read');
+    Route::post('/star', [AccountsWebmailController::class, 'toggleStar'])->name('accounts_emails.star');
+    Route::post('/delete', [AccountsWebmailController::class, 'destroy'])->name('accounts_emails.delete');
+    Route::get('/message/{id}', [AccountsWebmailController::class, 'show'])->name('accounts_emails.show')->where('id', '[0-9]+');
+    Route::get('/message/{id}/attachment/{index}', [AccountsWebmailController::class, 'downloadAttachment'])->name('accounts_emails.attachment')->where(['id' => '[0-9]+', 'index' => '[0-9]+']);
+    Route::get('/{folder}/{id}', [AccountsWebmailController::class, 'showLegacy'])->where('id', '[0-9]+');
 });
 
 

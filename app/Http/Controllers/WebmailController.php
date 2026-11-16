@@ -13,6 +13,52 @@ use Symfony\Component\Mime\Address;
 class WebmailController extends Controller
 {
     /**
+     * Account identifier in config/webmail.php ('info' or 'accounts')
+     */
+    protected string $accountKey = 'info';
+
+    /**
+     * Named route prefix ('emails' or 'accounts_emails')
+     */
+    protected string $routePrefix = 'emails';
+
+    /**
+     * Get IMAP configuration for this mailbox account
+     */
+    protected function getImapConfig(): array
+    {
+        $accounts = config('webmail.accounts', []);
+        if (isset($accounts[$this->accountKey]['imap'])) {
+            return $accounts[$this->accountKey]['imap'];
+        }
+        return config('webmail.imap', []);
+    }
+
+    /**
+     * Get SMTP configuration for this mailbox account
+     */
+    protected function getSmtpConfig(): array
+    {
+        $accounts = config('webmail.accounts', []);
+        if (isset($accounts[$this->accountKey]['smtp'])) {
+            return $accounts[$this->accountKey]['smtp'];
+        }
+        return config('webmail.smtp', []);
+    }
+
+    /**
+     * Get mailer transport name for this mailbox account
+     */
+    protected function getMailer(): string
+    {
+        $accounts = config('webmail.accounts', []);
+        if (isset($accounts[$this->accountKey]['mailer'])) {
+            return $accounts[$this->accountKey]['mailer'];
+        }
+        return 'hostinger_webmail';
+    }
+
+    /**
      * Render the Webmail Dashboard interface
      */
     public function index(Request $request)
@@ -34,6 +80,10 @@ class WebmailController extends Controller
         $search = $request->query('q');
         $forceRefresh = $request->boolean('refresh');
 
+        $imapConfig = $this->getImapConfig();
+        $mailboxUsername = $imapConfig['username'] ?? ($this->accountKey === 'accounts' ? 'accounts@crowncarz.com' : 'info@crowncarz.com');
+        $mailboxTitle = ($this->accountKey === 'accounts') ? 'Accounts Webmail' : 'Business Webmail';
+
         $errorMessage = null;
         $folders = [];
         $messagesData = [
@@ -46,12 +96,12 @@ class WebmailController extends Controller
         ];
 
         try {
-            $imap = new HostingerImapClient();
+            $imap = new HostingerImapClient($imapConfig);
             $folders = $imap->getFolders($forceRefresh);
             $messagesData = $imap->getMessages($folder, $page, 25, $search);
         } catch (\Throwable $e) {
             $errorMessage = $e->getMessage();
-            Log::error('Hostinger Webmail Error: ' . $errorMessage);
+            Log::error("Hostinger Webmail Error ({$this->accountKey}): " . $errorMessage);
         }
 
         return view('emails.webmail.index', [
@@ -63,7 +113,10 @@ class WebmailController extends Controller
             'currentFolder' => $folder,
             'searchQuery' => $search,
             'errorMessage' => $errorMessage,
-            'mailboxUsername' => config('webmail.imap.username', 'info@crowncarz.com'),
+            'mailboxUsername' => $mailboxUsername,
+            'mailboxTitle' => $mailboxTitle,
+            'routePrefix' => $this->routePrefix,
+            'accountKey' => $this->accountKey,
         ]);
     }
 
@@ -97,7 +150,7 @@ class WebmailController extends Controller
         }
 
         try {
-            $imap = new HostingerImapClient();
+            $imap = new HostingerImapClient($this->getImapConfig());
             $message = $imap->getMessage($folder, $id, true);
 
             return response()->json([
@@ -105,7 +158,7 @@ class WebmailController extends Controller
                 'message' => $message,
             ]);
         } catch (\Throwable $e) {
-            Log::error("Failed to load email #{$id} from folder '{$folder}': " . $e->getMessage());
+            Log::error("Failed to load email #{$id} from folder '{$folder}' ({$this->accountKey}): " . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -148,7 +201,7 @@ class WebmailController extends Controller
         }
 
         try {
-            $imap = new HostingerImapClient();
+            $imap = new HostingerImapClient($this->getImapConfig());
             $msg = $imap->getMessage($folder, $id, false);
 
             $attachment = null;
@@ -197,8 +250,11 @@ class WebmailController extends Controller
         ]);
 
         try {
-            $fromAddress = config('webmail.smtp.from_address') ?: config('webmail.smtp.username', 'info@crowncarz.com');
-            $fromName = config('webmail.smtp.from_name', 'Crown Carz');
+            $smtpConfig = $this->getSmtpConfig();
+            $imapConfig = $this->getImapConfig();
+            $fromAddress = $smtpConfig['from_address'] ?: ($smtpConfig['username'] ?? $imapConfig['username']);
+            $fromName = $smtpConfig['from_name'] ?: 'Crown Carz';
+            $mailer = $this->getMailer();
 
             // Parse recipient lists
             $toEmails = array_filter(array_map('trim', explode(',', $validated['to'])));
@@ -209,7 +265,7 @@ class WebmailController extends Controller
             $htmlBody = nl2br(e($validated['body']));
 
             // Send via dedicated Hostinger Webmail SMTP mailer
-            $sentMessage = Mail::mailer('hostinger_webmail')->html($htmlBody, function ($message) use ($fromAddress, $fromName, $validated, $toEmails, $ccEmails, $bccEmails, $request) {
+            $sentMessage = Mail::mailer($mailer)->html($htmlBody, function ($message) use ($fromAddress, $fromName, $validated, $toEmails, $ccEmails, $bccEmails, $request) {
                 $message->from($fromAddress, $fromName)
                     ->subject($validated['subject']);
 
@@ -254,9 +310,9 @@ class WebmailController extends Controller
             if ($sentMessage) {
                 try {
                     $rawMime = $sentMessage->toString();
-                    $imap = new HostingerImapClient();
+                    $imap = new HostingerImapClient($imapConfig);
                     $imap->appendToSent($rawMime);
-                    Cache::forget('hostinger_webmail_folders_' . md5(config('webmail.imap.username', 'info@crowncarz.com')));
+                    Cache::forget('hostinger_webmail_folders_' . md5($imapConfig['username'] ?? 'info@crowncarz.com'));
                 } catch (\Throwable $imapEx) {
                     Log::warning('Sent mail IMAP sync notice: ' . $imapEx->getMessage());
                 }
@@ -267,7 +323,7 @@ class WebmailController extends Controller
                 'message' => 'Email sent successfully via Hostinger!',
             ]);
         } catch (\Throwable $e) {
-            Log::error('Failed to send webmail: ' . $e->getMessage());
+            Log::error('Failed to send webmail (' . $this->accountKey . '): ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to send email: ' . $e->getMessage(),
@@ -289,7 +345,7 @@ class WebmailController extends Controller
         $read = $request->boolean('read', true);
 
         try {
-            $imap = new HostingerImapClient();
+            $imap = new HostingerImapClient($this->getImapConfig());
             $imap->markAsRead($folder, $id, $read);
 
             return response()->json(['success' => true]);
@@ -312,7 +368,7 @@ class WebmailController extends Controller
         $starred = $request->boolean('starred', true);
 
         try {
-            $imap = new HostingerImapClient();
+            $imap = new HostingerImapClient($this->getImapConfig());
             $imap->toggleStar($folder, $id, $starred);
 
             return response()->json(['success' => true]);
@@ -334,7 +390,7 @@ class WebmailController extends Controller
         $folder = $request->input('folder', 'INBOX');
 
         try {
-            $imap = new HostingerImapClient();
+            $imap = new HostingerImapClient($this->getImapConfig());
             $imap->deleteMessage($folder, $id);
 
             return response()->json([
