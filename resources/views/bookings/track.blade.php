@@ -115,7 +115,6 @@
             </div>
             <div class="tracking-map-footer">
                 <div class="tracking-legend"><span><b></b> Pickup</span><span><b class="destination"></b> Dropoff</span><span><b class="driver"></b> Driver</span></div>
-                <span>Location checked every 5 seconds</span>
             </div>
         </section>
     </div>
