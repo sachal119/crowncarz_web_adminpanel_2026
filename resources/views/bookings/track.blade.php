@@ -91,7 +91,6 @@
                 <div><div class="tracking-driver-name">{{ $trackingDriverName }}</div><div class="tracking-small">{{ $trackingCallSign !== '' ? 'Call sign · ' . $trackingCallSign : 'Crown Carz driver' }}</div></div>
             </div>
             <div class="tracking-speed"><span class="tracking-speed-label"><i class="bi bi-speedometer2 me-1" aria-hidden="true"></i> Driver speed</span><strong id="trackingSpeed">—</strong></div>
-            <div class="tracking-small" id="trackingUpdate" aria-live="polite">Waiting for a location update</div>
             <div class="tracking-divider"></div>
             <h2 class="tracking-section-title">Journey details</h2>
             <span class="tracking-booking-status">{{ ucwords(str_replace('_', ' ', $booking['status'] ?? 'Pending')) }}</span>
@@ -130,7 +129,6 @@
     const pickupAddress = @json($booking['pickup_address'] ?? '');
     const dropoffAddress = @json($booking['dropoff_address'] ?? '');
     const status = document.getElementById('trackingStatus');
-    const updated = document.getElementById('trackingUpdate');
     const speedDisplay = document.getElementById('trackingSpeed');
     const message = document.getElementById('trackingMapMessage');
     const followButton = document.getElementById('trackingFollow');
@@ -228,7 +226,6 @@
                 && String(data.speed).trim() !== '' && Number.isFinite(speedKmh) && speedKmh >= 0;
             speedDisplay.textContent = !offline && hasSpeed ? `${Math.round(speedKmh / 1.609344)} mph` : '—';
             setStatus(offline ? 'Offline' : 'Connected', offline ? '' : 'connected');
-            updated.textContent = `${offline ? 'Last known position · fetched' : 'Location received'} ${lastReceived.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
             showMessage(offline ? 'Driver is offline. Showing last known position.' : '');
             followButton.disabled = false;
             overviewButton.disabled = false;
@@ -240,7 +237,6 @@
             if (disposed) return;
             speedDisplay.textContent = '—';
             setStatus(lastReceived ? 'Reconnecting' : 'Unavailable', 'error');
-            updated.textContent = lastReceived ? `Last received ${lastReceived.toLocaleTimeString()}` : 'Waiting for driver location';
             showMessage(lastReceived ? 'Connection interrupted. Showing last received location.' : 'Driver location unavailable. Retrying automatically…');
         } finally {
             clearTimeout(timeout);
@@ -276,7 +272,6 @@
         if (driverId) updateDriverLocation();
         else {
             setStatus('Unassigned');
-            updated.textContent = 'Tracking starts once a driver is assigned. Reload to check for an assignment.';
         }
     };
     window.bookingTrackingMapError = function () {
