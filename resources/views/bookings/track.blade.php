@@ -105,7 +105,7 @@
             <div class="tracking-map-toolbar">
                 <div class="tracking-map-label"><i class="bi bi-broadcast" aria-hidden="true"></i> Live location</div>
                 <div class="tracking-controls">
-                    <button type="button" id="trackingFollow" class="tracking-control" aria-pressed="false" disabled><i class="bi bi-crosshair me-1" aria-hidden="true"></i> Follow driver</button>
+                    <button type="button" id="trackingFollow" class="tracking-control" aria-pressed="true" disabled><i class="bi bi-crosshair me-1" aria-hidden="true"></i> Follow driver</button>
                     <button type="button" id="trackingOverview" class="tracking-control" disabled><i class="bi bi-arrows-fullscreen me-1" aria-hidden="true"></i> Full route</button>
                 </div>
             </div>
@@ -132,7 +132,7 @@
     const followButton = document.getElementById('trackingFollow');
     const overviewButton = document.getElementById('trackingOverview');
     let map, driverMarker, routeBounds, timer, request;
-    let following = false;
+    let following = true;
     let disposed = false;
     let lastReceived = null;
 
@@ -223,8 +223,10 @@
             showMessage(offline ? 'Driver is offline. Showing last known position.' : '');
             followButton.disabled = false;
             overviewButton.disabled = false;
-            if (following) map.panTo({ lat, lng });
-            else if (firstLocation) fitJourney();
+            if (following) {
+                map.panTo({ lat, lng });
+                if (firstLocation) map.setZoom(15);
+            } else if (firstLocation) fitJourney();
         } catch (error) {
             if (disposed) return;
             setStatus(lastReceived ? 'Reconnecting' : 'Unavailable', 'error');
