@@ -470,7 +470,7 @@ td{
 
 /* 💎 Future Bookings Table UX Polish */
 .custom-dashboard-table {
-    min-width: 1380px;
+    min-width: 1200px;
     width: 100%;
     font-size: 12px;
     border-collapse: separate;
@@ -568,8 +568,9 @@ td{
 }
 .custom-dashboard-table .col-route,
 .custom-dashboard-table th.th-route {
-    min-width: 290px;
-    max-width: 440px;
+    width: 280px;
+    min-width: 240px;
+    max-width: 280px;
 }
 .custom-dashboard-table .col-datetime,
 .custom-dashboard-table th.th-datetime {
@@ -590,6 +591,11 @@ td{
     text-align: center;
     padding-left: 4px !important;
     padding-right: 6px !important;
+}
+
+.custom-dashboard-table .route-addresses {
+    max-width: 260px;
+    min-width: 0;
 }
 
 /* ⚡ Quick Calc Buttons (Swap / +Via) */
@@ -2617,7 +2623,7 @@ function buildBookingRowHtml(booking, isNew = false) {
         </td>
         <td class="col-driver driver-cell">${driverHtml}</td>
         <td class="col-route">
-            <div class="d-flex flex-column gap-1" style="max-width: 420px;">
+            <div class="d-flex flex-column gap-1 route-addresses">
                 <div class="d-flex align-items-center text-truncate" title="Pickup: ${escapeHtml(pickupAddress)}">
                     <i class="bi bi-geo-alt-fill text-success me-1.5 flex-shrink-0" style="font-size: 11px;"></i>
                     <span class="text-truncate text-dark fw-medium" style="font-size: 11.5px; line-height: 1.25;">${escapeHtml(pickupAddress)}</span>
