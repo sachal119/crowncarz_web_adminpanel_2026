@@ -23,6 +23,9 @@
 .tracking-driver { display: flex; align-items: center; gap: 12px; margin: 22px 0; }
 .tracking-avatar { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: rgba(230,176,74,.14); color: #b88322; font-size: 22px; flex-shrink: 0; }
 .tracking-driver-name { font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+.tracking-speed { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid var(--cc-border); border-radius: 10px; background: var(--cc-bg-card-subtle); }
+.tracking-speed-label { font-size: 12px; color: var(--cc-text-secondary); }
+.tracking-speed strong { font-size: 20px; font-variant-numeric: tabular-nums; }
 .tracking-small { font-size: 12px; color: var(--cc-text-secondary); line-height: 1.6; }
 .tracking-divider { height: 1px; background: var(--cc-border); margin: 22px 0; }
 .tracking-booking-status { display: inline-block; margin-top: 10px; padding: 4px 9px; border-radius: 6px; background: rgba(230,176,74,.13); color: var(--cc-text-primary); font-size: 11px; font-weight: 600; }
@@ -87,6 +90,7 @@
                 <div class="tracking-avatar"><i class="bi bi-car-front-fill" aria-hidden="true"></i></div>
                 <div><div class="tracking-driver-name">{{ $trackingDriverName }}</div><div class="tracking-small">{{ $trackingCallSign !== '' ? 'Call sign · ' . $trackingCallSign : 'Crown Carz driver' }}</div></div>
             </div>
+            <div class="tracking-speed"><span class="tracking-speed-label"><i class="bi bi-speedometer2 me-1" aria-hidden="true"></i> Driver speed</span><strong id="trackingSpeed">—</strong></div>
             <div class="tracking-small" id="trackingUpdate" aria-live="polite">Waiting for a location update</div>
             <div class="tracking-divider"></div>
             <h2 class="tracking-section-title">Journey details</h2>
@@ -127,6 +131,7 @@
     const dropoffAddress = @json($booking['dropoff_address'] ?? '');
     const status = document.getElementById('trackingStatus');
     const updated = document.getElementById('trackingUpdate');
+    const speedDisplay = document.getElementById('trackingSpeed');
     const message = document.getElementById('trackingMapMessage');
     const followButton = document.getElementById('trackingFollow');
     const overviewButton = document.getElementById('trackingOverview');
@@ -217,6 +222,11 @@
             });
             lastReceived = new Date();
             const offline = data.isOnline === false || data.isOnline === 0 || data.isOnline === '0' || data.isOnline === 'false';
+            // The driver location API stores speed in km/h; display mph for UK journeys.
+            const speedKmh = Number(data.speed);
+            const hasSpeed = (typeof data.speed === 'number' || typeof data.speed === 'string')
+                && String(data.speed).trim() !== '' && Number.isFinite(speedKmh) && speedKmh >= 0;
+            speedDisplay.textContent = !offline && hasSpeed ? `${Math.round(speedKmh / 1.609344)} mph` : '—';
             setStatus(offline ? 'Offline' : 'Connected', offline ? '' : 'connected');
             updated.textContent = `${offline ? 'Last known position · fetched' : 'Location received'} ${lastReceived.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
             showMessage(offline ? 'Driver is offline. Showing last known position.' : '');
@@ -228,6 +238,7 @@
             } else if (firstLocation) fitJourney();
         } catch (error) {
             if (disposed) return;
+            speedDisplay.textContent = '—';
             setStatus(lastReceived ? 'Reconnecting' : 'Unavailable', 'error');
             updated.textContent = lastReceived ? `Last received ${lastReceived.toLocaleTimeString()}` : 'Waiting for driver location';
             showMessage(lastReceived ? 'Connection interrupted. Showing last received location.' : 'Driver location unavailable. Retrying automatically…');
