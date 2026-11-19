@@ -558,8 +558,9 @@ td{
 }
 .custom-dashboard-table .col-passenger,
 .custom-dashboard-table th.th-passenger {
-    min-width: 130px;
-    max-width: 170px;
+    width: 145px;
+    min-width: 120px;
+    max-width: 145px;
 }
 .custom-dashboard-table .col-driver,
 .custom-dashboard-table th.th-driver {
