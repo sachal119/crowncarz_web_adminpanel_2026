@@ -731,7 +731,7 @@ td{
     border-color: #B87333 !important;
     box-shadow: 0 0 0 2px rgba(184, 115, 51, 0.15) !important;
 }
-#calendarWrapper input.flatpickr-input {
+#calendarWrapper input:not([type="hidden"]) {
     height: 30px !important;
     font-size: 11.5px !important;
     border-radius: 0 8px 8px 0 !important;
@@ -739,7 +739,7 @@ td{
     cursor: pointer !important;
 }
 [data-bs-theme="dark"] #universalSearchInput,
-[data-bs-theme="dark"] #calendarWrapper input.flatpickr-input,
+[data-bs-theme="dark"] #calendarWrapper input:not([type="hidden"]),
 [data-bs-theme="dark"] #calendarWrapper .input-group-text,
 [data-bs-theme="dark"] #dashboardSearchForm .input-group-text {
     background-color: #1e293b !important;
@@ -1024,8 +1024,8 @@ td{
 
   <div class="col-lg-12 mt-3">
         <div class="card shadow-sm border-0" style="border-radius: 14px; border: 1px solid #eaedf1 !important;">
-            <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom" style="border-top-left-radius: 13px; border-top-right-radius: 13px; border-color: #f1f5f9 !important;">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-3 border-bottom" style="border-top-left-radius: 13px; border-top-right-radius: 13px; border-color: #f1f5f9 !important;">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
                     <!-- 🔢 Total Bookings Count shown in place of old calendar icon -->
                     <span class="badge fw-bold d-flex align-items-center justify-content-center px-2 shadow-xs" id="bookingsTotalCount" title="Total Future Bookings" style="min-width: 32px; height: 30px; border-radius: 8px; background: rgba(184, 115, 51, 0.14); color: #B87333; font-size: 13px; border: 1px solid rgba(184, 115, 51, 0.28);">
                         {{ $bookings->total() }}
@@ -1035,7 +1035,7 @@ td{
                     </h6>
 
                     <!-- 🔀 Modern View Switcher (Table vs Calendar) - Icons Only -->
-                    <div class="btn-group btn-group-sm p-0.5 rounded-3 border bg-light ms-1" role="group" id="bookingViewSwitcher">
+                    <div class="btn-group btn-group-sm p-0.5 rounded-3 border bg-light" role="group" id="bookingViewSwitcher">
                         <button type="button" class="btn btn-sm px-2 py-1 fw-bold active rounded-2 d-flex align-items-center justify-content-center" id="switchTableViewBtn" onclick="switchBookingDashboardView('table')" title="Table View" style="width: 32px; height: 30px;">
                             <i class="bi bi-list-ul fs-6"></i>
                         </button>
@@ -1045,7 +1045,7 @@ td{
                     </div>
 
                     <!-- 🔍 Search & Date Range Picker Form (Moved here from top container) -->
-                    <form action="{{ route('bookings.search.main') }}" method="GET" id="dashboardSearchForm" class="d-flex align-items-center gap-1.5 flex-wrap ms-1 my-0">
+                    <form action="{{ route('bookings.search.main') }}" method="GET" id="dashboardSearchForm" class="d-flex align-items-center gap-3 flex-wrap my-0">
                         <!-- Universal Keyword Search Input -->
                         <div class="input-group input-group-sm" style="width: 240px; max-width: 100%;">
                             <span class="input-group-text bg-white border-end-0 text-muted ps-2.5 pe-1.5" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1;">
@@ -1087,7 +1087,7 @@ td{
                     </form>
                 </div>
 
-                <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
                     <!-- 📄 Per Page Selector -->
                     <div class="d-flex align-items-center gap-1" id="perPageSelectorWrapper">
                         <label for="perPageSelect" class="text-muted fw-semibold mb-0 text-nowrap" style="font-size: 11px;">Per Page:</label>
